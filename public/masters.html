@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Мастера — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="app-header"></div>
+
+  <main class="container">
+    <h1 class="page-title">Мастера</h1>
+    <p class="page-subtitle">Специалисты, которые оказывают услуги. Дальше сюда привяжем расписание и роли.</p>
+
+    <div class="card stack">
+      <div id="notice" class="notice" style="display:none"></div>
+      <div id="masters" class="list"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2 style="margin:0 0 10px">Добавить мастера</h2>
+
+      <div class="row two">
+        <div class="field">
+          <label for="name">Имя</label>
+          <input id="name" placeholder="Например: Анна" />
+        </div>
+        <div class="field">
+          <label for="role">Роль (заготовка)</label>
+          <select id="role">
+            <option value="MASTER">MASTER</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top:10px">
+        <label class="badge" style="cursor:pointer">
+          <input id="active" type="checkbox" checked style="margin:0 8px 0 0" />
+          Активен
+        </label>
+        <button class="btn" id="addBtn">Добавить</button>
+        <button class="btn secondary" id="clearBtn" type="button">Очистить</button>
+      </div>
+
+      <div class="notice" style="margin-top:10px">
+        Подготовлено под будущие роли: пока это просто строка. Позже сделаем нормальную модель ролей и права.
+      </div>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+  <script>
+    const notice = Bloknot.qs("#notice");
+
+    function showNotice(text) {
+      if (!text) {
+        notice.style.display = "none";
+        notice.textContent = "";
+        return;
+      }
+      notice.style.display = "block";
+      notice.textContent = text;
+    }
+
+    function masterMeta(m) {
+      const status = m.active ? "Активен" : "Неактивен";
+      return `${status} · ${m.role}`;
+    }
+
+    async function loadMasters() {
+      const masters = await Bloknot.api("/api/masters");
+      const container = Bloknot.qs("#masters");
+      container.innerHTML = "";
+
+      if (!masters.length) {
+        container.innerHTML = '<div class="notice">Пока нет мастеров. Добавьте первого ниже.</div>';
+        return;
+      }
+
+      masters.forEach((m) => {
+        const div = document.createElement("div");
+        div.className = "item";
+
+        const avatar = m.avatarUrl
+          ? `<img class="avatar" src="${m.avatarUrl}" alt="Аватар" />`
+          : `<div class="avatar" style="display:grid; place-items:center; color: var(--muted); font-weight:700">?</div>`;
+
+        div.innerHTML = `
+          <div style="display:flex; gap:12px; align-items:flex-start">
+            ${avatar}
+            <div style="min-width:0">
+              <div class="item-title">${Bloknot.esc(m.name)}</div>
+              <div class="item-meta">${Bloknot.esc(masterMeta(m))}</div>
+              <div class="actions" style="margin-top:8px">
+                <input type="file" accept="image/*" data-avatar-file="${m.id}" />
+                <button class="btn secondary" data-action="avatar" data-id="${m.id}">Загрузить аватар</button>
+              </div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn secondary" data-action="toggle" data-id="${m.id}" data-active="${m.active ? "1" : "0"}">
+              ${m.active ? "Выключить" : "Включить"}
+            </button>
+            <button class="btn secondary" data-action="delete" data-id="${m.id}">Удалить</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function clearForm() {
+      Bloknot.qs("#name").value = "";
+      Bloknot.qs("#active").checked = true;
+      Bloknot.qs("#role").value = "MASTER";
+    }
+
+    async function addMaster() {
+      const name = Bloknot.qs("#name").value.trim();
+      const active = Bloknot.qs("#active").checked;
+      const role = Bloknot.qs("#role").value;
+
+      if (!name) {
+        showNotice("Введите имя мастера.");
+        return;
+      }
+
+      showNotice("");
+      Bloknot.qs("#addBtn").disabled = true;
+      try {
+        await Bloknot.api("/api/masters", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, active, role }),
+        });
+        clearForm();
+        await loadMasters();
+      } catch (e) {
+        showNotice("Не удалось добавить мастера: " + e.message);
+      } finally {
+        Bloknot.qs("#addBtn").disabled = false;
+      }
+    }
+
+    async function toggleMaster(id, currentActive) {
+      showNotice("");
+      try {
+        await Bloknot.api("/api/masters/" + id, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ active: !currentActive }),
+        });
+        await loadMasters();
+      } catch (e) {
+        showNotice("Не удалось обновить мастера: " + e.message);
+      }
+    }
+
+    async function deleteMaster(id) {
+      if (!confirm("Удалить мастера?")) return;
+      showNotice("");
+      try {
+        await Bloknot.api("/api/masters/" + id, { method: "DELETE" });
+        await loadMasters();
+      } catch (e) {
+        showNotice("Не удалось удалить мастера: " + e.message);
+      }
+    }
+
+    async function uploadAvatar(id) {
+      const input = document.querySelector(`input[data-avatar-file="${id}"]`);
+      if (!input || !input.files || !input.files[0]) {
+        showNotice("Выберите файл изображения для аватара.");
+        return;
+      }
+
+      showNotice("");
+      try {
+        const fd = new FormData();
+        fd.append("avatar", input.files[0]);
+
+        const res = await fetch("/api/masters/" + id + "/avatar", {
+          method: "POST",
+          body: fd,
+        });
+
+        if (!res.ok) {
+          const t = await res.text();
+          throw new Error(t || ("HTTP " + res.status));
+        }
+
+        await loadMasters();
+      } catch (e) {
+        showNotice("Не удалось загрузить аватар: " + e.message);
+      }
+    }
+
+    Bloknot.renderHeader("masters");
+    Bloknot.qs("#addBtn").addEventListener("click", addMaster);
+    Bloknot.qs("#clearBtn").addEventListener("click", clearForm);
+    Bloknot.qs("#name").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addMaster();
+    });
+
+    Bloknot.qs("#masters").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+
+      if (btn.dataset.action === "toggle") {
+        toggleMaster(btn.dataset.id, btn.dataset.active === "1");
+      }
+      if (btn.dataset.action === "delete") {
+        deleteMaster(btn.dataset.id);
+      }
+      if (btn.dataset.action === "avatar") {
+        uploadAvatar(btn.dataset.id);
+      }
+    });
+
+    (async function init() {
+      try {
+        await loadMasters();
+      } catch (e) {
+        showNotice("Сервер недоступен: " + e.message);
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Услуги — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+ <div id="app-header"></div>
+
+ <main class="container">
+   <h1 class="page-title">Услуги</h1>
+   <p class="page-subtitle">Создавайте услуги, задавайте цену/длительность и привязывайте к категории.</p>
+
+   <div class="card stack">
+     <div id="notice" class="notice" style="display:none"></div>
+     <div id="services" class="list"></div>
+   </div>
+
+   <div class="card" style="margin-top:14px">
+     <h2 style="margin:0 0 10px">Добавить услугу</h2>
+     <div class="row two">
+       <div class="field">
+         <label for="category">Категория</label>
+         <select id="category"></select>
+       </div>
+       <div class="field">
+         <label for="name">Название</label>
+         <input id="name" placeholder="Например: Стрижка" />
+       </div>
+     </div>
+     <div class="row two">
+       <div class="field">
+         <label for="duration">Длительность (мин)</label>
+         <input id="duration" placeholder="60" type="number" min="1" />
+       </div>
+       <div class="field">
+         <label for="price">Цена (₽)</label>
+         <input id="price" placeholder="1500" type="number" min="0" />
+       </div>
+     </div>
+     <div class="actions">
+       <button class="btn" id="addBtn">Добавить</button>
+       <button class="btn secondary" id="clearBtn" type="button">Очистить</button>
+     </div>
+   </div>
+ </main>
+
+ <script src="/app.js"></script>
+ <script>
+   const notice = Bloknot.qs("#notice");
+
+   function showNotice(text) {
+     if (!text) {
+       notice.style.display = "none";
+       notice.textContent = "";
+       return;
+     }
+     notice.style.display = "block";
+     notice.textContent = text;
+   }
+
+   async function loadCategories() {
+     const categories = await Bloknot.api("/api/categories");
+     const select = Bloknot.qs("#category");
+     select.innerHTML = '<option value="">Без категории</option>';
+     categories.forEach((cat) => {
+       const opt = document.createElement("option");
+       opt.value = cat.id;
+       opt.textContent = cat.name;
+       select.appendChild(opt);
+     });
+   }
+
+   async function loadServices() {
+     const services = await Bloknot.api("/api/services");
+     const container = Bloknot.qs("#services");
+     container.innerHTML = "";
+
+     if (!services.length) {
+       container.innerHTML = '<div class="notice">Пока нет услуг. Добавьте первую ниже.</div>';
+       return;
+     }
+
+     services.forEach((service) => {
+       const div = document.createElement("div");
+       div.className = "item";
+
+       const categoryName = service.category ? service.category.name : "Без категории";
+
+       div.innerHTML = `
+         <div>
+           <div class="item-title">${Bloknot.esc(service.name)}</div>
+           <div class="item-meta">${service.duration} мин · ${service.price} ₽ · ${Bloknot.esc(categoryName)}</div>
+         </div>
+         <div class="actions">
+           <button class="btn secondary" data-action="delete" data-id="${service.id}">Удалить</button>
+         </div>
+       `;
+
+       container.appendChild(div);
+     });
+   }
+
+   function clearForm() {
+     Bloknot.qs("#name").value = "";
+     Bloknot.qs("#duration").value = "";
+     Bloknot.qs("#price").value = "";
+     Bloknot.qs("#category").value = "";
+   }
+
+   async function addService() {
+     const name = Bloknot.qs("#name").value.trim();
+     const duration = Bloknot.qs("#duration").value;
+     const price = Bloknot.qs("#price").value;
+     const categoryId = Bloknot.qs("#category").value;
+
+     if (!name || !duration || !price) {
+       showNotice("Заполните название, длительность и цену.");
+       return;
+     }
+
+     showNotice("");
+     Bloknot.qs("#addBtn").disabled = true;
+     try {
+       await Bloknot.api("/api/services", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+           name,
+           duration,
+           price,
+           categoryId: categoryId || null,
+         }),
+       });
+       clearForm();
+       await loadServices();
+     } catch (e) {
+       showNotice("Не удалось добавить услугу: " + e.message);
+     } finally {
+       Bloknot.qs("#addBtn").disabled = false;
+     }
+   }
+
+   async function deleteService(id) {
+     if (!confirm("Удалить услугу?")) return;
+     showNotice("");
+     try {
+       await Bloknot.api("/api/services/" + id, { method: "DELETE" });
+       await loadServices();
+     } catch (e) {
+       showNotice("Не удалось удалить услугу: " + e.message);
+     }
+   }
+
+   Bloknot.renderHeader("services");
+   Bloknot.qs("#addBtn").addEventListener("click", addService);
+   Bloknot.qs("#clearBtn").addEventListener("click", clearForm);
+
+   Bloknot.qs("#services").addEventListener("click", (e) => {
+     const btn = e.target.closest("button[data-action]");
+     if (!btn) return;
+     if (btn.dataset.action === "delete") deleteService(btn.dataset.id);
+   });
+
+   (async function init() {
+     try {
+       await loadCategories();
+       await loadServices();
+     } catch (e) {
+       showNotice("Сервер недоступен: " + e.message);
+     }
+   })();
+ </script>
+
+</body>
+</html>

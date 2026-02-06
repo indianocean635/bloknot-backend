@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String       @id @default(uuid())
+  email     String       @unique
+  role      String       @default("owner")
+  createdAt DateTime     @default(now())
+
+  loginTokens LoginToken[]
+}
+model Service {
+  id         Int       @id @default(autoincrement())
+  name       String
+  duration   Int
+  price      Int
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime  @default(now())
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  services  Service[]
+  createdAt DateTime  @default(now())
+}
+
+model Master {
+  id        Int      @id @default(autoincrement())
+  name      String
+  active    Boolean  @default(true)
+  role      String   @default("MASTER")
+  avatarUrl String?
+  createdAt DateTime @default(now())
+}
+
+model WorkPhoto {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String
+  caption   String?
+  createdAt DateTime @default(now())
+}
+
+model Branch {
+  id        Int       @id @default(autoincrement())
+  name      String
+  address   String?
+  createdAt DateTime  @default(now())
+
+  appointments Appointment[]
+}
+
+model Appointment {
+  id            Int      @id @default(autoincrement())
+  customerName  String
+  customerPhone String?
+  startsAt      DateTime
+  endsAt        DateTime
+
+  priceAtBooking Int?
+
+  serviceId Int
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  masterId Int
+  master   Master @relation(fields: [masterId], references: [id])
+
+  branchId Int?
+  branch   Branch? @relation(fields: [branchId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+
+model LoginToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id])
+}

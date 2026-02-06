@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Календарь — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="app-header"></div>
+
+  <main class="container">
+    <h1 class="page-title">Календарь</h1>
+    <p class="page-subtitle">Записи клиентов. Длительность берётся из услуги, пересечения по мастеру не допускаются.</p>
+
+    <div class="card stack" style="margin-bottom:14px">
+      <div class="row two">
+        <div class="field">
+          <label for="day">День</label>
+          <input id="day" type="date" />
+        </div>
+        <div class="field">
+          <label for="masterFilter">Мастер (фильтр)</label>
+          <select id="masterFilter"></select>
+        </div>
+      </div>
+      <div class="row two">
+        <div class="field">
+          <label for="workStart">Начало работы</label>
+          <input id="workStart" type="time" />
+        </div>
+        <div class="field">
+          <label for="workEnd">Конец работы</label>
+          <input id="workEnd" type="time" />
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn secondary" id="prevBtn" type="button">←</button>
+        <button class="btn secondary" id="todayBtn" type="button">Сегодня</button>
+        <button class="btn secondary" id="nextBtn" type="button">→</button>
+        <button class="btn secondary" id="refreshBtn" type="button">Обновить</button>
+      </div>
+      <div id="notice" class="notice" style="display:none"></div>
+    </div>
+
+    <div class="calendar">
+      <div class="card stack">
+        <div class="cal-topbar">
+          <div class="range" id="rangeTitle">Календарь</div>
+          <div class="nav">
+            <button type="button" id="prevBtn2">←</button>
+            <button type="button" id="todayBtn2">Сегодня</button>
+            <button type="button" id="nextBtn2">→</button>
+            <div class="badge" id="countBadge">0 записей</div>
+            <a class="badge" href="/works.html">Фото работ</a>
+          </div>
+        </div>
+
+        <div class="tabs" id="viewTabs" style="margin-top:10px">
+          <button class="active" type="button" data-view="day">День</button>
+          <button type="button" data-view="week">Неделя</button>
+          <button type="button" data-view="month">Месяц</button>
+        </div>
+
+        <div class="cal-view active" id="viewDay" style="margin-top:10px">
+          <div class="schedule-wrap" style="--hour-h:48px">
+            <div class="schedule-head" id="scheduleHead" style="grid-template-columns:64px repeat(1, 1fr)">
+              <div class="cell">Время</div>
+            </div>
+            <div class="cal-scroll">
+              <div class="schedule-body" id="scheduleBody" style="grid-template-columns:64px repeat(1, 1fr); height:624px">
+                <div class="time-col" id="timeCol"></div>
+                <div id="cols" style="display:contents"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cal-view" id="viewWeek" style="margin-top:10px">
+          <div class="week-grid" id="weekGrid"></div>
+        </div>
+
+        <div class="cal-view" id="viewMonth" style="margin-top:10px">
+          <div class="month-grid" id="monthGrid">
+            <div class="month-dow">Пн</div>
+            <div class="month-dow">Вт</div>
+            <div class="month-dow">Ср</div>
+            <div class="month-dow">Чт</div>
+            <div class="month-dow">Пт</div>
+            <div class="month-dow">Сб</div>
+            <div class="month-dow">Вс</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0 0 10px">Создать запись</h2>
+
+        <div class="field">
+          <label for="customerName">Клиент</label>
+          <input id="customerName" placeholder="Имя клиента" />
+        </div>
+        <div class="field">
+          <label for="customerPhone">Телефон (опционально)</label>
+          <input id="customerPhone" placeholder="+7..." />
+        </div>
+
+        <div class="field">
+          <label for="serviceId">Услуга</label>
+          <select id="serviceId"></select>
+        </div>
+        <div class="field">
+          <label for="masterId">Мастер</label>
+          <select id="masterId"></select>
+        </div>
+
+        <div class="field">
+          <label for="startsAt">Время начала</label>
+          <input id="startsAt" type="datetime-local" />
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="createBtn">Создать</button>
+          <button class="btn secondary" id="clearBtn" type="button">Очистить</button>
+        </div>
+
+        <div class="notice" style="margin-top:10px">
+          Длительность берётся из услуги. Пересечения у одного мастера не допускаются.
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+  <script>
+    const notice = Bloknot.qs("#notice");
+
+    function showNotice(text) {
+      if (!text) {
+        notice.style.display = "none";
+        notice.textContent = "";
+        return;
+      }
+      notice.style.display = "block";
+      notice.textContent = text;
+    }
+
+    function toIsoDayBounds(dayStr) {
+      const d = new Date(dayStr + "T00:00:00");
+      const from = new Date(d);
+      const to = new Date(d);
+      to.setDate(to.getDate() + 1);
+      return { from: from.toISOString(), to: to.toISOString() };
+    }
+
+    function fmtTime(iso) {
+      const d = new Date(iso);
+      const h = String(d.getHours()).padStart(2, "0");
+      const m = String(d.getMinutes()).padStart(2, "0");
+      return h + ":" + m;
+    }
+
+    function fmtDateRu(d) {
+      return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+
+    function fmtDayTitle(d) {
+      return d.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
+    }
+
+    function ymd(d) {
+      const yy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${yy}-${mm}-${dd}`;
+    }
+
+    function startOfDay(d) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+    }
+
+    function addDays(d, n) {
+      const x = new Date(d);
+      x.setDate(x.getDate() + n);
+      return x;
+    }
+
+    function startOfWeekMon(d) {
+      const x = startOfDay(d);
+      const dow = (x.getDay() + 6) % 7;
+      return addDays(x, -dow);
+    }
+
+    function startOfMonth(d) {
+      return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+    }
+
+    const state = { view: "day" };
+
+    function fmtLocalDateTimeInput(d) {
+      const pad = (n) => String(n).padStart(2, "0");
+      const yyyy = d.getFullYear();
+      const mm = pad(d.getMonth() + 1);
+      const dd = pad(d.getDate());
+      const hh = pad(d.getHours());
+      const mi = pad(d.getMinutes());
+      return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+    }
+
+    async function loadMasters() {
+      return Bloknot.api("/api/masters");
+    }
+
+    function fillMastersSelect(select, masters, withAll) {
+      select.innerHTML = "";
+      if (withAll) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Все мастера";
+        select.appendChild(opt);
+      }
+      masters.forEach((m) => {
+        const opt = document.createElement("option");
+        opt.value = m.id;
+        opt.textContent = m.name + (m.active ? "" : " (неактивен)");
+        select.appendChild(opt);
+      });
+    }
+
+    async function loadServices() {
+      const services = await Bloknot.api("/api/services");
+      const sel = Bloknot.qs("#serviceId");
+      sel.innerHTML = "";
+      services.forEach((s) => {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent = `${s.name} · ${s.duration} мин · ${s.price} ₽`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function hashColorClass(value) {
+      const palette = ["c-mint", "c-blue", "c-amber", "c-rose", "c-violet"];
+      let n = 0;
+      const s = String(value);
+      for (let i = 0; i < s.length; i++) n = (n + s.charCodeAt(i) * (i + 1)) % 100000;
+      return palette[n % palette.length];
+    }
+
+    function setActiveView(view) {
+      document.querySelectorAll("#viewTabs button").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+      ["day", "week", "month"].forEach((v) => {
+        Bloknot.qs(`#view${v[0].toUpperCase() + v.slice(1)}`).classList.toggle("active", v === view);
+      });
+      state.view = view;
+    }
+
+    function getWorkingHours() {
+      const rawStart = (localStorage.getItem("bloknot_work_start") || "09:00").trim();
+      const rawEnd = (localStorage.getItem("bloknot_work_end") || "21:00").trim();
+
+      const toH = (t) => {
+        const m = /^([0-2]\d):([0-5]\d)$/.exec(t);
+        if (!m) return null;
+        const hh = Number(m[1]);
+        const mm = Number(m[2]);
+        return hh + mm / 60;
+      };
+
+      const s = toH(rawStart);
+      const e = toH(rawEnd);
+      if (s === null || e === null || e <= s) return { start: 9, end: 21, rawStart: "09:00", rawEnd: "21:00" };
+      return { start: s, end: e, rawStart, rawEnd };
+    }
+
+    function buildScheduleFrame(visibleMasters) {
+      const head = Bloknot.qs("#scheduleHead");
+      const body = Bloknot.qs("#scheduleBody");
+      const timeCol = Bloknot.qs("#timeCol");
+      const colsHost = Bloknot.qs("#cols");
+
+      const wh = getWorkingHours();
+      const startHour = wh.start;
+      const endHour = wh.end;
+      const hourH = 48;
+      const bodyHeight = Math.max(1, (endHour - startHour) * hourH);
+      const pxPerMin = hourH / 60;
+
+      head.style.gridTemplateColumns = `64px repeat(${visibleMasters.length}, 1fr)`;
+      body.style.gridTemplateColumns = `64px repeat(${visibleMasters.length}, 1fr)`;
+      body.style.height = bodyHeight + "px";
+
+      head.innerHTML = '<div class="cell">Время</div>';
+      visibleMasters.forEach((m) => {
+        const c = document.createElement("div");
+        c.className = "cell name";
+        c.textContent = m.name;
+        head.appendChild(c);
+      });
+
+      timeCol.innerHTML = "";
+      for (let h = Math.floor(startHour); h <= Math.ceil(endHour); h++) {
+        const t = document.createElement("div");
+        t.className = "t";
+        t.textContent = String(h).padStart(2, "0") + ":00";
+        timeCol.appendChild(t);
+      }
+
+      colsHost.innerHTML = "";
+      visibleMasters.forEach((m) => {
+        const col = document.createElement("div");
+        col.className = "sched-col";
+        col.dataset.masterId = m.id;
+        col.innerHTML = '<div class="gridlines"></div><div class="inner"></div>';
+        colsHost.appendChild(col);
+      });
+
+      return { startHour, endHour, pxPerMin };
+    }
+
+    function renderDay(masters, items) {
+      const filter = Bloknot.qs("#masterFilter").value;
+      const visibleMasters = masters.filter((m) => (!filter ? true : String(m.id) === String(filter)));
+      if (!visibleMasters.length) {
+        Bloknot.qs("#cols").innerHTML = '<div class="notice" style="grid-column:1/-1">Добавьте мастеров или выберите другой фильтр.</div>';
+        return;
+      }
+
+      const { startHour, endHour, pxPerMin } = buildScheduleFrame(visibleMasters);
+      const startBase = new Date(Bloknot.qs("#day").value + "T00:00:00");
+      const dayStart = new Date(startBase.getFullYear(), startBase.getMonth(), startBase.getDate(), Math.floor(startHour), Math.round((startHour % 1) * 60), 0);
+      const dayEnd = new Date(startBase.getFullYear(), startBase.getMonth(), startBase.getDate(), Math.floor(endHour), Math.round((endHour % 1) * 60), 0);
+
+      visibleMasters.forEach((m) => {
+        const col = document.querySelector(`.sched-col[data-master-id="${m.id}"] .inner`);
+        col.innerHTML = "";
+
+        items
+          .filter((a) => String(a.masterId) === String(m.id))
+          .forEach((a) => {
+            const s = new Date(a.startsAt);
+            const e = new Date(a.endsAt);
+            if (e <= dayStart || s >= dayEnd) return;
+
+            const top = Math.max(0, (s.getTime() - dayStart.getTime()) / 60000) * pxPerMin;
+            const height = Math.max(40, (e.getTime() - s.getTime()) / 60000 * pxPerMin);
+            const color = hashColorClass(a.serviceId);
+
+            const b = document.createElement("div");
+            b.className = `booking ${color}`;
+            b.style.top = top + "px";
+            b.style.height = height + "px";
+            b.innerHTML = `
+              <div class="b-title">${Bloknot.esc(a.customerName)}</div>
+              <div class="b-sub">${Bloknot.esc(a.service.name)}</div>
+              <div class="b-time">
+                <span>${fmtTime(a.startsAt)}–${fmtTime(a.endsAt)}</span>
+                <button data-action="delete" data-id="${a.id}" type="button">Удалить</button>
+              </div>
+            `;
+            col.appendChild(b);
+          });
+      });
+    }
+
+    function renderWeek(masters, items, base) {
+      const grid = Bloknot.qs("#weekGrid");
+      const s = startOfWeekMon(base);
+      grid.innerHTML = "";
+
+      const masterMap = new Map(masters.map((m) => [String(m.id), m.name]));
+
+      for (let i = 0; i < 7; i++) {
+        const d = addDays(s, i);
+        const key = ymd(d);
+        const dayItems = items
+          .filter((a) => ymd(new Date(a.startsAt)) === key)
+          .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
+
+        const wrap = document.createElement("div");
+        wrap.className = "week-day";
+        wrap.innerHTML = `
+          <div class="wh">
+            <span>${d.toLocaleDateString("ru-RU", { weekday: "short", day: "numeric", month: "short" })}</span>
+            <span>${dayItems.length}</span>
+          </div>
+          <div class="wl"></div>
+        `;
+
+        const list = wrap.querySelector(".wl");
+        if (!dayItems.length) {
+          const empty = document.createElement("div");
+          empty.className = "notice";
+          empty.textContent = "Нет записей";
+          list.appendChild(empty);
+        } else {
+          dayItems.forEach((a) => {
+            const c = document.createElement("div");
+            c.className = `chip ${hashColorClass(a.serviceId)}`;
+            const masterName = masterMap.get(String(a.masterId)) || "";
+            c.innerHTML = `
+              <div class="t">
+                <span>${fmtTime(a.startsAt)}–${fmtTime(a.endsAt)}</span>
+                <button data-action="delete" data-id="${a.id}" type="button">Удалить</button>
+              </div>
+              <div class="n">${Bloknot.esc(a.customerName)}</div>
+              <div class="s">${Bloknot.esc(a.service.name)} · ${Bloknot.esc(masterName)}</div>
+            `;
+            list.appendChild(c);
+          });
+        }
+        grid.appendChild(wrap);
+      }
+    }
+
+    function renderMonth(items, base) {
+      const grid = Bloknot.qs("#monthGrid");
+      const keep = Array.from(grid.querySelectorAll(".month-dow"));
+      grid.innerHTML = "";
+      keep.forEach((x) => grid.appendChild(x));
+
+      const m0 = startOfMonth(base);
+      const m1 = new Date(m0.getFullYear(), m0.getMonth() + 1, 1, 0, 0, 0, 0);
+      const s = startOfWeekMon(m0);
+      const end = startOfWeekMon(m1);
+      const e = addDays(end, 7);
+
+      const counts = new Map();
+      items.forEach((a) => {
+        const k = ymd(new Date(a.startsAt));
+        counts.set(k, (counts.get(k) || 0) + 1);
+      });
+
+      for (let d = new Date(s); d < e; d = addDays(d, 1)) {
+        const k = ymd(d);
+        const cell = document.createElement("div");
+        cell.className = "month-day" + (d.getMonth() === m0.getMonth() ? "" : " off");
+        cell.dataset.day = k;
+        const cnt = counts.get(k) || 0;
+        cell.innerHTML = `
+          <div class="d">${d.getDate()}</div>
+          ${cnt ? `<div class="cnt">${cnt}</div>` : ""}
+        `;
+        grid.appendChild(cell);
+      }
+    }
+
+    async function loadAppointments(masters) {
+      const base = new Date(Bloknot.qs("#day").value + "T00:00:00");
+      let from;
+      let to;
+
+      if (state.view === "day") {
+        ({ from, to } = toIsoDayBounds(ymd(base)));
+        Bloknot.qs("#rangeTitle").textContent = fmtDayTitle(base);
+      } else if (state.view === "week") {
+        const s = startOfWeekMon(base);
+        const e = addDays(s, 7);
+        from = s.toISOString();
+        to = e.toISOString();
+        Bloknot.qs("#rangeTitle").textContent = `${fmtDateRu(s)} – ${fmtDateRu(addDays(e, -1))}`;
+      } else {
+        const m0 = startOfMonth(base);
+        const m1 = new Date(m0.getFullYear(), m0.getMonth() + 1, 1, 0, 0, 0, 0);
+        const s = startOfWeekMon(m0);
+        const end = startOfWeekMon(m1);
+        const e = addDays(end, 7);
+        from = s.toISOString();
+        to = e.toISOString();
+        Bloknot.qs("#rangeTitle").textContent = base.toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
+      }
+
+      const qs = new URLSearchParams({ from, to });
+      const filterMaster = Bloknot.qs("#masterFilter").value;
+      if (filterMaster) qs.set("masterId", filterMaster);
+
+      const items = await Bloknot.api("/api/appointments?" + qs.toString());
+      Bloknot.qs("#countBadge").textContent = items.length + " записей";
+
+      if (state.view === "day") renderDay(masters, items);
+      if (state.view === "week") renderWeek(masters, items, base);
+      if (state.view === "month") renderMonth(items, base);
+    }
+
+    function clearForm() {
+      Bloknot.qs("#customerName").value = "";
+      Bloknot.qs("#customerPhone").value = "";
+      const day = Bloknot.qs("#day").value;
+      Bloknot.qs("#startsAt").value = day ? (day + "T10:00") : "";
+    }
+
+    async function createAppointment() {
+      const customerName = Bloknot.qs("#customerName").value.trim();
+      const customerPhone = Bloknot.qs("#customerPhone").value.trim();
+      const serviceId = Bloknot.qs("#serviceId").value;
+      const masterId = Bloknot.qs("#masterId").value;
+      const startsAtLocal = Bloknot.qs("#startsAt").value;
+
+      if (!customerName || !serviceId || !masterId || !startsAtLocal) {
+        showNotice("Заполните клиента, услугу, мастера и время.");
+        return;
+      }
+
+      showNotice("");
+      Bloknot.qs("#createBtn").disabled = true;
+      try {
+        await Bloknot.api("/api/appointments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerName,
+            customerPhone: customerPhone || null,
+            startsAt: new Date(startsAtLocal).toISOString(),
+            serviceId,
+            masterId,
+          }),
+        });
+        clearForm();
+        await refresh();
+      } catch (e) {
+        showNotice("Не удалось создать запись: " + e.message);
+      } finally {
+        Bloknot.qs("#createBtn").disabled = false;
+      }
+    }
+
+    async function deleteAppointment(id) {
+      if (!confirm("Удалить запись?")) return;
+      showNotice("");
+      try {
+        await Bloknot.api("/api/appointments/" + id, { method: "DELETE" });
+        await refresh();
+      } catch (e) {
+        showNotice("Не удалось удалить запись: " + e.message);
+      }
+    }
+
+    function shiftRange(delta) {
+      const day = Bloknot.qs("#day").value;
+      const d = new Date(day + "T00:00:00");
+
+      if (state.view === "day") d.setDate(d.getDate() + delta);
+      if (state.view === "week") d.setDate(d.getDate() + 7 * delta);
+      if (state.view === "month") d.setMonth(d.getMonth() + delta);
+
+      Bloknot.qs("#day").value = ymd(d);
+      Bloknot.qs("#startsAt").value = fmtLocalDateTimeInput(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 10, 0, 0));
+      refresh().catch((e) => showNotice(e.message));
+    }
+
+    Bloknot.renderHeader("calendar");
+
+    Bloknot.qs("#prevBtn").addEventListener("click", () => shiftRange(-1));
+    Bloknot.qs("#nextBtn").addEventListener("click", () => shiftRange(1));
+    Bloknot.qs("#todayBtn").addEventListener("click", () => {
+      const now = new Date();
+      Bloknot.qs("#day").value = now.toISOString().slice(0, 10);
+      Bloknot.qs("#startsAt").value = fmtLocalDateTimeInput(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0, 0));
+      refresh().catch((e) => showNotice(e.message));
+    });
+
+    Bloknot.qs("#prevBtn2").addEventListener("click", () => shiftRange(-1));
+    Bloknot.qs("#nextBtn2").addEventListener("click", () => shiftRange(1));
+    Bloknot.qs("#todayBtn2").addEventListener("click", () => {
+      const now = new Date();
+      Bloknot.qs("#day").value = now.toISOString().slice(0, 10);
+      Bloknot.qs("#startsAt").value = fmtLocalDateTimeInput(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0, 0));
+      refresh().catch((e) => showNotice(e.message));
+    });
+
+    Bloknot.qs("#viewTabs").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-view]");
+      if (!btn) return;
+      setActiveView(btn.dataset.view);
+      refresh().catch((er) => showNotice(er.message));
+    });
+    async function refresh() {
+      const masters = await loadMasters();
+      fillMastersSelect(Bloknot.qs("#masterId"), masters, false);
+      fillMastersSelect(Bloknot.qs("#masterFilter"), masters, true);
+      await loadAppointments(masters);
+    }
+
+    Bloknot.qs("#refreshBtn").addEventListener("click", () => refresh().catch((e) => showNotice(e.message)));
+
+    Bloknot.qs("#day").addEventListener("change", () => {
+      const day = Bloknot.qs("#day").value;
+      Bloknot.qs("#startsAt").value = day ? (day + "T10:00") : "";
+      refresh().catch((e) => showNotice(e.message));
+    });
+
+    function initWorkingHoursInputs() {
+      const s = Bloknot.qs("#workStart");
+      const e = Bloknot.qs("#workEnd");
+      const wh = getWorkingHours();
+      s.value = wh.rawStart;
+      e.value = wh.rawEnd;
+      const onChange = () => {
+        localStorage.setItem("bloknot_work_start", s.value || "09:00");
+        localStorage.setItem("bloknot_work_end", e.value || "21:00");
+        refresh().catch((er) => showNotice(er.message));
+      };
+      s.addEventListener("change", onChange);
+      e.addEventListener("change", onChange);
+    }
+    Bloknot.qs("#masterFilter").addEventListener("change", () => refresh().catch((e) => showNotice(e.message)));
+
+    Bloknot.qs("#createBtn").addEventListener("click", createAppointment);
+    Bloknot.qs("#clearBtn").addEventListener("click", clearForm);
+
+    Bloknot.qs("#scheduleBody").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+      if (btn.dataset.action === "delete") deleteAppointment(btn.dataset.id);
+    });
+
+    Bloknot.qs("#weekGrid").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+      if (btn.dataset.action === "delete") deleteAppointment(btn.dataset.id);
+    });
+
+    Bloknot.qs("#monthGrid").addEventListener("click", (e) => {
+      const cell = e.target.closest(".month-day");
+      if (!cell) return;
+      const day = cell.dataset.day;
+      if (!day) return;
+      Bloknot.qs("#day").value = day;
+      Bloknot.qs("#startsAt").value = day + "T10:00";
+      setActiveView("day");
+      refresh().catch((er) => showNotice(er.message));
+    });
+
+    (async function init() {
+      const now = new Date();
+      Bloknot.qs("#day").value = now.toISOString().slice(0, 10);
+      Bloknot.qs("#startsAt").value = fmtLocalDateTimeInput(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0, 0));
+
+      initWorkingHoursInputs();
+
+      try {
+        await loadServices();
+        await refresh();
+      } catch (e) {
+        showNotice("Сервер недоступен: " + e.message);
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Категории — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="app-header"></div>
+
+  <main class="container">
+    <h1 class="page-title">Категории</h1>
+    <p class="page-subtitle">Категории помогают клиентам быстрее выбрать услугу.</p>
+
+    <div class="card stack">
+      <div id="notice" class="notice" style="display:none"></div>
+      <div id="categories" class="list"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2 style="margin:0 0 10px">Добавить категорию</h2>
+      <div class="row two">
+        <div class="field">
+          <label for="name">Название</label>
+          <input id="name" placeholder="Например: Ногти" />
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="btn" id="addBtn" style="width:100%">Добавить</button>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn secondary" id="clearBtn" type="button">Очистить</button>
+        <a class="badge" href="/services.html">Перейти к услугам</a>
+      </div>
+      <div class="notice" style="margin-top:10px">Если удалить категорию, услуги останутся, но станут «без категории».</div>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+  <script>
+    const notice = Bloknot.qs("#notice");
+
+    function showNotice(text) {
+      if (!text) {
+        notice.style.display = "none";
+        notice.textContent = "";
+        return;
+      }
+      notice.style.display = "block";
+      notice.textContent = text;
+    }
+
+    async function loadCategories() {
+      const categories = await Bloknot.api("/api/categories");
+      const container = Bloknot.qs("#categories");
+      container.innerHTML = "";
+
+      if (!categories.length) {
+        container.innerHTML = '<div class="notice">Пока нет категорий. Добавьте первую ниже.</div>';
+        return;
+      }
+
+      categories.forEach((cat) => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div>
+            <div class="item-title">${Bloknot.esc(cat.name)}</div>
+            <div class="item-meta">ID: ${cat.id}</div>
+          </div>
+          <div class="actions">
+            <button class="btn secondary" data-action="delete" data-id="${cat.id}">Удалить</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function clearForm() {
+      Bloknot.qs("#name").value = "";
+    }
+
+    async function addCategory() {
+      const name = Bloknot.qs("#name").value.trim();
+      if (!name) {
+        showNotice("Введите название категории.");
+        return;
+      }
+
+      showNotice("");
+      Bloknot.qs("#addBtn").disabled = true;
+      try {
+        await Bloknot.api("/api/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        clearForm();
+        await loadCategories();
+      } catch (e) {
+        showNotice("Не удалось добавить категорию: " + e.message);
+      } finally {
+        Bloknot.qs("#addBtn").disabled = false;
+      }
+    }
+
+    async function deleteCategory(id) {
+      if (!confirm("Удалить категорию? Услуги станут без категории.")) return;
+      showNotice("");
+      try {
+        await Bloknot.api("/api/categories/" + id, { method: "DELETE" });
+        await loadCategories();
+      } catch (e) {
+        showNotice("Не удалось удалить категорию: " + e.message);
+      }
+    }
+
+    Bloknot.renderHeader("categories");
+    Bloknot.qs("#addBtn").addEventListener("click", addCategory);
+    Bloknot.qs("#clearBtn").addEventListener("click", clearForm);
+    Bloknot.qs("#name").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addCategory();
+    });
+
+    Bloknot.qs("#categories").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+      if (btn.dataset.action === "delete") deleteCategory(btn.dataset.id);
+    });
+
+    (async function init() {
+      try {
+        await loadCategories();
+      } catch (e) {
+        showNotice("Сервер недоступен: " + e.message);
+      }
+    })();
+  </script>
+</body>
+</html>

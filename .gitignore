@@ -1,0 +1,19 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+
+# Runtime uploads (should live on server/volume)
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/

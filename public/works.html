@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Фото работ — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="app-header"></div>
+
+  <main class="container">
+    <h1 class="page-title">Фото работ</h1>
+    <p class="page-subtitle">Общая галерея работ вашего бизнеса. Позже добавим привязку к мастерам и услугам.</p>
+
+    <div class="card" style="margin-bottom:14px">
+      <h2 style="margin:0 0 10px">Добавить фото</h2>
+      <div class="row two">
+        <div class="field">
+          <label for="image">Фото</label>
+          <input id="image" type="file" accept="image/*" />
+        </div>
+        <div class="field">
+          <label for="caption">Подпись (опционально)</label>
+          <input id="caption" placeholder="Например: До/после" />
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="uploadBtn">Загрузить</button>
+        <button class="btn secondary" id="clearBtn" type="button">Очистить</button>
+      </div>
+      <div id="notice" class="notice" style="display:none; margin-top:10px"></div>
+    </div>
+
+    <div class="card stack">
+      <div class="actions" style="justify-content:space-between">
+        <div class="badge" id="countBadge">0 фото</div>
+        <button class="btn secondary" id="refreshBtn" type="button">Обновить</button>
+      </div>
+      <div id="grid" class="grid"></div>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+  <script>
+    const notice = Bloknot.qs("#notice");
+
+    function showNotice(text) {
+      if (!text) {
+        notice.style.display = "none";
+        notice.textContent = "";
+        return;
+      }
+      notice.style.display = "block";
+      notice.textContent = text;
+    }
+
+    function clearForm() {
+      Bloknot.qs("#image").value = "";
+      Bloknot.qs("#caption").value = "";
+    }
+
+    async function loadWorks() {
+      const items = await Bloknot.api("/api/works");
+      Bloknot.qs("#countBadge").textContent = items.length + " фото";
+
+      const grid = Bloknot.qs("#grid");
+      grid.innerHTML = "";
+
+      if (!items.length) {
+        grid.innerHTML = '<div class="notice" style="grid-column:1/-1">Пока нет фото. Загрузите первое сверху.</div>';
+        return;
+      }
+
+      items.forEach((p) => {
+        const wrap = document.createElement("div");
+        wrap.className = "stack";
+
+        const img = document.createElement("img");
+        img.className = "photo";
+        img.loading = "lazy";
+        img.src = p.imageUrl;
+        img.alt = p.caption || "Фото работ";
+
+        const meta = document.createElement("div");
+        meta.className = "actions";
+        meta.style.justifyContent = "space-between";
+
+        const cap = document.createElement("div");
+        cap.className = "muted";
+        cap.style.fontSize = "13px";
+        cap.textContent = p.caption || "";
+
+        const del = document.createElement("button");
+        del.className = "btn secondary";
+        del.textContent = "Удалить";
+        del.dataset.action = "delete";
+        del.dataset.id = p.id;
+
+        meta.appendChild(cap);
+        meta.appendChild(del);
+
+        wrap.appendChild(img);
+        wrap.appendChild(meta);
+        grid.appendChild(wrap);
+      });
+    }
+
+    async function uploadWork() {
+      const file = Bloknot.qs("#image").files[0];
+      const caption = Bloknot.qs("#caption").value.trim();
+
+      if (!file) {
+        showNotice("Выберите файл изображения.");
+        return;
+      }
+
+      showNotice("");
+      Bloknot.qs("#uploadBtn").disabled = true;
+      try {
+        const fd = new FormData();
+        fd.append("image", file);
+        if (caption) fd.append("caption", caption);
+
+        await fetch("/api/works", {
+          method: "POST",
+          body: fd,
+        }).then(async (res) => {
+          if (!res.ok) {
+            const t = await res.text();
+            throw new Error(t || ("HTTP " + res.status));
+          }
+        });
+
+        clearForm();
+        await loadWorks();
+      } catch (e) {
+        showNotice("Не удалось загрузить фото: " + e.message);
+      } finally {
+        Bloknot.qs("#uploadBtn").disabled = false;
+      }
+    }
+
+    async function deleteWork(id) {
+      if (!confirm("Удалить фото?")) return;
+      showNotice("");
+      try {
+        await Bloknot.api("/api/works/" + id, { method: "DELETE" });
+        await loadWorks();
+      } catch (e) {
+        showNotice("Не удалось удалить фото: " + e.message);
+      }
+    }
+
+    Bloknot.renderHeader("works");
+    Bloknot.qs("#uploadBtn").addEventListener("click", uploadWork);
+    Bloknot.qs("#clearBtn").addEventListener("click", clearForm);
+    Bloknot.qs("#refreshBtn").addEventListener("click", () => loadWorks().catch((e) => showNotice(e.message)));
+
+    Bloknot.qs("#grid").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+      if (btn.dataset.action === "delete") deleteWork(btn.dataset.id);
+    });
+
+    (async function init() {
+      try {
+        await loadWorks();
+      } catch (e) {
+        showNotice("Сервер недоступен: " + e.message);
+      }
+    })();
+  </script>
+</body>
+</html>

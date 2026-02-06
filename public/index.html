@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bloknot — вход</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+ <div class="login-wrap">
+   <div class="login-card">
+     <div class="brand" style="justify-content:center; width:100%">
+       <span class="brand-mark">✓</span>
+       <span>Bloknot</span>
+     </div>
+
+     <h1>Вход</h1>
+     <p class="muted" style="margin-top:0">Мы пришлём magic-link. Ссылку можно посмотреть в консоли сервера.</p>
+
+     <div class="field" style="margin-top:12px">
+       <label for="email">Email</label>
+       <input id="email" type="email" placeholder="you@company.com" />
+     </div>
+     <button class="btn" id="loginBtn" style="width:100%">Получить ссылку для входа</button>
+
+     <div class="message muted" id="message" style="margin-top:12px; text-align:center"></div>
+   </div>
+ </div>
+
+  <script>
+    const btn = document.getElementById("loginBtn");
+    const emailInput = document.getElementById("email");
+    const message = document.getElementById("message");
+
+    btn.addEventListener("click", async () => {
+      const email = emailInput.value.trim();
+      if (!email) {
+        message.textContent = "Введите email";
+        return;
+      }
+
+      btn.disabled = true;
+      message.textContent = "Отправляем ссылку для входа…";
+
+      try {
+        const res = await fetch("/auth/request-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+
+        if (res.ok) {
+          message.textContent =
+            "Ссылка для входа создана. Проверьте консоль сервера.";
+        } else {
+          message.textContent = "Ошибка. Попробуйте позже.";
+        }
+      } catch (e) {
+        message.textContent = "Сервер недоступен.";
+      }
+
+      btn.disabled = false;
+    });
+  </script>
+
+</body>
+</html>

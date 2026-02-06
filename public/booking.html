@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Онлайн‑запись — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="app-header"></div>
+
+  <main class="container">
+    <h1 class="page-title">Онлайн‑запись</h1>
+    <p class="page-subtitle">Выберите услугу, мастера и удобное время. Длительность берётся из услуги.</p>
+
+    <div class="row two">
+      <div class="card">
+        <h2 style="margin:0 0 10px">Записаться</h2>
+
+        <div class="field">
+          <label for="customerName">Имя</label>
+          <input id="customerName" placeholder="Как к вам обращаться" />
+        </div>
+
+        <div class="field">
+          <label for="customerPhone">Телефон</label>
+          <input id="customerPhone" placeholder="+7..." />
+        </div>
+
+        <div class="field">
+          <label for="serviceId">Услуга</label>
+          <select id="serviceId"></select>
+        </div>
+
+        <div class="field">
+          <label for="masterId">Мастер</label>
+          <select id="masterId"></select>
+        </div>
+
+        <div class="field">
+          <label for="startsAt">Дата и время</label>
+          <input id="startsAt" type="datetime-local" />
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="bookBtn">Записаться</button>
+          <button class="btn secondary" id="clearBtn" type="button">Очистить</button>
+        </div>
+
+        <div id="notice" class="notice" style="display:none; margin-top:10px"></div>
+      </div>
+
+      <div class="card stack">
+        <div class="item-title">Как это работает</div>
+        <div class="item-meta">Это первая версия онлайн‑записи.</div>
+        <div class="notice">
+          Если выбранное время занято, система предложит выбрать другое.
+        </div>
+        <div class="notice">
+          В следующей версии добавим свободные слоты и подтверждение записи.
+        </div>
+        <a class="badge" href="/" style="width:max-content">Вернуться</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+  <script>
+    const notice = Bloknot.qs("#notice");
+
+    function showNotice(text) {
+      if (!text) {
+        notice.style.display = "none";
+        notice.textContent = "";
+        return;
+      }
+      notice.style.display = "block";
+      notice.textContent = text;
+    }
+
+    function fmtLocalDateTimeInput(d) {
+      const pad = (n) => String(n).padStart(2, "0");
+      const yyyy = d.getFullYear();
+      const mm = pad(d.getMonth() + 1);
+      const dd = pad(d.getDate());
+      const hh = pad(d.getHours());
+      const mi = pad(d.getMinutes());
+      return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+    }
+
+    async function loadServices() {
+      const services = await Bloknot.api("/api/services");
+      const sel = Bloknot.qs("#serviceId");
+      sel.innerHTML = "";
+      services.forEach((s) => {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent = `${s.name} · ${s.duration} мин · ${s.price} ₽`;
+        sel.appendChild(opt);
+      });
+    }
+
+    async function loadMasters() {
+      const masters = await Bloknot.api("/api/masters");
+      const sel = Bloknot.qs("#masterId");
+      sel.innerHTML = "";
+      masters
+        .filter((m) => m.active)
+        .forEach((m) => {
+          const opt = document.createElement("option");
+          opt.value = m.id;
+          opt.textContent = m.name;
+          sel.appendChild(opt);
+        });
+    }
+
+    function clearForm() {
+      Bloknot.qs("#customerName").value = "";
+      Bloknot.qs("#customerPhone").value = "";
+      const now = new Date();
+      now.setHours(10, 0, 0, 0);
+      Bloknot.qs("#startsAt").value = fmtLocalDateTimeInput(now);
+    }
+
+    async function book() {
+      const customerName = Bloknot.qs("#customerName").value.trim();
+      const customerPhone = Bloknot.qs("#customerPhone").value.trim();
+      const serviceId = Bloknot.qs("#serviceId").value;
+      const masterId = Bloknot.qs("#masterId").value;
+      const startsAtLocal = Bloknot.qs("#startsAt").value;
+
+      if (!customerName || !customerPhone || !serviceId || !masterId || !startsAtLocal) {
+        showNotice("Заполните имя, телефон, услугу, мастера и время.");
+        return;
+      }
+
+      showNotice("");
+      Bloknot.qs("#bookBtn").disabled = true;
+      try {
+        await Bloknot.api("/api/appointments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerName,
+            customerPhone,
+            startsAt: new Date(startsAtLocal).toISOString(),
+            serviceId,
+            masterId,
+          }),
+        });
+        showNotice("Запись создана! Мы с вами свяжемся.");
+      } catch (e) {
+        showNotice("Не удалось создать запись: " + e.message);
+      } finally {
+        Bloknot.qs("#bookBtn").disabled = false;
+      }
+    }
+
+    Bloknot.renderHeader("dashboard");
+    Bloknot.qs("#bookBtn").addEventListener("click", book);
+    Bloknot.qs("#clearBtn").addEventListener("click", clearForm);
+
+    (async function init() {
+      const now = new Date();
+      now.setHours(10, 0, 0, 0);
+      Bloknot.qs("#startsAt").value = fmtLocalDateTimeInput(now);
+
+      try {
+        await Promise.all([loadServices(), loadMasters()]);
+      } catch (e) {
+        showNotice("Сервис временно недоступен: " + e.message);
+      }
+    })();
+  </script>
+</body>
+</html>

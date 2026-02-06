@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bloknot — кабинет владельца</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+ <div id="app-header"></div>
+
+ <main class="container">
+   <h1 class="page-title">Кабинет владельца</h1>
+   <p class="page-subtitle">Управляйте услугами, мастерами, фото работ и записями клиентов.</p>
+
+   <div class="row two">
+     <a class="card" href="/calendar.html" style="display:block">
+       <div class="item-title">Календарь</div>
+       <div class="item-meta">Создавайте записи клиентов и управляйте расписанием.</div>
+       <div class="badge" style="margin-top:10px">Открыть календарь</div>
+     </a>
+
+     <div class="card" style="display:block">
+       <div class="item-title">Доход</div>
+       <div class="item-meta">Считается по прошедшим записям за выбранный период.</div>
+       <div class="row two" style="margin-top:12px">
+         <div class="field">
+           <label for="revFrom">С</label>
+           <input id="revFrom" type="date" />
+         </div>
+         <div class="field">
+           <label for="revTo">По</label>
+           <input id="revTo" type="date" />
+         </div>
+       </div>
+       <div class="actions" style="justify-content:space-between">
+         <div class="badge" id="revenueBadge">0 ₽</div>
+         <button class="btn secondary" id="revenueBtn" type="button">Посчитать</button>
+       </div>
+     </div>
+   </div>
+
+   <div class="card" style="margin-top:12px">
+     <div class="actions" style="justify-content:space-between">
+       <div>
+         <div class="item-title">Статистика</div>
+         <div class="item-meta">Быстрый обзор настроек бизнеса.</div>
+       </div>
+       <button class="btn secondary" id="refreshBtn" type="button">Обновить</button>
+     </div>
+
+     <div id="stats" class="row three" style="margin-top:12px">
+       <a class="item" href="/services.html" style="display:flex">
+         <div>
+           <div class="item-title">Услуги</div>
+           <div class="item-meta" id="servicesCount">—</div>
+         </div>
+       </a>
+       <a class="item" href="/categories.html" style="display:flex">
+         <div>
+           <div class="item-title">Категории</div>
+           <div class="item-meta" id="categoriesCount">—</div>
+         </div>
+       </a>
+       <a class="item" href="/masters.html" style="display:flex">
+         <div>
+           <div class="item-title">Мастера</div>
+           <div class="item-meta" id="mastersCount">—</div>
+         </div>
+       </a>
+     </div>
+
+     <div class="row two" style="margin-top:10px">
+       <a class="item" href="/works.html" style="display:flex">
+         <div>
+           <div class="item-title">Фото работ</div>
+           <div class="item-meta" id="worksCount">—</div>
+         </div>
+       </a>
+       <a class="item" href="/calendar.html" style="display:flex">
+         <div>
+           <div class="item-title">Записи сегодня</div>
+           <div class="item-meta" id="todayCount">—</div>
+         </div>
+       </a>
+     </div>
+
+     <div id="notice" class="notice" style="display:none; margin-top:10px"></div>
+   </div>
+
+   <div class="card" style="margin-top:12px">
+     <div class="actions" style="justify-content:space-between">
+       <div>
+         <div class="item-title">Ссылка на онлайн‑запись</div>
+         <div class="item-meta">Эту ссылку можно вставить в Instagram, 2ГИС, Яндекс, Googl, на Сайт, Whatsupp, Telegram</div>
+       </div>
+       <a class="badge" id="openBookingLink" href="/booking.html" target="_blank" rel="noopener">Открыть как клиент</a>
+     </div>
+
+     <div class="row two" style="margin-top:12px">
+       <div class="field">
+         <label for="bookingLink">Ваша ссылка</label>
+         <input id="bookingLink" readonly class="blurred" />
+       </div>
+       <div class="field">
+         <label>&nbsp;</label>
+         <button class="btn" id="copyBookingBtn" type="button" style="width:100%">Скопировать</button>
+       </div>
+     </div>
+     <div class="notice" style="margin-top:10px">Чтобы получить доступ к ссылке, активируйте подписку и привяжите карту.</div>
+   </div>
+ </main>
+
+ <script src="/app.js"></script>
+ <script>
+   Bloknot.renderHeader("dashboard");
+
+   const notice = Bloknot.qs("#notice");
+   function showNotice(text) {
+     if (!text) {
+       notice.style.display = "none";
+       notice.textContent = "";
+       return;
+     }
+     notice.style.display = "block";
+     notice.textContent = text;
+   }
+
+   function dayBoundsIso(d) {
+     const from = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
+     const to = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0);
+     return { from: from.toISOString(), to: to.toISOString() };
+   }
+
+   function fmtTime(iso) {
+     const dt = new Date(iso);
+     const h = String(dt.getHours()).padStart(2, "0");
+     const m = String(dt.getMinutes()).padStart(2, "0");
+     return h + ":" + m;
+   }
+
+   async function loadDashboard() {
+     showNotice("");
+
+     async function safeCount(label, fn) {
+       try {
+         const items = await fn();
+         return { ok: true, items };
+       } catch (e) {
+         return { ok: false, error: e };
+       }
+     }
+
+     const servicesR = await safeCount("services", () => Bloknot.api("/api/services"));
+     const categoriesR = await safeCount("categories", () => Bloknot.api("/api/categories"));
+     const mastersR = await safeCount("masters", () => Bloknot.api("/api/masters"));
+     const worksR = await safeCount("works", () => Bloknot.api("/api/works"));
+
+     if (servicesR.ok) Bloknot.qs("#servicesCount").textContent = servicesR.items.length + " шт";
+     if (categoriesR.ok) Bloknot.qs("#categoriesCount").textContent = categoriesR.items.length + " шт";
+     if (mastersR.ok) Bloknot.qs("#mastersCount").textContent = mastersR.items.length + " шт";
+     if (worksR.ok) Bloknot.qs("#worksCount").textContent = worksR.items.length + " фото";
+
+     const missing = [];
+     if (!servicesR.ok) missing.push("услуги");
+     if (!categoriesR.ok) missing.push("категории");
+     if (!mastersR.ok) missing.push("мастера");
+     if (!worksR.ok) missing.push("фото работ");
+     if (missing.length) {
+       showNotice("Не удалось загрузить: " + missing.join(", ") + ". Проверьте, что backend перезапущен и миграции применены.");
+     }
+
+     const now = new Date();
+     const { from, to } = dayBoundsIso(now);
+
+     try {
+       const today = await Bloknot.api("/api/appointments?" + new URLSearchParams({ from, to }).toString());
+       Bloknot.qs("#todayCount").textContent = today.length + " шт";
+     } catch (e) {
+       Bloknot.qs("#todayCount").textContent = "—";
+     }
+   }
+
+   function setRevenueDefaults() {
+     const now = new Date();
+     const from = new Date(now.getFullYear(), now.getMonth(), 1);
+     const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+     Bloknot.qs("#revFrom").value = from.toISOString().slice(0, 10);
+     Bloknot.qs("#revTo").value = to.toISOString().slice(0, 10);
+   }
+
+   async function calcRevenue() {
+     const fromStr = Bloknot.qs("#revFrom").value;
+     const toStr = Bloknot.qs("#revTo").value;
+     if (!fromStr || !toStr) {
+       showNotice("Выберите период.");
+       return;
+     }
+
+     const from = new Date(fromStr + "T00:00:00");
+     const to = new Date(toStr + "T23:59:59");
+     if (to < from) {
+       showNotice("Период выбран некорректно.");
+       return;
+     }
+
+     showNotice("");
+     Bloknot.qs("#revenueBtn").disabled = true;
+     try {
+       const items = await Bloknot.api(
+         "/api/appointments?" + new URLSearchParams({ from: from.toISOString(), to: to.toISOString() }).toString()
+       );
+
+       const now = new Date();
+       const done = items.filter((a) => new Date(a.endsAt) < now);
+       const sum = done.reduce((acc, a) => {
+         const p = a.priceAtBooking != null ? Number(a.priceAtBooking) : (a.service && a.service.price != null ? Number(a.service.price) : 0);
+         return acc + (Number.isFinite(p) ? p : 0);
+       }, 0);
+
+       Bloknot.qs("#revenueBadge").textContent = sum.toLocaleString("ru-RU") + " ₽";
+     } catch (e) {
+       showNotice("Не удалось посчитать доход: " + e.message);
+     } finally {
+       Bloknot.qs("#revenueBtn").disabled = false;
+     }
+   }
+
+   Bloknot.qs("#refreshBtn").addEventListener("click", () => {
+     loadDashboard().catch((e) => showNotice("Не удалось загрузить данные: " + e.message));
+   });
+
+   Bloknot.qs("#revenueBtn").addEventListener("click", () => {
+     calcRevenue().catch((e) => showNotice("Не удалось посчитать доход: " + e.message));
+   });
+
+   (function initBookingLink() {
+     const link = String(location.origin || "").replace(/\/$/, "") + "/booking.html";
+     const input = Bloknot.qs("#bookingLink");
+     const isSubscribed = localStorage.getItem("bloknot_subscription_active") === "1";
+
+     const open = document.querySelector("#openBookingLink");
+     if (open) open.href = link;
+
+     function applyGate() {
+       const ok = localStorage.getItem("bloknot_subscription_active") === "1";
+       if (ok) {
+         input.value = link;
+         input.classList.remove("blurred");
+         input.removeAttribute("aria-hidden");
+       } else {
+         input.value = "https://bloknot.app/••••••••";
+         input.classList.add("blurred");
+         input.setAttribute("aria-hidden", "true");
+       }
+     }
+
+     applyGate();
+
+     // Defensive: block manual copy/select when gated
+     ["copy", "cut", "paste", "contextmenu"].forEach((ev) => {
+       input.addEventListener(ev, (e) => {
+         const ok = localStorage.getItem("bloknot_subscription_active") === "1";
+         if (!ok) e.preventDefault();
+       });
+     });
+     input.addEventListener("keydown", (e) => {
+       const ok = localStorage.getItem("bloknot_subscription_active") === "1";
+       if (!ok && ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "a"))) e.preventDefault();
+     });
+
+     Bloknot.qs("#copyBookingBtn").addEventListener("click", async () => {
+       const ok = localStorage.getItem("bloknot_subscription_active") === "1";
+       if (!ok) {
+         location.href = "/subscribe.html";
+         return;
+       }
+       try {
+         await navigator.clipboard.writeText(link);
+         showNotice("Ссылка скопирована.");
+       } catch (e) {
+         Bloknot.qs("#bookingLink").focus();
+         Bloknot.qs("#bookingLink").select();
+         showNotice("Не удалось скопировать автоматически. Выделил ссылку — нажмите Ctrl+C.");
+       }
+     });
+   })();
+
+   loadDashboard().catch((e) => showNotice("Сервер недоступен: " + e.message));
+
+  setRevenueDefaults();
+  calcRevenue().catch(() => {});
+ </script>
+
+</body>
+</html>

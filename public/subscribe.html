@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Подписка — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="app-header"></div>
+
+  <main class="container">
+    <h1 class="page-title">Подписка</h1>
+    <p class="page-subtitle">Чтобы получить ссылку на онлайн‑запись, нужно привязать карту.</p>
+
+    <div class="card stack">
+      <div class="item-title">Привязка карты</div>
+      <div class="item-meta">MVP‑версия. Здесь будет подключение платёжного провайдера. Сейчас имитируем успешную привязку.</div>
+
+      <div class="row two" style="margin-top:10px">
+        <div class="field">
+          <label for="card">Номер карты</label>
+          <input id="card" placeholder="0000 0000 0000 0000" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label for="exp">Срок</label>
+          <input id="exp" placeholder="MM/YY" inputmode="numeric" />
+        </div>
+      </div>
+      <div class="row two">
+        <div class="field">
+          <label for="name">Имя на карте</label>
+          <input id="name" placeholder="IVAN IVANOV" />
+        </div>
+        <div class="field">
+          <label for="cvc">CVC</label>
+          <input id="cvc" placeholder="123" inputmode="numeric" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="payBtn" type="button">Привязать карту и получить ссылку</button>
+        <a class="btn secondary" href="/dashboard.html" style="text-align:center">Назад</a>
+      </div>
+
+      <div id="notice" class="notice" style="display:none"></div>
+
+      <div class="card" id="success" style="display:none">
+        <div class="item-title">Подписка активна</div>
+        <div class="item-meta" style="margin-top:6px">Теперь ссылка на онлайн‑запись доступна в кабинете.</div>
+        <div class="actions" style="margin-top:12px">
+          <a class="btn" href="/dashboard.html" style="text-align:center">Перейти в кабинет</a>
+          <a class="btn secondary" href="/booking.html" target="_blank" rel="noopener" style="text-align:center">Открыть онлайн‑запись</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+  <script>
+    Bloknot.renderHeader(null);
+
+    const notice = Bloknot.qs("#notice");
+    function showNotice(text) {
+      if (!text) {
+        notice.style.display = "none";
+        notice.textContent = "";
+        return;
+      }
+      notice.style.display = "block";
+      notice.textContent = text;
+    }
+
+    function isFilled(id) {
+      const v = Bloknot.qs(id).value.trim();
+      return v.length > 0;
+    }
+
+    Bloknot.qs("#payBtn").addEventListener("click", () => {
+      showNotice("");
+
+      if (!isFilled("#card") || !isFilled("#exp") || !isFilled("#name") || !isFilled("#cvc")) {
+        showNotice("Заполните данные карты.");
+        return;
+      }
+
+      localStorage.setItem("bloknot_subscription_active", "1");
+      Bloknot.qs("#success").style.display = "block";
+      showNotice("Карта привязана. Подписка активна.");
+    });
+
+    if (localStorage.getItem("bloknot_subscription_active") === "1") {
+      Bloknot.qs("#success").style.display = "block";
+      showNotice("Подписка уже активна.");
+    }
+  </script>
+</body>
+</html>
