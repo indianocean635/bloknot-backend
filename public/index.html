@@ -1,68 +1,265 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Bloknot — вход</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="/styles.css" />
+  <meta charset="UTF-8">
+  <title>Bloknot — сервис онлайн-записи клиентов</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- FAVICON -->
+  <link rel="icon" href="/favicon.png" type="image/png">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #ffffff;
+      color: #111;
+      line-height: 1.4;
+    }
+
+    /* =====================
+       HEADER (FULL WIDTH)
+    ====================== */
+
+    .header {
+      width: 100%;
+      border-bottom: 1px solid #eee;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 72px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo img {
+      height: 44px;
+      display: block;
+    }
+
+    .nav a {
+      margin-left: 24px;
+      text-decoration: none;
+      color: #111;
+      font-size: 15px;
+    }
+
+    /* =====================
+       CONTAINER
+    ====================== */
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    /* =====================
+       VIDEO
+    ====================== */
+
+    .video-block {
+      background: #f4f5f6;
+      border-radius: 16px;
+      height: 360px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      color: #777;
+      font-size: 18px;
+      text-align: center;
+
+      margin-bottom: 64px;
+    }
+
+    /* =====================
+       HERO
+    ====================== */
+
+    h1 {
+      font-size: 44px;
+      margin-bottom: 16px;
+    }
+
+    .subtitle {
+      font-size: 20px;
+      color: #555;
+      margin-bottom: 28px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #4CAF50;
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .note {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #777;
+    }
+
+    /* =====================
+       FEATURES
+    ====================== */
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 32px;
+      margin: 96px 0;
+    }
+
+    .feature h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .feature p {
+      font-size: 15px;
+      color: #555;
+    }
+
+    /* =====================
+       CTA
+    ====================== */
+
+    .cta {
+      background: #f4f5f6;
+      border-radius: 16px;
+      padding: 56px 32px;
+      text-align: center;
+      margin-bottom: 96px;
+    }
+
+    .cta h2 {
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+
+    footer {
+      border-top: 1px solid #eee;
+      padding: 32px 0;
+      text-align: center;
+      font-size: 14px;
+      color: #777;
+    }
+
+    /* =====================
+       MOBILE
+    ====================== */
+
+    @media (max-width: 600px) {
+      .header-inner {
+        height: 64px;
+      }
+
+      .logo img {
+        height: 38px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .video-block {
+        height: 220px;
+      }
+    }
+  </style>
 </head>
 <body>
 
- <div class="login-wrap">
-   <div class="login-card">
-     <div class="brand" style="justify-content:center; width:100%">
-       <span class="brand-mark">✓</span>
-       <span>Bloknot</span>
-     </div>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <img src="/logo-wordmark.svg?v=10" alt="Bloknot">
+      </div>
+      <nav class="nav">
+        <a href="#">Войти</a>
+        <a href="#">Регистрация</a>
+      </nav>
+    </div>
+  </header>
 
-     <h1>Вход</h1>
-     <p class="muted" style="margin-top:0">Мы пришлём magic-link. Ссылку можно посмотреть в консоли сервера.</p>
+  <!-- CONTENT -->
+  <div class="container">
 
-     <div class="field" style="margin-top:12px">
-       <label for="email">Email</label>
-       <input id="email" type="email" placeholder="you@company.com" />
-     </div>
-     <button class="btn" id="loginBtn" style="width:100%">Получить ссылку для входа</button>
+    <!-- VIDEO -->
+    <div class="video-block">
+      Здесь будет видео<br>
+      «Как работает сервис онлайн-записи»
+    </div>
 
-     <div class="message muted" id="message" style="margin-top:12px; text-align:center"></div>
-   </div>
- </div>
+    <!-- HERO -->
+    <main>
+      <h1>Сервис онлайн-записи клиентов</h1>
+      <div class="subtitle">
+        Запуск за 5 минут.<br>
+        Клиенты записываются сами — без CRM и сложных систем.
+      </div>
 
-  <script>
-    const btn = document.getElementById("loginBtn");
-    const emailInput = document.getElementById("email");
-    const message = document.getElementById("message");
+      <a href="#" class="btn">Попробовать бесплатно</a>
+      <div class="note">Подписку можно отменить в любой момент</div>
+    </main>
 
-    btn.addEventListener("click", async () => {
-      const email = emailInput.value.trim();
-      if (!email) {
-        message.textContent = "Введите email";
-        return;
-      }
+    <!-- FEATURES -->
+    <section class="features">
+      <div class="feature">
+        <h3>⚡ Быстрый запуск</h3>
+        <p>Работает сразу, без обучения.</p>
+      </div>
+      <div class="feature">
+        <h3>📒 Вместо блокнота</h3>
+        <p>Все записи в одном месте.</p>
+      </div>
+      <div class="feature">
+        <h3>🔔 Автоподтверждения</h3>
+        <p>WhatsApp и Telegram.</p>
+      </div>
+      <div class="feature">
+        <h3>📱 Любое устройство</h3>
+        <p>Телефон, планшет, компьютер.</p>
+      </div>
+      <div class="feature">
+        <h3>🖼 Логотип и фото</h3>
+        <p>Добавляйте свои работы.</p>
+      </div>
+      <div class="feature">
+        <h3>🧘 Простота</h3>
+        <p>Понятно вам и клиенту.</p>
+      </div>
+    </section>
 
-      btn.disabled = true;
-      message.textContent = "Отправляем ссылку для входа…";
+    <!-- CTA -->
+    <section class="cta">
+      <h2>Клиенты могут записаться уже сегодня</h2>
+      <a href="#" class="btn">Записаться</a>
+    </section>
 
-      try {
-        const res = await fetch("/auth/request-login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email })
-        });
+    <footer>
+      © 2026 Bloknot — сервис онлайн-записи клиентов
+    </footer>
 
-        if (res.ok) {
-          message.textContent =
-            "Ссылка для входа создана. Проверьте консоль сервера.";
-        } else {
-          message.textContent = "Ошибка. Попробуйте позже.";
-        }
-      } catch (e) {
-        message.textContent = "Сервер недоступен.";
-      }
-
-      btn.disabled = false;
-    });
-  </script>
+  </div>
 
 </body>
 </html>
