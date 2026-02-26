@@ -7,6 +7,7 @@ const multer = require("multer");
 const { PrismaClient } = require("@prisma/client");
 const nodemailer = require("nodemailer");
 const sgMail = require("@sendgrid/mail");
+const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
 
@@ -108,6 +109,72 @@ const BASE_URL = String(process.env.BASE_URL || `http://localhost:${PORT}`).repl
   ""
 );
 
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_COOKIE_NAME = "auth";
+const IS_PROD = process.env.NODE_ENV === "production";
+
+function parseCookies(req) {
+  const header = req.headers.cookie;
+  if (!header) return {};
+  const out = {};
+  header.split(";").forEach((part) => {
+    const i = part.indexOf("=");
+    if (i < 0) return;
+    const k = part.slice(0, i).trim();
+    const v = part.slice(i + 1).trim();
+    out[k] = decodeURIComponent(v);
+  });
+  return out;
+}
+
+function setAuthCookie(res, token) {
+  const maxAge = 7 * 24 * 60 * 60;
+  const parts = [
+    `${JWT_COOKIE_NAME}=${encodeURIComponent(token)}`,
+    `Max-Age=${maxAge}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+  ];
+  if (IS_PROD) parts.push("Secure");
+  res.setHeader("Set-Cookie", parts.join("; "));
+}
+
+function clearAuthCookie(res) {
+  const parts = [
+    `${JWT_COOKIE_NAME}=`,
+    "Max-Age=0",
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+  ];
+  if (IS_PROD) parts.push("Secure");
+  res.setHeader("Set-Cookie", parts.join("; "));
+}
+
+function getAuthUser(req) {
+  if (!JWT_SECRET) return null;
+  const cookies = parseCookies(req);
+  const token = cookies[JWT_COOKIE_NAME];
+  if (!token) return null;
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (!payload || typeof payload !== "object") return null;
+    const userId = payload.userId;
+    if (typeof userId !== "number") return null;
+    return { id: userId };
+  } catch (e) {
+    return null;
+  }
+}
+
+function requireAuth(req, res, next) {
+  const user = getAuthUser(req);
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  req.user = user;
+  next();
+}
+
 // Static frontend path
 // По умолчанию ожидаем статический фронт в папке ./public рядом с index.js
 const FRONTEND_PATH = process.env.FRONTEND_PATH
@@ -170,21 +237,31 @@ const worksUpload = multer({
   limits: { fileSize: 12 * 1024 * 1024 },
 });
 
-// --- AUTH ---
-app.post("/auth/request-login", async (req, res) => {
-  const { email } = req.body;
+// --- AUTH MIDDLEWARE (API) ---
+// Оставляем публичными ровно те API, которые нужны для публичной страницы записи.
+const PUBLIC_API = new Set([
+  "GET /api/services",
+  "GET /api/masters",
+  "POST /api/appointments",
+]);
 
-  console.log("AUTH REQUEST:", email);
+app.use((req, res, next) => {
+  if (!req.path.startsWith("/api/")) return next();
+  const key = `${req.method.toUpperCase()} ${req.path}`;
+  if (PUBLIC_API.has(key)) return next();
+  return requireAuth(req, res, next);
+});
+
+// --- AUTH ---
+app.post("/auth/request-link", async (req, res) => {
+  const { email } = req.body;
 
   const normalizedEmail = String(email || "").trim().toLowerCase();
   if (!normalizedEmail) {
     return res.status(400).json({ error: "Email обязателен" });
   }
 
-  let user = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
-  });
-
+  let user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
   if (!user) {
     user = await prisma.user.create({
       data: {
@@ -194,7 +271,7 @@ app.post("/auth/request-login", async (req, res) => {
     });
   }
 
-  const token = crypto.randomBytes(32).toString("hex");
+  const token = typeof crypto.randomUUID === "function" ? crypto.randomUUID() : crypto.randomBytes(16).toString("hex");
 
   await prisma.loginToken.create({
     data: {
@@ -204,8 +281,8 @@ app.post("/auth/request-login", async (req, res) => {
     },
   });
 
-  const magicLink = `${BASE_URL}/auth/login?token=${token}`;
-  console.log("MAGIC LINK:", magicLink);
+  const publicBase = IS_PROD ? "https://bloknotservis.ru" : BASE_URL;
+  const magicLink = `${publicBase}/auth/confirm?token=${encodeURIComponent(token)}`;
 
   try {
     const r = await sendMagicLinkEmail(normalizedEmail, magicLink);
@@ -213,10 +290,11 @@ app.post("/auth/request-login", async (req, res) => {
       console.log(
         "MAIL is not configured. Configure SendGrid (SENDGRID_API_KEY + EMAIL_FROM) or SMTP (SMTP_HOST/SMTP_PORT/MAIL_FROM ...) to send emails."
       );
+      console.log("MAGIC LINK:", magicLink);
     }
   } catch (e) {
     console.error("MAIL SEND ERROR:", e);
-    // Не падаем: оставляем ссылку в логах как fallback.
+    console.log("MAGIC LINK:", magicLink);
   }
 
   res.json({ ok: true });
@@ -255,24 +333,39 @@ app.delete("/api/branches/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/auth/login", async (req, res) => {
-  const { token } = req.query;
+app.get("/auth/confirm", async (req, res) => {
+  if (!JWT_SECRET) {
+    return res.status(500).send("Server is not configured");
+  }
 
-  const loginToken = await prisma.loginToken.findUnique({
-    where: { token },
-  });
+  const token = String(req.query.token || "").trim();
+  if (!token) return res.status(400).send("Ссылка недействительна");
 
-  if (!loginToken || loginToken.used || loginToken.expiresAt < new Date()) {
+  const loginToken = await prisma.loginToken.findUnique({ where: { token } });
+  if (!loginToken || loginToken.expiresAt < new Date()) {
     return res.status(400).send("Ссылка недействительна");
   }
 
-  await prisma.loginToken.update({
-    where: { token },
-    data: { used: true },
-  });
+  await prisma.loginToken.delete({ where: { token } });
 
-  // редирект в кабинет
-  res.redirect("/dashboard.html?logged=1");
+  const jwtToken = jwt.sign({ userId: loginToken.userId }, JWT_SECRET, { expiresIn: "7d" });
+  setAuthCookie(res, jwtToken);
+
+  res.redirect("/dashboard");
+});
+
+app.get("/dashboard", (req, res) => {
+  const user = getAuthUser(req);
+  if (!user) return res.redirect("/");
+  res.sendFile(path.join(FRONTEND_PATH, "dashboard.html"));
+});
+
+// legacy endpoints (disabled)
+app.post("/auth/request-login", (req, res) => {
+  res.status(410).json({ error: "Endpoint removed" });
+});
+app.get("/auth/login", (req, res) => {
+  res.status(410).send("Endpoint removed");
 });
 
 // ===== CATEGORIES API =====

@@ -428,7 +428,7 @@
         showNotice("");
         sendBtn.disabled = true;
         try {
-          const res = await fetch("/auth/request-login", {
+          const res = await fetch("/auth/request-link", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email }),
