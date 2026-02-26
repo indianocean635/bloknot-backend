@@ -162,6 +162,110 @@
       color: #777;
     }
 
+    .footer-links {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .footer-links a {
+      color: #777;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 17, 17, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 1000;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 440px;
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #eee;
+      padding: 18px;
+    }
+
+    .modal-title {
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    .modal-sub {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin: 12px 0;
+      text-align: left;
+    }
+
+    .field label {
+      font-size: 13px;
+      color: #555;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: rgba(76, 175, 80, 0.7);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.14);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-top: 14px;
+    }
+
+    .btn.secondary {
+      background: #fff;
+      color: #111;
+      border: 1px solid #e5e7eb;
+    }
+
+    .notice {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+      background: #f6f7f8;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: none;
+    }
+
     /* =====================
        MOBILE
     ====================== */
@@ -194,8 +298,8 @@
         <img src="/logo-wordmark.svg?v=10" alt="Bloknot">
       </div>
       <nav class="nav">
-        <a href="#">Войти</a>
-        <a href="#">Регистрация</a>
+        <a href="#" id="loginLink">Войти</a>
+        <a href="#" id="signupLink">Регистрация</a>
       </nav>
     </div>
   </header>
@@ -217,7 +321,7 @@
         Клиенты записываются сами — без CRM и сложных систем.
       </div>
 
-      <a href="#" class="btn">Попробовать бесплатно</a>
+      <a href="#" class="btn" id="tryBtn">Попробовать бесплатно</a>
       <div class="note">Подписку можно отменить в любой момент</div>
     </main>
 
@@ -252,14 +356,124 @@
     <!-- CTA -->
     <section class="cta">
       <h2>Клиенты могут записаться уже сегодня</h2>
-      <a href="#" class="btn">Записаться</a>
+      <a href="#" class="btn" id="bookBtn">Записаться</a>
     </section>
 
     <footer>
       © 2026 Bloknot — сервис онлайн-записи клиентов
+      <div class="footer-links" aria-label="Юридическая информация">
+        <a href="/terms.html">Оферта</a>
+        <a href="/privacy.html">Политика конфиденциальности</a>
+      </div>
     </footer>
 
   </div>
+
+  <div class="modal" id="authModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <div class="modal-title" id="authTitle">Вход / регистрация</div>
+      <div class="modal-sub">Введите email — отправим ссылку для входа.</div>
+
+      <div class="field">
+        <label for="authEmail">Email</label>
+        <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+      </div>
+
+      <div class="notice" id="authNotice"></div>
+
+      <div class="modal-actions">
+        <button class="btn secondary" id="authCloseBtn" type="button">Закрыть</button>
+        <button class="btn" id="authSendBtn" type="button">Отправить ссылку</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const modal = document.getElementById("authModal");
+      const emailInput = document.getElementById("authEmail");
+      const notice = document.getElementById("authNotice");
+      const sendBtn = document.getElementById("authSendBtn");
+      const closeBtn = document.getElementById("authCloseBtn");
+
+      function showNotice(text) {
+        if (!text) {
+          notice.style.display = "none";
+          notice.textContent = "";
+          return;
+        }
+        notice.style.display = "block";
+        notice.textContent = text;
+      }
+
+      function openModal() {
+        showNotice("");
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+        setTimeout(() => emailInput && emailInput.focus(), 0);
+      }
+
+      function closeModal() {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+      }
+
+      async function requestLogin() {
+        const email = String(emailInput.value || "").trim();
+        if (!email) {
+          showNotice("Введите email.");
+          return;
+        }
+        showNotice("");
+        sendBtn.disabled = true;
+        try {
+          const res = await fetch("/auth/request-login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+          if (!res.ok) {
+            const t = await res.text().catch(() => "");
+            throw new Error(t || ("HTTP " + res.status));
+          }
+          showNotice("Ссылка для входа создана. В текущей версии она появляется в логах сервера.");
+        } catch (e) {
+          showNotice("Не удалось отправить: " + (e && e.message ? e.message : "ошибка"));
+        } finally {
+          sendBtn.disabled = false;
+        }
+      }
+
+      document.getElementById("loginLink").addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal();
+      });
+      document.getElementById("signupLink").addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal();
+      });
+      document.getElementById("tryBtn").addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal();
+      });
+      document.getElementById("bookBtn").addEventListener("click", (e) => {
+        e.preventDefault();
+        window.location.href = "/booking.html";
+      });
+
+      closeBtn.addEventListener("click", closeModal);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+      sendBtn.addEventListener("click", requestLogin);
+      emailInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") requestLogin();
+      });
+    })();
+  </script>
 
 </body>
 </html>
