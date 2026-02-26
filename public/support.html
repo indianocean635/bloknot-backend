@@ -4,10 +4,17 @@
   <meta charset="UTF-8" />
   <title>Поддержка — Bloknot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div id="app-header"></div>
+  <div class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Bloknot">
+        <img src="/logo-wordmark.svg?v=10" alt="Bloknot" style="height:34px; display:block" />
+      </a>
+    </div>
+  </div>
   <main class="container">
     <h1 class="page-title">Поддержка</h1>
     <p class="page-subtitle">Напишите нам, и мы поможем.</p>
@@ -16,7 +23,5 @@
       <div class="item-meta" style="margin-top:8px">Email: support@bloknot.local</div>
     </div>
   </main>
-  <script src="/app.js"></script>
-  <script>Bloknot.renderHeader(null);</script>
 </body>
 </html>

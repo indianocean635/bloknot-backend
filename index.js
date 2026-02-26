@@ -139,6 +139,10 @@ if (!prisma || !prisma.branch || !prisma.loginToken) {
 // раздаём фронт
 app.use(express.static(FRONTEND_PATH));
 
+app.get("/favicon.ico", (req, res) => {
+  res.redirect(302, "/favicon.png");
+});
+
 // раздаём загруженные файлы
 app.use("/uploads", express.static(UPLOADS_PATH));
 
@@ -268,7 +272,7 @@ app.get("/auth/login", async (req, res) => {
   });
 
   // редирект в кабинет
-  res.redirect("/dashboard.html");
+  res.redirect("/dashboard.html?logged=1");
 });
 
 // ===== CATEGORIES API =====

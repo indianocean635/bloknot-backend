@@ -1,6 +1,33 @@
 (function () {
   const API_BASE = "";
 
+  function ensureFavicon() {
+    const head = document.head;
+    if (!head) return;
+    const hasIcon = !!head.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
+    if (hasIcon) return;
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.type = "image/png";
+    link.href = "/favicon.png";
+    head.appendChild(link);
+  }
+
+  function initAuthFlagFromQuery() {
+    try {
+      const params = new URLSearchParams(location.search || "");
+      if (params.get("logged") === "1") {
+        localStorage.setItem("bloknot_logged_in", "1");
+        params.delete("logged");
+        const next = location.pathname + (params.toString() ? "?" + params.toString() : "") + (location.hash || "");
+        history.replaceState(null, "", next);
+      }
+    } catch (e) {}
+  }
+
+  ensureFavicon();
+  initAuthFlagFromQuery();
+
   function qs(sel) {
     return document.querySelector(sel);
   }
@@ -49,6 +76,16 @@
     const host = qs("#app-header");
     if (!host) return;
 
+    const isLoggedIn = (() => {
+      try {
+        return localStorage.getItem("bloknot_logged_in") === "1";
+      } catch (e) {
+        return false;
+      }
+    })();
+
+    const brandHref = isLoggedIn ? "/dashboard.html" : "/";
+
     const links = [
       { key: "dashboard", href: "/dashboard.html", label: "Кабинет" },
       { key: "branches", href: "/branches.html", label: "Филиалы" },
@@ -62,7 +99,7 @@
     host.innerHTML = `
       <div class="header">
         <div class="container header-inner">
-          <a class="brand" href="/dashboard.html" aria-label="Bloknot">
+          <a class="brand" href="${brandHref}" aria-label="Bloknot">
             <img src="/logo-wordmark.svg?v=10" alt="Bloknot" style="height:34px; display:block" />
           </a>
           <nav class="nav" aria-label="Навигация">
