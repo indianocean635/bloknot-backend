@@ -5,11 +5,79 @@ const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 const { PrismaClient } = require("@prisma/client");
+const nodemailer = require("nodemailer");
+const sgMail = require("@sendgrid/mail");
 
 require("dotenv").config();
 
 const app = express();
 const prisma = new PrismaClient();
+
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const EMAIL_FROM = process.env.EMAIL_FROM;
+
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : null;
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_SECURE = process.env.SMTP_SECURE === "1" || process.env.SMTP_SECURE === "true";
+const MAIL_FROM = process.env.MAIL_FROM;
+
+function createMailer() {
+  if (!SMTP_HOST || !SMTP_PORT || !MAIL_FROM) return null;
+  return nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS || "" } : undefined,
+  });
+}
+
+function canUseSendgrid() {
+  return Boolean(SENDGRID_API_KEY && EMAIL_FROM);
+}
+
+async function sendMagicLinkEmail(toEmail, magicLink) {
+  const subject = "Вход в Bloknot";
+  const text = `Здравствуйте!\n\nВаша ссылка для входа:\n${magicLink}\n\nЕсли вы не запрашивали вход — просто проигнорируйте это письмо.\n`;
+  const html = `
+    <div style="font-family:Arial,sans-serif; line-height:1.5">
+      <h2 style="margin:0 0 12px">Вход в Bloknot</h2>
+      <p style="margin:0 0 12px">Нажмите, чтобы войти:</p>
+      <p style="margin:0 0 16px"><a href="${magicLink}">${magicLink}</a></p>
+      <p style="color:#666; margin:0">Если вы не запрашивали вход — просто проигнорируйте это письмо.</p>
+    </div>
+  `;
+
+  // 1) SendGrid (preferred)
+  if (canUseSendgrid()) {
+    sgMail.setApiKey(SENDGRID_API_KEY);
+    await sgMail.send({
+      to: toEmail,
+      from: EMAIL_FROM,
+      subject,
+      text,
+      html,
+    });
+    return { provider: "sendgrid" };
+  }
+
+  // 2) SMTP fallback
+  const mailer = createMailer();
+  if (mailer) {
+    await mailer.sendMail({
+      from: MAIL_FROM,
+      to: toEmail,
+      subject,
+      text,
+      html,
+    });
+    return { provider: "smtp" };
+  }
+
+  // 3) No mail provider configured
+  return { provider: "none" };
+}
 
 // --- middleware ---
 app.use(express.json());
@@ -62,6 +130,12 @@ console.log("FRONTEND PATH:", FRONTEND_PATH);
 console.log("UPLOADS PATH:", UPLOADS_PATH);
 console.log("BASE URL:", BASE_URL);
 
+if (!prisma || !prisma.branch || !prisma.loginToken) {
+  console.error(
+    "PRISMA CLIENT ERROR: some models are missing on PrismaClient. Usually it means @prisma/client was not generated for current schema. Run: prisma generate"
+  );
+}
+
 // раздаём фронт
 app.use(express.static(FRONTEND_PATH));
 
@@ -98,14 +172,19 @@ app.post("/auth/request-login", async (req, res) => {
 
   console.log("AUTH REQUEST:", email);
 
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail) {
+    return res.status(400).json({ error: "Email обязателен" });
+  }
+
   let user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: normalizedEmail },
   });
 
   if (!user) {
     user = await prisma.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         role: "OWNER",
       },
     });
@@ -123,6 +202,18 @@ app.post("/auth/request-login", async (req, res) => {
 
   const magicLink = `${BASE_URL}/auth/login?token=${token}`;
   console.log("MAGIC LINK:", magicLink);
+
+  try {
+    const r = await sendMagicLinkEmail(normalizedEmail, magicLink);
+    if (r.provider === "none") {
+      console.log(
+        "MAIL is not configured. Configure SendGrid (SENDGRID_API_KEY + EMAIL_FROM) or SMTP (SMTP_HOST/SMTP_PORT/MAIL_FROM ...) to send emails."
+      );
+    }
+  } catch (e) {
+    console.error("MAIL SEND ERROR:", e);
+    // Не падаем: оставляем ссылку в логах как fallback.
+  }
 
   res.json({ ok: true });
 });
@@ -486,6 +577,12 @@ app.delete("/api/appointments/:id", async (req, res) => {
   const id = Number(req.params.id);
   await prisma.appointment.delete({ where: { id } });
   res.json({ ok: true });
+});
+
+app.use((err, req, res, next) => {
+  console.error("UNHANDLED ERROR:", err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: "Server error" });
 });
 
 app.listen(PORT, () => {

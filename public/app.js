@@ -63,8 +63,7 @@
       <div class="header">
         <div class="container header-inner">
           <a class="brand" href="/dashboard.html" aria-label="Bloknot">
-            <span class="brand-mark">✓</span>
-            <span>Bloknot</span>
+            <img src="/logo-wordmark.svg?v=10" alt="Bloknot" style="height:34px; display:block" />
           </a>
           <nav class="nav" aria-label="Навигация">
             ${links
