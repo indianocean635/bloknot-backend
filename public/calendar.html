@@ -639,10 +639,11 @@
       initWorkingHoursInputs();
 
       try {
+        await loadMasters();
         await loadServices();
         await refresh();
       } catch (e) {
-        showNotice("Сервер недоступен: " + e.message);
+        showNotice("Не удалось загрузить календарь. Попробуйте обновить страницу позже.");
       }
     })();
   </script>

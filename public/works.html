@@ -163,11 +163,11 @@
       if (btn.dataset.action === "delete") deleteWork(btn.dataset.id);
     });
 
-    (async function init() {
+    (async () => {
       try {
         await loadWorks();
       } catch (e) {
-        showNotice("Сервер недоступен: " + e.message);
+        showNotice("Не удалось загрузить фото работ. Попробуйте обновить страницу позже.");
       }
     })();
   </script>

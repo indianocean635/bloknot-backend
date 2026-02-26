@@ -356,12 +356,13 @@
     <!-- CTA -->
     <section class="cta">
       <h2>Клиенты могут записаться уже сегодня</h2>
-      <a href="#" class="btn" id="bookBtn">Записаться</a>
+      <a href="#" class="btn" id="bookBtn">Создать ссылку онлайн записи</a>
     </section>
 
     <footer>
       © 2026 Bloknot — сервис онлайн-записи клиентов
       <div class="footer-links" aria-label="Юридическая информация">
+        <a href="/pricing.html">Тарифы</a>
         <a href="/terms.html">Оферта</a>
         <a href="/privacy.html">Политика конфиденциальности</a>
       </div>
@@ -436,7 +437,7 @@
             const t = await res.text().catch(() => "");
             throw new Error(t || ("HTTP " + res.status));
           }
-          showNotice("Ссылка для входа создана. В текущей версии она появляется в логах сервера.");
+          showNotice("Ссылка для входа отправлена на вашу почту. Проверьте входящие и папку «Спам». ");
         } catch (e) {
           showNotice("Не удалось отправить: " + (e && e.message ? e.message : "ошибка"));
         } finally {
@@ -458,7 +459,7 @@
       });
       document.getElementById("bookBtn").addEventListener("click", (e) => {
         e.preventDefault();
-        window.location.href = "/booking.html";
+        openModal();
       });
 
       closeBtn.addEventListener("click", closeModal);

@@ -287,7 +287,7 @@
      });
    })();
 
-   loadDashboard().catch((e) => showNotice("Сервер недоступен: " + e.message));
+   loadDashboard().catch(() => showNotice("Не удалось загрузить данные. Попробуйте обновить страницу позже."));
 
   setRevenueDefaults();
   calcRevenue().catch(() => {});
