@@ -54,6 +54,34 @@
       font-size: 15px;
     }
 
+    .nav a.auth-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(76, 175, 80, 0.25);
+      background: rgba(76, 175, 80, 0.10);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 120ms ease;
+    }
+
+    .nav a.auth-pill:hover {
+      background: rgba(76, 175, 80, 0.16);
+      border-color: rgba(76, 175, 80, 0.36);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.6) inset,
+        0 10px 22px rgba(0, 0, 0, 0.08);
+    }
+
+    .nav a.auth-pill:active {
+      transform: scale(0.98);
+      background: rgba(76, 175, 80, 0.18);
+      border-color: rgba(76, 175, 80, 0.42);
+    }
+
     /* =====================
        CONTAINER
     ====================== */
@@ -298,8 +326,8 @@
         <img src="/logo-wordmark.svg?v=10" alt="Bloknot">
       </div>
       <nav class="nav">
-        <a href="#" id="loginLink">Войти</a>
-        <a href="#" id="signupLink">Регистрация</a>
+        <a href="#" id="loginLink" class="auth-pill">Войти</a>
+        <a href="#" id="signupLink" class="auth-pill">Регистрация</a>
       </nav>
     </div>
   </header>

@@ -161,7 +161,7 @@ function getAuthUser(req) {
     const payload = jwt.verify(token, JWT_SECRET);
     if (!payload || typeof payload !== "object") return null;
     const userId = payload.userId;
-    if (typeof userId !== "number") return null;
+    if (typeof userId !== "string" || !userId) return null;
     return { id: userId };
   } catch (e) {
     return null;
