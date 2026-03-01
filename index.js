@@ -1,20 +1,28 @@
+require("dotenv").config();
+const nodemailer = require('nodemailer');
 
+const transporter = nodemailer.createTransport({
+  host: 'smtp.yandex.ru',
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 const express = require("express");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 const { PrismaClient } = require("@prisma/client");
-const nodemailer = require("nodemailer");
-const sgMail = require("@sendgrid/mail");
+
 const jwt = require("jsonwebtoken");
 
-require("dotenv").config();
 
 const app = express();
 const prisma = new PrismaClient();
 
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const EMAIL_FROM = process.env.EMAIL_FROM;
 
 const SMTP_HOST = process.env.SMTP_HOST;
@@ -23,61 +31,37 @@ const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 const SMTP_SECURE = process.env.SMTP_SECURE === "1" || process.env.SMTP_SECURE === "true";
 const MAIL_FROM = process.env.MAIL_FROM;
-
-function createMailer() {
-  if (!SMTP_HOST || !SMTP_PORT || !MAIL_FROM) return null;
-  return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_SECURE,
-    auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS || "" } : undefined,
-  });
-}
-
-function canUseSendgrid() {
-  return Boolean(SENDGRID_API_KEY && EMAIL_FROM);
-}
-
+console.log("ОТПРАВКА ПИСЬМА...");
 async function sendMagicLinkEmail(toEmail, magicLink) {
   const subject = "Вход в Bloknot";
-  const text = `Здравствуйте!\n\nВаша ссылка для входа:\n${magicLink}\n\nЕсли вы не запрашивали вход — просто проигнорируйте это письмо.\n`;
+  const text = `Здравствуйте!
+
+Ваша ссылка для входа:
+${magicLink}
+
+Если вы не запрашивали вход — просто проигнорируйте это письмо.`;
+
   const html = `
     <div style="font-family:Arial,sans-serif; line-height:1.5">
-      <h2 style="margin:0 0 12px">Вход в Bloknot</h2>
-      <p style="margin:0 0 12px">Нажмите, чтобы войти:</p>
-      <p style="margin:0 0 16px"><a href="${magicLink}">${magicLink}</a></p>
-      <p style="color:#666; margin:0">Если вы не запрашивали вход — просто проигнорируйте это письмо.</p>
+      <h2>Вход в Bloknot</h2>
+      <p>Нажмите, чтобы войти:</p>
+      <p><a href="${magicLink}">${magicLink}</a></p>
+      <p style="color:#666">
+        Если вы не запрашивали вход — проигнорируйте это письмо.
+      </p>
     </div>
   `;
 
-  // 1) SendGrid (preferred)
-  if (canUseSendgrid()) {
-    sgMail.setApiKey(SENDGRID_API_KEY);
-    await sgMail.send({
-      to: toEmail,
-      from: EMAIL_FROM,
-      subject,
-      text,
-      html,
-    });
-    return { provider: "sendgrid" };
-  }
-
-  // 2) SMTP fallback
-  const mailer = createMailer();
-  if (mailer) {
-    await mailer.sendMail({
-      from: MAIL_FROM,
-      to: toEmail,
-      subject,
-      text,
-      html,
-    });
-    return { provider: "smtp" };
-  }
+  await transporter.sendMail({
+    from: `"Bloknot" <${process.env.SMTP_USER}>`,
+    to: toEmail,
+    subject,
+    text,
+    html,
+  });
 
   // 3) No mail provider configured
-  return { provider: "none" };
+  return;
 }
 
 // --- middleware ---
@@ -254,6 +238,7 @@ app.use((req, res, next) => {
 
 // --- AUTH ---
 app.post("/auth/request-link", async (req, res) => {
+console.log("ЗАПРОС НА ВХОД:", req.body.email);
   const { email } = req.body;
 
   const normalizedEmail = String(email || "").trim().toLowerCase();
