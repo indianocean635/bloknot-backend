@@ -96,6 +96,9 @@ const BASE_URL = String(process.env.BASE_URL || `http://localhost:${PORT}`).repl
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_COOKIE_NAME = "auth";
 const IS_PROD = process.env.NODE_ENV === "production";
+const SUPERADMIN_EMAIL = String(process.env.SUPERADMIN_EMAIL || "")
+  .trim()
+  .toLowerCase();
 
 function parseCookies(req) {
   const header = req.headers.cookie;
@@ -156,6 +159,21 @@ function requireAuth(req, res, next) {
   const user = getAuthUser(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
   req.user = user;
+  next();
+}
+
+async function requireSuperAdmin(req, res, next) {
+  const authUser = getAuthUser(req);
+  if (!authUser) return res.status(401).json({ error: "Unauthorized" });
+  if (!SUPERADMIN_EMAIL) return res.status(500).json({ error: "Server is not configured" });
+
+  const u = await prisma.user.findUnique({ where: { id: authUser.id } });
+  if (!u) return res.status(401).json({ error: "Unauthorized" });
+  if (String(u.email || "").toLowerCase() !== SUPERADMIN_EMAIL) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  req.user = { id: u.id, email: u.email, role: u.role };
   next();
 }
 
@@ -343,6 +361,70 @@ app.get("/dashboard", (req, res) => {
   const user = getAuthUser(req);
   if (!user) return res.redirect("/");
   res.sendFile(path.join(FRONTEND_PATH, "dashboard.html"));
+});
+
+app.get("/admin", async (req, res) => {
+  const authUser = getAuthUser(req);
+  if (!authUser) return res.redirect("/");
+  if (!SUPERADMIN_EMAIL) return res.status(500).send("Server is not configured");
+
+  const u = await prisma.user.findUnique({ where: { id: authUser.id } });
+  if (!u || String(u.email || "").toLowerCase() !== SUPERADMIN_EMAIL) {
+    return res.status(403).send("Forbidden");
+  }
+
+  res.sendFile(path.join(FRONTEND_PATH, "admin.html"));
+});
+
+app.get("/api/admin/stats", requireSuperAdmin, async (req, res) => {
+  const [totalUsers, payingUsers, sumPaidAgg] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { isPaying: true } }),
+    prisma.user.aggregate({ _sum: { totalPaid: true } }),
+  ]);
+
+  const totalPaid = (sumPaidAgg && sumPaidAgg._sum && sumPaidAgg._sum.totalPaid) || 0;
+  res.json({ totalUsers, payingUsers, totalPaid });
+});
+
+app.get("/api/admin/users", requireSuperAdmin, async (req, res) => {
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      isPaying: true,
+      totalPaid: true,
+      nextBillingAt: true,
+    },
+  });
+  res.json(users);
+});
+
+app.patch("/api/admin/users/:id", requireSuperAdmin, async (req, res) => {
+  const id = String(req.params.id);
+  const { isPaying, totalPaid, nextBillingAt } = req.body || {};
+
+  const data = {};
+  if (typeof isPaying === "boolean") data.isPaying = isPaying;
+  if (totalPaid !== undefined) data.totalPaid = Number(totalPaid) || 0;
+  if (nextBillingAt !== undefined) {
+    const v = String(nextBillingAt || "").trim();
+    data.nextBillingAt = v ? new Date(v) : null;
+  }
+
+  const u = await prisma.user.update({ where: { id }, data });
+  res.json({
+    id: u.id,
+    email: u.email,
+    role: u.role,
+    createdAt: u.createdAt,
+    isPaying: u.isPaying,
+    totalPaid: u.totalPaid,
+    nextBillingAt: u.nextBillingAt,
+  });
 });
 
 // legacy endpoints (disabled)

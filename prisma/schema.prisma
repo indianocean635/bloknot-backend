@@ -13,6 +13,10 @@ model User {
   role        String   @default("owner")
   createdAt   DateTime @default(now())
 
+  isPaying     Boolean  @default(false)
+  totalPaid    Int      @default(0)
+  nextBillingAt DateTime?
+
   loginTokens LoginToken[]
 }
 model Service {
