@@ -403,6 +403,20 @@ app.get("/api/admin/users", requireSuperAdmin, async (req, res) => {
   res.json(users);
 });
 
+app.get("/api/admin/impersonate/:id", requireSuperAdmin, async (req, res) => {
+  if (!JWT_SECRET) {
+    return res.status(500).send("Server is not configured");
+  }
+
+  const id = String(req.params.id);
+  const u = await prisma.user.findUnique({ where: { id } });
+  if (!u) return res.status(404).send("Not found");
+
+  const jwtToken = jwt.sign({ userId: u.id }, JWT_SECRET, { expiresIn: "7d" });
+  setAuthCookie(res, jwtToken);
+  res.redirect("/dashboard");
+});
+
 app.patch("/api/admin/users/:id", requireSuperAdmin, async (req, res) => {
   const id = String(req.params.id);
   const { isPaying, totalPaid, nextBillingAt } = req.body || {};
@@ -425,6 +439,20 @@ app.patch("/api/admin/users/:id", requireSuperAdmin, async (req, res) => {
     totalPaid: u.totalPaid,
     nextBillingAt: u.nextBillingAt,
   });
+});
+
+app.delete("/api/admin/users/:id", requireSuperAdmin, async (req, res) => {
+  const id = String(req.params.id);
+  if (req.user && req.user.id === id) {
+    return res.status(400).json({ error: "Cannot delete yourself" });
+  }
+
+  await prisma.$transaction([
+    prisma.loginToken.deleteMany({ where: { userId: id } }),
+    prisma.user.delete({ where: { id } }),
+  ]);
+
+  res.json({ ok: true });
 });
 
 // legacy endpoints (disabled)

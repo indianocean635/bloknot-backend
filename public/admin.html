@@ -8,8 +8,6 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div id="app-header"></div>
-
   <main class="container">
     <h1 class="page-title">Super Admin</h1>
     <p class="page-subtitle">Статистика и пользователи</p>
@@ -65,11 +63,41 @@
     </div>
   </main>
 
-  <script src="/app.js"></script>
   <script>
     const notice = document.getElementById('notice');
     const tbody = document.getElementById('tbody');
     const q = document.getElementById('q');
+
+    function escHtml(s) {
+      return String(s || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    async function api(url, options) {
+      const r = await fetch(url, Object.assign({ credentials: 'include' }, options || {}));
+      const ct = String(r.headers.get('content-type') || '');
+      if (!r.ok) {
+        let msg = `HTTP ${r.status}`;
+        if (ct.includes('application/json')) {
+          try {
+            const data = await r.json();
+            if (data && data.error) msg = data.error;
+          } catch (e) {}
+        } else {
+          try {
+            const t = await r.text();
+            if (t) msg = t;
+          } catch (e) {}
+        }
+        throw new Error(msg);
+      }
+      if (ct.includes('application/json')) return r.json();
+      return r.text();
+    }
 
     function showNotice(text) {
       if (!text) {
@@ -91,17 +119,17 @@
       }
     }
 
-    function esc(s){ return Bloknot.esc(String(s||'')); }
+    function esc(s){ return escHtml(String(s||'')); }
 
     async function loadStats() {
-      const s = await Bloknot.api('/api/admin/stats');
+      const s = await api('/api/admin/stats');
       document.getElementById('statTotal').textContent = String(s.totalUsers ?? '—');
       document.getElementById('statPaying').textContent = String(s.payingUsers ?? '—');
       document.getElementById('statPaid').textContent = String(s.totalPaid ?? '—');
     }
 
     async function loadUsers() {
-      const users = await Bloknot.api('/api/admin/users');
+      const users = await api('/api/admin/users');
       const query = String(q.value || '').trim().toLowerCase();
       const filtered = query ? users.filter(u => String(u.email||'').toLowerCase().includes(query)) : users;
 
@@ -109,7 +137,9 @@
         const next = u.nextBillingAt ? fmtDate(u.nextBillingAt) : '';
         return `
           <tr>
-            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">${esc(u.email)}</td>
+            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
+              <a href="#" data-action="impersonate" data-id="${esc(u.id)}" style="font-weight:800">${esc(u.email)}</a>
+            </td>
             <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">${fmtDate(u.createdAt)}</td>
             <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
               <label style="display:inline-flex; align-items:center; gap:8px; user-select:none">
@@ -125,6 +155,7 @@
             </td>
             <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
               <button class="btn secondary" data-action="save" data-id="${esc(u.id)}" type="button">Сохранить</button>
+              <button class="btn danger" data-action="delete" data-id="${esc(u.id)}" type="button" style="margin-left:8px">Удалить</button>
             </td>
           </tr>
         `;
@@ -142,11 +173,15 @@
         nextBillingAt: nextBillingAtEl && nextBillingAtEl.value ? nextBillingAtEl.value : "",
       };
 
-      await Bloknot.api(`/api/admin/users/${encodeURIComponent(id)}`, {
+      await api(`/api/admin/users/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+    }
+
+    async function deleteUser(id) {
+      await api(`/api/admin/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
     }
 
     document.getElementById('refreshBtn').addEventListener('click', async () => {
@@ -163,22 +198,49 @@
     });
 
     document.addEventListener('click', async (e) => {
-      const btn = e.target && e.target.closest && e.target.closest('button[data-action="save"]');
-      if (!btn) return;
-      const id = btn.getAttribute('data-id');
-      showNotice('');
-      btn.disabled = true;
-      try {
-        await saveUser(id);
-        await Promise.all([loadStats(), loadUsers()]);
-      } catch (err) {
-        showNotice('Не удалось сохранить: ' + (err && err.message ? err.message : ''));
-      } finally {
-        btn.disabled = false;
+      const saveBtn = e.target && e.target.closest && e.target.closest('button[data-action="save"]');
+      const delBtn = e.target && e.target.closest && e.target.closest('button[data-action="delete"]');
+      const impLink = e.target && e.target.closest && e.target.closest('a[data-action="impersonate"]');
+
+      if (impLink) {
+        e.preventDefault();
+        const id = impLink.getAttribute('data-id');
+        window.location.href = `/api/admin/impersonate/${encodeURIComponent(id)}`;
+        return;
+      }
+
+      if (saveBtn) {
+        const id = saveBtn.getAttribute('data-id');
+        showNotice('');
+        saveBtn.disabled = true;
+        try {
+          await saveUser(id);
+          await Promise.all([loadStats(), loadUsers()]);
+        } catch (err) {
+          showNotice('Не удалось сохранить: ' + (err && err.message ? err.message : ''));
+        } finally {
+          saveBtn.disabled = false;
+        }
+        return;
+      }
+
+      if (delBtn) {
+        const id = delBtn.getAttribute('data-id');
+        const ok = window.confirm('Удалить пользователя? Это действие необратимо.');
+        if (!ok) return;
+        showNotice('');
+        delBtn.disabled = true;
+        try {
+          await deleteUser(id);
+          await Promise.all([loadStats(), loadUsers()]);
+        } catch (err) {
+          showNotice('Не удалось удалить: ' + (err && err.message ? err.message : ''));
+        } finally {
+          delBtn.disabled = false;
+        }
+        return;
       }
     });
-
-    Bloknot.renderHeader(null);
 
     (async function init() {
       try {
