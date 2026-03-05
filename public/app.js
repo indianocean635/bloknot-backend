@@ -13,6 +13,34 @@
     head.appendChild(link);
   }
 
+  function ensurePwaMeta() {
+    const head = document.head;
+    if (!head) return;
+
+    if (!head.querySelector('link[rel="manifest"]')) {
+      const m = document.createElement("link");
+      m.rel = "manifest";
+      m.href = "/manifest.webmanifest";
+      head.appendChild(m);
+    }
+
+    if (!head.querySelector('meta[name="theme-color"]')) {
+      const t = document.createElement("meta");
+      t.name = "theme-color";
+      t.content = "#22c55e";
+      head.appendChild(t);
+    }
+  }
+
+  function registerServiceWorker() {
+    try {
+      if (!('serviceWorker' in navigator)) return;
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      });
+    } catch (e) {}
+  }
+
   function initAuthFlagFromQuery() {
     try {
       const params = new URLSearchParams(location.search || "");
@@ -26,6 +54,8 @@
   }
 
   ensureFavicon();
+  ensurePwaMeta();
+  registerServiceWorker();
   initAuthFlagFromQuery();
 
   function qs(sel) {
@@ -72,6 +102,113 @@
     document.body.appendChild(el);
   }
 
+  let deferredInstallPrompt = null;
+  try {
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+    });
+  } catch (e) {}
+
+  function isIOS() {
+    const ua = navigator.userAgent || "";
+    return /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  }
+
+  function isStandalone() {
+    try {
+      return (
+        window.matchMedia &&
+        window.matchMedia("(display-mode: standalone)").matches
+      ) || window.navigator.standalone === true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function ensureBookmarkModal() {
+    if (document.getElementById("bookmark-modal")) return;
+    const wrap = document.createElement("div");
+    wrap.id = "bookmark-modal";
+    wrap.style.position = "fixed";
+    wrap.style.inset = "0";
+    wrap.style.background = "rgba(15,23,42,0.45)";
+    wrap.style.backdropFilter = "blur(6px)";
+    wrap.style.display = "none";
+    wrap.style.alignItems = "center";
+    wrap.style.justifyContent = "center";
+    wrap.style.padding = "18px";
+    wrap.style.zIndex = "9999";
+    wrap.innerHTML = `
+      <div class="card" style="max-width:520px; width:100%">
+        <div class="item-title" style="font-size:18px">Сохранить в закладках</div>
+        <div class="item-meta" id="bookmark-text" style="margin-top:8px"></div>
+        <div class="actions" style="margin-top:14px; justify-content:flex-end">
+          <button class="btn secondary" id="bookmark-close" type="button">Закрыть</button>
+          <button class="btn" id="bookmark-install" type="button" style="display:none">Добавить на экран</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(wrap);
+
+    const closeBtn = document.getElementById("bookmark-close");
+    closeBtn.addEventListener("click", () => {
+      wrap.style.display = "none";
+    });
+    wrap.addEventListener("click", (e) => {
+      if (e.target === wrap) wrap.style.display = "none";
+    });
+  }
+
+  async function openBookmarkHelp() {
+    ensureBookmarkModal();
+    const modal = document.getElementById("bookmark-modal");
+    const text = document.getElementById("bookmark-text");
+    const installBtn = document.getElementById("bookmark-install");
+
+    if (isStandalone()) {
+      text.innerHTML = "Похоже, приложение уже добавлено на главный экран.";
+      installBtn.style.display = "none";
+      modal.style.display = "flex";
+      return;
+    }
+
+    const isMac = /Macintosh|Mac OS X/.test(navigator.userAgent || "");
+    const isWin = /Windows/.test(navigator.userAgent || "");
+
+    if (deferredInstallPrompt) {
+      text.innerHTML = "Нажми кнопку ниже, чтобы добавить кабинет на главный экран / в список приложений.";
+      installBtn.style.display = "inline-flex";
+      installBtn.onclick = async () => {
+        try {
+          const p = deferredInstallPrompt;
+          deferredInstallPrompt = null;
+          installBtn.style.display = "none";
+          await p.prompt();
+        } catch (e) {}
+      };
+      modal.style.display = "flex";
+      return;
+    }
+
+    if (isIOS()) {
+      text.innerHTML = "Safari: нажми «Поделиться» → «На экран «Домой»».";
+      installBtn.style.display = "none";
+      modal.style.display = "flex";
+      return;
+    }
+
+    if (isMac) {
+      text.innerHTML = "Нажми Cmd + D, чтобы добавить страницу в закладки браузера.";
+    } else if (isWin) {
+      text.innerHTML = "Нажми Ctrl + D, чтобы добавить страницу в закладки браузера.";
+    } else {
+      text.innerHTML = "Открой меню браузера и выбери «Добавить в закладки» или «Добавить на главный экран».";
+    }
+    installBtn.style.display = "none";
+    modal.style.display = "flex";
+  }
+
   function renderHeader(active) {
     const host = qs("#app-header");
     if (!host) return;
@@ -111,10 +248,18 @@
                   )}</a>`
               )
               .join("")}
+            <button class="btn secondary" id="bookmark-btn" type="button" style="padding:8px 10px; border-radius:10px">Установить</button>
           </nav>
         </div>
       </div>
     `;
+
+    const b = host.querySelector("#bookmark-btn");
+    if (b) {
+      b.addEventListener("click", () => {
+        openBookmarkHelp();
+      });
+    }
 
     renderFooter();
   }

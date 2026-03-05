@@ -115,7 +115,7 @@ function parseCookies(req) {
 }
 
 function setAuthCookie(res, token) {
-  const maxAge = 7 * 24 * 60 * 60;
+  const maxAge = 90 * 24 * 60 * 60;
   const parts = [
     `${JWT_COOKIE_NAME}=${encodeURIComponent(token)}`,
     `Max-Age=${maxAge}`,
@@ -351,7 +351,7 @@ app.get("/auth/confirm", async (req, res) => {
 
   await prisma.loginToken.delete({ where: { token } });
 
-  const jwtToken = jwt.sign({ userId: loginToken.userId }, JWT_SECRET, { expiresIn: "7d" });
+  const jwtToken = jwt.sign({ userId: loginToken.userId }, JWT_SECRET, { expiresIn: "90d" });
   setAuthCookie(res, jwtToken);
 
   res.redirect("/dashboard");
@@ -412,7 +412,7 @@ app.get("/api/admin/impersonate/:id", requireSuperAdmin, async (req, res) => {
   const u = await prisma.user.findUnique({ where: { id } });
   if (!u) return res.status(404).send("Not found");
 
-  const jwtToken = jwt.sign({ userId: u.id }, JWT_SECRET, { expiresIn: "7d" });
+  const jwtToken = jwt.sign({ userId: u.id }, JWT_SECRET, { expiresIn: "90d" });
   setAuthCookie(res, jwtToken);
   res.redirect("/dashboard");
 });
