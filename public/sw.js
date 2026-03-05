@@ -1,8 +1,6 @@
-const CACHE_NAME = "bloknot-pwa-v1";
+const CACHE_NAME = "bloknot-pwa-v2";
 
 const APP_SHELL = [
-  "/",
-  "/dashboard",
   "/styles.css",
   "/app.js",
   "/logo-wordmark.svg?v=10",
@@ -35,22 +33,30 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
 
   // Never cache API calls and auth flows
-  if (req.url.includes("/api/") || req.url.includes("/auth/")) {
-    return;
-  }
+  if (req.url.includes("/api/") || req.url.includes("/auth/")) return;
 
   if (req.method !== "GET") return;
 
+  // Never cache navigations/HTML pages (admin/dashboard) to avoid caching Forbidden/Unauthorized.
+  if (req.mode === "navigate") {
+    event.respondWith(fetch(req));
+    return;
+  }
+
+  // Only cache same-origin static assets.
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+
   event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req)
+    caches.match(req).then((cached) =>
+      cached ||
+      fetch(req)
         .then((res) => {
           const resClone = res.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
           return res;
         })
-        .catch(() => cached);
-    })
+        .catch(() => cached)
+    )
   );
 });
