@@ -209,6 +209,18 @@
     modal.style.display = "flex";
   }
 
+  async function triggerInstallPrompt() {
+    if (!deferredInstallPrompt) return false;
+    try {
+      const p = deferredInstallPrompt;
+      deferredInstallPrompt = null;
+      await p.prompt();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   function renderHeader(active) {
     const host = qs("#app-header");
     if (!host) return;
@@ -257,7 +269,9 @@
     const b = host.querySelector("#bookmark-btn");
     if (b) {
       b.addEventListener("click", () => {
-        openBookmarkHelp();
+        triggerInstallPrompt().then((didPrompt) => {
+          if (!didPrompt) openBookmarkHelp();
+        });
       });
     }
 
