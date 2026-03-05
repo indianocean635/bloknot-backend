@@ -95,6 +95,7 @@ const BASE_URL = String(process.env.BASE_URL || `http://localhost:${PORT}`).repl
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_COOKIE_NAME = "auth";
+const SUPERADMIN_COOKIE_NAME = "sa_auth";
 const IS_PROD = process.env.NODE_ENV === "production";
 const SUPERADMIN_EMAIL = String(process.env.SUPERADMIN_EMAIL || "")
   .trim()
@@ -127,6 +128,19 @@ function setAuthCookie(res, token) {
   res.setHeader("Set-Cookie", parts.join("; "));
 }
 
+function setSuperAdminCookie(res, token) {
+  const maxAge = 90 * 24 * 60 * 60;
+  const parts = [
+    `${SUPERADMIN_COOKIE_NAME}=${encodeURIComponent(token)}`,
+    `Max-Age=${maxAge}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+  ];
+  if (IS_PROD) parts.push("Secure");
+  res.setHeader("Set-Cookie", parts.join("; "));
+}
+
 function clearAuthCookie(res) {
   const parts = [
     `${JWT_COOKIE_NAME}=`,
@@ -140,9 +154,13 @@ function clearAuthCookie(res) {
 }
 
 function getAuthUser(req) {
+  return getJwtUser(req, JWT_COOKIE_NAME);
+}
+
+function getJwtUser(req, cookieName) {
   if (!JWT_SECRET) return null;
   const cookies = parseCookies(req);
-  const token = cookies[JWT_COOKIE_NAME];
+  const token = cookies[cookieName];
   if (!token) return null;
   try {
     const payload = jwt.verify(token, JWT_SECRET);
@@ -163,15 +181,30 @@ function requireAuth(req, res, next) {
 }
 
 async function requireSuperAdmin(req, res, next) {
+  if (!SUPERADMIN_EMAIL) return res.status(500).json({ error: "Server is not configured" });
+
+  const saUser = getJwtUser(req, SUPERADMIN_COOKIE_NAME);
+  if (saUser) {
+    const u = await prisma.user.findUnique({ where: { id: saUser.id } });
+    if (u && String(u.email || "").toLowerCase() === SUPERADMIN_EMAIL) {
+      req.user = { id: u.id, email: u.email, role: u.role };
+      return next();
+    }
+  }
+
   const authUser = getAuthUser(req);
   if (!authUser) return res.status(401).json({ error: "Unauthorized" });
-  if (!SUPERADMIN_EMAIL) return res.status(500).json({ error: "Server is not configured" });
 
   const u = await prisma.user.findUnique({ where: { id: authUser.id } });
   if (!u) return res.status(401).json({ error: "Unauthorized" });
   if (String(u.email || "").toLowerCase() !== SUPERADMIN_EMAIL) {
     return res.status(403).json({ error: "Forbidden" });
   }
+
+  try {
+    const saToken = jwt.sign({ userId: u.id }, JWT_SECRET, { expiresIn: "90d" });
+    setSuperAdminCookie(res, saToken);
+  } catch (e) {}
 
   req.user = { id: u.id, email: u.email, role: u.role };
   next();
@@ -363,17 +396,18 @@ app.get("/dashboard", (req, res) => {
   res.sendFile(path.join(FRONTEND_PATH, "dashboard.html"));
 });
 
-app.get("/admin", async (req, res) => {
-  const authUser = getAuthUser(req);
-  if (!authUser) return res.redirect("/");
-  if (!SUPERADMIN_EMAIL) return res.status(500).send("Server is not configured");
+app.get("/admin", requireSuperAdmin, async (req, res) => {
+  res.sendFile(path.join(FRONTEND_PATH, "admin.html"));
+});
 
-  const u = await prisma.user.findUnique({ where: { id: authUser.id } });
-  if (!u || String(u.email || "").toLowerCase() !== SUPERADMIN_EMAIL) {
-    return res.status(403).send("Forbidden");
+app.get("/api/admin/return", requireSuperAdmin, async (req, res) => {
+  if (!JWT_SECRET) {
+    return res.status(500).send("Server is not configured");
   }
 
-  res.sendFile(path.join(FRONTEND_PATH, "admin.html"));
+  const jwtToken = jwt.sign({ userId: req.user.id }, JWT_SECRET, { expiresIn: "90d" });
+  setAuthCookie(res, jwtToken);
+  res.redirect("/dashboard");
 });
 
 app.get("/api/admin/stats", requireSuperAdmin, async (req, res) => {
