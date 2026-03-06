@@ -77,14 +77,16 @@ model LoginToken {
 }
 
 model Service {
-  id         Int       @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   name       String
   duration   Int
   price      Int
   businessId String
-  createdAt  DateTime  @default(now())
+  createdAt  DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  appointments Appointment[]
 }
 
 model Category {
