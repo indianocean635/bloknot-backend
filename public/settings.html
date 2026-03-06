@@ -4,7 +4,13 @@
   <meta charset="UTF-8" />
   <title>Настройки - Bloknot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="/styles.css" />
+  
+  <!-- Cache control -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
+  <link rel="stylesheet" href="/styles.css?v=2" />
 </head>
 <body>
 
@@ -315,9 +321,29 @@
 
 <script src="/app.js"></script>
 <script>
+// Simple API function
+async function apiCall(url, options = {}) {
+  const response = await fetch(url, {
+    headers: options.body instanceof FormData ? {} : {
+      'Content-Type': 'application/json',
+      ...options.headers
+    },
+    ...options
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  
+  return response.json();
+}
+
 // Инициализация
 document.addEventListener('DOMContentLoaded', function() {
-  renderHeader('settings');
+  // Load Bloknot functions
+  if (typeof Bloknot !== 'undefined') {
+    Bloknot.renderHeader('settings');
+  }
   loadAllData();
   setupEventListeners();
 });
@@ -352,7 +378,7 @@ function setupEventListeners() {
 // Филиалы
 async function loadBranches() {
   try {
-    const branches = await fetch('/api/branches').then(r => r.json());
+    const branches = await apiCall('/api/branches');
     renderBranches(branches);
   } catch (error) {
     console.error('Error loading branches:', error);
@@ -423,15 +449,13 @@ async function saveBranch(id = null) {
   
   try {
     if (id) {
-      await fetch(`/api/branches/${id}`, {
+      await apiCall(`/api/branches/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, address })
       });
     } else {
-      await fetch('/api/branches', {
+      await apiCall('/api/branches', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, address })
       });
     }
@@ -448,7 +472,7 @@ async function deleteBranch(id) {
   if (!confirm('Удалить филиал?')) return;
   
   try {
-    await fetch(`/api/branches/${id}`, { method: 'DELETE' });
+    await apiCall(`/api/branches/${id}`, { method: 'DELETE' });
     loadBranches();
   } catch (error) {
     console.error('Error deleting branch:', error);
@@ -459,7 +483,7 @@ async function deleteBranch(id) {
 // Категории
 async function loadCategories() {
   try {
-    const categories = await fetch('/api/categories').then(r => r.json());
+    const categories = await apiCall('/api/categories');
     renderCategories(categories);
   } catch (error) {
     console.error('Error loading categories:', error);
@@ -513,15 +537,13 @@ async function saveCategory(id = null) {
   
   try {
     if (id) {
-      await fetch(`/api/categories/${id}`, {
+      await apiCall(`/api/categories/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name })
       });
     } else {
-      await fetch('/api/categories', {
+      await apiCall('/api/categories', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name })
       });
     }
@@ -538,7 +560,7 @@ async function deleteCategory(id) {
   if (!confirm('Удалить категорию?')) return;
   
   try {
-    await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+    await apiCall(`/api/categories/${id}`, { method: 'DELETE' });
     loadCategories();
   } catch (error) {
     console.error('Error deleting category:', error);
@@ -549,7 +571,7 @@ async function deleteCategory(id) {
 // Услуги
 async function loadServices() {
   try {
-    const services = await fetch('/api/services').then(r => r.json());
+    const services = await apiCall('/api/services');
     renderServices(services);
   } catch (error) {
     console.error('Error loading services:', error);
@@ -633,15 +655,13 @@ async function saveService(id = null) {
   
   try {
     if (id) {
-      await fetch(`/api/services/${id}`, {
+      await apiCall(`/api/services/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, duration: Number(duration), price: Number(price), categoryId: categoryId ? Number(categoryId) : null })
       });
     } else {
-      await fetch('/api/services', {
+      await apiCall('/api/services', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, duration: Number(duration), price: Number(price), categoryId: categoryId ? Number(categoryId) : null })
       });
     }
@@ -658,7 +678,7 @@ async function deleteService(id) {
   if (!confirm('Удалить услугу?')) return;
   
   try {
-    await fetch(`/api/services/${id}`, { method: 'DELETE' });
+    await apiCall(`/api/services/${id}`, { method: 'DELETE' });
     loadServices();
   } catch (error) {
     console.error('Error deleting service:', error);
@@ -669,7 +689,7 @@ async function deleteService(id) {
 // Мастера
 async function loadMasters() {
   try {
-    const masters = await fetch('/api/masters').then(r => r.json());
+    const masters = await apiCall('/api/masters');
     renderMasters(masters);
   } catch (error) {
     console.error('Error loading masters:', error);
@@ -738,15 +758,13 @@ async function saveMaster(id = null) {
   
   try {
     if (id) {
-      await fetch(`/api/masters/${id}`, {
+      await apiCall(`/api/masters/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, active })
       });
     } else {
-      await fetch('/api/masters', {
+      await apiCall('/api/masters', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, active })
       });
     }
@@ -763,7 +781,7 @@ async function deleteMaster(id) {
   if (!confirm('Удалить мастера?')) return;
   
   try {
-    await fetch(`/api/masters/${id}`, { method: 'DELETE' });
+    await apiCall(`/api/masters/${id}`, { method: 'DELETE' });
     loadMasters();
   } catch (error) {
     console.error('Error deleting master:', error);
@@ -774,7 +792,7 @@ async function deleteMaster(id) {
 // Фото работ
 async function loadWorks() {
   try {
-    const works = await fetch('/api/works').then(r => r.json());
+    const works = await apiCall('/api/works');
     renderWorks(works);
   } catch (error) {
     console.error('Error loading works:', error);
@@ -840,7 +858,7 @@ async function saveWork() {
   if (caption) formData.append('caption', caption);
   
   try {
-    await fetch('/api/works', {
+    await apiCall('/api/works', {
       method: 'POST',
       body: formData
     });
@@ -857,7 +875,7 @@ async function deleteWork(id) {
   if (!confirm('Удалить фото?')) return;
   
   try {
-    await fetch(`/api/works/${id}`, { method: 'DELETE' });
+    await apiCall(`/api/works/${id}`, { method: 'DELETE' });
     loadWorks();
   } catch (error) {
     console.error('Error deleting work:', error);
