@@ -336,26 +336,31 @@ console.log("ЗАПРОС НА ВХОД:", req.body.email);
       ]);
       user = newUser;
     } else {
-      // Create new business and owner
-      const business = await prisma.business.create({
-        data: {
-          name: `${normalizedEmail} Business`,
-          slug: crypto.randomUUID(),
-        },
-      });
-      
+      // Create new user first
       user = await prisma.user.create({
         data: {
           email: normalizedEmail,
           role: "OWNER",
-          businessId: business.id,
         },
       });
       
-      // Update business with actual owner ID
-      await prisma.business.update({
-        where: { id: business.id },
-        data: { ownerId: user.id },
+      // Create business and connect owner
+      const business = await prisma.business.create({
+        data: {
+          name: `${normalizedEmail} Business`,
+          slug: crypto.randomUUID(),
+          owner: {
+            connect: {
+              id: user.id
+            }
+          }
+        },
+      });
+      
+      // Update user with businessId
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { businessId: business.id },
       });
     }
   }
