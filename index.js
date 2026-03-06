@@ -286,12 +286,12 @@ const worksUpload = multer({
 // --- AUTH MIDDLEWARE (API) ---
 // Оставляем публичными ровно те API, которые нужны для публичной страницы записи.
 const PUBLIC_API = new Set([
-  "GET /api/services",
-  "GET /api/masters",
-  "GET /api/categories",
-  "GET /api/works",
-  "GET /api/appointments",
-  "POST /api/appointments",
+  "GET /api/public/services",
+  "GET /api/public/masters",
+  "GET /api/public/categories",
+  "GET /api/public/works",
+  "GET /api/public/appointments",
+  "POST /api/public/appointments",
 ]);
 
 app.use((req, res, next) => {
@@ -574,8 +574,22 @@ app.get("/auth/login", (req, res) => {
 
 // ===== CATEGORIES API =====
 
+// Получить все категории (для админки)
+app.get("/api/categories", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  
+  const categories = await prisma.category.findMany({
+    where: { businessId: user.businessId },
+    orderBy: { id: "asc" },
+  });
+  res.json(categories);
+});
+
 // Получить все категории (публичные)
-app.get("/api/categories", getBusinessBySlug, async (req, res) => {
+app.get("/api/public/categories", getBusinessBySlug, async (req, res) => {
   const categories = await prisma.category.findMany({
     where: { businessId: req.business.id },
     orderBy: { id: "asc" },
@@ -632,8 +646,23 @@ app.get("/book/:slug", (req, res) => {
 
 // ===== SERVICES API =====
 
+// Получить все услуги (для админки)
+app.get("/api/services", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  
+  const services = await prisma.service.findMany({
+    where: { businessId: user.businessId },
+    orderBy: { id: "asc" },
+    include: { category: true },
+  });
+  res.json(services);
+});
+
 // Получить все услуги (публичные)
-app.get("/api/services", getBusinessBySlug, async (req, res) => {
+app.get("/api/public/services", getBusinessBySlug, async (req, res) => {
   const services = await prisma.service.findMany({
     where: { businessId: req.business.id },
     orderBy: { id: "asc" },
@@ -681,8 +710,22 @@ app.delete("/api/services/:id", async (req, res) => {
 
 // ===== MASTERS API =====
 
+// Получить всех мастеров (для админки)
+app.get("/api/masters", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  
+  const masters = await prisma.master.findMany({
+    where: { businessId: user.businessId },
+    orderBy: { id: "asc" },
+  });
+  res.json(masters);
+});
+
 // Получить всех мастеров (публичные)
-app.get("/api/masters", getBusinessBySlug, async (req, res) => {
+app.get("/api/public/masters", getBusinessBySlug, async (req, res) => {
   const masters = await prisma.master.findMany({
     where: { businessId: req.business.id },
     orderBy: { id: "asc" },
@@ -781,8 +824,22 @@ app.delete("/api/masters/:id", async (req, res) => {
 
 // ===== WORKS (PHOTOS) API =====
 
+// Получить работы (для админки)
+app.get("/api/works", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  
+  const photos = await prisma.workPhoto.findMany({
+    where: { businessId: user.businessId },
+    orderBy: { id: "desc" },
+  });
+  res.json(photos);
+});
+
 // Получить работы (публичные)
-app.get("/api/works", getBusinessBySlug, async (req, res) => {
+app.get("/api/public/works", getBusinessBySlug, async (req, res) => {
   const photos = await prisma.workPhoto.findMany({
     where: { businessId: req.business.id },
     orderBy: { id: "desc" },
@@ -836,7 +893,36 @@ function parseDate(value) {
   return d;
 }
 
-app.get("/api/appointments", getBusinessBySlug, async (req, res) => {
+app.get("/api/appointments", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  
+  const { from, to, masterId } = req.query;
+  const where = { businessId: user.businessId };
+
+  const fromDate = from ? parseDate(from) : null;
+  const toDate = to ? parseDate(to) : null;
+
+  if (fromDate || toDate) {
+    where.startsAt = {};
+    if (fromDate) where.startsAt.gte = fromDate;
+    if (toDate) where.startsAt.lte = toDate;
+  }
+  if (masterId) where.staffId = Number(masterId);
+
+  const items = await prisma.appointment.findMany({
+    where,
+    orderBy: { startsAt: "asc" },
+    include: { service: true, staff: true, branch: true },
+  });
+
+  res.json(items);
+});
+
+// Получить записи (публичные)
+app.get("/api/public/appointments", getBusinessBySlug, async (req, res) => {
   const { from, to, masterId } = req.query;
   const where = { businessId: req.business.id };
 
@@ -859,7 +945,7 @@ app.get("/api/appointments", getBusinessBySlug, async (req, res) => {
   res.json(items);
 });
 
-app.post("/api/appointments", getBusinessBySlug, async (req, res) => {
+app.post("/api/public/appointments", getBusinessBySlug, async (req, res) => {
   const { customerName, customerPhone, startsAt, serviceId, staffId, branchId } = req.body;
 
   if (!customerName || !startsAt || !serviceId || !staffId) {
