@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Настройки - Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<div id="app-header"></div>
+
+<main class="container">
+  <h1 class="page-title">Настройки бизнеса</h1>
+  <p class="page-subtitle">Управляйте филиалами, категориями, услугами, мастерами и фото работ</p>
+
+  <!-- Филиалы -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>📍 Филиалы</h2>
+      <button class="btn" id="addBranchBtn">+ Добавить филиал</button>
+    </div>
+    
+    <div class="items-grid" id="branchesGrid">
+      <div class="loading">Загрузка...</div>
+    </div>
+  </section>
+
+  <!-- Категории -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>📁 Категории услуг</h2>
+      <button class="btn" id="addCategoryBtn">+ Добавить категорию</button>
+    </div>
+    
+    <div class="items-grid" id="categoriesGrid">
+      <div class="loading">Загрузка...</div>
+    </div>
+  </section>
+
+  <!-- Услуги -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>✂️ Услуги</h2>
+      <button class="btn" id="addServiceBtn">+ Добавить услугу</button>
+    </div>
+    
+    <div class="items-grid" id="servicesGrid">
+      <div class="loading">Загрузка...</div>
+    </div>
+  </section>
+
+  <!-- Мастера -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>👨‍💼 Мастера</h2>
+      <button class="btn" id="addMasterBtn">+ Добавить мастера</button>
+    </div>
+    
+    <div class="items-grid" id="mastersGrid">
+      <div class="loading">Загрузка...</div>
+    </div>
+  </section>
+
+  <!-- Фото работ -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>📸 Фото работ</h2>
+      <button class="btn" id="addWorkBtn">+ Добавить фото</button>
+    </div>
+    
+    <div class="items-grid" id="worksGrid">
+      <div class="loading">Загрузка...</div>
+    </div>
+  </section>
+</main>
+
+<!-- Модальное окно для добавления/редактирования -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle">Добавить</h3>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <!-- Динамическое содержимое -->
+    </div>
+  </div>
+</div>
+
+<style>
+.settings-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #111;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.item-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f9fafb;
+  transition: all 0.2s;
+}
+
+.item-card:hover {
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.item-card h4 {
+  margin: 0 0 8px 0;
+  color: #111;
+  font-size: 16px;
+}
+
+.item-card p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.item-actions button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.edit-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.edit-btn:hover {
+  background: #2563eb;
+}
+
+.delete-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  margin: 50px auto;
+  padding: 0;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 12px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.modal-close:hover {
+  color: #111;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  border: 1px solid #fecaca;
+}
+
+.success {
+  background: #f0fdf4;
+  color: #16a34a;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  border: 1px solid #bbf7d0;
+}
+
+.work-photo {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+  .items-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .modal-content {
+    margin: 20px;
+    width: calc(100% - 40px);
+  }
+}
+</style>
+
+<script src="/app.js"></script>
+<script>
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+  renderHeader('settings');
+  loadAllData();
+  setupEventListeners();
+});
+
+// Загрузка всех данных
+async function loadAllData() {
+  await Promise.all([
+    loadBranches(),
+    loadCategories(),
+    loadServices(),
+    loadMasters(),
+    loadWorks()
+  ]);
+}
+
+// Настройка обработчиков событий
+function setupEventListeners() {
+  // Кнопки добавления
+  document.getElementById('addBranchBtn').addEventListener('click', () => openBranchModal());
+  document.getElementById('addCategoryBtn').addEventListener('click', () => openCategoryModal());
+  document.getElementById('addServiceBtn').addEventListener('click', () => openServiceModal());
+  document.getElementById('addMasterBtn').addEventListener('click', () => openMasterModal());
+  document.getElementById('addWorkBtn').addEventListener('click', () => openWorkModal());
+  
+  // Закрытие модального окна
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modal').addEventListener('click', (e) => {
+    if (e.target.id === 'modal') closeModal();
+  });
+}
+
+// Филиалы
+async function loadBranches() {
+  try {
+    const branches = await fetch('/api/branches').then(r => r.json());
+    renderBranches(branches);
+  } catch (error) {
+    console.error('Error loading branches:', error);
+    document.getElementById('branchesGrid').innerHTML = '<div class="error">Ошибка загрузки</div>';
+  }
+}
+
+function renderBranches(branches) {
+  const grid = document.getElementById('branchesGrid');
+  if (branches.length === 0) {
+    grid.innerHTML = '<p style="text-align: center; color: #6b7280;">Филиалы не добавлены</p>';
+    return;
+  }
+  
+  grid.innerHTML = branches.map(branch => `
+    <div class="item-card">
+      <h4>${branch.name}</h4>
+      <p>${branch.address || 'Адрес не указан'}</p>
+      <div class="item-actions">
+        <button class="edit-btn" onclick="openBranchModal(${branch.id})">Редактировать</button>
+        <button class="delete-btn" onclick="deleteBranch(${branch.id})">Удалить</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openBranchModal(id = null) {
+  const title = id ? 'Редактировать филиал' : 'Добавить филиал';
+  const body = `
+    <form id="branchForm">
+      <div class="form-group">
+        <label for="branchName">Название *</label>
+        <input type="text" id="branchName" required>
+      </div>
+      <div class="form-group">
+        <label for="branchAddress">Адрес</label>
+        <input type="text" id="branchAddress">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Отмена</button>
+        <button type="submit" class="btn">Сохранить</button>
+      </div>
+    </form>
+  `;
+  
+  openModal(title, body);
+  
+  if (id) {
+    // Загрузить данные филиала для редактирования
+    fetch(`/api/branches`).then(r => r.json()).then(branches => {
+      const branch = branches.find(b => b.id === id);
+      if (branch) {
+        document.getElementById('branchName').value = branch.name;
+        document.getElementById('branchAddress').value = branch.address || '';
+      }
+    });
+  }
+  
+  document.getElementById('branchForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveBranch(id);
+  });
+}
+
+async function saveBranch(id = null) {
+  const name = document.getElementById('branchName').value;
+  const address = document.getElementById('branchAddress').value;
+  
+  try {
+    if (id) {
+      await fetch(`/api/branches/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, address })
+      });
+    } else {
+      await fetch('/api/branches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, address })
+      });
+    }
+    
+    closeModal();
+    loadBranches();
+  } catch (error) {
+    console.error('Error saving branch:', error);
+    alert('Ошибка сохранения');
+  }
+}
+
+async function deleteBranch(id) {
+  if (!confirm('Удалить филиал?')) return;
+  
+  try {
+    await fetch(`/api/branches/${id}`, { method: 'DELETE' });
+    loadBranches();
+  } catch (error) {
+    console.error('Error deleting branch:', error);
+    alert('Ошибка удаления');
+  }
+}
+
+// Категории
+async function loadCategories() {
+  try {
+    const categories = await fetch('/api/categories').then(r => r.json());
+    renderCategories(categories);
+  } catch (error) {
+    console.error('Error loading categories:', error);
+    document.getElementById('categoriesGrid').innerHTML = '<div class="error">Ошибка загрузки</div>';
+  }
+}
+
+function renderCategories(categories) {
+  const grid = document.getElementById('categoriesGrid');
+  if (categories.length === 0) {
+    grid.innerHTML = '<p style="text-align: center; color: #6b7280;">Категории не добавлены</p>';
+    return;
+  }
+  
+  grid.innerHTML = categories.map(category => `
+    <div class="item-card">
+      <h4>${category.name}</h4>
+      <div class="item-actions">
+        <button class="edit-btn" onclick="openCategoryModal(${category.id}, '${category.name}')">Редактировать</button>
+        <button class="delete-btn" onclick="deleteCategory(${category.id})">Удалить</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openCategoryModal(id = null, name = '') {
+  const title = id ? 'Редактировать категорию' : 'Добавить категорию';
+  const body = `
+    <form id="categoryForm">
+      <div class="form-group">
+        <label for="categoryName">Название *</label>
+        <input type="text" id="categoryName" value="${name}" required>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Отмена</button>
+        <button type="submit" class="btn">Сохранить</button>
+      </div>
+    </form>
+  `;
+  
+  openModal(title, body);
+  
+  document.getElementById('categoryForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveCategory(id);
+  });
+}
+
+async function saveCategory(id = null) {
+  const name = document.getElementById('categoryName').value;
+  
+  try {
+    if (id) {
+      await fetch(`/api/categories/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+    } else {
+      await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+    }
+    
+    closeModal();
+    loadCategories();
+  } catch (error) {
+    console.error('Error saving category:', error);
+    alert('Ошибка сохранения');
+  }
+}
+
+async function deleteCategory(id) {
+  if (!confirm('Удалить категорию?')) return;
+  
+  try {
+    await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+    loadCategories();
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    alert('Ошибка удаления');
+  }
+}
+
+// Услуги
+async function loadServices() {
+  try {
+    const services = await fetch('/api/services').then(r => r.json());
+    renderServices(services);
+  } catch (error) {
+    console.error('Error loading services:', error);
+    document.getElementById('servicesGrid').innerHTML = '<div class="error">Ошибка загрузки</div>';
+  }
+}
+
+function renderServices(services) {
+  const grid = document.getElementById('servicesGrid');
+  if (services.length === 0) {
+    grid.innerHTML = '<p style="text-align: center; color: #6b7280;">Услуги не добавлены</p>';
+    return;
+  }
+  
+  grid.innerHTML = services.map(service => `
+    <div class="item-card">
+      <h4>${service.name}</h4>
+      <p>${service.price} ₽ • ${service.duration} мин</p>
+      <p style="font-size: 12px; color: #9ca3af;">${service.category?.name || 'Без категории'}</p>
+      <div class="item-actions">
+        <button class="edit-btn" onclick="openServiceModal(${service.id})">Редактировать</button>
+        <button class="delete-btn" onclick="deleteService(${service.id})">Удалить</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function openServiceModal(id = null) {
+  const categories = await fetch('/api/categories').then(r => r.json());
+  const title = id ? 'Редактировать услугу' : 'Добавить услугу';
+  
+  let service = null;
+  if (id) {
+    const services = await fetch('/api/services').then(r => r.json());
+    service = services.find(s => s.id === id);
+  }
+  
+  const body = `
+    <form id="serviceForm">
+      <div class="form-group">
+        <label for="serviceName">Название *</label>
+        <input type="text" id="serviceName" value="${service?.name || ''}" required>
+      </div>
+      <div class="form-group">
+        <label for="serviceDuration">Длительность (мин) *</label>
+        <input type="number" id="serviceDuration" value="${service?.duration || ''}" required>
+      </div>
+      <div class="form-group">
+        <label for="servicePrice">Цена (₽) *</label>
+        <input type="number" id="servicePrice" value="${service?.price || ''}" required>
+      </div>
+      <div class="form-group">
+        <label for="serviceCategory">Категория</label>
+        <select id="serviceCategory">
+          <option value="">Без категории</option>
+          ${categories.map(cat => `
+            <option value="${cat.id}" ${service?.categoryId === cat.id ? 'selected' : ''}>${cat.name}</option>
+          `).join('')}
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Отмена</button>
+        <button type="submit" class="btn">Сохранить</button>
+      </div>
+    </form>
+  `;
+  
+  openModal(title, body);
+  
+  document.getElementById('serviceForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveService(id);
+  });
+}
+
+async function saveService(id = null) {
+  const name = document.getElementById('serviceName').value;
+  const duration = document.getElementById('serviceDuration').value;
+  const price = document.getElementById('servicePrice').value;
+  const categoryId = document.getElementById('serviceCategory').value || null;
+  
+  try {
+    if (id) {
+      await fetch(`/api/services/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, duration: Number(duration), price: Number(price), categoryId: categoryId ? Number(categoryId) : null })
+      });
+    } else {
+      await fetch('/api/services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, duration: Number(duration), price: Number(price), categoryId: categoryId ? Number(categoryId) : null })
+      });
+    }
+    
+    closeModal();
+    loadServices();
+  } catch (error) {
+    console.error('Error saving service:', error);
+    alert('Ошибка сохранения');
+  }
+}
+
+async function deleteService(id) {
+  if (!confirm('Удалить услугу?')) return;
+  
+  try {
+    await fetch(`/api/services/${id}`, { method: 'DELETE' });
+    loadServices();
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    alert('Ошибка удаления');
+  }
+}
+
+// Мастера
+async function loadMasters() {
+  try {
+    const masters = await fetch('/api/masters').then(r => r.json());
+    renderMasters(masters);
+  } catch (error) {
+    console.error('Error loading masters:', error);
+    document.getElementById('mastersGrid').innerHTML = '<div class="error">Ошибка загрузки</div>';
+  }
+}
+
+function renderMasters(masters) {
+  const grid = document.getElementById('mastersGrid');
+  if (masters.length === 0) {
+    grid.innerHTML = '<p style="text-align: center; color: #6b7280;">Мастера не добавлены</p>';
+    return;
+  }
+  
+  grid.innerHTML = masters.map(master => `
+    <div class="item-card">
+      <h4>${master.name}</h4>
+      <p>${master.active ? '🟢 Активен' : '🔴 Неактивен'}</p>
+      <div class="item-actions">
+        <button class="edit-btn" onclick="openMasterModal(${master.id})">Редактировать</button>
+        <button class="delete-btn" onclick="deleteMaster(${master.id})">Удалить</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function openMasterModal(id = null) {
+  const title = id ? 'Редактировать мастера' : 'Добавить мастера';
+  
+  let master = null;
+  if (id) {
+    const masters = await fetch('/api/masters').then(r => r.json());
+    master = masters.find(m => m.id === id);
+  }
+  
+  const body = `
+    <form id="masterForm">
+      <div class="form-group">
+        <label for="masterName">Имя *</label>
+        <input type="text" id="masterName" value="${master?.name || ''}" required>
+      </div>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="masterActive" ${master?.active ? 'checked' : ''}>
+          Активен
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Отмена</button>
+        <button type="submit" class="btn">Сохранить</button>
+      </div>
+    </form>
+  `;
+  
+  openModal(title, body);
+  
+  document.getElementById('masterForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveMaster(id);
+  });
+}
+
+async function saveMaster(id = null) {
+  const name = document.getElementById('masterName').value;
+  const active = document.getElementById('masterActive').checked;
+  
+  try {
+    if (id) {
+      await fetch(`/api/masters/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, active })
+      });
+    } else {
+      await fetch('/api/masters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, active })
+      });
+    }
+    
+    closeModal();
+    loadMasters();
+  } catch (error) {
+    console.error('Error saving master:', error);
+    alert('Ошибка сохранения');
+  }
+}
+
+async function deleteMaster(id) {
+  if (!confirm('Удалить мастера?')) return;
+  
+  try {
+    await fetch(`/api/masters/${id}`, { method: 'DELETE' });
+    loadMasters();
+  } catch (error) {
+    console.error('Error deleting master:', error);
+    alert('Ошибка удаления');
+  }
+}
+
+// Фото работ
+async function loadWorks() {
+  try {
+    const works = await fetch('/api/works').then(r => r.json());
+    renderWorks(works);
+  } catch (error) {
+    console.error('Error loading works:', error);
+    document.getElementById('worksGrid').innerHTML = '<div class="error">Ошибка загрузки</div>';
+  }
+}
+
+function renderWorks(works) {
+  const grid = document.getElementById('worksGrid');
+  if (works.length === 0) {
+    grid.innerHTML = '<p style="text-align: center; color: #6b7280;">Фото не добавлены</p>';
+    return;
+  }
+  
+  grid.innerHTML = works.map(work => `
+    <div class="item-card">
+      ${work.imageUrl ? `<img src="${work.imageUrl}" alt="${work.caption}" class="work-photo">` : ''}
+      <h4>${work.caption || 'Без названия'}</h4>
+      <div class="item-actions">
+        <button class="delete-btn" onclick="deleteWork(${work.id})">Удалить</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openWorkModal() {
+  const body = `
+    <form id="workForm" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="workImage">Фото *</label>
+        <input type="file" id="workImage" accept="image/*" required>
+      </div>
+      <div class="form-group">
+        <label for="workCaption">Описание</label>
+        <input type="text" id="workCaption" placeholder="Краткое описание">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Отмена</button>
+        <button type="submit" class="btn">Загрузить</button>
+      </div>
+    </form>
+  `;
+  
+  openModal('Добавить фото работы', body);
+  
+  document.getElementById('workForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveWork();
+  });
+}
+
+async function saveWork() {
+  const fileInput = document.getElementById('workImage');
+  const caption = document.getElementById('workCaption').value;
+  
+  if (!fileInput.files[0]) {
+    alert('Выберите фото');
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('image', fileInput.files[0]);
+  if (caption) formData.append('caption', caption);
+  
+  try {
+    await fetch('/api/works', {
+      method: 'POST',
+      body: formData
+    });
+    
+    closeModal();
+    loadWorks();
+  } catch (error) {
+    console.error('Error saving work:', error);
+    alert('Ошибка загрузки');
+  }
+}
+
+async function deleteWork(id) {
+  if (!confirm('Удалить фото?')) return;
+  
+  try {
+    await fetch(`/api/works/${id}`, { method: 'DELETE' });
+    loadWorks();
+  } catch (error) {
+    console.error('Error deleting work:', error);
+    alert('Ошибка удаления');
+  }
+}
+
+// Модальное окно
+function openModal(title, body) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modal').style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+}
+</script>
+
+</body>
+</html>

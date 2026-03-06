@@ -273,11 +273,7 @@
 
     const links = [
       { key: "dashboard", href: "/dashboard.html", label: "Кабинет" },
-      { key: "branches", href: "/branches.html", label: "Филиалы" },
-      { key: "categories", href: "/categories.html", label: "Категории" },
-      { key: "services", href: "/services.html", label: "Услуги" },
-      { key: "masters", href: "/masters.html", label: "Мастера" },
-      { key: "works", href: "/works.html", label: "Фото работ" },
+      { key: "settings", href: "/settings.html", label: "Настройки" },
       { key: "calendar", href: "/calendar.html", label: "Календарь" },
     ];
 

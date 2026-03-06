@@ -471,6 +471,28 @@ app.get("/dashboard", (req, res) => {
   res.sendFile(path.join(FRONTEND_PATH, "dashboard.html"));
 });
 
+app.get("/settings", requireAuth, (req, res) => {
+  res.sendFile(path.join(FRONTEND_PATH, "settings.html"));
+});
+
+app.get("/booking-link", requireAuth, (req, res) => {
+  res.sendFile(path.join(FRONTEND_PATH, "booking-link.html"));
+});
+
+// Получить slug бизнеса для владельца
+app.get("/api/business/slug", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ 
+    where: { id: req.user.id },
+    include: { business: true }
+  });
+  
+  if (!user || !user.business) {
+    return res.status(404).json({ error: "Business not found" });
+  }
+  
+  res.json({ slug: user.business.slug });
+});
+
 app.get("/admin", requireSuperAdmin, async (req, res) => {
   res.sendFile(path.join(FRONTEND_PATH, "admin.html"));
 });
@@ -618,11 +640,25 @@ app.post("/api/categories", requireAuth, async (req, res) => {
 });
 
 // Удалить категорию
-app.delete("/api/categories/:id", async (req, res) => {
+app.delete("/api/categories/:id", requireAuth, async (req, res) => {
   const id = Number(req.params.id);
+  
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  // Check if category belongs to user's business
+  const category = await prisma.category.findFirst({
+    where: { id, businessId: user.businessId }
+  });
+  
+  if (!category) {
+    return res.status(404).json({ error: "Category not found" });
+  }
 
   await prisma.service.updateMany({
-    where: { categoryId: id },
+    where: { categoryId: id, businessId: user.businessId },
     data: { categoryId: null },
   });
 
