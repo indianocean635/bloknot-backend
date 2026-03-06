@@ -10,72 +10,120 @@ datasource db {
 model User {
   id          String   @id @default(uuid())
   email       String   @unique
-  role        String   @default("owner") // OWNER | STAFF | SUPERADMIN
+  role        String   @default("OWNER")
   businessId  String?
   createdAt   DateTime @default(now())
 
-  isPaying     Boolean  @default(false)
-  totalPaid    Int      @default(0)
+  isPaying      Boolean   @default(false)
+  totalPaid     Int       @default(0)
   nextBillingAt DateTime?
 
-  business     Business? @relation("BusinessOwner", fields: [businessId], references: [id])
-  staffMembers Staff[]
-  loginTokens LoginToken[]
+  business Business? @relation("BusinessUsers", fields: [businessId], references: [id])
+  ownedBusiness Business? @relation("BusinessOwner")
+
+  staffProfile Staff?
+  loginTokens  LoginToken[]
 }
+
+model Business {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  ownerId   String   @unique
+  createdAt DateTime @default(now())
+
+  owner User @relation("BusinessOwner", fields: [ownerId], references: [id])
+  users User[] @relation("BusinessUsers")
+
+  staff        Staff[]
+  staffInvites StaffInvite[]
+  services     Service[]
+  categories   Category[]
+  masters      Master[]
+  workPhotos   WorkPhoto[]
+  branches     Branch[]
+  appointments Appointment[]
+}
+
+model Staff {
+  id         String   @id @default(uuid())
+  name       String
+  userId     String   @unique
+  businessId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model StaffInvite {
+  id         String   @id @default(uuid())
+  email      String
+  businessId String
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model LoginToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id])
+}
+
 model Service {
   id         Int       @id @default(autoincrement())
   name       String
   duration   Int
   price      Int
-  categoryId Int?
-  category   Category? @relation(fields: [categoryId], references: [id])
   businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   createdAt  DateTime  @default(now())
 
-  appointments Appointment[]
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 }
 
 model Category {
   id         Int       @id @default(autoincrement())
   name       String
   businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  services   Service[]
   createdAt  DateTime  @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 }
 
 model Master {
-  id        Int      @id @default(autoincrement())
-  name      String
-  active    Boolean  @default(true)
-  role      String   @default("MASTER")
-  avatarUrl String?
+  id         Int      @id @default(autoincrement())
+  name       String
+  active     Boolean  @default(true)
   businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
 
-  appointments Appointment[]
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 }
 
 model WorkPhoto {
-  id        Int      @id @default(autoincrement())
-  imageUrl  String
-  caption   String?
+  id         Int      @id @default(autoincrement())
+  imageUrl   String
+  caption    String?
   businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 }
 
 model Branch {
-  id        Int       @id @default(autoincrement())
-  name      String
-  address   String?
+  id         Int      @id @default(autoincrement())
+  name       String
+  address    String?
   businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
+  createdAt  DateTime @default(now())
 
-  appointments Appointment[]
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 }
 
 model Appointment {
@@ -85,66 +133,15 @@ model Appointment {
   startsAt      DateTime
   endsAt        DateTime
   businessId    String
-  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
-  priceAtBooking Int?
-
-  serviceId Int
-  service   Service @relation(fields: [serviceId], references: [id])
-
-  staffId Int
-  staff   Master @relation(fields: [staffId], references: [id])
-
-  branchId Int?
-  branch   Branch? @relation(fields: [branchId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-model Business {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  ownerId   String
-  createdAt DateTime @default(now())
-
-  owner     User       @relation("BusinessOwner", fields: [ownerId], references: [id])
-  users     User[]
-  staff     Staff[]
-  services  Service[]
-  categories Category[]
-  masters   Master[]
-  workPhotos WorkPhoto[]
-  branches  Branch[]
-  appointments Appointment[]
-}
-
-model StaffInvite {
-  id        String   @id @default(uuid())
-  email     String
-  businessId String
-  status    String   @default("pending") // pending | accepted
-  createdAt DateTime @default(now())
+  serviceId     Int
+  masterId      Int
+  branchId      Int?
+  createdAt     DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-}
+  service  Service  @relation(fields: [serviceId], references: [id])
+  master   Master   @relation(fields: [masterId], references: [id])
+  branch   Branch?  @relation(fields: [branchId], references: [id])
 
-model Staff {
-  id         String   @id @default(uuid())
-  name       String
-  userId     String
-  businessId String
-  createdAt  DateTime @default(now())
-
-  user     User     @relation(fields: [userId], references: [id])
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-}
-
-model LoginToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  expiresAt DateTime
-  used      Boolean  @default(false)
+  @@index([businessId, startsAt])
 }
