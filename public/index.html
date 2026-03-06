@@ -89,6 +89,17 @@
       border-color: rgba(0, 0, 0, 0.18);
     }
 
+    .btn.secondary {
+      background: transparent;
+      color: #111;
+      border: 2px solid #111;
+    }
+
+    .btn.secondary:hover {
+      background: #111;
+      color: white;
+    }
+
     @media (max-width: 520px) {
       .header-inner {
         padding: 0 16px;
@@ -381,7 +392,7 @@
       <div class="logo">
         <img src="/logo-wordmark.svg?v=10" alt="Bloknot">
       </div>
-      <nav class="nav">
+      <nav class="nav" id="mainNav">
         <a href="#" id="loginLink" class="auth-pill">Войти</a>
         <a href="#" id="signupLink" class="auth-pill">Регистрация</a>
       </nav>
@@ -579,7 +590,7 @@
     </section>
 
     <!-- CTA -->
-    <section class="cta">
+    <section class="cta" id="ctaSection">
       <h2>Клиенты могут записаться уже сегодня</h2>
       <a href="#" class="btn" id="bookBtn">Создать ссылку онлайн записи</a>
     </section>
@@ -622,6 +633,82 @@
       const notice = document.getElementById("authNotice");
       const sendBtn = document.getElementById("authSendBtn");
       const closeBtn = document.getElementById("authCloseBtn");
+      const mainNav = document.getElementById("mainNav");
+
+      // Check if user is logged in
+      function checkAuthStatus() {
+        try {
+          const isLoggedIn = localStorage.getItem("bloknot_logged_in") === "1";
+          if (isLoggedIn) {
+            // Show "My Cabinet" button for logged-in users
+            mainNav.innerHTML = `
+              <a href="/dashboard.html" class="auth-pill">Мой кабинет</a>
+              <a href="#" id="logoutLink" class="auth-pill">Выйти</a>
+            `;
+            
+            // Update CTA section for logged-in users
+            const ctaSection = document.getElementById("ctaSection");
+            if (ctaSection) {
+              ctaSection.innerHTML = `
+                <h2>Добро пожаловать в ваш кабинет!</h2>
+                <p>Управляйте услугами, мастерами и принимайте онлайн-записи от клиентов.</p>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+                  <a href="/dashboard.html" class="btn">Перейти в кабинет</a>
+                  <a href="/booking-link.html" class="btn secondary">Моя ссылка записи</a>
+                </div>
+              `;
+            }
+            
+            // Add logout handler
+            document.getElementById("logoutLink").addEventListener("click", (e) => {
+              e.preventDefault();
+              localStorage.removeItem("bloknot_logged_in");
+              // Clear auth cookie by setting it to expire
+              document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+              checkAuthStatus(); // Refresh the navigation
+            });
+          } else {
+            // Show login/signup for non-logged-in users
+            mainNav.innerHTML = `
+              <a href="#" id="loginLink" class="auth-pill">Войти</a>
+              <a href="#" id="signupLink" class="auth-pill">Регистрация</a>
+            `;
+            
+            // Reset CTA section for non-logged-in users
+            const ctaSection = document.getElementById("ctaSection");
+            if (ctaSection) {
+              ctaSection.innerHTML = `
+                <h2>Клиенты могут записаться уже сегодня</h2>
+                <a href="#" class="btn" id="bookBtn">Создать ссылку онлайн записи</a>
+              `;
+            }
+            
+            // Re-attach event listeners for login/signup
+            document.getElementById("loginLink").addEventListener("click", (e) => {
+              e.preventDefault();
+              openModal();
+            });
+            document.getElementById("signupLink").addEventListener("click", (e) => {
+              e.preventDefault();
+              openModal();
+            });
+            
+            // Add bookBtn listener
+            const bookBtn = document.getElementById("bookBtn");
+            if (bookBtn) {
+              bookBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                openModal();
+              });
+            }
+          }
+        } catch (e) {
+          console.error('Error checking auth status:', e);
+        }
+      }
+
+      // Check auth status on page load
+      checkAuthStatus();
 
       function showNotice(text) {
         if (!text) {
@@ -671,19 +758,8 @@
         }
       }
 
-      document.getElementById("loginLink").addEventListener("click", (e) => {
-        e.preventDefault();
-        openModal();
-      });
-      document.getElementById("signupLink").addEventListener("click", (e) => {
-        e.preventDefault();
-        openModal();
-      });
+      // Event listeners for buttons that always exist
       document.getElementById("tryBtn").addEventListener("click", (e) => {
-        e.preventDefault();
-        openModal();
-      });
-      document.getElementById("bookBtn").addEventListener("click", (e) => {
         e.preventDefault();
         openModal();
       });
