@@ -21,7 +21,7 @@ jobs:
             cd /var/www/bloknot-backend
             git pull origin main
             npm ci
-            npx prisma migrate deploy
+            npx prisma db push
             npx prisma generate
             cp -r public/* /var/www/html/
             pm2 reload ecosystem.config.js --only bloknot --update-env
