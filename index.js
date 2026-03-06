@@ -341,7 +341,6 @@ console.log("ЗАПРОС НА ВХОД:", req.body.email);
         data: {
           name: `${normalizedEmail} Business`,
           slug: crypto.randomUUID(),
-          ownerId: "", // will be set after user creation
         },
       });
       
@@ -392,17 +391,34 @@ console.log("ЗАПРОС НА ВХОД:", req.body.email);
 
 // ===== BRANCHES API =====
 
-app.get("/api/branches", async (req, res) => {
-  const items = await prisma.branch.findMany({ orderBy: { id: "asc" } });
+app.get("/api/branches", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  
+  const items = await prisma.branch.findMany({ 
+    where: { businessId: user.businessId },
+    orderBy: { id: "asc" } 
+  });
   res.json(items);
 });
 
-app.post("/api/branches", async (req, res) => {
+app.post("/api/branches", requireAuth, async (req, res) => {
   const { name, address } = req.body;
   if (!name) return res.status(400).json({ error: "Название обязательно" });
 
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
   const item = await prisma.branch.create({
-    data: { name: String(name), address: address ? String(address) : null },
+    data: { 
+      name: String(name), 
+      address: address ? String(address) : null,
+      businessId: user.businessId
+    },
   });
   res.json(item);
 });
