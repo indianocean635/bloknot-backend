@@ -180,6 +180,17 @@ function requireAuth(req, res, next) {
   next();
 }
 
+async function getBusinessBySlug(req, res, next) {
+  const slug = req.params.slug || req.query.slug;
+  if (!slug) return res.status(400).json({ error: "Slug required" });
+  
+  const business = await prisma.business.findUnique({ where: { slug } });
+  if (!business) return res.status(404).json({ error: "Business not found" });
+  
+  req.business = business;
+  next();
+}
+
 async function requireSuperAdmin(req, res, next) {
   if (!SUPERADMIN_EMAIL) return res.status(500).json({ error: "Server is not configured" });
 
@@ -277,6 +288,9 @@ const worksUpload = multer({
 const PUBLIC_API = new Set([
   "GET /api/services",
   "GET /api/masters",
+  "GET /api/categories",
+  "GET /api/works",
+  "GET /api/appointments",
   "POST /api/appointments",
 ]);
 
@@ -299,12 +313,52 @@ console.log("ЗАПРОС НА ВХОД:", req.body.email);
 
   let user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
   if (!user) {
-    user = await prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        role: "OWNER",
-      },
+    // Check for pending staff invite
+    const invite = await prisma.staffInvite.findFirst({ 
+      where: { email: normalizedEmail, status: "pending" },
+      include: { business: true }
     });
+    
+    if (invite) {
+      // Join as staff
+      const [newUser] = await prisma.$transaction([
+        prisma.user.create({
+          data: {
+            email: normalizedEmail,
+            role: "STAFF",
+            businessId: invite.businessId,
+          },
+        }),
+        prisma.staffInvite.update({
+          where: { id: invite.id },
+          data: { status: "accepted" },
+        }),
+      ]);
+      user = newUser;
+    } else {
+      // Create new business and owner
+      const business = await prisma.business.create({
+        data: {
+          name: `${normalizedEmail} Business`,
+          slug: crypto.randomUUID(),
+          ownerId: "", // will be set after user creation
+        },
+      });
+      
+      user = await prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          role: "OWNER",
+          businessId: business.id,
+        },
+      });
+      
+      // Update business with actual owner ID
+      await prisma.business.update({
+        where: { id: business.id },
+        data: { ownerId: user.id },
+      });
+    }
   }
 
   const token = typeof crypto.randomUUID === "function" ? crypto.randomUUID() : crypto.randomBytes(16).toString("hex");
@@ -499,24 +553,30 @@ app.get("/auth/login", (req, res) => {
 
 // ===== CATEGORIES API =====
 
-// Получить все категории
-app.get("/api/categories", async (req, res) => {
+// Получить все категории (публичные)
+app.get("/api/categories", getBusinessBySlug, async (req, res) => {
   const categories = await prisma.category.findMany({
+    where: { businessId: req.business.id },
     orderBy: { id: "asc" },
   });
   res.json(categories);
 });
 
-// Создать категорию
-app.post("/api/categories", async (req, res) => {
+// Создать категорию (защищенный)
+app.post("/api/categories", requireAuth, async (req, res) => {
   const { name } = req.body;
 
   if (!name) {
     return res.status(400).json({ error: "Название обязательно" });
   }
 
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
   const category = await prisma.category.create({
-    data: { name },
+    data: { name, businessId: user.businessId },
   });
 
   res.json(category);
@@ -544,23 +604,34 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(FRONTEND_PATH, "index.html"));
 });
 
+// Public booking page by slug
+app.get("/book/:slug", (req, res) => {
+  res.sendFile(path.join(FRONTEND_PATH, "book-template.html"));
+});
+
 // ===== SERVICES API =====
 
-// Получить все услуги
-app.get("/api/services", async (req, res) => {
+// Получить все услуги (публичные)
+app.get("/api/services", getBusinessBySlug, async (req, res) => {
   const services = await prisma.service.findMany({
+    where: { businessId: req.business.id },
     orderBy: { id: "asc" },
     include: { category: true },
   });
   res.json(services);
 });
 
-// Создать услугу
-app.post("/api/services", async (req, res) => {
+// Создать услугу (защищенный)
+app.post("/api/services", requireAuth, async (req, res) => {
   const { name, duration, price, categoryId } = req.body;
 
   if (!name || !duration || !price) {
     return res.status(400).json({ error: "Заполните все поля" });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
   const service = await prisma.service.create({
@@ -569,6 +640,7 @@ app.post("/api/services", async (req, res) => {
       duration: Number(duration),
       price: Number(price),
       categoryId: categoryId ? Number(categoryId) : null,
+      businessId: user.businessId,
     },
   });
 
@@ -588,20 +660,26 @@ app.delete("/api/services/:id", async (req, res) => {
 
 // ===== MASTERS API =====
 
-// Получить всех мастеров
-app.get("/api/masters", async (req, res) => {
+// Получить всех мастеров (публичные)
+app.get("/api/masters", getBusinessBySlug, async (req, res) => {
   const masters = await prisma.master.findMany({
+    where: { businessId: req.business.id },
     orderBy: { id: "asc" },
   });
   res.json(masters);
 });
 
-// Создать мастера
-app.post("/api/masters", async (req, res) => {
+// Создать мастера (защищенный)
+app.post("/api/masters", requireAuth, async (req, res) => {
   const { name, active, role } = req.body;
 
   if (!name) {
     return res.status(400).json({ error: "Имя обязательно" });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
   const master = await prisma.master.create({
@@ -609,6 +687,7 @@ app.post("/api/masters", async (req, res) => {
       name: String(name),
       active: typeof active === "boolean" ? active : true,
       role: role ? String(role) : "MASTER",
+      businessId: user.businessId,
     },
   });
 
@@ -681,16 +760,23 @@ app.delete("/api/masters/:id", async (req, res) => {
 
 // ===== WORKS (PHOTOS) API =====
 
-app.get("/api/works", async (req, res) => {
+// Получить работы (публичные)
+app.get("/api/works", getBusinessBySlug, async (req, res) => {
   const photos = await prisma.workPhoto.findMany({
+    where: { businessId: req.business.id },
     orderBy: { id: "desc" },
   });
   res.json(photos);
 });
 
-app.post("/api/works", worksUpload.single("image"), async (req, res) => {
+app.post("/api/works", worksUpload.single("image"), requireAuth, async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "Файл не выбран" });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
   const imageUrl = `/uploads/works/${req.file.filename}`;
@@ -700,6 +786,7 @@ app.post("/api/works", worksUpload.single("image"), async (req, res) => {
     data: {
       imageUrl,
       caption,
+      businessId: user.businessId,
     },
   });
 
@@ -728,9 +815,9 @@ function parseDate(value) {
   return d;
 }
 
-app.get("/api/appointments", async (req, res) => {
+app.get("/api/appointments", getBusinessBySlug, async (req, res) => {
   const { from, to, masterId } = req.query;
-  const where = {};
+  const where = { businessId: req.business.id };
 
   const fromDate = from ? parseDate(from) : null;
   const toDate = to ? parseDate(to) : null;
@@ -740,21 +827,21 @@ app.get("/api/appointments", async (req, res) => {
     if (fromDate) where.startsAt.gte = fromDate;
     if (toDate) where.startsAt.lte = toDate;
   }
-  if (masterId) where.masterId = Number(masterId);
+  if (masterId) where.staffId = Number(masterId);
 
   const items = await prisma.appointment.findMany({
     where,
     orderBy: { startsAt: "asc" },
-    include: { service: true, master: true, branch: true },
+    include: { service: true, staff: true, branch: true },
   });
 
   res.json(items);
 });
 
-app.post("/api/appointments", async (req, res) => {
-  const { customerName, customerPhone, startsAt, serviceId, masterId, branchId } = req.body;
+app.post("/api/appointments", getBusinessBySlug, async (req, res) => {
+  const { customerName, customerPhone, startsAt, serviceId, staffId, branchId } = req.body;
 
-  if (!customerName || !startsAt || !serviceId || !masterId) {
+  if (!customerName || !startsAt || !serviceId || !staffId) {
     return res.status(400).json({ error: "Заполните клиента, услугу, мастера и время" });
   }
 
@@ -763,7 +850,7 @@ app.post("/api/appointments", async (req, res) => {
     return res.status(400).json({ error: "Некорректная дата" });
   }
 
-  const service = await prisma.service.findUnique({ where: { id: Number(serviceId) } });
+  const service = await prisma.service.findFirst({ where: { id: Number(serviceId), businessId: req.business.id } });
   if (!service) {
     return res.status(400).json({ error: "Услуга не найдена" });
   }
@@ -771,10 +858,11 @@ app.post("/api/appointments", async (req, res) => {
   const durationMs = Number(service.duration) * 60 * 1000;
   const end = new Date(start.getTime() + durationMs);
 
-  const mid = Number(masterId);
+  const sid = Number(staffId);
   const overlap = await prisma.appointment.findFirst({
     where: {
-      masterId: mid,
+      businessId: req.business.id,
+      staffId: sid,
       AND: [{ startsAt: { lt: end } }, { endsAt: { gt: start } }],
     },
   });
@@ -784,16 +872,17 @@ app.post("/api/appointments", async (req, res) => {
 
   const item = await prisma.appointment.create({
     data: {
+      businessId: req.business.id,
       customerName: String(customerName),
       customerPhone: customerPhone ? String(customerPhone) : null,
       startsAt: start,
       endsAt: end,
       priceAtBooking: Number(service.price),
       serviceId: Number(serviceId),
-      masterId: mid,
+      staffId: sid,
       branchId: branchId ? Number(branchId) : null,
     },
-    include: { service: true, master: true, branch: true },
+    include: { service: true, staff: true, branch: true },
   });
 
   res.json(item);

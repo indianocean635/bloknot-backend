@@ -173,11 +173,31 @@
       return;
     }
 
-    const isMac = /Macintosh|Mac OS X/.test(navigator.userAgent || "");
-    const isWin = /Windows/.test(navigator.userAgent || "");
+    const ua = navigator.userAgent || "";
+    const isMac = /Macintosh|Mac OS X/.test(ua);
+    const isWin = /Windows/.test(ua);
+
+    if (isIOS()) {
+      text.innerHTML =
+        "<div style=\"display:grid; gap:8px\">" +
+        "<div><b>Добавить на экран «Домой»</b></div>" +
+        "<div>1) Открой сайт именно в <b>Safari</b> (не внутри Telegram/Instagram/ВК браузера).</div>" +
+        "<div>2) Нажми кнопку <b>Поделиться</b> (квадрат со стрелкой вверх).</div>" +
+        "<div>3) Прокрути список действий вниз и выбери <b>\"На экран «Домой»\"</b> / <b>\"Add to Home Screen\"</b>.</div>" +
+        "<div>Если пункта нет: нажми <b>\"Изменить действия\"</b> и включи \"На экран «Домой»\" (или обнови iOS).</div>" +
+        "</div>";
+      installBtn.style.display = "none";
+      modal.style.display = "flex";
+      return;
+    }
+
+    const parts = [];
 
     if (deferredInstallPrompt) {
-      text.innerHTML = "Нажми кнопку ниже, чтобы добавить кабинет на главный экран / в список приложений.";
+      parts.push(
+        "<div><b>Установить как приложение</b></div>" +
+          "<div>Нажми кнопку ниже — появится системное окно установки Bloknot.</div>"
+      );
       installBtn.style.display = "inline-flex";
       installBtn.onclick = async () => {
         try {
@@ -187,25 +207,41 @@
           await p.prompt();
         } catch (e) {}
       };
-      modal.style.display = "flex";
-      return;
-    }
-
-    if (isIOS()) {
-      text.innerHTML = "Safari: нажми «Поделиться» → «На экран «Домой»».";
+    } else {
       installBtn.style.display = "none";
-      modal.style.display = "flex";
-      return;
+      if (isWin) {
+        parts.push(
+          "<div><b>Установить как приложение (Edge/Chrome)</b></div>" +
+            "<div>Открой меню браузера → <b>Установить приложение</b> / <b>Приложения</b> → <b>Установить этот сайт как приложение</b>.</div>"
+        );
+      } else if (isMac) {
+        parts.push(
+          "<div><b>Установить как приложение (Chrome/Edge)</b></div>" +
+            "<div>Открой меню браузера → <b>Install app</b> / <b>Установить</b>.</div>"
+        );
+      }
     }
 
     if (isMac) {
-      text.innerHTML = "Нажми Cmd + D, чтобы добавить страницу в закладки браузера.";
+      parts.push("<div><b>Добавить в закладки</b></div><div>Нажми <b>Cmd + D</b>.</div>");
     } else if (isWin) {
-      text.innerHTML = "Нажми Ctrl + D, чтобы добавить страницу в закладки браузера.";
-    } else {
-      text.innerHTML = "Открой меню браузера и выбери «Добавить в закладки» или «Добавить на главный экран».";
+      parts.push("<div><b>Добавить в закладки</b></div><div>Нажми <b>Ctrl + D</b>.</div>");
     }
-    installBtn.style.display = "none";
+
+    if (isWin) {
+      parts.push(
+        "<div><b>Закрепить на панели задач</b></div>" +
+          "<div>После установки: открой приложение Bloknot → правой кнопкой по иконке на панели задач → <b>Закрепить</b>.</div>" +
+          "<div>Если не установлено: закрепить нельзя — сначала нужно установить как приложение.</div>"
+      );
+    } else if (isMac) {
+      parts.push(
+        "<div><b>Закрепить в Dock</b></div>" +
+          "<div>После установки: открой Bloknot → правой кнопкой по иконке в Dock → <b>Параметры</b> → <b>Оставить в Dock</b>.</div>"
+      );
+    }
+
+    text.innerHTML = `<div style="display:grid; gap:10px">${parts.join("")}</div>`;
     modal.style.display = "flex";
   }
 
