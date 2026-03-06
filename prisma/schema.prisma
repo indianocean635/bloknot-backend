@@ -104,6 +104,8 @@ model Master {
   createdAt  DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  appointments Appointment[]
 }
 
 model WorkPhoto {
@@ -124,6 +126,8 @@ model Branch {
   createdAt  DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  appointments Appointment[]
 }
 
 model Appointment {
