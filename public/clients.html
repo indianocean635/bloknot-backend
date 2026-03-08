@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="version" content="3">
+  <title>Клиенты - Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Cache control -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
+  <link rel="stylesheet" href="/styles.css?v=2" />
+</head>
+<body>
+
+<div id="app-header"></div>
+
+<main class="container">
+  <h1 class="page-title">Список клиентов</h1>
+  <p class="page-subtitle">Все клиенты, которые когда-либо записывались через онлайн-запись</p>
+
+  <div class="card">
+    <div class="actions" style="justify-content:space-between">
+      <div>
+        <div class="item-title">Всего клиентов</div>
+        <div class="item-meta" id="totalClients">Загрузка...</div>
+      </div>
+      <button class="btn secondary" id="exportBtn" type="button">Экспорт в CSV</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <div class="field">
+      <label for="searchInput">Поиск клиентов</label>
+      <input type="text" id="searchInput" placeholder="Введите имя или телефон для поиска...">
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <div id="clientsList">
+      <div class="loading">Загрузка клиентов...</div>
+    </div>
+  </div>
+</main>
+
+<style>
+.client-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #f9fafb;
+  transition: all 0.2s;
+}
+
+.client-card:hover {
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.client-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 8px;
+}
+
+.client-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111;
+}
+
+.client-phone {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.client-email {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.client-stats {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.no-clients {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .client-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .client-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+</style>
+
+<script src="/app.js"></script>
+<script>
+// Simple API function
+async function apiCall(url, options = {}) {
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers
+    },
+    ...options
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  
+  return response.json();
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof Bloknot !== 'undefined') {
+    Bloknot.renderHeader('clients');
+  }
+  loadClients();
+  setupEventListeners();
+});
+
+function setupEventListeners() {
+  const searchInput = document.getElementById('searchInput');
+  const exportBtn = document.getElementById('exportBtn');
+  
+  searchInput.addEventListener('input', debounce(filterClients, 300));
+  exportBtn.addEventListener('click', exportToCSV);
+}
+
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+let allClients = [];
+
+async function loadClients() {
+  try {
+    const appointments = await apiCall('/api/appointments');
+    
+    // Extract unique clients
+    const clientsMap = new Map();
+    
+    appointments.forEach(appointment => {
+      if (appointment.customerName) {
+        const key = appointment.customerName.toLowerCase();
+        if (!clientsMap.has(key)) {
+          clientsMap.set(key, {
+            name: appointment.customerName,
+            phone: appointment.customerPhone || '',
+            email: appointment.customerEmail || '',
+            firstAppointment: appointment.startsAt,
+            lastAppointment: appointment.startsAt,
+            totalAppointments: 1,
+            services: [appointment.service?.name || 'Неизвестная услуга']
+          });
+        } else {
+          const client = clientsMap.get(key);
+          client.totalAppointments++;
+          client.lastAppointment = appointment.startsAt;
+          if (appointment.service?.name && !client.services.includes(appointment.service.name)) {
+            client.services.push(appointment.service.name);
+          }
+        }
+      }
+    });
+    
+    allClients = Array.from(clientsMap.values());
+    allClients.sort((a, b) => new Date(b.lastAppointment) - new Date(a.lastAppointment));
+    
+    renderClients(allClients);
+    updateTotalCount();
+    
+  } catch (error) {
+    console.error('Error loading clients:', error);
+    document.getElementById('clientsList').innerHTML = '<div class="no-clients">Ошибка загрузки клиентов</div>';
+  }
+}
+
+function renderClients(clients) {
+  const container = document.getElementById('clientsList');
+  
+  if (clients.length === 0) {
+    container.innerHTML = '<div class="no-clients">Клиенты не найдены</div>';
+    return;
+  }
+  
+  container.innerHTML = clients.map(client => `
+    <div class="client-card">
+      <div class="client-header">
+        <div>
+          <div class="client-name">${escapeHtml(client.name)}</div>
+          ${client.phone ? `<div class="client-phone">📱 ${escapeHtml(client.phone)}</div>` : ''}
+          ${client.email ? `<div class="client-email">✉️ ${escapeHtml(client.email)}</div>` : ''}
+        </div>
+      </div>
+      <div class="client-stats">
+        <div class="stat-item">
+          <span>📅</span>
+          <span>${client.totalAppointments} запис${getAppointmentWord(client.totalAppointments)}</span>
+        </div>
+        <div class="stat-item">
+          <span>🗓️</span>
+          <span>Последняя: ${formatDate(client.lastAppointment)}</span>
+        </div>
+      </div>
+      ${client.services.length > 0 ? `
+        <div style="margin-top: 8px; font-size: 12px; color: #6b7280;">
+          <strong>Услуги:</strong> ${client.services.slice(0, 3).join(', ')}${client.services.length > 3 ? '...' : ''}
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+function filterClients() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+  
+  if (!searchTerm) {
+    renderClients(allClients);
+    return;
+  }
+  
+  const filtered = allClients.filter(client => 
+    client.name.toLowerCase().includes(searchTerm) ||
+    (client.phone && client.phone.includes(searchTerm)) ||
+    (client.email && client.email.toLowerCase().includes(searchTerm))
+  );
+  
+  renderClients(filtered);
+}
+
+function updateTotalCount() {
+  document.getElementById('totalClients').textContent = `${allClients.length} человек`;
+}
+
+function exportToCSV() {
+  if (allClients.length === 0) {
+    alert('Нет клиентов для экспорта');
+    return;
+  }
+  
+  const headers = ['Имя', 'Телефон', 'Email', 'Всего записей', 'Первая запись', 'Последняя запись', 'Услуги'];
+  const rows = allClients.map(client => [
+    client.name,
+    client.phone || '',
+    client.email || '',
+    client.totalAppointments,
+    formatDate(client.firstAppointment),
+    formatDate(client.lastAppointment),
+    client.services.join('; ')
+  ]);
+  
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+  ].join('\n');
+  
+  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', `clients_${new Date().toISOString().split('T')[0]}.csv`);
+  link.style.visibility = 'hidden';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function formatDate(dateString) {
+  if (!dateString) return '—';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}
+
+function getAppointmentWord(count) {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+  
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return 'ей';
+  }
+  
+  if (lastDigit === 1) {
+    return 'ь';
+  } else if (lastDigit >= 2 && lastDigit <= 4) {
+    return 'и';
+  } else {
+    return 'ей';
+  }
+}
+
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+</script>
+
+</body>
+</html>

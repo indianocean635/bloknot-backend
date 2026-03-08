@@ -15,18 +15,6 @@
    <p class="page-subtitle">Управляйте услугами, мастерами, фото работ и записями клиентов.</p>
 
    <div class="row two">
-     <a class="card" href="/settings.html" style="display:block">
-       <div class="item-title">Настройки</div>
-       <div class="item-meta">Управляйте филиалами, категориями, услугами, мастерами и фото работ.</div>
-       <div class="badge" style="margin-top:10px">Открыть настройки</div>
-     </a>
-
-     <a class="card" href="/calendar.html" style="display:block">
-       <div class="item-title">Календарь</div>
-       <div class="item-meta">Создавайте записи клиентов и управляйте расписанием.</div>
-       <div class="badge" style="margin-top:10px">Открыть календарь</div>
-     </a>
-
      <div class="card" style="display:block">
        <div class="item-title">Доход</div>
        <div class="item-meta">Считается по прошедшим записям за выбранный период.</div>
@@ -57,40 +45,25 @@
      </div>
 
      <div id="stats" class="row three" style="margin-top:12px">
-       <a class="item" href="/services.html" style="display:flex">
-         <div>
-           <div class="item-title">Услуги</div>
-           <div class="item-meta" id="servicesCount">—</div>
-         </div>
-       </a>
-       <a class="item" href="/categories.html" style="display:flex">
-         <div>
-           <div class="item-title">Категории</div>
-           <div class="item-meta" id="categoriesCount">—</div>
-         </div>
-       </a>
-       <a class="item" href="/masters.html" style="display:flex">
-         <div>
-           <div class="item-title">Мастера</div>
-           <div class="item-meta" id="mastersCount">—</div>
-         </div>
-       </a>
-     </div>
-
-     <div class="row two" style="margin-top:10px">
-       <a class="item" href="/works.html" style="display:flex">
-         <div>
-           <div class="item-title">Фото работ</div>
-           <div class="item-meta" id="worksCount">—</div>
-         </div>
-       </a>
-       <a class="item" href="/calendar.html" style="display:flex">
-         <div>
-           <div class="item-title">Записи сегодня</div>
-           <div class="item-meta" id="todayCount">—</div>
-         </div>
-       </a>
-     </div>
+      <a class="item" href="/masters.html" style="display:flex">
+        <div>
+          <div class="item-title">Мастера</div>
+          <div class="item-meta" id="mastersCount">—</div>
+        </div>
+      </a>
+      <a class="item" href="/calendar.html" style="display:flex">
+        <div>
+          <div class="item-title">Записи сегодня</div>
+          <div class="item-meta" id="todayCount">—</div>
+        </div>
+      </a>
+      <a class="item" href="/clients.html" style="display:flex">
+        <div>
+          <div class="item-title">Список клиентов</div>
+          <div class="item-meta" id="clientsCount">—</div>
+        </div>
+      </a>
+    </div>
 
      <div id="notice" class="notice" style="display:none; margin-top:10px"></div>
    </div>
@@ -101,7 +74,7 @@
          <div class="item-title">Ссылка на онлайн‑запись</div>
          <div class="item-meta">Эту ссылку можно вставить в Instagram, 2ГИС, Яндекс, Googl, на Сайт, Whatsupp, Telegram</div>
        </div>
-       <a class="badge" id="openBookingLink" href="/booking.html" target="_blank" rel="noopener">Открыть как клиент</a>
+       <a class="badge" id="openBookingLink" href="/book-template.html" target="_blank" rel="noopener">Открыть как клиент</a>
      </div>
 
      <div class="row two" style="margin-top:12px">
@@ -158,24 +131,8 @@
        }
      }
 
-     const servicesR = await safeCount("services", () => Bloknot.api("/api/services"));
-     const categoriesR = await safeCount("categories", () => Bloknot.api("/api/categories"));
      const mastersR = await safeCount("masters", () => Bloknot.api("/api/masters"));
-     const worksR = await safeCount("works", () => Bloknot.api("/api/works"));
-
-     if (servicesR.ok) Bloknot.qs("#servicesCount").textContent = servicesR.items.length + " шт";
-     if (categoriesR.ok) Bloknot.qs("#categoriesCount").textContent = categoriesR.items.length + " шт";
      if (mastersR.ok) Bloknot.qs("#mastersCount").textContent = mastersR.items.length + " шт";
-     if (worksR.ok) Bloknot.qs("#worksCount").textContent = worksR.items.length + " фото";
-
-     const missing = [];
-     if (!servicesR.ok) missing.push("услуги");
-     if (!categoriesR.ok) missing.push("категории");
-     if (!mastersR.ok) missing.push("мастера");
-     if (!worksR.ok) missing.push("фото работ");
-     if (missing.length) {
-       showNotice("Не удалось загрузить: " + missing.join(", ") + ". Проверьте, что backend перезапущен и миграции применены.");
-     }
 
      const now = new Date();
      const { from, to } = dayBoundsIso(now);
@@ -183,8 +140,20 @@
      try {
        const today = await Bloknot.api("/api/appointments?" + new URLSearchParams({ from, to }).toString());
        Bloknot.qs("#todayCount").textContent = today.length + " шт";
+       
+       const uniqueClients = new Set(today.map(a => a.customerName).filter(name => name));
+       Bloknot.qs("#clientsCount").textContent = uniqueClients.size + " чел";
      } catch (e) {
        Bloknot.qs("#todayCount").textContent = "—";
+       Bloknot.qs("#clientsCount").textContent = "—";
+     }
+
+     try {
+       const allAppointments = await Bloknot.api("/api/appointments");
+       const allUniqueClients = new Set(allAppointments.map(a => a.customerName).filter(name => name));
+       Bloknot.qs("#clientsCount").textContent = allUniqueClients.size + " чел";
+     } catch (e) {
+       // Keep today's count if all appointments fail
      }
    }
 
@@ -242,7 +211,7 @@
    });
 
    (function initBookingLink() {
-     const link = String(location.origin || "").replace(/\/$/, "") + "/booking.html";
+     const link = String(location.origin || "").replace(/\/$/, "") + "/book-template.html";
      const input = Bloknot.qs("#bookingLink");
      const isSubscribed = localStorage.getItem("bloknot_subscription_active") === "1";
 
