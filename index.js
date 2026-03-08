@@ -524,6 +524,45 @@ app.get("/api/business/slug", requireAuth, async (req, res) => {
   res.json({ slug: user.business.slug });
 });
 
+// Получить информацию о бизнесе (для владельца)
+app.get("/api/business", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ 
+    where: { id: req.user.id },
+    include: { business: true }
+  });
+  
+  if (!user || !user.business) {
+    return res.status(404).json({ error: "Business not found" });
+  }
+  
+  res.json({ name: user.business.name });
+});
+
+// Обновить название компании
+app.patch("/api/business/name", requireAuth, async (req, res) => {
+  const { name } = req.body;
+  
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: "Название обязательно" });
+  }
+  
+  const user = await prisma.user.findUnique({ 
+    where: { id: req.user.id },
+    include: { business: true }
+  });
+  
+  if (!user || !user.business) {
+    return res.status(404).json({ error: "Business not found" });
+  }
+  
+  const business = await prisma.business.update({
+    where: { id: user.business.id },
+    data: { name: name.trim() }
+  });
+  
+  res.json({ name: business.name });
+});
+
 app.get("/admin", requireSuperAdmin, async (req, res) => {
   res.sendFile(path.join(FRONTEND_PATH, "admin.html"));
 });
@@ -769,25 +808,14 @@ app.get("/api/public/business", getBusinessBySlug, async (req, res) => {
     }
   });
   
-  // Try to get business logo from work photos where it's marked as logo
-  const logo = await prisma.workPhoto.findFirst({
-    where: { 
-      businessId: req.business.id,
-      isLogo: true 
-    },
-    select: {
-      imageUrl: true
-    }
-  });
-  
   const result = {
     name: business.name,
     address: business.branches[0]?.address || null,
     phone: business.branches[0]?.phone || null,
-    logo: logo?.imageUrl || null
+    logo: null // Temporarily disabled
   };
   
-  console.log('Business data with logo:', result);
+  console.log('Business data:', result);
   res.json(result);
 });
 
@@ -960,7 +988,6 @@ app.get("/api/works", requireAuth, async (req, res) => {
       id: true,
       imageUrl: true,
       caption: true,
-      isLogo: true,
       createdAt: true
     }
   });
@@ -971,7 +998,6 @@ app.get("/api/works", requireAuth, async (req, res) => {
     url: photo.imageUrl,
     description: photo.caption,
     type: photo.imageUrl.toLowerCase().includes('.mp4') || photo.imageUrl.toLowerCase().includes('.mov') ? 'video' : 'image',
-    isLogo: photo.isLogo,
     createdAt: photo.createdAt
   }));
   
@@ -982,10 +1008,7 @@ app.get("/api/works", requireAuth, async (req, res) => {
 app.get("/api/public/works", getBusinessBySlug, async (req, res) => {
   console.log('Public works API called for business:', req.business.id);
   const works = await prisma.workPhoto.findMany({
-    where: { 
-      businessId: req.business.id,
-      isLogo: false  // Exclude logo from works gallery
-    },
+    where: { businessId: req.business.id },
     orderBy: { id: "desc" },
     select: {
       id: true,
@@ -1020,24 +1043,11 @@ app.post("/api/works", worksUpload.single("image"), requireAuth, async (req, res
 
   const imageUrl = `/uploads/works/${req.file.filename}`;
   const caption = req.body && req.body.caption ? String(req.body.caption) : null;
-  const isLogo = req.body && req.body.isLogo === 'true';
-
-  // If this is a logo, first remove any existing logo
-  if (isLogo) {
-    await prisma.workPhoto.updateMany({
-      where: { 
-        businessId: user.businessId,
-        isLogo: true 
-      },
-      data: { isLogo: false }
-    });
-  }
 
   const photo = await prisma.workPhoto.create({
     data: {
       imageUrl,
       caption,
-      isLogo,
       businessId: user.businessId,
     },
   });

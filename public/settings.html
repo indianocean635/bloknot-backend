@@ -21,6 +21,17 @@
   <h1 class="page-title">Настройки бизнеса</h1>
   <p class="page-subtitle">Управляйте филиалами, категориями, услугами, мастерами и фото работ</p>
 
+  <!-- Название компании -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>🏢 Название компании</h2>
+    </div>
+    
+    <div class="company-name-container" id="companyNameContainer">
+      <div class="loading">Загрузка...</div>
+    </div>
+  </section>
+
   <!-- Логотип компании -->
   <section class="settings-section">
     <div class="section-header">
@@ -135,6 +146,41 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
+}
+
+.company-name-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.company-name-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.company-name-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.company-name-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.company-name-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .logo-container {
@@ -415,36 +461,48 @@ async function apiCall(url, options = {}) {
       } else {
         result = await Bloknot.api(url);
       }
-      console.log('API Success:', result);
+      console.log('Bloknot.api Success:', result);
       return result;
     } catch (e) {
       console.error('Bloknot.api error:', e);
-      throw e;
+      console.log('Falling back to fetch');
+      // Continue to fallback
     }
+  } else {
+    console.log('Bloknot.api not available, using fetch');
   }
   
   // Fallback to fetch
-  console.log('Using fallback fetch');
-  const response = await fetch(url, {
-    headers: options.body instanceof FormData ? {} : {
-      'Content-Type': 'application/json',
-      ...options.headers
-    },
-    ...options
-  });
-  
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
+  try {
+    const response = await fetch(url, {
+      headers: options.body instanceof FormData ? {} : {
+        'Content-Type': 'application/json',
+        ...options.headers
+      },
+      ...options
+    });
+    
+    console.log('Fetch response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Fetch error response:', errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log('Fetch Success:', result);
+    return result;
+  } catch (e) {
+    console.error('Fetch error:', e);
+    throw e;
   }
-  
-  const result = await response.json();
-  console.log('Fetch Success:', result);
-  return result;
 }
 
 // Загрузка всех данных
 async function loadAllData() {
   await Promise.all([
+    loadCompanyName(),
     loadLogo(),
     loadBranches(),
     loadCategories(),
@@ -471,36 +529,62 @@ function setupEventListeners() {
   });
 }
 
+// Название компании
+async function loadCompanyName() {
+  try {
+    const business = await apiCall('/api/business');
+    
+    const container = document.getElementById('companyNameContainer');
+    
+    container.innerHTML = `
+      <div class="company-name-item">
+        <input type="text" id="companyNameInput" class="company-name-input" value="${business.name || ''}" placeholder="Введите название компании">
+        <div class="company-name-actions">
+          <button class="btn" onclick="saveCompanyName()">Сохранить</button>
+        </div>
+      </div>
+    `;
+  } catch (error) {
+    console.error('Error loading company name:', error);
+    document.getElementById('companyNameContainer').innerHTML = '<div class="error">Ошибка загрузки названия компании</div>';
+  }
+}
+
+async function saveCompanyName() {
+  const nameInput = document.getElementById('companyNameInput');
+  const name = nameInput.value.trim();
+  
+  if (!name) {
+    alert('Введите название компании');
+    return;
+  }
+  
+  try {
+    await apiCall('/api/business/name', {
+      method: 'PATCH',
+      body: JSON.stringify({ name })
+    });
+    
+    alert('Название компании сохранено');
+  } catch (error) {
+    console.error('Error saving company name:', error);
+    alert('Ошибка сохранения названия компании: ' + error.message);
+  }
+}
+
 // Логотип
 async function loadLogo() {
   try {
-    const works = await apiCall('/api/works');
-    const logo = works.find(work => work.isLogo);
-    
     const container = document.getElementById('logoContainer');
     
-    if (logo) {
-      container.innerHTML = `
-        <div class="logo-item">
-          <img src="${logo.url}" alt="Логотип" class="logo-preview">
-          <div class="logo-info">
-            <div class="logo-name">Логотип компании</div>
-            <div class="logo-meta">Отображается в странице онлайн-записи</div>
-          </div>
-          <div class="logo-actions">
-            <button class="btn secondary" onclick="deleteLogo(${logo.id})">Удалить</button>
-          </div>
-        </div>
-      `;
-    } else {
-      container.innerHTML = `
-        <div style="text-align: center; padding: 40px; color: #6b7280; border: 2px dashed #e5e7eb; border-radius: 12px;">
-          <div style="font-size: 48px; margin-bottom: 16px;">🏢</div>
-          <div>Логотип еще не загружен</div>
-          <div style="font-size: 14px; margin-top: 8px;">Загрузите логотип, который будет отображаться в странице онлайн-записи</div>
-        </div>
-      `;
-    }
+    // Temporarily disabled until migration is applied
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #6b7280; border: 2px dashed #e5e7eb; border-radius: 12px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">🏢</div>
+        <div>Функция логотипа временно отключена</div>
+        <div style="font-size: 14px; margin-top: 8px;">Будет доступна после обновления базы данных</div>
+      </div>
+    `;
   } catch (error) {
     console.error('Error loading logo:', error);
     document.getElementById('logoContainer').innerHTML = '<div class="error">Ошибка загрузки логотипа</div>';
@@ -508,68 +592,16 @@ async function loadLogo() {
 }
 
 function openLogoModal() {
-  const modalBody = document.getElementById('modalBody');
-  modalBody.innerHTML = `
-    <form id="logoForm">
-      <div class="form-group">
-        <label for="logoImage">Логотип компании</label>
-        <input type="file" id="logoImage" accept="image/*" required>
-        <small style="color: #6b7280; display: block; margin-top: 4px;">
-          Рекомендуемый размер: 200x200px. Форматы: JPG, PNG, SVG
-        </small>
-      </div>
-      <div class="form-actions">
-        <button type="button" class="btn secondary" onclick="closeModal()">Отмена</button>
-        <button type="submit" class="btn">Загрузить</button>
-      </div>
-    </form>
-  `;
-  
-  document.getElementById('modalTitle').textContent = 'Загрузить логотип';
-  document.getElementById('modal').style.display = 'flex';
-  
-  document.getElementById('logoForm').addEventListener('submit', handleLogoSubmit);
+  alert('Функция логотипа временно отключена. Пожалуйста, обновите базу данных.');
 }
 
 async function handleLogoSubmit(e) {
   e.preventDefault();
-  
-  const fileInput = document.getElementById('logoImage');
-  const file = fileInput.files[0];
-  
-  if (!file) {
-    alert('Выберите файл');
-    return;
-  }
-  
-  const formData = new FormData();
-  formData.append('image', file);
-  formData.append('isLogo', 'true');
-  
-  try {
-    await apiCall('/api/works', {
-      method: 'POST',
-      body: formData
-    });
-    
-    closeModal();
-    loadLogo();
-  } catch (error) {
-    console.error('Error uploading logo:', error);
-    alert('Ошибка загрузки логотипа: ' + error.message);
-  }
+  alert('Функция логотипа временно отключена. Пожалуйста, обновите базу данных.');
 }
 
 async function deleteLogo(id) {
-  if (!confirm('Удалить логотип?')) return;
-  
-  try {
-    await apiCall(`/api/works/${id}`, { method: 'DELETE' });
-    loadLogo();
-  } catch (error) {
-    console.error('Error deleting logo:', error);
-    alert('Ошибка удаления логотипа');
-  }
+  alert('Функция логотипа временно отключена. Пожалуйста, обновите базу данных.');
 }
 
 // Филиалы
@@ -625,12 +657,14 @@ function openBranchModal(id = null) {
   
   if (id) {
     // Загрузить данные филиала для редактирования
-    fetch(`/api/branches`).then(r => r.json()).then(branches => {
+    apiCall('/api/branches').then(branches => {
       const branch = branches.find(b => b.id === id);
       if (branch) {
         document.getElementById('branchName').value = branch.name;
         document.getElementById('branchAddress').value = branch.address || '';
       }
+    }).catch(err => {
+      console.error('Error loading branch for edit:', err);
     });
   }
   
@@ -797,12 +831,12 @@ function renderServices(services) {
 }
 
 async function openServiceModal(id = null) {
-  const categories = await fetch('/api/categories').then(r => r.json());
+  const categories = await apiCall('/api/categories');
   const title = id ? 'Редактировать услугу' : 'Добавить услугу';
   
   let service = null;
   if (id) {
-    const services = await fetch('/api/services').then(r => r.json());
+    const services = await apiCall('/api/services');
     service = services.find(s => s.id === id);
   }
   
@@ -923,7 +957,7 @@ async function openMasterModal(id = null) {
   
   let master = null;
   if (id) {
-    const masters = await fetch('/api/masters').then(r => r.json());
+    const masters = await apiCall('/api/masters');
     master = masters.find(m => m.id === id);
   }
   
