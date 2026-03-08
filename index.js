@@ -304,6 +304,7 @@ const PUBLIC_API = new Set([
   "GET /api/public/categories",
   "GET /api/public/works",
   "GET /api/public/branches",
+  "GET /api/public/business",
   "POST /api/public/appointments",
 ]);
 
@@ -497,7 +498,7 @@ app.get("/booking-link", requireAuth, (req, res) => {
 });
 
 app.get("/book-template/:slug", (req, res) => {
-  res.sendFile(path.join(FRONTEND_PATH, "book-template.html"));
+  res.sendFile(path.join(FRONTEND_PATH, "booking-form.html"));
 });
 
 // Получить slug бизнеса для владельца
@@ -735,6 +736,33 @@ app.get("/api/public/branches", getBusinessBySlug, async (req, res) => {
     orderBy: { id: "asc" },
   });
   res.json(branches);
+});
+
+// Получить информацию о бизнесе (публичная)
+app.get("/api/public/business", getBusinessBySlug, async (req, res) => {
+  const business = await prisma.business.findUnique({
+    where: { id: req.business.id },
+    select: {
+      name: true
+    },
+    include: {
+      branches: {
+        take: 1,
+        select: {
+          address: true,
+          phone: true
+        }
+      }
+    }
+  });
+  
+  const result = {
+    name: business.name,
+    address: business.branches[0]?.address || null,
+    phone: business.branches[0]?.phone || null
+  };
+  
+  res.json(result);
 });
 
 // Создать услугу (защищенный)
