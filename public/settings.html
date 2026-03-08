@@ -21,6 +21,18 @@
   <h1 class="page-title">Настройки бизнеса</h1>
   <p class="page-subtitle">Управляйте филиалами, категориями, услугами, мастерами и фото работ</p>
 
+  <!-- Логотип компании -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>🏢 Логотип компании</h2>
+      <button class="btn" id="addLogoBtn">+ Загрузить логотип</button>
+    </div>
+    
+    <div class="logo-container" id="logoContainer">
+      <div class="loading">Загрузка...</div>
+    </div>
+  </section>
+
   <!-- Филиалы -->
   <section class="settings-section">
     <div class="section-header">
@@ -121,8 +133,51 @@
 
 .items-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
+}
+
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.logo-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.logo-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+}
+
+.logo-info {
+  flex: 1;
+}
+
+.logo-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.logo-meta {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.logo-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .item-card {
@@ -390,6 +445,7 @@ async function apiCall(url, options = {}) {
 // Загрузка всех данных
 async function loadAllData() {
   await Promise.all([
+    loadLogo(),
     loadBranches(),
     loadCategories(),
     loadServices(),
@@ -401,6 +457,7 @@ async function loadAllData() {
 // Настройка обработчиков событий
 function setupEventListeners() {
   // Кнопки добавления
+  document.getElementById('addLogoBtn').addEventListener('click', () => openLogoModal());
   document.getElementById('addBranchBtn').addEventListener('click', () => openBranchModal());
   document.getElementById('addCategoryBtn').addEventListener('click', () => openCategoryModal());
   document.getElementById('addServiceBtn').addEventListener('click', () => openServiceModal());
@@ -412,6 +469,107 @@ function setupEventListeners() {
   document.getElementById('modal').addEventListener('click', (e) => {
     if (e.target.id === 'modal') closeModal();
   });
+}
+
+// Логотип
+async function loadLogo() {
+  try {
+    const works = await apiCall('/api/works');
+    const logo = works.find(work => work.isLogo);
+    
+    const container = document.getElementById('logoContainer');
+    
+    if (logo) {
+      container.innerHTML = `
+        <div class="logo-item">
+          <img src="${logo.url}" alt="Логотип" class="logo-preview">
+          <div class="logo-info">
+            <div class="logo-name">Логотип компании</div>
+            <div class="logo-meta">Отображается в странице онлайн-записи</div>
+          </div>
+          <div class="logo-actions">
+            <button class="btn secondary" onclick="deleteLogo(${logo.id})">Удалить</button>
+          </div>
+        </div>
+      `;
+    } else {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #6b7280; border: 2px dashed #e5e7eb; border-radius: 12px;">
+          <div style="font-size: 48px; margin-bottom: 16px;">🏢</div>
+          <div>Логотип еще не загружен</div>
+          <div style="font-size: 14px; margin-top: 8px;">Загрузите логотип, который будет отображаться в странице онлайн-записи</div>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Error loading logo:', error);
+    document.getElementById('logoContainer').innerHTML = '<div class="error">Ошибка загрузки логотипа</div>';
+  }
+}
+
+function openLogoModal() {
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <form id="logoForm">
+      <div class="form-group">
+        <label for="logoImage">Логотип компании</label>
+        <input type="file" id="logoImage" accept="image/*" required>
+        <small style="color: #6b7280; display: block; margin-top: 4px;">
+          Рекомендуемый размер: 200x200px. Форматы: JPG, PNG, SVG
+        </small>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Отмена</button>
+        <button type="submit" class="btn">Загрузить</button>
+      </div>
+    </form>
+  `;
+  
+  document.getElementById('modalTitle').textContent = 'Загрузить логотип';
+  document.getElementById('modal').style.display = 'flex';
+  
+  document.getElementById('logoForm').addEventListener('submit', handleLogoSubmit);
+}
+
+async function handleLogoSubmit(e) {
+  e.preventDefault();
+  
+  const fileInput = document.getElementById('logoImage');
+  const file = fileInput.files[0];
+  
+  if (!file) {
+    alert('Выберите файл');
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('isLogo', 'true');
+  
+  try {
+    await apiCall('/api/works', {
+      method: 'POST',
+      body: formData
+    });
+    
+    closeModal();
+    loadLogo();
+  } catch (error) {
+    console.error('Error uploading logo:', error);
+    alert('Ошибка загрузки логотипа: ' + error.message);
+  }
+}
+
+async function deleteLogo(id) {
+  if (!confirm('Удалить логотип?')) return;
+  
+  try {
+    await apiCall(`/api/works/${id}`, { method: 'DELETE' });
+    loadLogo();
+  } catch (error) {
+    console.error('Error deleting logo:', error);
+    alert('Ошибка удаления логотипа');
+  }
 }
 
 // Филиалы

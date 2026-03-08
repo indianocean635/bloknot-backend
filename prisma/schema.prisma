@@ -114,6 +114,7 @@ model WorkPhoto {
   id         Int      @id @default(autoincrement())
   imageUrl   String
   caption    String?
+  isLogo     Boolean  @default(false)
   businessId String
   createdAt  DateTime @default(now())
 

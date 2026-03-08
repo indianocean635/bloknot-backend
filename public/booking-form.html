@@ -17,15 +17,18 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background: #ffffff;
-      color: #111;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
       line-height: 1.4;
     }
 
     /* HEADER */
     .header {
       width: 100%;
-      border-bottom: 1px solid #eee;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .header-inner {
@@ -43,143 +46,271 @@
       display: block;
     }
 
-    /* MAIN CONTENT */
-    .main-content {
-      max-width: 600px;
+    .business-logo {
+      height: 48px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+
+    /* MAIN CONTAINER */
+    .booking-container {
+      max-width: 800px;
       margin: 40px auto;
       padding: 0 24px;
     }
 
+    .booking-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
     .booking-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 32px;
       text-align: center;
-      margin-bottom: 32px;
+      position: relative;
     }
 
-    .booking-header h1 {
-      font-size: 32px;
+    .business-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .business-name {
+      font-size: 28px;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin: 0;
     }
 
-    .booking-header p {
-      font-size: 18px;
-      color: #6b7280;
-    }
-
-    /* FORM STYLES */
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: #374151;
-    }
-
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 12px 16px;
-      border: 2px solid #e5e7eb;
-      border-radius: 8px;
+    .business-meta {
       font-size: 16px;
-      transition: border-color 0.2s;
+      opacity: 0.9;
+      margin: 0;
     }
 
-    .form-group input:focus,
-    .form-group select:focus {
+    /* STEPS */
+    .steps-container {
+      padding: 32px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 32px;
+      position: relative;
+    }
+
+    .step-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .step-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .icon-branch { background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%); }
+    .icon-name { background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); }
+    .icon-phone { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .icon-service { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .icon-master { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .icon-datetime { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .icon-email { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .step-input {
+      width: 100%;
+      padding: 16px 20px;
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .step-input:focus {
       outline: none;
-      border-color: #3b82f6;
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      transform: translateY(-2px);
+    }
+
+    /* WORKS SECTION */
+    .works-section {
+      padding: 0 32px 32px;
+    }
+
+    .works-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .works-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .work-item {
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 1;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .work-item:hover {
+      transform: scale(1.05);
+    }
+
+    .work-item img, .work-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* SUBMIT BUTTON */
+    .submit-section {
+      padding: 0 32px 32px;
     }
 
     .btn-submit {
       width: 100%;
-      background: #3b82f6;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
-      padding: 14px 20px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
+      padding: 20px;
+      border-radius: 16px;
+      font-size: 18px;
+      font-weight: 700;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
     }
 
     .btn-submit:hover {
-      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
     }
 
     .btn-submit:disabled {
       background: #9ca3af;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* SUCCESS STATE */
+    .success-container {
+      text-align: center;
+      padding: 60px 32px;
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 24px rgba(67, 233, 123, 0.3);
+    }
+
+    .success-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 16px;
+    }
+
+    .success-details {
+      font-size: 16px;
+      color: #666;
+      line-height: 1.6;
     }
 
     .error {
       text-align: center;
-      padding: 40px;
+      padding: 60px 32px;
       color: #dc2626;
       font-size: 18px;
     }
 
     .loading {
       text-align: center;
-      padding: 40px;
+      padding: 60px 32px;
       color: #6b7280;
       font-size: 18px;
     }
 
-    .success {
-      text-align: center;
-      padding: 40px;
-      background: #f0fdf4;
-      border: 2px solid #22c55e;
-      border-radius: 8px;
-    }
-
-    .success h2 {
-      color: #16a34a;
-      margin-bottom: 16px;
-    }
-
-    .success p {
-      color: #15803d;
-      margin-bottom: 8px;
-    }
-
-    .business-info {
-      background: #f8fafc;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 24px;
-      border: 1px solid #e2e8f0;
-    }
-
-    .business-name {
-      font-size: 20px;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 8px;
-    }
-
-    .business-meta {
-      color: #6b7280;
-      font-size: 14px;
-    }
-
     @media (max-width: 768px) {
-      .main-content {
-        margin: 24px auto;
+      .booking-container {
+        margin: 20px auto;
         padding: 0 16px;
       }
 
-      .booking-header h1 {
-        font-size: 28px;
+      .booking-card {
+        border-radius: 20px;
       }
 
-      .booking-header p {
-        font-size: 16px;
+      .booking-header {
+        padding: 24px;
+      }
+
+      .business-name {
+        font-size: 24px;
+      }
+
+      .steps-container {
+        padding: 24px;
+      }
+
+      .step-item {
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .step-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+      }
+
+      .works-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       }
     }
   </style>
@@ -191,23 +322,27 @@
       <div class="logo">
         <img src="/logo-wordmark.svg" alt="Bloknot">
       </div>
+      <div id="business-logo-container" style="display: none;">
+        <img id="business-logo" class="business-logo" src="" alt="">
+      </div>
     </div>
   </header>
 
   <!-- MAIN CONTENT -->
-  <main class="main-content">
-    <div class="booking-header">
-      <h1>Онлайн-запись</h1>
-      <p>Выберите услугу, мастера и удобное время</p>
-    </div>
+  <main class="booking-container">
+    <div class="booking-card">
+      <div class="booking-header">
+        <div class="business-info">
+          <div>
+            <h1 class="business-name" id="business-name">Загрузка...</h1>
+            <p class="business-meta" id="business-meta">Загрузка...</p>
+          </div>
+        </div>
+      </div>
 
-    <div id="business-info" class="business-info" style="display: none;">
-      <div class="business-name" id="business-name">Загрузка...</div>
-      <div class="business-meta" id="business-meta">Загрузка...</div>
-    </div>
-
-    <div id="booking-content">
-      <div class="loading">Загрузка данных...</div>
+      <div id="booking-content">
+        <div class="loading">Загрузка данных...</div>
+      </div>
     </div>
   </main>
 
@@ -237,16 +372,21 @@
         if (businessResponse.ok) {
           const business = await businessResponse.json();
           console.log('Business data:', business);
-          document.getElementById('business-info').style.display = 'block';
           document.getElementById('business-name').textContent = business.name;
           document.getElementById('business-meta').textContent = business.address || 'Онлайн-запись доступна';
+          
+          // Load business logo if exists
+          if (business.logo) {
+            document.getElementById('business-logo').src = business.logo;
+            document.getElementById('business-logo-container').style.display = 'block';
+          }
         } else {
           const errorText = await businessResponse.text();
           console.error('Business API error:', businessResponse.status, errorText);
         }
 
-        // Load branches, services and masters
-        console.log('Loading branches, services, masters...');
+        // Load branches, services, masters and works
+        console.log('Loading branches, services, masters, works...');
         
         const loadBranches = fetch(`/api/public/branches?slug=${slug}`)
           .then(r => {
@@ -281,26 +421,40 @@
             return []; // Return empty array on error
           });
 
-        const [branches, services, masters] = await Promise.all([
+        const loadWorks = fetch(`/api/public/works?slug=${slug}`)
+          .then(r => {
+            console.log('Works response status:', r.status);
+            if (!r.ok) throw new Error(`Works API error: ${r.status}`);
+            return r.json();
+          })
+          .catch(err => {
+            console.error('Works error:', err);
+            return []; // Return empty array on error
+          });
+
+        const [branches, services, masters, works] = await Promise.all([
           loadBranches,
           loadServices,
-          loadMasters
+          loadMasters,
+          loadWorks
         ]);
 
-        console.log('Loaded data:', { branches, services, masters });
+        console.log('Loaded data:', { branches, services, masters, works });
 
         // Validate data more flexibly
         const branchesValid = Array.isArray(branches);
         const servicesValid = Array.isArray(services);
         const mastersValid = Array.isArray(masters);
+        const worksValid = Array.isArray(works);
         
-        console.log('Data validation:', { branchesValid, servicesValid, mastersValid });
+        console.log('Data validation:', { branchesValid, servicesValid, mastersValid, worksValid });
 
-        if (!branchesValid || !servicesValid || !mastersValid) {
+        if (!branchesValid || !servicesValid || !mastersValid || !worksValid) {
           console.error('Invalid data format:', {
             branches: typeof branches,
             services: typeof services,
-            masters: typeof masters
+            masters: typeof masters,
+            works: typeof works
           });
           document.getElementById('booking-content').innerHTML = `
             <div class="error">
@@ -310,6 +464,7 @@
                 ${!branchesValid ? '<li>Филиалы: ошибка загрузки</li>' : ''}
                 ${!servicesValid ? '<li>Услуги: ошибка загрузки</li>' : ''}
                 ${!mastersValid ? '<li>Мастера: ошибка загрузки</li>' : ''}
+                ${!worksValid ? '<li>Работы: ошибка загрузки</li>' : ''}
               </ul>
             </div>
           `;
@@ -328,80 +483,116 @@
           return;
         }
 
-        renderBookingForm(branches, services, masters);
+        renderBookingForm(branches, services, masters, works);
       } catch (error) {
         console.error('Error loading booking data:', error);
         document.getElementById('booking-content').innerHTML = '<div class="error">Не удалось загрузить форму записи. Ошибка: ' + error.message + '</div>';
       }
     }
 
-    function renderBookingForm(branches, services, masters) {
+    function renderBookingForm(branches, services, masters, works) {
       const hasBranches = branches && branches.length > 0;
       
       const formHtml = `
-        <form id="booking-form">
+        <div class="steps-container">
           ${hasBranches ? `
-          <div class="form-group">
-            <label for="branch">Филиал</label>
-            <select id="branch" required>
-              <option value="">Выберите филиал</option>
-              ${branches.map(branch => `
-                <option value="${branch.id}">${branch.name} ${branch.address ? `- ${branch.address}` : ''}</option>
-              `).join('')}
-            </select>
+          <div class="step-item">
+            <div class="step-icon icon-branch">📍</div>
+            <div class="step-content">
+              <div class="step-label">Филиал</div>
+              <select id="branch" class="step-input" required>
+                <option value="">Выберите филиал</option>
+                ${branches.map(branch => `
+                  <option value="${branch.id}">${branch.name} ${branch.address ? `- ${branch.address}` : ''}</option>
+                `).join('')}
+              </select>
+            </div>
           </div>
           ` : ''}
           
-          <div class="form-group">
-            <label for="customer-name">Ваше имя</label>
-            <input type="text" id="customer-name" required placeholder="Как к вам обращаться?">
+          <div class="step-item">
+            <div class="step-icon icon-name">👤</div>
+            <div class="step-content">
+              <div class="step-label">Ваше имя</div>
+              <input type="text" id="customer-name" class="step-input" required placeholder="Как к вам обращаться?">
+            </div>
           </div>
           
-          <div class="form-group">
-            <label for="customer-phone">Телефон</label>
-            <input type="tel" id="customer-phone" required placeholder="+7 (999) 123-45-67">
+          <div class="step-item">
+            <div class="step-icon icon-phone">📱</div>
+            <div class="step-content">
+              <div class="step-label">Телефон</div>
+              <input type="tel" id="customer-phone" class="step-input" required placeholder="+7 (999) 123-45-67">
+            </div>
           </div>
           
-          <div class="form-group">
-            <label for="service">Услуга</label>
-            <select id="service" required>
-              <option value="">Выберите услугу</option>
-              ${services.map(service => `
-                <option value="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
-                  ${service.name} - ${service.price}₽ (${service.duration} мин)
-                </option>
-              `).join('')}
-            </select>
+          <div class="step-item">
+            <div class="step-icon icon-service">💇</div>
+            <div class="step-content">
+              <div class="step-label">Услуга</div>
+              <select id="service" class="step-input" required>
+                <option value="">Выберите услугу</option>
+                ${services.map(service => `
+                  <option value="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
+                    ${service.name} - ${service.price}₽ (${service.duration} мин)
+                  </option>
+                `).join('')}
+              </select>
+            </div>
           </div>
           
-          <div class="form-group">
-            <label for="master">Мастер</label>
-            <select id="master" required>
-              <option value="">Выберите мастера</option>
-              ${masters.map(master => `
-                <option value="${master.id}">${master.name}</option>
-              `).join('')}
-            </select>
+          <div class="step-item">
+            <div class="step-icon icon-master">✂️</div>
+            <div class="step-content">
+              <div class="step-label">Мастер</div>
+              <select id="master" class="step-input" required>
+                <option value="">Выберите мастера</option>
+                ${masters.map(master => `
+                  <option value="${master.id}">${master.name}</option>
+                `).join('')}
+              </select>
+            </div>
           </div>
           
-          <div class="form-group">
-            <label for="datetime">Дата и время</label>
-            <input type="datetime-local" id="datetime" required>
+          <div class="step-item">
+            <div class="step-icon icon-datetime">📅</div>
+            <div class="step-content">
+              <div class="step-label">Дата и время</div>
+              <input type="datetime-local" id="datetime" class="step-input" required>
+            </div>
           </div>
           
-          <div class="form-group">
-            <label for="customer-email">Email (необязательно)</label>
-            <input type="email" id="customer-email" placeholder="email@example.com">
+          <div class="step-item">
+            <div class="step-icon icon-email">📧</div>
+            <div class="step-content">
+              <div class="step-label">Email (необязательно)</div>
+              <input type="email" id="customer-email" class="step-input" placeholder="email@example.com">
+            </div>
           </div>
-          
-          <button type="submit" class="btn-submit">Записаться</button>
-        </form>
+        </div>
+        
+        ${works.length > 0 ? `
+        <div class="works-section">
+          <h3 class="works-title">Наши работы</h3>
+          <div class="works-grid">
+            ${works.map(work => `
+              <div class="work-item">
+                ${work.type === 'video' ? 
+                  `<video controls><source src="${work.url}" type="video/mp4"></video>` :
+                  `<img src="${work.url}" alt="${work.description || 'Работа'}">`
+                }
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
+        
+        <div class="submit-section">
+          <button type="submit" class="btn-submit" onclick="handleBookingSubmit(event)">Записаться</button>
+        </div>
       `;
       
       document.getElementById('booking-content').innerHTML = formHtml;
-      
-      // Add form submit handler
-      document.getElementById('booking-form').addEventListener('submit', handleBookingSubmit);
       
       // Set minimum datetime to now
       const now = new Date();
@@ -437,12 +628,15 @@
 
         if (response.ok) {
           document.getElementById('booking-content').innerHTML = `
-            <div class="success">
-              <h2>✅ Запись успешно создана!</h2>
-              <p>Мы свяжемся с вами для подтверждения записи.</p>
-              <p><strong>${formData.customerName}</strong></p>
-              <p>📱 ${formData.customerPhone}</p>
-              <p>🗓️ ${new Date(formData.startsAt).toLocaleString('ru-RU')}</p>
+            <div class="success-container">
+              <div class="success-icon">✓</div>
+              <h2 class="success-title">✅ Запись успешно создана!</h2>
+              <div class="success-details">
+                <p>Мы свяжемся с вами для подтверждения записи.</p>
+                <p><strong>${formData.customerName}</strong></p>
+                <p>📱 ${formData.customerPhone}</p>
+                <p>🗓️ ${new Date(formData.startsAt).toLocaleString('ru-RU')}</p>
+              </div>
             </div>
           `;
         } else {

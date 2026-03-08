@@ -769,12 +769,25 @@ app.get("/api/public/business", getBusinessBySlug, async (req, res) => {
     }
   });
   
+  // Try to get business logo from work photos where it's marked as logo
+  const logo = await prisma.workPhoto.findFirst({
+    where: { 
+      businessId: req.business.id,
+      isLogo: true 
+    },
+    select: {
+      imageUrl: true
+    }
+  });
+  
   const result = {
     name: business.name,
     address: business.branches[0]?.address || null,
-    phone: business.branches[0]?.phone || null
+    phone: business.branches[0]?.phone || null,
+    logo: logo?.imageUrl || null
   };
   
+  console.log('Business data with logo:', result);
   res.json(result);
 });
 
@@ -943,17 +956,56 @@ app.get("/api/works", requireAuth, async (req, res) => {
   const photos = await prisma.workPhoto.findMany({
     where: { businessId: user.businessId },
     orderBy: { id: "desc" },
+    select: {
+      id: true,
+      imageUrl: true,
+      caption: true,
+      isLogo: true,
+      createdAt: true
+    }
   });
-  res.json(photos);
+  
+  // Transform to match expected format
+  const transformedPhotos = photos.map(photo => ({
+    id: photo.id,
+    url: photo.imageUrl,
+    description: photo.caption,
+    type: photo.imageUrl.toLowerCase().includes('.mp4') || photo.imageUrl.toLowerCase().includes('.mov') ? 'video' : 'image',
+    isLogo: photo.isLogo,
+    createdAt: photo.createdAt
+  }));
+  
+  res.json(transformedPhotos);
 });
 
-// Получить работы (публичные)
+// Получить все фото работ (публичные)
 app.get("/api/public/works", getBusinessBySlug, async (req, res) => {
-  const photos = await prisma.workPhoto.findMany({
-    where: { businessId: req.business.id },
+  console.log('Public works API called for business:', req.business.id);
+  const works = await prisma.workPhoto.findMany({
+    where: { 
+      businessId: req.business.id,
+      isLogo: false  // Exclude logo from works gallery
+    },
     orderBy: { id: "desc" },
+    select: {
+      id: true,
+      imageUrl: true,
+      caption: true,
+      createdAt: true
+    }
   });
-  res.json(photos);
+  
+  // Transform to match expected format
+  const transformedWorks = works.map(work => ({
+    id: work.id,
+    url: work.imageUrl,
+    description: work.caption,
+    type: work.imageUrl.toLowerCase().includes('.mp4') || work.imageUrl.toLowerCase().includes('.mov') ? 'video' : 'image',
+    createdAt: work.createdAt
+  }));
+  
+  console.log('Found works:', transformedWorks.length);
+  res.json(transformedWorks);
 });
 
 app.post("/api/works", worksUpload.single("image"), requireAuth, async (req, res) => {
@@ -968,13 +1020,53 @@ app.post("/api/works", worksUpload.single("image"), requireAuth, async (req, res
 
   const imageUrl = `/uploads/works/${req.file.filename}`;
   const caption = req.body && req.body.caption ? String(req.body.caption) : null;
+  const isLogo = req.body && req.body.isLogo === 'true';
+
+  // If this is a logo, first remove any existing logo
+  if (isLogo) {
+    await prisma.workPhoto.updateMany({
+      where: { 
+        businessId: user.businessId,
+        isLogo: true 
+      },
+      data: { isLogo: false }
+    });
+  }
 
   const photo = await prisma.workPhoto.create({
     data: {
       imageUrl,
       caption,
+      isLogo,
       businessId: user.businessId,
     },
+  });
+
+  res.json(photo);
+});
+
+// Set existing work as logo
+app.patch("/api/works/:id/logo", requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  // Remove existing logo
+  await prisma.workPhoto.updateMany({
+    where: { 
+      businessId: user.businessId,
+      isLogo: true 
+    },
+    data: { isLogo: false }
+  });
+
+  // Set new logo
+  const photo = await prisma.workPhoto.update({
+    where: { id },
+    data: { isLogo: true }
   });
 
   res.json(photo);
