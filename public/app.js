@@ -1,6 +1,42 @@
 (function () {
   const API_BASE = "";
 
+  // Auto-refresh on version change
+  async function checkForUpdates() {
+    try {
+      const currentVersion = localStorage.getItem('bloknot_version') || '0';
+      
+      // Check server version
+      const response = await fetch('/api/version');
+      const serverVersion = response.ok ? (await response.json()).version : '1';
+      
+      if (currentVersion !== serverVersion) {
+        localStorage.setItem('bloknot_version', serverVersion);
+        // Force refresh to get latest version
+        window.location.reload(true);
+      }
+    } catch (e) {
+      // Fallback to meta tag if API fails
+      try {
+        const currentVersion = localStorage.getItem('bloknot_version') || '0';
+        const pageVersion = document.querySelector('meta[name="version"]')?.content || '1';
+        
+        if (currentVersion !== pageVersion) {
+          localStorage.setItem('bloknot_version', pageVersion);
+          window.location.reload(true);
+        }
+      } catch (e2) {
+        // Ignore all errors
+      }
+    }
+  }
+
+  // Check for updates on page load
+  checkForUpdates();
+
+  // Check periodically (every 30 seconds)
+  setInterval(checkForUpdates, 30000);
+
   function ensureFavicon() {
     const head = document.head;
     if (!head) return;

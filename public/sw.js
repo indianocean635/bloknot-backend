@@ -1,4 +1,4 @@
-const CACHE_NAME = "bloknot-pwa-v2";
+const CACHE_NAME = "bloknot-pwa-v3";
 
 const APP_SHELL = [
   "/styles.css",
@@ -37,9 +37,21 @@ self.addEventListener("fetch", (event) => {
 
   if (req.method !== "GET") return;
 
-  // Never cache navigations/HTML pages (admin/dashboard) to avoid caching Forbidden/Unauthorized.
+  // Network-first strategy for HTML pages to always get fresh content
   if (req.mode === "navigate") {
-    event.respondWith(fetch(req));
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          // Cache the fresh response for offline use
+          const resClone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
+          return res;
+        })
+        .catch(() => {
+          // If network fails, try cache
+          return caches.match(req);
+        })
+    );
     return;
   }
 
@@ -47,6 +59,21 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
+  // Network-first for CSS and JS files to ensure updates
+  if (req.url.endsWith('.css') || req.url.endsWith('.js')) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const resClone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Cache-first for other static assets (images, icons)
   event.respondWith(
     caches.match(req).then((cached) =>
       cached ||

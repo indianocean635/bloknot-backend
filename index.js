@@ -250,7 +250,20 @@ if (!prisma || !prisma.branch || !prisma.loginToken) {
 }
 
 // раздаём фронт
-app.use(express.static(FRONTEND_PATH));
+app.use(express.static(FRONTEND_PATH, {
+  setHeaders: (res, path) => {
+    // Prevent caching of HTML files
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+    // Cache CSS/JS with short TTL for updates
+    else if (path.endsWith('.css') || path.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes
+    }
+  }
+}));
 
 app.get("/favicon.ico", (req, res) => {
   res.redirect(302, "/favicon.png");
@@ -463,6 +476,10 @@ app.get("/auth/confirm", async (req, res) => {
   setAuthCookie(res, jwtToken);
 
   res.redirect("/dashboard");
+});
+
+app.get("/api/version", (req, res) => {
+  res.json({ version: "3" });
 });
 
 app.get("/dashboard", (req, res) => {
