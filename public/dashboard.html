@@ -74,7 +74,7 @@
          <div class="item-title">Ссылка на онлайн‑запись</div>
          <div class="item-meta">Эту ссылку можно вставить в Instagram, 2ГИС, Яндекс, Googl, на Сайт, Whatsupp, Telegram</div>
        </div>
-       <a class="badge" id="openBookingLink" href="/book-template.html" target="_blank" rel="noopener">Открыть как клиент</a>
+       <a class="badge" id="openBookingLink" target="_blank" rel="noopener">Открыть как клиент</a>
      </div>
 
      <div class="row two" style="margin-top:12px">
@@ -211,55 +211,63 @@
    });
 
    (function initBookingLink() {
-     const link = String(location.origin || "").replace(/\/$/, "") + "/book-template.html";
-     const input = Bloknot.qs("#bookingLink");
-     const isSubscribed = localStorage.getItem("bloknot_subscription_active") === "1";
+     fetch('/api/business/slug')
+       .then(r => r.json())
+       .then(data => {
+         const link = String(location.origin || "").replace(/\/$/, "") + "/book-template/" + data.slug;
+         const input = Bloknot.qs("#bookingLink");
+         const isSubscribed = localStorage.getItem("bloknot_subscription_active") === "1";
 
-     const open = document.querySelector("#openBookingLink");
-     if (open) open.href = link;
+         const open = document.querySelector("#openBookingLink");
+         if (open) open.href = link;
 
-     function applyGate() {
-       const ok = localStorage.getItem("bloknot_subscription_active") === "1";
-       if (ok) {
-         input.value = link;
-         input.classList.remove("blurred");
-         input.removeAttribute("aria-hidden");
-       } else {
-         input.value = "https://bloknot.app/••••••••";
-         input.classList.add("blurred");
-         input.setAttribute("aria-hidden", "true");
-       }
-     }
+         function applyGate() {
+           const ok = localStorage.getItem("bloknot_subscription_active") === "1";
+           if (ok) {
+             input.value = link;
+             input.classList.remove("blurred");
+             input.removeAttribute("aria-hidden");
+           } else {
+             input.value = "https://bloknot.app/••••••••";
+             input.classList.add("blurred");
+             input.setAttribute("aria-hidden", "true");
+           }
+         }
 
-     applyGate();
+         applyGate();
 
-     // Defensive: block manual copy/select when gated
-     ["copy", "cut", "paste", "contextmenu"].forEach((ev) => {
-       input.addEventListener(ev, (e) => {
-         const ok = localStorage.getItem("bloknot_subscription_active") === "1";
-         if (!ok) e.preventDefault();
+         // Defensive: block manual copy/select when gated
+         ["copy", "cut", "paste", "contextmenu"].forEach((ev) => {
+           input.addEventListener(ev, (e) => {
+             const ok = localStorage.getItem("bloknot_subscription_active") === "1";
+             if (!ok) e.preventDefault();
+           });
+         });
+         input.addEventListener("keydown", (e) => {
+           const ok = localStorage.getItem("bloknot_subscription_active") === "1";
+           if (!ok && ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "a"))) e.preventDefault();
+         });
+
+         Bloknot.qs("#copyBookingBtn").addEventListener("click", async () => {
+           const ok = localStorage.getItem("bloknot_subscription_active") === "1";
+           if (!ok) {
+             location.href = "/subscribe.html";
+             return;
+           }
+           try {
+             await navigator.clipboard.writeText(link);
+             showNotice("Ссылка скопирована.");
+           } catch (e) {
+             Bloknot.qs("#bookingLink").focus();
+             Bloknot.qs("#bookingLink").select();
+             showNotice("Не удалось скопировать автоматически. Выделил ссылку — нажмите Ctrl+C.");
+           }
+         });
+       })
+       .catch(err => {
+         console.error('Error getting slug:', err);
+         showNotice("Ошибка загрузки ссылки записи");
        });
-     });
-     input.addEventListener("keydown", (e) => {
-       const ok = localStorage.getItem("bloknot_subscription_active") === "1";
-       if (!ok && ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "a"))) e.preventDefault();
-     });
-
-     Bloknot.qs("#copyBookingBtn").addEventListener("click", async () => {
-       const ok = localStorage.getItem("bloknot_subscription_active") === "1";
-       if (!ok) {
-         location.href = "/subscribe.html";
-         return;
-       }
-       try {
-         await navigator.clipboard.writeText(link);
-         showNotice("Ссылка скопирована.");
-       } catch (e) {
-         Bloknot.qs("#bookingLink").focus();
-         Bloknot.qs("#bookingLink").select();
-         showNotice("Не удалось скопировать автоматически. Выделил ссылку — нажмите Ctrl+C.");
-       }
-     });
    })();
 
    loadDashboard().catch(() => showNotice("Не удалось загрузить данные. Попробуйте обновить страницу позже."));

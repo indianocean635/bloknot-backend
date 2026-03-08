@@ -303,7 +303,7 @@ const PUBLIC_API = new Set([
   "GET /api/public/masters",
   "GET /api/public/categories",
   "GET /api/public/works",
-  "GET /api/public/appointments",
+  "GET /api/public/branches",
   "POST /api/public/appointments",
 ]);
 
@@ -494,6 +494,10 @@ app.get("/settings", requireAuth, (req, res) => {
 
 app.get("/booking-link", requireAuth, (req, res) => {
   res.sendFile(path.join(FRONTEND_PATH, "booking-link.html"));
+});
+
+app.get("/book-template/:slug", (req, res) => {
+  res.sendFile(path.join(FRONTEND_PATH, "book-template.html"));
 });
 
 // Получить slug бизнеса для владельца
@@ -722,6 +726,15 @@ app.get("/api/public/services", getBusinessBySlug, async (req, res) => {
     include: { category: true },
   });
   res.json(services);
+});
+
+// Получить все филиалы (публичные)
+app.get("/api/public/branches", getBusinessBySlug, async (req, res) => {
+  const branches = await prisma.branch.findMany({
+    where: { businessId: req.business.id },
+    orderBy: { id: "asc" },
+  });
+  res.json(branches);
 });
 
 // Создать услугу (защищенный)
