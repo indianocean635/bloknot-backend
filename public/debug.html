@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Debug</title>
+</head>
+<body>
+    <h1>API Debug Page</h1>
+    <div id="output"></div>
+    
+    <script>
+        const slug = window.location.pathname.split('/').pop();
+        document.getElementById('output').innerHTML = '<p>Testing slug: ' + slug + '</p>';
+        
+        async function testAPI() {
+            const results = {};
+            
+            try {
+                const business = await fetch(`/api/public/business?slug=${slug}`);
+                results.business = { status: business.status, data: await business.json() };
+            } catch (e) {
+                results.business = { error: e.message };
+            }
+            
+            try {
+                const branches = await fetch(`/api/public/branches?slug=${slug}`);
+                results.branches = { status: branches.status, data: await branches.json() };
+            } catch (e) {
+                results.branches = { error: e.message };
+            }
+            
+            try {
+                const services = await fetch(`/api/public/services?slug=${slug}`);
+                results.services = { status: services.status, data: await services.json() };
+            } catch (e) {
+                results.services = { error: e.message };
+            }
+            
+            try {
+                const masters = await fetch(`/api/public/masters?slug=${slug}`);
+                results.masters = { status: masters.status, data: await masters.json() };
+            } catch (e) {
+                results.masters = { error: e.message };
+            }
+            
+            document.getElementById('output').innerHTML = '<pre>' + JSON.stringify(results, null, 2) + '</pre>';
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html>

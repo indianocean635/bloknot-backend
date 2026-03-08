@@ -322,8 +322,54 @@
 
 <script src="/app.js"></script>
 <script>
-// Simple API function
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+  // Load Bloknot functions
+  if (typeof Bloknot !== 'undefined') {
+    Bloknot.renderHeader('settings');
+  }
+  loadAllData();
+  setupEventListeners();
+});
+
+// Simple API function - fallback if Bloknot.api not available
 async function apiCall(url, options = {}) {
+  console.log('API Call:', url, options);
+  
+  // Try to use Bloknot.api first
+  if (typeof Bloknot !== 'undefined' && Bloknot.api) {
+    console.log('Using Bloknot.api');
+    try {
+      let result;
+      if (options.method === 'POST') {
+        result = await Bloknot.api(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: options.body
+        });
+      } else if (options.method === 'PATCH') {
+        result = await Bloknot.api(url, {
+          method: 'PATCH', 
+          headers: { 'Content-Type': 'application/json' },
+          body: options.body
+        });
+      } else if (options.method === 'DELETE') {
+        result = await Bloknot.api(url, {
+          method: 'DELETE'
+        });
+      } else {
+        result = await Bloknot.api(url);
+      }
+      console.log('API Success:', result);
+      return result;
+    } catch (e) {
+      console.error('Bloknot.api error:', e);
+      throw e;
+    }
+  }
+  
+  // Fallback to fetch
+  console.log('Using fallback fetch');
   const response = await fetch(url, {
     headers: options.body instanceof FormData ? {} : {
       'Content-Type': 'application/json',
@@ -336,18 +382,10 @@ async function apiCall(url, options = {}) {
     throw new Error(`HTTP ${response.status}`);
   }
   
-  return response.json();
+  const result = await response.json();
+  console.log('Fetch Success:', result);
+  return result;
 }
-
-// Инициализация
-document.addEventListener('DOMContentLoaded', function() {
-  // Load Bloknot functions
-  if (typeof Bloknot !== 'undefined') {
-    Bloknot.renderHeader('settings');
-  }
-  loadAllData();
-  setupEventListeners();
-});
 
 // Загрузка всех данных
 async function loadAllData() {
@@ -654,24 +692,29 @@ async function saveService(id = null) {
   const price = document.getElementById('servicePrice').value;
   const categoryId = document.getElementById('serviceCategory').value || null;
   
+  console.log('Saving service:', { name, duration, price, categoryId, id });
+  
   try {
     if (id) {
+      console.log('Updating service:', id);
       await apiCall(`/api/services/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ name, duration: Number(duration), price: Number(price), categoryId: categoryId ? Number(categoryId) : null })
       });
     } else {
+      console.log('Creating new service');
       await apiCall('/api/services', {
         method: 'POST',
         body: JSON.stringify({ name, duration: Number(duration), price: Number(price), categoryId: categoryId ? Number(categoryId) : null })
       });
     }
     
+    console.log('Service saved successfully');
     closeModal();
     loadServices();
   } catch (error) {
     console.error('Error saving service:', error);
-    alert('Ошибка сохранения');
+    alert('Ошибка сохранения: ' + error.message);
   }
 }
 
@@ -757,24 +800,29 @@ async function saveMaster(id = null) {
   const name = document.getElementById('masterName').value;
   const active = document.getElementById('masterActive').checked;
   
+  console.log('Saving master:', { name, active, id });
+  
   try {
     if (id) {
+      console.log('Updating master:', id);
       await apiCall(`/api/masters/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ name, active })
       });
     } else {
+      console.log('Creating new master');
       await apiCall('/api/masters', {
         method: 'POST',
         body: JSON.stringify({ name, active })
       });
     }
     
+    console.log('Master saved successfully');
     closeModal();
     loadMasters();
   } catch (error) {
     console.error('Error saving master:', error);
-    alert('Ошибка сохранения');
+    alert('Ошибка сохранения: ' + error.message);
   }
 }
 

@@ -247,22 +247,74 @@
 
         // Load branches, services and masters
         console.log('Loading branches, services, masters...');
-        const [branches, services, masters] = await Promise.all([
-          fetch(`/api/public/branches?slug=${slug}`).then(r => {
+        
+        const loadBranches = fetch(`/api/public/branches?slug=${slug}`)
+          .then(r => {
             console.log('Branches response status:', r.status);
-            return r.json();
-          }),
-          fetch(`/api/public/services?slug=${slug}`).then(r => {
-            console.log('Services response status:', r.status);
-            return r.json();
-          }),
-          fetch(`/api/public/masters?slug=${slug}`).then(r => {
-            console.log('Masters response status:', r.status);
+            if (!r.ok) throw new Error(`Branches API error: ${r.status}`);
             return r.json();
           })
+          .catch(err => {
+            console.error('Branches error:', err);
+            return []; // Return empty array on error
+          });
+          
+        const loadServices = fetch(`/api/public/services?slug=${slug}`)
+          .then(r => {
+            console.log('Services response status:', r.status);
+            if (!r.ok) throw new Error(`Services API error: ${r.status}`);
+            return r.json();
+          })
+          .catch(err => {
+            console.error('Services error:', err);
+            return []; // Return empty array on error
+          });
+          
+        const loadMasters = fetch(`/api/public/masters?slug=${slug}`)
+          .then(r => {
+            console.log('Masters response status:', r.status);
+            if (!r.ok) throw new Error(`Masters API error: ${r.status}`);
+            return r.json();
+          })
+          .catch(err => {
+            console.error('Masters error:', err);
+            return []; // Return empty array on error
+          });
+
+        const [branches, services, masters] = await Promise.all([
+          loadBranches,
+          loadServices,
+          loadMasters
         ]);
 
         console.log('Loaded data:', { branches, services, masters });
+
+        // Validate data more flexibly
+        const branchesValid = Array.isArray(branches);
+        const servicesValid = Array.isArray(services);
+        const mastersValid = Array.isArray(masters);
+        
+        console.log('Data validation:', { branchesValid, servicesValid, mastersValid });
+
+        if (!branchesValid || !servicesValid || !mastersValid) {
+          console.error('Invalid data format:', {
+            branches: typeof branches,
+            services: typeof services,
+            masters: typeof masters
+          });
+          document.getElementById('booking-content').innerHTML = `
+            <div class="error">
+              <h3>Ошибка загрузки данных</h3>
+              <p>Некоторые данные не загрузились корректно:</p>
+              <ul style="text-align: left; margin: 20px;">
+                ${!branchesValid ? '<li>Филиалы: ошибка загрузки</li>' : ''}
+                ${!servicesValid ? '<li>Услуги: ошибка загрузки</li>' : ''}
+                ${!mastersValid ? '<li>Мастера: ошибка загрузки</li>' : ''}
+              </ul>
+            </div>
+          `;
+          return;
+        }
 
         // Check if there's any data to show
         if (branches.length === 0 && services.length === 0 && masters.length === 0) {
@@ -276,11 +328,7 @@
           return;
         }
 
-        if (Array.isArray(branches) && Array.isArray(services) && Array.isArray(masters)) {
-          renderBookingForm(branches, services, masters);
-        } else {
-          throw new Error('Invalid data format');
-        }
+        renderBookingForm(branches, services, masters);
       } catch (error) {
         console.error('Error loading booking data:', error);
         document.getElementById('booking-content').innerHTML = '<div class="error">Не удалось загрузить форму записи. Ошибка: ' + error.message + '</div>';

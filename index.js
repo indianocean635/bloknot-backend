@@ -506,6 +506,10 @@ app.get("/book-template/:slug", (req, res) => {
   res.sendFile(path.join(FRONTEND_PATH, "booking-form.html"));
 });
 
+app.get("/debug/:slug", (req, res) => {
+  res.sendFile(path.join(FRONTEND_PATH, "debug.html"));
+});
+
 // Получить slug бизнеса для владельца
 app.get("/api/business/slug", requireAuth, async (req, res) => {
   const user = await prisma.user.findUnique({ 
@@ -726,20 +730,24 @@ app.get("/api/services", requireAuth, async (req, res) => {
 
 // Получить все услуги (публичные)
 app.get("/api/public/services", getBusinessBySlug, async (req, res) => {
+  console.log('Public services API called for business:', req.business.id);
   const services = await prisma.service.findMany({
     where: { businessId: req.business.id },
     orderBy: { id: "asc" },
     include: { category: true },
   });
+  console.log('Found services:', services.length);
   res.json(services);
 });
 
 // Получить все филиалы (публичные)
 app.get("/api/public/branches", getBusinessBySlug, async (req, res) => {
+  console.log('Public branches API called for business:', req.business.id);
   const branches = await prisma.branch.findMany({
     where: { businessId: req.business.id },
     orderBy: { id: "asc" },
   });
+  console.log('Found branches:', branches.length);
   res.json(branches);
 });
 
@@ -825,10 +833,12 @@ app.get("/api/masters", requireAuth, async (req, res) => {
 
 // Получить всех мастеров (публичные)
 app.get("/api/public/masters", getBusinessBySlug, async (req, res) => {
+  console.log('Public masters API called for business:', req.business.id);
   const masters = await prisma.master.findMany({
     where: { businessId: req.business.id },
     orderBy: { id: "asc" },
   });
+  console.log('Found masters:', masters.length);
   res.json(masters);
 });
 
