@@ -212,31 +212,69 @@
   </main>
 
   <script>
-    // Get slug from URL
-    const slug = window.location.pathname.split('/').pop();
-    if (!slug || slug === 'book') {
-      document.getElementById('booking-content').innerHTML = '<div class="error">Бизнес не найден</div>';
+    // Get slug from URL - handle both /book-template/slug and /book-template/:slug formats
+    const pathParts = window.location.pathname.split('/').filter(part => part);
+    const slug = pathParts[pathParts.length - 1];
+    
+    console.log('Current path:', window.location.pathname);
+    console.log('Path parts:', pathParts);
+    console.log('Extracted slug:', slug);
+    
+    if (!slug || slug === 'book-template' || slug === 'book') {
+      document.getElementById('booking-content').innerHTML = '<div class="error">Бизнес не найден. Неверная ссылка.</div>';
     } else {
       loadBookingData();
     }
 
     async function loadBookingData() {
       try {
+        console.log('Loading booking data for slug:', slug);
+        
         // Load business info
         const businessResponse = await fetch(`/api/public/business?slug=${slug}`);
+        console.log('Business response status:', businessResponse.status);
+        
         if (businessResponse.ok) {
           const business = await businessResponse.json();
+          console.log('Business data:', business);
           document.getElementById('business-info').style.display = 'block';
           document.getElementById('business-name').textContent = business.name;
           document.getElementById('business-meta').textContent = business.address || 'Онлайн-запись доступна';
+        } else {
+          const errorText = await businessResponse.text();
+          console.error('Business API error:', businessResponse.status, errorText);
         }
 
         // Load branches, services and masters
+        console.log('Loading branches, services, masters...');
         const [branches, services, masters] = await Promise.all([
-          fetch(`/api/public/branches?slug=${slug}`).then(r => r.json()),
-          fetch(`/api/public/services?slug=${slug}`).then(r => r.json()),
-          fetch(`/api/public/masters?slug=${slug}`).then(r => r.json())
+          fetch(`/api/public/branches?slug=${slug}`).then(r => {
+            console.log('Branches response status:', r.status);
+            return r.json();
+          }),
+          fetch(`/api/public/services?slug=${slug}`).then(r => {
+            console.log('Services response status:', r.status);
+            return r.json();
+          }),
+          fetch(`/api/public/masters?slug=${slug}`).then(r => {
+            console.log('Masters response status:', r.status);
+            return r.json();
+          })
         ]);
+
+        console.log('Loaded data:', { branches, services, masters });
+
+        // Check if there's any data to show
+        if (branches.length === 0 && services.length === 0 && masters.length === 0) {
+          document.getElementById('booking-content').innerHTML = `
+            <div class="error">
+              <h3>Запись временно недоступна</h3>
+              <p>Владелец бизнеса еще не добавил услуги, мастеров или филиалы.</p>
+              <p>Попробуйте зайти позже.</p>
+            </div>
+          `;
+          return;
+        }
 
         if (Array.isArray(branches) && Array.isArray(services) && Array.isArray(masters)) {
           renderBookingForm(branches, services, masters);
@@ -245,13 +283,16 @@
         }
       } catch (error) {
         console.error('Error loading booking data:', error);
-        document.getElementById('booking-content').innerHTML = '<div class="error">Не удалось загрузить форму записи</div>';
+        document.getElementById('booking-content').innerHTML = '<div class="error">Не удалось загрузить форму записи. Ошибка: ' + error.message + '</div>';
       }
     }
 
     function renderBookingForm(branches, services, masters) {
+      const hasBranches = branches && branches.length > 0;
+      
       const formHtml = `
         <form id="booking-form">
+          ${hasBranches ? `
           <div class="form-group">
             <label for="branch">Филиал</label>
             <select id="branch" required>
@@ -261,6 +302,7 @@
               `).join('')}
             </select>
           </div>
+          ` : ''}
           
           <div class="form-group">
             <label for="customer-name">Ваше имя</label>
@@ -327,7 +369,7 @@
       submitBtn.textContent = 'Создание записи...';
       
       const formData = {
-        branchId: document.getElementById('branch').value,
+        branchId: document.getElementById('branch')?.value || null,
         customerName: document.getElementById('customer-name').value,
         customerPhone: document.getElementById('customer-phone').value,
         customerEmail: document.getElementById('customer-email').value || null,

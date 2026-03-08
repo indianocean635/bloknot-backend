@@ -182,11 +182,16 @@ function requireAuth(req, res, next) {
 
 async function getBusinessBySlug(req, res, next) {
   const slug = req.params.slug || req.query.slug;
+  console.log('getBusinessBySlug called with slug:', slug);
+  console.log('req.params:', req.params);
+  console.log('req.query:', req.query);
+  
   if (!slug) return res.status(400).json({ error: "Slug required" });
   
   const business = await prisma.business.findUnique({ where: { slug } });
   if (!business) return res.status(404).json({ error: "Business not found" });
   
+  console.log('Business found:', business.id, business.name);
   req.business = business;
   next();
 }
