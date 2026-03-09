@@ -540,16 +540,21 @@ app.get("/api/business", requireAuth, async (req, res) => {
 
 // Получить название компании
 app.get("/api/business/name", requireAuth, async (req, res) => {
-  const user = await prisma.user.findUnique({ 
-    where: { id: req.user.id },
-    include: { business: true }
-  });
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
   
   if (!user || !user.businessId) {
     return res.status(403).json({ error: "Forbidden" });
   }
   
-  res.json({ name: user.business.name });
+  const business = await prisma.business.findUnique({ 
+    where: { id: user.businessId }
+  });
+  
+  if (!business) {
+    return res.status(404).json({ error: "Business not found" });
+  }
+  
+  res.json({ name: business.name });
 });
 
 // Обновить название компании
@@ -560,17 +565,14 @@ app.patch("/api/business/name", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "Название обязательно" });
   }
   
-  const user = await prisma.user.findUnique({ 
-    where: { id: req.user.id },
-    include: { business: true }
-  });
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
   
-  if (!user || !user.business) {
-    return res.status(404).json({ error: "Business not found" });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
   }
   
   const business = await prisma.business.update({
-    where: { id: user.business.id },
+    where: { id: user.businessId },
     data: { name: name.trim() }
   });
   

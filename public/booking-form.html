@@ -460,9 +460,7 @@
   <!-- HEADER -->
   <header class="header">
     <div class="header-inner">
-      <div class="logo">
-        <img src="/logo-wordmark.svg" alt="Bloknot">
-      </div>
+      <!-- Logo removed as requested -->
     </div>
   </header>
 
@@ -598,9 +596,24 @@
           const business = await businessResponse.json();
           console.log('Business data:', business);
           
+          // Load company name
+          const businessNameElement = document.getElementById('business-name');
+          console.log('Company name data:', business.name);
+          console.log('Business name element:', businessNameElement);
+          if (business.name && businessNameElement) {
+            businessNameElement.textContent = business.name;
+            console.log('Company name set to:', business.name);
+          } else {
+            console.log('No company name found or element missing');
+          }
+          
           // Load logo for footer
           const logoElement = document.getElementById('business-logo');
           const logoContainer = document.getElementById('business-logo-container');
+          
+          console.log('Logo data:', business.logo);
+          console.log('Logo element:', logoElement);
+          console.log('Logo container:', logoContainer);
           
           if (business.logo && logoElement && logoContainer) {
             logoElement.src = business.logo;
@@ -609,6 +622,7 @@
             if (noLogoText) {
               noLogoText.style.display = 'none';
             }
+            console.log('Logo loaded successfully');
           } else if (logoContainer) {
             const logoImg = logoContainer.querySelector('#business-logo');
             if (logoImg) {
@@ -618,6 +632,7 @@
             if (noLogoText) {
               noLogoText.style.display = 'block';
             }
+            console.log('No logo found, showing placeholder');
           }
         } else {
           const errorText = await businessResponse.text();
