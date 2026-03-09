@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Онлайн запись v2.0</title>
+  <title>Онлайн запись v2.1 - Fixed</title>
   <style>
     * {
       margin: 0;
@@ -303,7 +303,7 @@
   </footer>
 
   <script>
-    console.log('🚀 Booking form v2.0 - Script loaded successfully!');
+    console.log('🚀 Booking form v2.1 - All template literals fixed!');
     
     // Prevent auto-scroll immediately
     window.scrollTo(0, 0);
@@ -342,7 +342,7 @@
         
         // Load business info
         console.log('Fetching business data...');
-        const businessResponse = await fetch(`/api/public/business?slug=${slug}`);
+        const businessResponse = await fetch('/api/public/business?slug=' + slug);
         console.log('Business response status:', businessResponse.status);
         
         if (businessResponse.ok) {
@@ -410,24 +410,24 @@
         console.log('Loading branches, services, masters, works...');
         
         const [branches, services, masters, works] = await Promise.all([
-          fetch(`/api/public/branches?slug=${slug}`).then(r => {
+          fetch('/api/public/branches?slug=' + slug).then(r => {
             console.log('Branches response status:', r.status);
-            if (!r.ok) throw new Error(`Branches API error: ${r.status}`);
+            if (!r.ok) throw new Error('Branches API error: ' + r.status);
             return r.json();
           }),
-          fetch(`/api/public/services?slug=${slug}`).then(r => {
+          fetch('/api/public/services?slug=' + slug).then(r => {
             console.log('Services response status:', r.status);
-            if (!r.ok) throw new Error(`Services API error: ${r.status}`);
+            if (!r.ok) throw new Error('Services API error: ' + r.status);
             return r.json();
           }),
-          fetch(`/api/public/masters?slug=${slug}`).then(r => {
+          fetch('/api/public/masters?slug=' + slug).then(r => {
             console.log('Masters response status:', r.status);
-            if (!r.ok) throw new Error(`Masters API error: ${r.status}`);
+            if (!r.ok) throw new Error('Masters API error: ' + r.status);
             return r.json();
           }),
-          fetch(`/api/public/works?slug=${slug}`).then(r => {
+          fetch('/api/public/works?slug=' + slug).then(r => {
             console.log('Works response status:', r.status);
-            if (!r.ok) throw new Error(`Works API error: ${r.status}`);
+            if (!r.ok) throw new Error('Works API error: ' + r.status);
             return r.json();
           })
         ]);
@@ -585,7 +585,7 @@
         }
       } catch (error) {
         console.error('Booking error:', error);
-        alert(`Ошибка: ${error.message}`);
+        alert('Ошибка: ' + error.message);
         submitBtn.disabled = false;
         submitBtn.textContent = 'Записаться';
       }
@@ -597,7 +597,7 @@
       
       if (!dateInput || !timeInput) return null;
       
-      return `${dateInput}T${timeInput}:00`;
+      return dateInput + 'T' + timeInput + ':00';
     }
   </script>
 </body>
