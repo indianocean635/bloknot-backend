@@ -538,6 +538,20 @@ app.get("/api/business", requireAuth, async (req, res) => {
   res.json({ name: user.business.name });
 });
 
+// Получить название компании
+app.get("/api/business/name", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ 
+    where: { id: req.user.id },
+    include: { business: true }
+  });
+  
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  
+  res.json({ name: user.business.name });
+});
+
 // Обновить название компании
 app.patch("/api/business/name", requireAuth, async (req, res) => {
   const { name } = req.body;
@@ -1129,11 +1143,12 @@ app.get("/api/works", requireAuth, async (req, res) => {
   
   const photos = await prisma.workPhoto.findMany({
     where: { businessId: user.businessId },
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "desc" },
     select: {
       id: true,
       imageUrl: true,
       caption: true,
+      isLogo: true,
       createdAt: true
     }
   });
@@ -1144,6 +1159,7 @@ app.get("/api/works", requireAuth, async (req, res) => {
     url: photo.imageUrl,
     description: photo.caption,
     type: photo.imageUrl.toLowerCase().includes('.mp4') || photo.imageUrl.toLowerCase().includes('.mov') ? 'video' : 'image',
+    isLogo: photo.isLogo,
     createdAt: photo.createdAt
   }));
   

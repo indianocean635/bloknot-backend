@@ -21,30 +21,7 @@
   <h1 class="page-title">Настройки бизнеса</h1>
   <p class="page-subtitle">Управляйте филиалами, категориями, услугами, мастерами и фото работ</p>
 
-  <!-- Название компании -->
-  <section class="settings-section">
-    <div class="section-header">
-      <h2>🏢 Название компании</h2>
-    </div>
-    
-    <div class="company-name-container" id="companyNameContainer">
-      <div class="loading">Загрузка...</div>
-    </div>
-  </section>
-
-  <!-- Логотип компании -->
-  <section class="settings-section">
-    <div class="section-header">
-      <h2>🏢 Логотип компании</h2>
-      <button class="btn" id="addLogoBtn">+ Загрузить логотип</button>
-    </div>
-    
-    <div class="logo-container" id="logoContainer">
-      <div class="loading">Загрузка...</div>
-    </div>
-  </section>
-
-  <!-- Логотип и название компании -->
+  <!-- Брендинг -->
   <section class="settings-section">
     <div class="section-header">
       <h2>🏢 Брендинг</h2>
@@ -886,8 +863,8 @@ async function apiCall(url, options = {}) {
 // Загрузка всех данных
 async function loadAllData() {
   await Promise.all([
-    loadCompanyName(),
     loadLogo(),
+    loadCompanyName(),
     loadBranches(),
     loadCategories(),
     loadServices(),

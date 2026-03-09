@@ -463,11 +463,6 @@
       <div class="logo">
         <img src="/logo-wordmark.svg" alt="Bloknot">
       </div>
-      <div id="business-logo-container" style="display: none;">
-        <a href="/" style="text-decoration: none;">
-          <img id="business-logo" class="business-logo" src="" alt="">
-        </a>
-      </div>
     </div>
   </header>
 
@@ -603,18 +598,26 @@
           const business = await businessResponse.json();
           console.log('Business data:', business);
           
-          // Load logo
+          // Load logo for footer
           const logoElement = document.getElementById('business-logo');
           const logoContainer = document.getElementById('business-logo-container');
-          const noLogoText = logoContainer.querySelector('.no-logo-text');
           
-          if (business.logo) {
+          if (business.logo && logoElement && logoContainer) {
             logoElement.src = business.logo;
             logoElement.style.display = 'block';
-            noLogoText.style.display = 'none';
-          } else {
-            logoElement.style.display = 'none';
-            noLogoText.style.display = 'block';
+            const noLogoText = logoContainer.querySelector('.no-logo-text');
+            if (noLogoText) {
+              noLogoText.style.display = 'none';
+            }
+          } else if (logoContainer) {
+            const logoImg = logoContainer.querySelector('#business-logo');
+            if (logoImg) {
+              logoImg.style.display = 'none';
+            }
+            const noLogoText = logoContainer.querySelector('.no-logo-text');
+            if (noLogoText) {
+              noLogoText.style.display = 'block';
+            }
           }
         } else {
           const errorText = await businessResponse.text();
@@ -904,16 +907,17 @@
       }
     }
   </script>
+
 <footer class="footer">
-      <div class="footer-content">
-        <div class="footer-logo" onclick="window.location.href='/'" style="cursor: pointer;">
-          <div id="business-logo-container">
-            <img id="business-logo" src="" alt="Logo" style="max-width: 120px; max-height: 60px; display: none;">
-            <div class="no-logo-text" style="color: #6b7280; font-size: 14px;">Нет логотипа</div>
-          </div>
-          <div class="footer-text">Сервис онлайн записи</div>
-        </div>
+  <div class="footer-content">
+    <div class="footer-logo" onclick="window.location.href='/'" style="cursor: pointer;">
+      <div id="business-logo-container">
+        <img id="business-logo" src="" alt="Logo" style="max-width: 120px; max-height: 60px; display: none;">
+        <div class="no-logo-text" style="color: #6b7280; font-size: 14px;">Нет логотипа</div>
       </div>
-    </footer>
-  </body>
+      <div class="footer-text">Сервис онлайн записи</div>
+    </div>
+  </div>
+</footer>
+</body>
 </html>
