@@ -853,8 +853,7 @@ app.get("/api/public/business", getBusinessBySlug, async (req, res) => {
       branches: {
         take: 1,
         select: {
-          address: true,
-          phone: true
+          address: true
         }
       }
     }
@@ -863,7 +862,6 @@ app.get("/api/public/business", getBusinessBySlug, async (req, res) => {
   const result = {
     name: business.name,
     address: business.branches[0]?.address || null,
-    phone: business.branches[0]?.phone || null,
     logo: logoPhoto?.imageUrl || null
   };
   
