@@ -898,12 +898,14 @@ app.get("/api/public/masters", getBusinessBySlug, async (req, res) => {
 
 // Создать мастера (защищенный)
 app.post("/api/masters", requireAuth, async (req, res) => {
-  const { name, email, active, role } = req.body;
+  const { name, email, active } = req.body;
 
+  // Валидация обязательных полей
   if (!name || !email) {
     return res.status(400).json({ error: "Имя и email обязательны" });
   }
 
+  // Валидация формата email
   if (!email.includes('@') || !email.includes('.')) {
     return res.status(400).json({ error: "Некорректный email" });
   }
@@ -919,7 +921,6 @@ app.post("/api/masters", requireAuth, async (req, res) => {
         name: String(name),
         email: String(email).toLowerCase(),
         active: typeof active === "boolean" ? active : true,
-        role: role ? String(role) : "MASTER",
         businessId: user.businessId,
       },
     });
@@ -965,7 +966,7 @@ app.post("/api/masters/:id/avatar", avatarUpload.single("avatar"), async (req, r
 // Обновить мастера (минимально)
 app.patch("/api/masters/:id", async (req, res) => {
   const id = Number(req.params.id);
-  const { name, email, active, role } = req.body;
+  const { name, email, active } = req.body;
 
   const data = {};
   if (name !== undefined) data.name = String(name);
@@ -976,7 +977,6 @@ app.patch("/api/masters/:id", async (req, res) => {
     data.email = String(email).toLowerCase();
   }
   if (active !== undefined) data.active = Boolean(active);
-  if (role !== undefined) data.role = String(role);
 
   try {
     const master = await prisma.master.update({
