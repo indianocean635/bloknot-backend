@@ -762,12 +762,20 @@ app.get("/api/services", requireAuth, async (req, res) => {
   const services = await prisma.service.findMany({
     where: { businessId: user.businessId },
     orderBy: { id: "asc" },
-    include: { category: true },
+    include: {
+      category: {
+        select: {
+          id: true,
+          name: true
+        }
+      }
+    }
   });
+  
   res.json(services);
 });
 
-// Получить все услуги (публичные)
+// Получить услуги (публичные)
 app.get("/api/public/services", getBusinessBySlug, async (req, res) => {
   console.log('Public services API called for business:', req.business.id);
   const services = await prisma.service.findMany({
@@ -832,17 +840,22 @@ app.post("/api/services", requireAuth, async (req, res) => {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  const service = await prisma.service.create({
-    data: {
-      name,
-      duration: Number(duration),
-      price: Number(price),
-      categoryId: categoryId ? Number(categoryId) : null,
-      businessId: user.businessId,
-    },
-  });
+  try {
+    const service = await prisma.service.create({
+      data: {
+        name,
+        duration: Number(duration),
+        price: Number(price),
+        businessId: user.businessId,
+        categoryId: categoryId ? Number(categoryId) : null,
+      },
+    });
 
-  res.json(service);
+    res.json(service);
+  } catch (error) {
+    console.error('Error creating service:', error);
+    return res.status(500).json({ error: "Ошибка создания услуги" });
+  }
 });
 
 // Удалить услугу
@@ -885,10 +898,14 @@ app.get("/api/public/masters", getBusinessBySlug, async (req, res) => {
 
 // Создать мастера (защищенный)
 app.post("/api/masters", requireAuth, async (req, res) => {
-  const { name, active, role } = req.body;
+  const { name, email, active, role } = req.body;
 
-  if (!name) {
-    return res.status(400).json({ error: "Имя обязательно" });
+  if (!name || !email) {
+    return res.status(400).json({ error: "Имя и email обязательны" });
+  }
+
+  if (!email.includes('@') || !email.includes('.')) {
+    return res.status(400).json({ error: "Некорректный email" });
   }
 
   const user = await prisma.user.findUnique({ where: { id: req.user.id } });
@@ -896,16 +913,25 @@ app.post("/api/masters", requireAuth, async (req, res) => {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  const master = await prisma.master.create({
-    data: {
-      name: String(name),
-      active: typeof active === "boolean" ? active : true,
-      role: role ? String(role) : "MASTER",
-      businessId: user.businessId,
-    },
-  });
+  try {
+    const master = await prisma.master.create({
+      data: {
+        name: String(name),
+        email: String(email).toLowerCase(),
+        active: typeof active === "boolean" ? active : true,
+        role: role ? String(role) : "MASTER",
+        businessId: user.businessId,
+      },
+    });
 
-  res.json(master);
+    res.json(master);
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: "Мастер с таким email уже существует" });
+    }
+    console.error('Error creating master:', error);
+    return res.status(500).json({ error: "Ошибка создания мастера" });
+  }
 });
 
 // Загрузить/обновить аватар мастера
@@ -939,19 +965,32 @@ app.post("/api/masters/:id/avatar", avatarUpload.single("avatar"), async (req, r
 // Обновить мастера (минимально)
 app.patch("/api/masters/:id", async (req, res) => {
   const id = Number(req.params.id);
-  const { name, active, role } = req.body;
+  const { name, email, active, role } = req.body;
 
   const data = {};
   if (name !== undefined) data.name = String(name);
+  if (email !== undefined) {
+    if (!email.includes('@') || !email.includes('.')) {
+      return res.status(400).json({ error: "Некорректный email" });
+    }
+    data.email = String(email).toLowerCase();
+  }
   if (active !== undefined) data.active = Boolean(active);
   if (role !== undefined) data.role = String(role);
 
-  const master = await prisma.master.update({
-    where: { id },
-    data,
-  });
-
-  res.json(master);
+  try {
+    const master = await prisma.master.update({
+      where: { id },
+      data,
+    });
+    res.json(master);
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: "Мастер с таким email уже существует" });
+    }
+    console.error('Error updating master:', error);
+    return res.status(500).json({ error: "Ошибка обновления мастера" });
+  }
 });
 
 // Удалить мастера

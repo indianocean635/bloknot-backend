@@ -935,15 +935,20 @@ async function loadMasters() {
 
 function renderMasters(masters) {
   const grid = document.getElementById('mastersGrid');
-  if (masters.length === 0) {
-    grid.innerHTML = '<p style="text-align: center; color: #6b7280;">Мастера не добавлены</p>';
+  if (!masters || masters.length === 0) {
+    grid.innerHTML = '<div style="color: #6b7280;">Нет мастеров</div>';
     return;
   }
   
   grid.innerHTML = masters.map(master => `
     <div class="item-card">
-      <h4>${master.name}</h4>
-      <p>${master.active ? '🟢 Активен' : '🔴 Неактивен'}</p>
+      <div class="item-header">
+        <div class="item-name">${master.name}</div>
+        <div class="item-status ${master.active ? 'active' : 'inactive'}">
+          ${master.active ? 'Активен' : 'Неактивен'}
+        </div>
+      </div>
+      <p style="font-size: 12px; color: #9ca3af;">${master.email}</p>
       <div class="item-actions">
         <button class="edit-btn" onclick="openMasterModal(${master.id})">Редактировать</button>
         <button class="delete-btn" onclick="deleteMaster(${master.id})">Удалить</button>
@@ -968,6 +973,10 @@ async function openMasterModal(id = null) {
         <input type="text" id="masterName" value="${master?.name || ''}" required>
       </div>
       <div class="form-group">
+        <label for="masterEmail">Email *</label>
+        <input type="email" id="masterEmail" value="${master?.email || ''}" required>
+      </div>
+      <div class="form-group">
         <label>
           <input type="checkbox" id="masterActive" ${master?.active ? 'checked' : ''}>
           Активен
@@ -990,22 +999,28 @@ async function openMasterModal(id = null) {
 
 async function saveMaster(id = null) {
   const name = document.getElementById('masterName').value;
+  const email = document.getElementById('masterEmail').value;
   const active = document.getElementById('masterActive').checked;
   
-  console.log('Saving master:', { name, active, id });
+  if (!name || !email) {
+    alert('Имя и email обязательны');
+    return;
+  }
+  
+  console.log('Saving master:', { name, email, active, id });
   
   try {
     if (id) {
       console.log('Updating master:', id);
       await apiCall(`/api/masters/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ name, active })
+        body: JSON.stringify({ name, email, active })
       });
     } else {
       console.log('Creating new master');
       await apiCall('/api/masters', {
         method: 'POST',
-        body: JSON.stringify({ name, active })
+        body: JSON.stringify({ name, email, active })
       });
     }
     

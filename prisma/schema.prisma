@@ -82,9 +82,11 @@ model Service {
   duration   Int
   price      Int
   businessId String
+  categoryId Int?
   createdAt  DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id])
 
   appointments Appointment[]
 }
@@ -95,12 +97,14 @@ model Category {
   businessId String
   createdAt  DateTime  @default(now())
 
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  services Service[]
 }
 
 model Master {
   id         Int      @id @default(autoincrement())
   name       String
+  email      String   @unique
   active     Boolean  @default(true)
   businessId String
   createdAt  DateTime @default(now())
