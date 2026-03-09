@@ -75,16 +75,46 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 32px;
-      text-align: center;
+      text-align: left;
       position: relative;
     }
 
     .business-info {
       display: flex;
       align-items: center;
-      justify-content: center;
       gap: 16px;
-      margin-bottom: 16px;
+    }
+
+    .business-logo-header {
+      flex-shrink: 0;
+    }
+
+    #business-logo-header-container {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #e5e7eb;
+    }
+
+    #business-logo-header {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .no-logo-header-text {
+      font-size: 10px;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    .business-details {
+      flex: 1;
     }
 
     .business-name {
@@ -431,6 +461,17 @@
         padding: 24px;
       }
 
+      .business-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      #business-logo-header-container {
+        width: 50px;
+        height: 50px;
+      }
+
       .business-name {
         font-size: 24px;
       }
@@ -469,7 +510,13 @@
     <div class="booking-card">
       <div class="booking-header">
         <div class="business-info">
-          <div>
+          <div class="business-logo-header">
+            <div id="business-logo-header-container">
+              <img id="business-logo-header" src="" alt="Logo" style="display: none;">
+              <div class="no-logo-header-text" style="display: none;">Нет логотипа</div>
+            </div>
+          </div>
+          <div class="business-details">
             <h1 class="business-name" id="business-name">Загрузка...</h1>
             <p class="business-meta" id="business-meta">Загрузка...</p>
           </div>
@@ -607,32 +654,32 @@
             console.log('No company name found or element missing');
           }
           
-          // Load logo for footer
-          const logoElement = document.getElementById('business-logo');
-          const logoContainer = document.getElementById('business-logo-container');
+          // Load logo for header
+          const logoHeaderElement = document.getElementById('business-logo-header');
+          const logoHeaderContainer = document.getElementById('business-logo-header-container');
           
           console.log('Logo data:', business.logo);
-          console.log('Logo element:', logoElement);
-          console.log('Logo container:', logoContainer);
+          console.log('Logo header element:', logoHeaderElement);
+          console.log('Logo header container:', logoHeaderContainer);
           
-          if (business.logo && logoElement && logoContainer) {
-            logoElement.src = business.logo;
-            logoElement.style.display = 'block';
-            const noLogoText = logoContainer.querySelector('.no-logo-text');
-            if (noLogoText) {
-              noLogoText.style.display = 'none';
+          if (business.logo && logoHeaderElement && logoHeaderContainer) {
+            logoHeaderElement.src = business.logo;
+            logoHeaderElement.style.display = 'block';
+            const noLogoHeaderText = logoHeaderContainer.querySelector('.no-logo-header-text');
+            if (noLogoHeaderText) {
+              noLogoHeaderText.style.display = 'none';
             }
-            console.log('Logo loaded successfully');
-          } else if (logoContainer) {
-            const logoImg = logoContainer.querySelector('#business-logo');
+            console.log('Logo loaded successfully in header');
+          } else if (logoHeaderContainer) {
+            const logoImg = logoHeaderContainer.querySelector('#business-logo-header');
             if (logoImg) {
               logoImg.style.display = 'none';
             }
-            const noLogoText = logoContainer.querySelector('.no-logo-text');
-            if (noLogoText) {
-              noLogoText.style.display = 'block';
+            const noLogoHeaderText = logoHeaderContainer.querySelector('.no-logo-header-text');
+            if (noLogoHeaderText) {
+              noLogoHeaderText.style.display = 'block';
             }
-            console.log('No logo found, showing placeholder');
+            console.log('No logo found, showing placeholder in header');
           }
         } else {
           const errorText = await businessResponse.text();
@@ -926,10 +973,6 @@
 <footer class="footer">
   <div class="footer-content">
     <div class="footer-logo" onclick="window.location.href='/'" style="cursor: pointer;">
-      <div id="business-logo-container">
-        <img id="business-logo" src="" alt="Logo" style="max-width: 120px; max-height: 60px; display: none;">
-        <div class="no-logo-text" style="color: #6b7280; font-size: 14px;">Нет логотипа</div>
-      </div>
       <div class="footer-text">Сервис онлайн записи</div>
     </div>
   </div>
