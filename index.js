@@ -849,9 +849,7 @@ app.get("/api/public/business", getBusinessBySlug, async (req, res) => {
   const business = await prisma.business.findUnique({
     where: { id: req.business.id },
     select: {
-      name: true
-    },
-    include: {
+      name: true,
       branches: {
         take: 1,
         select: {
