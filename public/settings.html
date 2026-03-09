@@ -582,6 +582,131 @@
   margin-bottom: 16px;
 }
 
+.editor-area {
+  margin-bottom: 20px;
+}
+
+.image-editor-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.image-preview-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.image-preview {
+  width: 300px;
+  height: 300px;
+  border: 2px solid #e5e7eb;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  background: #f9fafb;
+}
+
+#previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.crop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px dashed #10b981;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.crop-area {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  border: 2px solid #10b981;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.editor-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.control-group label {
+  min-width: 80px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.control-group input[type="range"] {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #10b981;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.control-group input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #10b981;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.control-group span {
+  min-width: 50px;
+  text-align: right;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
 .logo-actions {
   display: flex;
   gap: 8px;
@@ -1447,14 +1572,47 @@ function openLogoModal() {
         <input type="file" id="logoFile" accept="image/*" style="display: none;">
       </div>
       
-      <div class="preview-area" id="previewArea" style="display: none;">
-        <img id="previewImage" style="max-width: 200px; max-height: 200px;">
-        <button type="button" class="btn secondary" onclick="clearPreview()">Удалить</button>
+      <div class="editor-area" id="editorArea" style="display: none;">
+        <div class="image-editor-container">
+          <div class="image-preview-wrapper">
+            <div class="image-preview" id="imagePreview">
+              <img id="previewImage" style="display: none;">
+              <div class="crop-overlay" id="cropOverlay">
+                <div class="crop-area"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="editor-controls">
+            <div class="control-group">
+              <label>Масштаб:</label>
+              <input type="range" id="scaleSlider" min="0.5" max="3" step="0.1" value="1">
+              <span id="scaleValue">1.0x</span>
+            </div>
+            
+            <div class="control-group">
+              <label>Позиция X:</label>
+              <input type="range" id="positionXSlider" min="-100" max="100" step="1" value="0">
+              <span id="positionXValue">0</span>
+            </div>
+            
+            <div class="control-group">
+              <label>Позиция Y:</label>
+              <input type="range" id="positionYSlider" min="-100" max="100" step="1" value="0">
+              <span id="positionYValue">0</span>
+            </div>
+            
+            <div class="editor-actions">
+              <button type="button" class="btn secondary" onclick="resetImageEditor()">Сбросить</button>
+              <button type="button" class="btn secondary" onclick="backToUpload()">Другое изображение</button>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div class="modal-actions">
         <button type="button" class="btn secondary" onclick="closeModal()">Отмена</button>
-        <button type="button" class="btn" onclick="uploadLogo()">Загрузить</button>
+        <button type="button" class="btn" id="uploadBtn" onclick="uploadLogo()" style="display: none;">Загрузить</button>
       </div>
     </div>
   `;
@@ -1468,8 +1626,15 @@ function openLogoModal() {
 function setupLogoUpload() {
   const uploadArea = document.getElementById('uploadArea');
   const fileInput = document.getElementById('logoFile');
-  const previewArea = document.getElementById('previewArea');
+  const editorArea = document.getElementById('editorArea');
   const previewImage = document.getElementById('previewImage');
+  const uploadBtn = document.getElementById('uploadBtn');
+  
+  // Image editor variables
+  let currentScale = 1;
+  let currentX = 0;
+  let currentY = 0;
+  let originalImageData = null;
   
   uploadArea.addEventListener('click', () => fileInput.click());
   
@@ -1478,13 +1643,88 @@ function setupLogoUpload() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        previewImage.src = e.target.result;
-        uploadArea.style.display = 'none';
-        previewArea.style.display = 'block';
+        originalImageData = e.target.result;
+        showImageEditor(originalImageData);
       };
       reader.readAsDataURL(file);
     }
   });
+  
+  function showImageEditor(imageData) {
+    previewImage.src = imageData;
+    previewImage.style.display = 'block';
+    
+    // Show editor, hide upload area
+    uploadArea.style.display = 'none';
+    editorArea.style.display = 'block';
+    uploadBtn.style.display = 'inline-block';
+    
+    // Reset controls
+    resetImageEditor();
+    
+    // Setup control listeners
+    setupEditorControls();
+  }
+  
+  function setupEditorControls() {
+    const scaleSlider = document.getElementById('scaleSlider');
+    const positionXSlider = document.getElementById('positionXSlider');
+    const positionYSlider = document.getElementById('positionYSlider');
+    const scaleValue = document.getElementById('scaleValue');
+    const positionXValue = document.getElementById('positionXValue');
+    const positionYValue = document.getElementById('positionYValue');
+    
+    scaleSlider.addEventListener('input', (e) => {
+      currentScale = parseFloat(e.target.value);
+      scaleValue.textContent = currentScale.toFixed(1) + 'x';
+      updateImageTransform();
+    });
+    
+    positionXSlider.addEventListener('input', (e) => {
+      currentX = parseInt(e.target.value);
+      positionXValue.textContent = currentX;
+      updateImageTransform();
+    });
+    
+    positionYSlider.addEventListener('input', (e) => {
+      currentY = parseInt(e.target.value);
+      positionYValue.textContent = currentY;
+      updateImageTransform();
+    });
+  }
+  
+  function updateImageTransform() {
+    previewImage.style.transform = `translate(-50%, -50%) scale(${currentScale}) translate(${currentX}px, ${currentY}px)`;
+  }
+  
+  window.resetImageEditor = function() {
+    currentScale = 1;
+    currentX = 0;
+    currentY = 0;
+    
+    const scaleSlider = document.getElementById('scaleSlider');
+    const positionXSlider = document.getElementById('positionXSlider');
+    const positionYSlider = document.getElementById('positionYSlider');
+    const scaleValue = document.getElementById('scaleValue');
+    const positionXValue = document.getElementById('positionXValue');
+    const positionYValue = document.getElementById('positionYValue');
+    
+    scaleSlider.value = 1;
+    positionXSlider.value = 0;
+    positionYSlider.value = 0;
+    scaleValue.textContent = '1.0x';
+    positionXValue.textContent = '0';
+    positionYValue.textContent = '0';
+    
+    updateImageTransform();
+  };
+  
+  window.backToUpload = function() {
+    uploadArea.style.display = 'block';
+    editorArea.style.display = 'none';
+    uploadBtn.style.display = 'none';
+    fileInput.value = '';
+  };
   
   // Drag and drop
   uploadArea.addEventListener('dragover', (e) => {
@@ -1524,22 +1764,78 @@ async function uploadLogo() {
     return;
   }
   
-  const formData = new FormData();
-  formData.append('work', file);
-  formData.append('isLogo', 'true');
+  // Create canvas to apply transformations
+  const previewImage = document.getElementById('previewImage');
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
   
-  try {
-    await apiCall('/api/works', {
-      method: 'POST',
-      body: formData
-    });
+  // Set canvas size (300x300 for circular logo)
+  canvas.width = 300;
+  canvas.height = 300;
+  
+  // Get current transformation values
+  const scaleSlider = document.getElementById('scaleSlider');
+  const positionXSlider = document.getElementById('positionXSlider');
+  const positionYSlider = document.getElementById('positionYSlider');
+  
+  const scale = parseFloat(scaleSlider.value);
+  const offsetX = parseInt(positionXSlider.value);
+  const offsetY = parseInt(positionYSlider.value);
+  
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Create circular clip
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(150, 150, 150, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      
+      // Calculate image dimensions and position
+      const imgWidth = img.width * scale;
+      const imgHeight = img.height * scale;
+      
+      const x = (canvas.width - imgWidth) / 2 + offsetX;
+      const y = (canvas.height - imgHeight) / 2 + offsetY;
+      
+      // Draw image with transformations
+      ctx.drawImage(img, x, y, imgWidth, imgHeight);
+      ctx.restore();
+      
+      // Convert canvas to blob
+      canvas.toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append('image', blob, 'logo.png');
+        formData.append('isLogo', 'true');
+        
+        try {
+          await apiCall('/api/works', {
+            method: 'POST',
+            body: formData
+          });
+          
+          closeModal();
+          loadLogo();
+          resolve();
+        } catch (error) {
+          console.error('Error uploading logo:', error);
+          alert('Ошибка загрузки логотипа: ' + error.message);
+          reject(error);
+        }
+      }, 'image/png', 0.9);
+    };
     
-    closeModal();
-    loadLogo();
-  } catch (error) {
-    console.error('Error uploading logo:', error);
-    alert('Ошибка загрузки логотипа');
-  }
+    img.onerror = () => {
+      alert('Ошибка загрузки изображения');
+      reject(new Error('Image load error'));
+    };
+    
+    img.src = previewImage.src;
+  });
 }
 
 // Название компании
