@@ -72,11 +72,12 @@
     }
 
     .booking-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 32px;
+      background: white;
+      color: #333;
+      padding: 16px 32px;
       text-align: left;
       position: relative;
+      border-bottom: 1px solid #e5e7eb;
     }
 
     .business-info {
@@ -94,7 +95,7 @@
       height: 60px;
       border-radius: 12px;
       overflow: hidden;
-      background: #f9fafb;
+      background: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -458,7 +459,7 @@
       }
 
       .booking-header {
-        padding: 24px;
+        padding: 12px 16px;
       }
 
       .business-info {
@@ -530,6 +531,16 @@
   </main>
 
   <script>
+    // Prevent auto-scroll immediately
+    window.scrollTo(0, 0);
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+    
+    // Prevent focus-induced scroll
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
     // Get slug from URL - handle both /book-template/slug and /book-template/:slug formats
     const pathParts = window.location.pathname.split('/').filter(part => part);
     const slug = pathParts[pathParts.length - 1];
@@ -543,6 +554,13 @@
     } else {
       loadBookingData();
     }
+
+    // Prevent scroll after initial load
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    }, 100);
 
     // iOS-style Time Picker
     function initializeTimePicker() {
@@ -636,12 +654,13 @@
         console.log('Loading booking data for slug:', slug);
         
         // Load business info
+        console.log('Fetching business data...');
         const businessResponse = await fetch(`/api/public/business?slug=${slug}`);
         console.log('Business response status:', businessResponse.status);
         
         if (businessResponse.ok) {
           const business = await businessResponse.json();
-          console.log('Business data:', business);
+          console.log('Business data received:', business);
           
           // Load company name
           const businessNameElement = document.getElementById('business-name');
@@ -684,6 +703,8 @@
         } else {
           const errorText = await businessResponse.text();
           console.error('Business API error:', businessResponse.status, errorText);
+          document.getElementById('booking-content').innerHTML = '<div class="error">Ошибка загрузки данных бизнеса</div>';
+          return;
         }
 
         // Load branches, services, masters and works
@@ -913,7 +934,7 @@
       // Set minimum date to today
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('date').min = today;
-      
+
       // Initialize time picker
       initializeTimePicker();
     }
