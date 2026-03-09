@@ -41,6 +41,7 @@ model Business {
   categories   Category[]
   masters      Master[]
   workPhotos   WorkPhoto[]
+  schedules    Schedule[]
   branches     Branch[]
   appointments Appointment[]
 }
@@ -109,8 +110,8 @@ model Master {
   businessId String
   createdAt  DateTime @default(now())
 
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
+  business  Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  schedules Schedule[]
   appointments Appointment[]
 }
 
@@ -123,6 +124,19 @@ model WorkPhoto {
   createdAt  DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model Schedule {
+  id         Int      @id @default(autoincrement())
+  type       String   // 'owner' or 'master'
+  email      String
+  masterId   Int?
+  businessId String
+  days       Json     // { "dateString": { working: true, start: "09:00", end: "18:00" } }
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  master  Master?  @relation(fields: [masterId], references: [id])
 }
 
 model Branch {

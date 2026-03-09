@@ -92,6 +92,17 @@
     </div>
   </section>
 
+  <!-- График работы -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>📅 График работы</h2>
+    </div>
+    
+    <div class="schedule-container" id="scheduleContainer">
+      <div class="loading">Загрузка...</div>
+    </div>
+  </section>
+
   <!-- Фото работ -->
   <section class="settings-section">
     <div class="section-header">
@@ -219,6 +230,218 @@
 .logo-meta {
   font-size: 14px;
   color: #6b7280;
+}
+
+.schedule-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.schedule-item {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  background: #f9fafb;
+}
+
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.schedule-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #111;
+}
+
+.schedule-email {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.schedule-btn {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.schedule-btn:hover {
+  background: #5a67d8;
+}
+
+.schedule-preview {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.day-cell {
+  padding: 8px;
+  text-align: center;
+  border-radius: 6px;
+  font-size: 12px;
+  border: 1px solid #e5e7eb;
+  background: white;
+}
+
+.day-cell.working {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #166534;
+}
+
+.day-cell.off {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.schedule-modal {
+  max-width: 600px;
+  width: 100%;
+}
+
+.schedule-info h3 {
+  margin: 0 0 8px 0;
+  color: #111;
+}
+
+.schedule-info p {
+  margin: 0 0 20px 0;
+  color: #6b7280;
+}
+
+.month-selector {
+  margin-bottom: 20px;
+}
+
+.month-selector label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.month-selector select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-weight: 600;
+  font-size: 12px;
+  color: #6b7280;
+  padding: 8px 4px;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  background: white;
+  transition: all 0.2s;
+}
+
+.calendar-day:hover {
+  border-color: #667eea;
+  background: #f3f4f6;
+}
+
+.calendar-day.empty {
+  cursor: default;
+  border: none;
+  background: transparent;
+}
+
+.calendar-day.selected {
+  border-color: #667eea;
+  background: #eef2ff;
+}
+
+.calendar-day.working-day {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #166534;
+}
+
+.calendar-day.day-off {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.time-selector {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.time-selector h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #111;
+}
+
+.time-inputs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.time-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-input-group label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.time-input-group input[type="time"] {
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.time-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .logo-actions {
@@ -508,6 +731,7 @@ async function loadAllData() {
     loadCategories(),
     loadServices(),
     loadMasters(),
+    loadSchedule(),
     loadWorks()
   ]);
 }
@@ -1042,6 +1266,286 @@ async function deleteMaster(id) {
   } catch (error) {
     console.error('Error deleting master:', error);
     alert('Ошибка удаления');
+  }
+}
+
+// График работы
+async function loadSchedule() {
+  try {
+    const [user, masters] = await Promise.all([
+      apiCall('/api/user'),
+      apiCall('/api/masters')
+    ]);
+    
+    const container = document.getElementById('scheduleContainer');
+    
+    // График владельца
+    const ownerSchedule = `
+      <div class="schedule-item">
+        <div class="schedule-header">
+          <div>
+            <div class="schedule-title">Владелец бизнеса</div>
+            <div class="schedule-email">${user.email}</div>
+          </div>
+          <button class="schedule-btn" onclick="openScheduleModal('owner', '${user.email}')">Настроить график</button>
+        </div>
+        <div class="schedule-preview" id="owner-schedule-preview">
+          <!-- Предпросмотр графика -->
+        </div>
+      </div>
+    `;
+    
+    // Графики мастеров
+    const mastersSchedules = masters.map(master => `
+      <div class="schedule-item">
+        <div class="schedule-header">
+          <div>
+            <div class="schedule-title">${master.name}</div>
+            <div class="schedule-email">${master.email}</div>
+          </div>
+          <button class="schedule-btn" onclick="openScheduleModal('master', '${master.email}', ${master.id})">Настроить график</button>
+        </div>
+        <div class="schedule-preview" id="master-${master.id}-schedule-preview">
+          <!-- Предпросмотр графика -->
+        </div>
+      </div>
+    `).join('');
+    
+    container.innerHTML = ownerSchedule + mastersSchedules;
+    
+    // Загрузим предпросмотры графиков
+    loadSchedulePreviews();
+    
+  } catch (error) {
+    console.error('Error loading schedule:', error);
+    document.getElementById('scheduleContainer').innerHTML = '<div class="error">Ошибка загрузки графика работы</div>';
+  }
+}
+
+async function loadSchedulePreviews() {
+  // Загрузка предпросмотров графиков для всех сотрудников
+  try {
+    const schedules = await apiCall('/api/schedules');
+    
+    schedules.forEach(schedule => {
+      const previewId = schedule.type === 'owner' ? 'owner-schedule-preview' : `master-${schedule.masterId}-schedule-preview`;
+      const previewElement = document.getElementById(previewId);
+      
+      if (previewElement) {
+        previewElement.innerHTML = generateSchedulePreview(schedule);
+      }
+    });
+  } catch (error) {
+    console.error('Error loading schedule previews:', error);
+  }
+}
+
+function generateSchedulePreview(schedule) {
+  const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(currentYear, currentMonth, today.getDate() + i);
+    const daySchedule = schedule.days[date.toDateString()];
+    
+    if (daySchedule && daySchedule.working) {
+      html += `<div class="day-cell working">${days[i]}<br>${daySchedule.start}-${daySchedule.end}</div>`;
+    } else {
+      html += `<div class="day-cell off">${days[i]}<br>Выходной</div>`;
+    }
+  }
+  
+  return html;
+}
+
+function openScheduleModal(type, email, masterId = null) {
+  const modalBody = document.getElementById('modalBody');
+  const title = type === 'owner' ? 'График работы владельца' : `График работы ${email}`;
+  
+  modalBody.innerHTML = `
+    <div class="schedule-modal">
+      <div class="schedule-info">
+        <h3>${title}</h3>
+        <p>Выберите рабочие дни и время</p>
+      </div>
+      
+      <div class="month-selector">
+        <label for="scheduleMonth">Месяц:</label>
+        <select id="scheduleMonth">
+          ${generateMonthOptions()}
+        </select>
+      </div>
+      
+      <div class="calendar-grid" id="calendarGrid">
+        <!-- Календарь сгенерируется через JS -->
+      </div>
+      
+      <div class="time-selector" id="timeSelector" style="display: none;">
+        <h4>Время работы для <span id="selectedDate"></span></h4>
+        <div class="time-inputs">
+          <div class="time-input-group">
+            <label>С:</label>
+            <input type="time" id="startTime" value="09:00">
+          </div>
+          <div class="time-input-group">
+            <label>До:</label>
+            <input type="time" id="endTime" value="18:00">
+          </div>
+        </div>
+        <div class="time-actions">
+          <button type="button" class="btn secondary" onclick="setDayOff()">Выходной</button>
+          <button type="button" class="btn" onclick="saveDaySchedule()">Сохранить день</button>
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Отмена</button>
+        <button type="button" class="btn" onclick="saveSchedule('${type}', '${email}', ${masterId})">Сохранить график</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modal').style.display = 'flex';
+  
+  // Инициализация календаря
+  initializeCalendar();
+}
+
+function generateMonthOptions() {
+  const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
+                   'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+  const currentMonth = new Date().getMonth();
+  
+  return months.map((month, index) => 
+    `<option value="${index}" ${index === currentMonth ? 'selected' : ''}>${month}</option>`
+  ).join('');
+}
+
+let currentEditingDate = null;
+
+function initializeCalendar() {
+  const monthSelect = document.getElementById('scheduleMonth');
+  const calendarGrid = document.getElementById('calendarGrid');
+  
+  monthSelect.addEventListener('change', generateCalendar);
+  generateCalendar();
+}
+
+function generateCalendar() {
+  const monthSelect = document.getElementById('scheduleMonth');
+  const calendarGrid = document.getElementById('calendarGrid');
+  const month = parseInt(monthSelect.value);
+  const year = new Date().getFullYear();
+  
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startingDayOfWeek = firstDay.getDay();
+  
+  let html = '<div class="calendar-weekdays">';
+  const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  weekdays.forEach(day => {
+    html += `<div class="calendar-weekday">${day}</div>`;
+  });
+  html += '</div><div class="calendar-days">';
+  
+  // Пустые ячейки для начала месяца
+  for (let i = 0; i < (startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1); i++) {
+    html += '<div class="calendar-day empty"></div>';
+  }
+  
+  // Дни месяца
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    const dateStr = date.toDateString();
+    html += `<div class="calendar-day" onclick="selectDate('${dateStr}', ${day})">${day}</div>`;
+  }
+  
+  html += '</div>';
+  calendarGrid.innerHTML = html;
+}
+
+function selectDate(dateStr, day) {
+  currentEditingDate = dateStr;
+  const timeSelector = document.getElementById('timeSelector');
+  const selectedDateSpan = document.getElementById('selectedDate');
+  
+  selectedDateSpan.textContent = new Date(dateStr).toLocaleDateString('ru-RU');
+  timeSelector.style.display = 'block';
+  
+  // Подсветка выбранного дня
+  document.querySelectorAll('.calendar-day').forEach(el => {
+    el.classList.remove('selected');
+  });
+  event.target.classList.add('selected');
+}
+
+function setDayOff() {
+  if (!currentEditingDate) return;
+  
+  // Сохраняем как выходной день
+  if (!window.tempSchedule) window.tempSchedule = {};
+  window.tempSchedule[currentEditingDate] = { working: false };
+  
+  // Обновляем стиль дня
+  event.target.classList.add('day-off');
+  
+  // Скрываем выбор времени
+  document.getElementById('timeSelector').style.display = 'none';
+}
+
+function saveDaySchedule() {
+  if (!currentEditingDate) return;
+  
+  const startTime = document.getElementById('startTime').value;
+  const endTime = document.getElementById('endTime').value;
+  
+  if (!startTime || !endTime) {
+    alert('Выберите время работы');
+    return;
+  }
+  
+  // Сохраняем график дня
+  if (!window.tempSchedule) window.tempSchedule = {};
+  window.tempSchedule[currentEditingDate] = {
+    working: true,
+    start: startTime,
+    end: endTime
+  };
+  
+  // Обновляем стиль дня
+  event.target.classList.add('working-day');
+  
+  // Скрываем выбор времени
+  document.getElementById('timeSelector').style.display = 'none';
+}
+
+async function saveSchedule(type, email, masterId = null) {
+  if (!window.tempSchedule) {
+    alert('Настройте хотя бы один день');
+    return;
+  }
+  
+  try {
+    await apiCall('/api/schedules', {
+      method: 'POST',
+      body: JSON.stringify({
+        type,
+        email,
+        masterId,
+        days: window.tempSchedule
+      })
+    });
+    
+    closeModal();
+    loadSchedule();
+  } catch (error) {
+    console.error('Error saving schedule:', error);
+    alert('Ошибка сохранения графика');
   }
 }
 

@@ -563,6 +563,25 @@ app.patch("/api/business/name", requireAuth, async (req, res) => {
   res.json({ name: business.name });
 });
 
+// Получить информацию о текущем пользователе
+app.get("/api/user", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ 
+    where: { id: req.user.id },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      businessId: true
+    }
+  });
+  
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+  
+  res.json(user);
+});
+
 app.get("/admin", requireSuperAdmin, async (req, res) => {
   res.sendFile(path.join(FRONTEND_PATH, "admin.html"));
 });
@@ -1009,6 +1028,83 @@ app.delete("/api/masters/:id", async (req, res) => {
   }
 
   res.json({ ok: true });
+});
+
+// ===== SCHEDULE API =====
+
+// Получить все графики бизнеса
+app.get("/api/schedules", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  
+  const schedules = await prisma.schedule.findMany({
+    where: { businessId: user.businessId },
+    orderBy: { createdAt: "desc" }
+  });
+  
+  res.json(schedules);
+});
+
+// Создать или обновить график
+app.post("/api/schedules", requireAuth, async (req, res) => {
+  const { type, email, masterId, days } = req.body;
+  
+  if (!type || !email || !days) {
+    return res.status(400).json({ error: "Тип, email и дни обязательны" });
+  }
+  
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  
+  try {
+    // Удаляем существующий график для этого сотрудника
+    await prisma.schedule.deleteMany({
+      where: {
+        businessId: user.businessId,
+        type,
+        email,
+        ...(masterId && { masterId })
+      }
+    });
+    
+    // Создаем новый график
+    const schedule = await prisma.schedule.create({
+      data: {
+        type,
+        email,
+        masterId: masterId ? Number(masterId) : null,
+        businessId: user.businessId,
+        days
+      }
+    });
+    
+    res.json(schedule);
+  } catch (error) {
+    console.error('Error saving schedule:', error);
+    return res.status(500).json({ error: "Ошибка сохранения графика" });
+  }
+});
+
+// Получить график для публичной страницы
+app.get("/api/public/schedule/:email", getBusinessBySlug, async (req, res) => {
+  const { email } = req.params;
+  
+  const schedule = await prisma.schedule.findFirst({
+    where: {
+      businessId: req.business.id,
+      email
+    }
+  });
+  
+  if (!schedule) {
+    return res.json({ days: {} });
+  }
+  
+  res.json(schedule);
 });
 
 // ===== WORKS (PHOTOS) API =====

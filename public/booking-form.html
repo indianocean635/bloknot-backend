@@ -16,19 +16,20 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #ffffff;
       min-height: 100vh;
-      color: #333;
+      color: #1a1a1a;
       line-height: 1.4;
     }
 
     /* HEADER */
     .header {
       width: 100%;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 16px 0;
     }
 
     .header-inner {
@@ -60,11 +61,14 @@
     }
 
     .booking-card {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
+      background: #ffffff;
       border-radius: 24px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
+      padding: 40px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e5e7eb;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
     }
 
     .booking-header {
@@ -160,6 +164,109 @@
       border-color: #667eea;
       box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
       transform: translateY(-2px);
+    }
+
+    .date-input {
+      width: 100%;
+      padding: 16px 20px;
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      font-size: 16px;
+      margin-bottom: 16px;
+      background: white;
+      transition: all 0.3s ease;
+    }
+
+    .date-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .datetime-picker {
+      width: 100%;
+    }
+
+    .time-picker-container {
+      position: relative;
+    }
+
+    .time-picker {
+      display: flex;
+      background: #f2f2f7;
+      border-radius: 20px;
+      padding: 8px;
+      margin-bottom: 16px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+      height: 200px;
+    }
+
+    .time-wheel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .wheel-label {
+      font-size: 12px;
+      color: #8e8e93;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .wheel-items {
+      flex: 1;
+      width: 100%;
+      overflow-y: auto;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      position: relative;
+    }
+
+    .wheel-items::-webkit-scrollbar {
+      display: none;
+    }
+
+    .wheel-item {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1c1c1e;
+      scroll-snap-align: center;
+      cursor: pointer;
+      border-radius: 8px;
+      margin: 0 8px;
+      transition: all 0.2s;
+    }
+
+    .wheel-item:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .wheel-item.selected {
+      color: #007aff;
+      font-weight: 700;
+      background: rgba(0, 122, 255, 0.1);
+    }
+
+    .wheel-indicator {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 40px;
+      border-top: 2px solid #c7c7cc;
+      border-bottom: 2px solid #c7c7cc;
+      transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 1;
     }
 
     /* WORKS SECTION */
@@ -363,6 +470,93 @@
       loadBookingData();
     }
 
+    // iOS-style Time Picker
+    function initializeTimePicker() {
+      const hoursItems = document.getElementById('hoursItems');
+      const minutesItems = document.getElementById('minutesItems');
+      const timeInput = document.getElementById('time');
+      
+      // Generate hours (0-23)
+      for (let i = 0; i < 24; i++) {
+        const hour = i.toString().padStart(2, '0');
+        const item = document.createElement('div');
+        item.className = 'wheel-item';
+        item.textContent = hour;
+        item.dataset.value = hour;
+        item.addEventListener('click', () => selectHour(hour, item));
+        hoursItems.appendChild(item);
+      }
+      
+      // Generate minutes (0, 15, 30, 45)
+      const minuteValues = [0, 15, 30, 45];
+      minuteValues.forEach(minute => {
+        const minStr = minute.toString().padStart(2, '0');
+        const item = document.createElement('div');
+        item.className = 'wheel-item';
+        item.textContent = minStr;
+        item.dataset.value = minStr;
+        item.addEventListener('click', () => selectMinute(minStr, item));
+        minutesItems.appendChild(item);
+      });
+      
+      // Add indicators
+      const hoursWheel = document.getElementById('hoursWheel');
+      const minutesWheel = document.getElementById('minutesWheel');
+      
+      const hoursIndicator = document.createElement('div');
+      hoursIndicator.className = 'wheel-indicator';
+      hoursWheel.appendChild(hoursIndicator);
+      
+      const minutesIndicator = document.createElement('div');
+      minutesIndicator.className = 'wheel-indicator';
+      minutesWheel.appendChild(minutesIndicator);
+      
+      // Select default values (09:00)
+      selectHour('09', hoursItems.querySelector('[data-value="09"]'));
+      selectMinute('00', minutesItems.querySelector('[data-value="00"]'));
+    }
+    
+    function selectHour(hour, element) {
+      document.querySelectorAll('#hoursItems .wheel-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      element.classList.add('selected');
+      
+      // Scroll to selected
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      updateTimeValue();
+    }
+    
+    function selectMinute(minute, element) {
+      document.querySelectorAll('#minutesItems .wheel-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      element.classList.add('selected');
+      
+      // Scroll to selected
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      updateTimeValue();
+    }
+    
+    function updateTimeValue() {
+      const selectedHour = document.querySelector('#hoursItems .wheel-item.selected')?.dataset.value || '09';
+      const selectedMinute = document.querySelector('#minutesItems .wheel-item.selected')?.dataset.value || '00';
+      const timeInput = document.getElementById('time');
+      
+      timeInput.value = `${selectedHour}:${selectedMinute}`;
+    }
+    
+    function getCombinedDateTime() {
+      const dateInput = document.getElementById('date').value;
+      const timeInput = document.getElementById('time').value;
+      
+      if (!dateInput || !timeInput) return null;
+      
+      return `${dateInput}T${timeInput}:00`;
+    }
+
     async function loadBookingData() {
       try {
         console.log('Loading booking data for slug:', slug);
@@ -560,7 +754,22 @@
             <div class="step-icon icon-datetime">📅</div>
             <div class="step-content">
               <div class="step-label">Дата и время</div>
-              <input type="datetime-local" id="datetime" class="step-input" required>
+              <div class="datetime-picker">
+                <input type="date" id="date" class="date-input" required>
+                <div class="time-picker-container">
+                  <div class="time-picker" id="timePicker">
+                    <div class="time-wheel" id="hoursWheel">
+                      <div class="wheel-label">Часы</div>
+                      <div class="wheel-items" id="hoursItems"></div>
+                    </div>
+                    <div class="time-wheel" id="minutesWheel">
+                      <div class="wheel-label">Минуты</div>
+                      <div class="wheel-items" id="minutesItems"></div>
+                    </div>
+                  </div>
+                  <input type="hidden" id="time" class="time-input" required>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -596,10 +805,12 @@
       
       document.getElementById('booking-content').innerHTML = formHtml;
       
-      // Set minimum datetime to now
-      const now = new Date();
-      const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-      document.getElementById('datetime').min = localDateTime;
+      // Set minimum date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('date').min = today;
+      
+      // Initialize time picker
+      initializeTimePicker();
     }
 
     async function handleBookingSubmit(e) {
@@ -616,7 +827,7 @@
         customerEmail: document.getElementById('customer-email').value || null,
         serviceId: document.getElementById('service').value,
         staffId: document.getElementById('master').value,
-        startsAt: document.getElementById('datetime').value
+        startsAt: getCombinedDateTime()
       };
 
       try {
