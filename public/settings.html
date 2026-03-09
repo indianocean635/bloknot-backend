@@ -44,6 +44,34 @@
     </div>
   </section>
 
+  <!-- Логотип и название компании -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>🏢 Брендинг</h2>
+    </div>
+    
+    <div class="branding-container">
+      <div class="branding-item">
+        <h3>Логотип</h3>
+        <div class="logo-preview" id="logoPreview">
+          <div class="no-logo">Нет логотипа</div>
+        </div>
+        <div class="logo-actions">
+          <button class="btn" id="addLogoBtn">+ Добавить логотип</button>
+          <button class="btn secondary" id="changeLogoBtn" style="display: none;">Изменить логотип</button>
+        </div>
+      </div>
+      
+      <div class="branding-item">
+        <h3>Название компании</h3>
+        <div class="company-info">
+          <input type="text" id="companyNameInput" placeholder="Введите название компании">
+          <button class="btn" id="saveCompanyNameBtn">Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Филиалы -->
   <section class="settings-section">
     <div class="section-header">
@@ -80,11 +108,11 @@
     </div>
   </section>
 
-  <!-- Мастера -->
+  <!-- Специалисты -->
   <section class="settings-section">
     <div class="section-header">
-      <h2>👨‍💼 Мастера</h2>
-      <button class="btn" id="addMasterBtn">+ Добавить мастера</button>
+      <h2>👨‍💼 Специалисты</h2>
+      <button class="btn" id="addMasterBtn">+ Добавить специалиста</button>
     </div>
     
     <div class="items-grid" id="mastersGrid">
@@ -444,6 +472,139 @@
   gap: 8px;
 }
 
+.branding-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.branding-item {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 16px;
+  padding: 24px;
+  color: white;
+  text-align: center;
+}
+
+.branding-item h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.logo-preview {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 16px;
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.logo-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.no-logo {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+.logo-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.branding-item .btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.branding-item .btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.branding-item .btn.secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.company-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.company-info input {
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 16px;
+}
+
+.company-info input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.company-info input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.logo-modal {
+  text-align: center;
+}
+
+.logo-modal h3 {
+  margin: 0 0 8px 0;
+  color: #111;
+}
+
+.logo-modal p {
+  margin: 0 0 24px 0;
+  color: #6b7280;
+}
+
+.upload-area {
+  border: 2px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 40px 20px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upload-area:hover {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.02);
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.preview-area {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.preview-area img {
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
 .logo-actions {
   display: flex;
   gap: 8px;
@@ -740,6 +901,8 @@ async function loadAllData() {
 function setupEventListeners() {
   // Кнопки добавления
   document.getElementById('addLogoBtn').addEventListener('click', () => openLogoModal());
+  document.getElementById('changeLogoBtn').addEventListener('click', () => openLogoModal());
+  document.getElementById('saveCompanyNameBtn').addEventListener('click', saveCompanyName);
   document.getElementById('addBranchBtn').addEventListener('click', () => openBranchModal());
   document.getElementById('addCategoryBtn').addEventListener('click', () => openCategoryModal());
   document.getElementById('addServiceBtn').addEventListener('click', () => openServiceModal());
@@ -1182,7 +1345,7 @@ function renderMasters(masters) {
 }
 
 async function openMasterModal(id = null) {
-  const title = id ? 'Редактировать мастера' : 'Добавить мастера';
+  const title = id ? 'Редактировать специалиста' : 'Добавить специалиста';
   
   let master = null;
   if (id) {
@@ -1253,12 +1416,12 @@ async function saveMaster(id = null) {
     loadMasters();
   } catch (error) {
     console.error('Error saving master:', error);
-    alert('Ошибка сохранения: ' + error.message);
+    alert('Ошибка сохранения специалиста: ' + error.message);
   }
 }
 
 async function deleteMaster(id) {
-  if (!confirm('Удалить мастера?')) return;
+  if (!confirm('Удалить специалиста?')) return;
   
   try {
     await apiCall(`/api/masters/${id}`, { method: 'DELETE' });
@@ -1266,6 +1429,175 @@ async function deleteMaster(id) {
   } catch (error) {
     console.error('Error deleting master:', error);
     alert('Ошибка удаления');
+  }
+}
+
+// Логотип
+async function loadLogo() {
+  try {
+    const works = await apiCall('/api/works');
+    const logo = works.find(work => work.isLogo);
+    
+    const logoPreview = document.getElementById('logoPreview');
+    const addBtn = document.getElementById('addLogoBtn');
+    const changeBtn = document.getElementById('changeLogoBtn');
+    
+    if (logo) {
+      logoPreview.innerHTML = `<img src="${logo.imageUrl}" alt="Logo">`;
+      addBtn.style.display = 'none';
+      changeBtn.style.display = 'inline-block';
+    } else {
+      logoPreview.innerHTML = '<div class="no-logo">Нет логотипа</div>';
+      addBtn.style.display = 'inline-block';
+      changeBtn.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Error loading logo:', error);
+  }
+}
+
+function openLogoModal() {
+  const modalBody = document.getElementById('modalBody');
+  
+  modalBody.innerHTML = `
+    <div class="logo-modal">
+      <h3>Загрузить логотип</h3>
+      <p>Выберите изображение для логотипа вашей компании</p>
+      
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📷</div>
+        <p>Нажмите для выбора файла или перетащите изображение сюда</p>
+        <input type="file" id="logoFile" accept="image/*" style="display: none;">
+      </div>
+      
+      <div class="preview-area" id="previewArea" style="display: none;">
+        <img id="previewImage" style="max-width: 200px; max-height: 200px;">
+        <button type="button" class="btn secondary" onclick="clearPreview()">Удалить</button>
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Отмена</button>
+        <button type="button" class="btn" onclick="uploadLogo()">Загрузить</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('modalTitle').textContent = 'Логотип компании';
+  document.getElementById('modal').style.display = 'flex';
+  
+  setupLogoUpload();
+}
+
+function setupLogoUpload() {
+  const uploadArea = document.getElementById('uploadArea');
+  const fileInput = document.getElementById('logoFile');
+  const previewArea = document.getElementById('previewArea');
+  const previewImage = document.getElementById('previewImage');
+  
+  uploadArea.addEventListener('click', () => fileInput.click());
+  
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        uploadArea.style.display = 'none';
+        previewArea.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  
+  // Drag and drop
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.style.background = 'rgba(16, 185, 129, 0.1)';
+  });
+  
+  uploadArea.addEventListener('dragleave', () => {
+    uploadArea.style.background = 'transparent';
+  });
+  
+  uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.style.background = 'transparent';
+    
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      fileInput.files = e.dataTransfer.files;
+      const event = new Event('change', { bubbles: true });
+      fileInput.dispatchEvent(event);
+    }
+  });
+}
+
+function clearPreview() {
+  document.getElementById('uploadArea').style.display = 'block';
+  document.getElementById('previewArea').style.display = 'none';
+  document.getElementById('logoFile').value = '';
+}
+
+async function uploadLogo() {
+  const fileInput = document.getElementById('logoFile');
+  const file = fileInput.files[0];
+  
+  if (!file) {
+    alert('Выберите файл для загрузки');
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('work', file);
+  formData.append('isLogo', 'true');
+  
+  try {
+    await apiCall('/api/works', {
+      method: 'POST',
+      body: formData
+    });
+    
+    closeModal();
+    loadLogo();
+  } catch (error) {
+    console.error('Error uploading logo:', error);
+    alert('Ошибка загрузки логотипа');
+  }
+}
+
+// Название компании
+async function loadCompanyName() {
+  try {
+    const business = await apiCall('/api/business/name');
+    const input = document.getElementById('companyNameInput');
+    
+    if (business && business.name) {
+      input.value = business.name;
+    }
+  } catch (error) {
+    console.error('Error loading company name:', error);
+  }
+}
+
+async function saveCompanyName() {
+  const input = document.getElementById('companyNameInput');
+  const name = input.value.trim();
+  
+  if (!name) {
+    alert('Введите название компании');
+    return;
+  }
+  
+  try {
+    await apiCall('/api/business/name', {
+      method: 'PATCH',
+      body: JSON.stringify({ name })
+    });
+    
+    alert('Название компании сохранено');
+  } catch (error) {
+    console.error('Error saving company name:', error);
+    alert('Ошибка сохранения названия');
   }
 }
 

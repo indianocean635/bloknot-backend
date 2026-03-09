@@ -819,6 +819,17 @@ app.get("/api/public/branches", getBusinessBySlug, async (req, res) => {
 
 // Получить информацию о бизнесе (публичная)
 app.get("/api/public/business", getBusinessBySlug, async (req, res) => {
+  // Получаем логотип
+  const logoPhoto = await prisma.workPhoto.findFirst({
+    where: {
+      businessId: req.business.id,
+      isLogo: true
+    },
+    select: {
+      imageUrl: true
+    }
+  });
+  
   const business = await prisma.business.findUnique({
     where: { id: req.business.id },
     select: {
@@ -839,7 +850,7 @@ app.get("/api/public/business", getBusinessBySlug, async (req, res) => {
     name: business.name,
     address: business.branches[0]?.address || null,
     phone: business.branches[0]?.phone || null,
-    logo: null // Temporarily disabled
+    logo: logoPhoto?.imageUrl || null
   };
   
   console.log('Business data:', result);
@@ -1178,11 +1189,26 @@ app.post("/api/works", worksUpload.single("image"), requireAuth, async (req, res
 
   const imageUrl = `/uploads/works/${req.file.filename}`;
   const caption = req.body && req.body.caption ? String(req.body.caption) : null;
+  const isLogo = req.body && req.body.isLogo === 'true';
+
+  // Если это логотип, сначала убираем старый логотип
+  if (isLogo) {
+    await prisma.workPhoto.updateMany({
+      where: {
+        businessId: user.businessId,
+        isLogo: true
+      },
+      data: {
+        isLogo: false
+      }
+    });
+  }
 
   const photo = await prisma.workPhoto.create({
     data: {
       imageUrl,
       caption,
+      isLogo,
       businessId: user.businessId,
     },
   });
