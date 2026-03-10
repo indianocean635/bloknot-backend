@@ -1296,7 +1296,7 @@ app.get("/api/appointments", requireAuth, async (req, res) => {
     if (fromDate) where.startsAt.gte = fromDate;
     if (toDate) where.startsAt.lte = toDate;
   }
-  if (masterId) where.staffId = Number(masterId);
+  if (masterId) where.masterId = Number(masterId);
 
   const items = await prisma.appointment.findMany({
     where,
@@ -1320,7 +1320,7 @@ app.get("/api/public/appointments", getBusinessBySlug, async (req, res) => {
     if (fromDate) where.startsAt.gte = fromDate;
     if (toDate) where.startsAt.lte = toDate;
   }
-  if (masterId) where.staffId = Number(masterId);
+  if (masterId) where.masterId = Number(masterId);
 
   const items = await prisma.appointment.findMany({
     where,
@@ -1332,9 +1332,9 @@ app.get("/api/public/appointments", getBusinessBySlug, async (req, res) => {
 });
 
 app.post("/api/public/appointments", getBusinessBySlug, async (req, res) => {
-  const { customerName, customerPhone, startsAt, serviceId, staffId, branchId } = req.body;
+  const { customerName, customerPhone, startsAt, serviceId, masterId, branchId } = req.body;
 
-  if (!customerName || !startsAt || !serviceId || !staffId) {
+  if (!customerName || !startsAt || !serviceId || !masterId) {
     return res.status(400).json({ error: "Заполните клиента, услугу, мастера и время" });
   }
 
@@ -1351,11 +1351,11 @@ app.post("/api/public/appointments", getBusinessBySlug, async (req, res) => {
   const durationMs = Number(service.duration) * 60 * 1000;
   const end = new Date(start.getTime() + durationMs);
 
-  const sid = Number(staffId);
+  const sid = Number(masterId);
   const overlap = await prisma.appointment.findFirst({
     where: {
       businessId: req.business.id,
-      staffId: sid,
+      masterId: sid,
       AND: [{ startsAt: { lt: end } }, { endsAt: { gt: start } }],
     },
   });
@@ -1372,7 +1372,7 @@ app.post("/api/public/appointments", getBusinessBySlug, async (req, res) => {
       endsAt: end,
       priceAtBooking: Number(service.price),
       serviceId: Number(serviceId),
-      staffId: sid,
+      masterId: sid,
       branchId: branchId ? Number(branchId) : null,
     },
     include: { service: true, master: true, branch: true },

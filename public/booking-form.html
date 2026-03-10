@@ -442,7 +442,7 @@
       business: null,
       branchId: null,
       serviceId: null,
-      staffId: null,
+      masterId: null,
       date: null,
       time: null,
       customerName: '',
@@ -750,7 +750,7 @@
     }
 
     function selectMaster(masterId) {
-      bookingData.staffId = masterId;
+      bookingData.masterId = masterId;
       autoNavigateToNext();
     }
 
@@ -904,7 +904,7 @@
           body: JSON.stringify({
             branchId: bookingData.branchId,
             serviceId: bookingData.serviceId,
-            staffId: bookingData.staffId,
+            masterId: bookingData.masterId,
             customerName: bookingData.customerName,
             customerPhone: bookingData.customerPhone,
             customerEmail: bookingData.customerEmail,
