@@ -482,34 +482,56 @@
           }
           
           // Load all data
-          const [branches, services, masters] = await Promise.all([
-            fetch('/api/public/branches?slug=' + slug).then(r => r.json()),
-            fetch('/api/public/services?slug=' + slug).then(r => r.json()),
-            fetch('/api/public/masters?slug=' + slug).then(r => r.json())
-          ]);
+          console.log('Loading branches, services, masters...');
+          
+          try {
+            const [branches, services, masters] = await Promise.all([
+              fetch('/api/public/branches?slug=' + slug).then(r => {
+                console.log('Branches response status:', r.status);
+                if (!r.ok) throw new Error('Branches API error: ' + r.status);
+                return r.json();
+              }),
+              fetch('/api/public/services?slug=' + slug).then(r => {
+                console.log('Services response status:', r.status);
+                if (!r.ok) throw new Error('Services API error: ' + r.status);
+                return r.json();
+              }),
+              fetch('/api/public/masters?slug=' + slug).then(r => {
+                console.log('Masters response status:', r.status);
+                if (!r.ok) throw new Error('Masters API error: ' + r.status);
+                return r.json();
+              })
+            ]);
 
-          bookingData.branches = branches;
-          bookingData.services = services;
-          bookingData.masters = masters;
+            console.log('Data loaded successfully:', {
+              branches: branches.length,
+              services: services.length,
+              masters: masters.length
+            });
 
-          console.log('Data loaded:', {
-            branches: branches.length,
-            services: services.length,
-            masters: masters.length
-          });
+            bookingData.branches = branches;
+            bookingData.services = services;
+            bookingData.masters = masters;
 
-          // Start with first available step
-          if (branches.length > 0) {
-            showStep('branches');
-          } else if (services.length > 0) {
-            showStep('services');
-          } else if (masters.length > 0) {
-            showStep('masters');
-          } else {
-            showStep('datetime');
+            // Start with first available step
+            if (branches.length > 0) {
+              showStep('branches');
+            } else if (services.length > 0) {
+              showStep('services');
+            } else if (masters.length > 0) {
+              showStep('masters');
+            } else {
+              document.getElementById('step-content').innerHTML = '<div class="error">Нет доступных услуг или специалистов</div>';
+            }
+          } catch (error) {
+            console.error('Error loading additional data:', error);
+            document.getElementById('step-content').innerHTML = '<div class="error">Ошибка загрузки данных: ' + error.message + '</div>';
           }
         } else {
-          throw new Error('Business not found');
+          const errorText = await businessResponse.text();
+          console.error('Business API error:', businessResponse.status, errorText);
+          document.getElementById('step-content').innerHTML = '<div class="error">Ошибка загрузки бизнеса: ' + businessResponse.status + '</div>';
+          return;
         }
       } catch (error) {
         console.error('Error loading booking data:', error);
