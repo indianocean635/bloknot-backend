@@ -1301,7 +1301,7 @@ app.get("/api/appointments", requireAuth, async (req, res) => {
   const items = await prisma.appointment.findMany({
     where,
     orderBy: { startsAt: "asc" },
-    include: { service: true, staff: true, branch: true },
+    include: { service: true, master: true, branch: true },
   });
 
   res.json(items);
@@ -1325,7 +1325,7 @@ app.get("/api/public/appointments", getBusinessBySlug, async (req, res) => {
   const items = await prisma.appointment.findMany({
     where,
     orderBy: { startsAt: "asc" },
-    include: { service: true, staff: true, branch: true },
+    include: { service: true, master: true, branch: true },
   });
 
   res.json(items);
@@ -1375,7 +1375,7 @@ app.post("/api/public/appointments", getBusinessBySlug, async (req, res) => {
       staffId: sid,
       branchId: branchId ? Number(branchId) : null,
     },
-    include: { service: true, staff: true, branch: true },
+    include: { service: true, master: true, branch: true },
   });
 
   res.json(item);
