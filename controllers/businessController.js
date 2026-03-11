@@ -1,0 +1,150 @@
+const { prisma } = require("../services/prismaService");
+
+// Получить бизнес по slug
+async function getBusinessBySlug(req, res) {
+  const { slug } = req.params;
+  
+  const business = await prisma.business.findUnique({
+    where: { slug }
+  });
+  
+  if (!business) return res.status(404).json({ error: "Business not found" });
+  
+  // Получаем логотип
+  const logoPhoto = await prisma.workPhoto.findFirst({
+    where: {
+      businessId: business.id,
+      isLogo: true
+    },
+    select: {
+      imageUrl: true
+    }
+  });
+  
+  const businessData = await prisma.business.findUnique({
+    where: { id: business.id },
+    select: {
+      name: true,
+      branches: {
+        take: 1,
+        select: {
+          address: true
+        }
+      }
+    }
+  });
+  
+  const result = {
+    name: businessData.name,
+    address: businessData.branches[0]?.address || null,
+    logo: logoPhoto?.imageUrl || null
+  };
+  
+  console.log('Business data:', result);
+  res.json(result);
+}
+
+// Получить филиалы
+async function getBranches(req, res) {
+  const branches = await prisma.branch.findMany({
+    where: { businessId: req.business.id },
+    orderBy: { id: "asc" }
+  });
+  
+  res.json(branches.map(b => ({
+    id: b.id,
+    name: b.name,
+    address: b.address,
+    phone: b.phone,
+    description: b.description
+  })));
+}
+
+// Получить услуги
+async function getServices(req, res) {
+  const services = await prisma.service.findMany({
+    where: { businessId: req.business.id },
+    orderBy: { id: "asc" },
+    include: { category: true },
+  });
+  
+  res.json(services);
+}
+
+// Получить мастеров
+async function getMasters(req, res) {
+  const masters = await prisma.master.findMany({
+    where: { businessId: req.business.id },
+    orderBy: { id: "asc" }
+  });
+  
+  res.json(masters);
+}
+
+// Получить работы (фото)
+async function getWorks(req, res) {
+  const works = await prisma.workPhoto.findMany({
+    where: { businessId: req.business.id },
+    orderBy: { id: "desc" }
+  });
+  
+  res.json(works.map(work => ({
+    id: work.id,
+    url: work.imageUrl,
+    description: work.caption,
+    type: work.imageUrl.toLowerCase().includes('.mp4') || work.imageUrl.toLowerCase().includes('.mov') ? 'video' : 'image',
+    isLogo: work.isLogo,
+    createdAt: work.createdAt
+  })));
+}
+
+// Получить название компании
+async function getBusinessName(req, res) {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  
+  const business = await prisma.business.findUnique({ 
+    where: { id: user.businessId }
+  });
+  
+  if (!business) {
+    return res.status(404).json({ error: "Business not found" });
+  }
+  
+  res.json({ name: business.name });
+}
+
+// Обновить название компании
+async function updateBusinessName(req, res) {
+  const { name } = req.body;
+  
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: "Название обязательно" });
+  }
+  
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  
+  if (!user || !user.businessId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  
+  const business = await prisma.business.update({
+    where: { id: user.businessId },
+    data: { name: name.trim() }
+  });
+  
+  res.json({ name: business.name });
+}
+
+module.exports = {
+  getBusinessBySlug,
+  getBranches,
+  getServices,
+  getMasters,
+  getWorks,
+  getBusinessName,
+  updateBusinessName
+};
