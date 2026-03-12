@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { prisma } = require("../services/prismaService");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_COOKIE_NAME = "auth";
