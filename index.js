@@ -5,8 +5,6 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 
-const authRoutes = require('./routes/authRoutes');
-
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -33,10 +31,66 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API Routes - FULL ROUTER
-app.use('/api/auth', authRoutes);
+// Временное хранилище
+const memoryUsers = new Map();
+const memoryTokens = new Map();
 
-// Catch all for SPA - ONLY for GET requests
+// ПРЯМОЙ ОБРАБОТЧИК authRoutes
+app.post('/api/auth/magic-link', async (req, res) => {
+  try {
+    console.log('🔥 MAGIC-LINK REQUEST RECEIVED');
+    console.log('🔥 Headers:', req.headers);
+    console.log('🔥 Body:', req.body);
+    
+    const { email } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    
+    if (!normalizedEmail) {
+      console.log('❌ NO EMAIL PROVIDED');
+      return res.status(400).json({ error: "Email required" });
+    }
+
+    // Создаем или получаем пользователя
+    let user = memoryUsers.get(normalizedEmail);
+    if (!user) {
+      user = {
+        id: 'user_' + Math.random().toString(36).substring(2),
+        email: normalizedEmail,
+        role: 'OWNER',
+        businessId: 'business_' + Math.random().toString(36).substring(2),
+        createdAt: new Date()
+      };
+      memoryUsers.set(normalizedEmail, user);
+    }
+
+    // Генерируем токен
+    const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    
+    // Сохраняем токен
+    memoryTokens.set(token, {
+      userId: user.id,
+      email: normalizedEmail,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+    });
+
+    console.log('🔗 LOGIN LINK:', `https://bloknotservis.ru/auth/verify?token=${token}`);
+    console.log('👤 User:', normalizedEmail);
+    console.log('✅ MAGIC-LINK RESPONSE SENT');
+
+    res.json({ 
+      success: true,
+      message: "Login link sent successfully",
+      verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}`
+    });
+
+  } catch (error) {
+    console.error('❌ MAGIC-LINK ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Catch all for SPA
 app.get('*', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
