@@ -33,11 +33,15 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 
-// Catch all for SPA
+// Catch all for SPA - ONLY for non-API routes
 app.get('*', (req, res) => {
+  // Don't catch API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
   res.sendFile(__dirname + '/public/index.html');
 });
 
