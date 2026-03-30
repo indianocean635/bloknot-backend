@@ -35,62 +35,59 @@ app.get('/health', (req, res) => {
 const memoryUsers = new Map();
 const memoryTokens = new Map();
 
-// ПРЯМОЙ ОБРАБОТЧИК authRoutes
+// ВСЕ ВОЗМОЖНЫЕ URL ДЛЯ АВТОРИЗАЦИИ
 app.post('/api/auth/magic-link', async (req, res) => {
   try {
-    console.log('🔥 MAGIC-LINK REQUEST RECEIVED');
-    console.log('🔥 Headers:', req.headers);
-    console.log('🔥 Body:', req.body);
-    
+    console.log('🔥 /api/auth/magic-link REQUEST');
     const { email } = req.body;
-    const normalizedEmail = String(email || "").trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: "Email required" });
     
-    if (!normalizedEmail) {
-      console.log('❌ NO EMAIL PROVIDED');
-      return res.status(400).json({ error: "Email required" });
-    }
-
-    // Создаем или получаем пользователя
-    let user = memoryUsers.get(normalizedEmail);
-    if (!user) {
-      user = {
-        id: 'user_' + Math.random().toString(36).substring(2),
-        email: normalizedEmail,
-        role: 'OWNER',
-        businessId: 'business_' + Math.random().toString(36).substring(2),
-        createdAt: new Date()
-      };
-      memoryUsers.set(normalizedEmail, user);
-    }
-
-    // Генерируем токен
     const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    memoryTokens.set(token, { email, createdAt: new Date() });
     
-    // Сохраняем токен
-    memoryTokens.set(token, {
-      userId: user.id,
-      email: normalizedEmail,
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-    });
-
-    console.log('🔗 LOGIN LINK:', `https://bloknotservis.ru/auth/verify?token=${token}`);
-    console.log('👤 User:', normalizedEmail);
-    console.log('✅ MAGIC-LINK RESPONSE SENT');
-
-    res.json({ 
-      success: true,
-      message: "Login link sent successfully",
-      verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}`
-    });
-
+    console.log('✅ /api/auth/magic-link RESPONSE');
+    res.json({ success: true, verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}` });
   } catch (error) {
-    console.error('❌ MAGIC-LINK ERROR:', error);
+    console.error('❌ /api/auth/magic-link ERROR:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Catch all for SPA
+app.post('/auth/request-link', async (req, res) => {
+  try {
+    console.log('🔥 /auth/request-link REQUEST');
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
+    
+    const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    memoryTokens.set(token, { email, createdAt: new Date() });
+    
+    console.log('✅ /auth/request-link RESPONSE');
+    res.json({ success: true, verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}` });
+  } catch (error) {
+    console.error('❌ /auth/request-link ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/auth/magic-link', async (req, res) => {
+  try {
+    console.log('🔥 /auth/magic-link REQUEST');
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
+    
+    const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    memoryTokens.set(token, { email, createdAt: new Date() });
+    
+    console.log('✅ /auth/magic-link RESPONSE');
+    res.json({ success: true, verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}` });
+  } catch (error) {
+    console.error('❌ /auth/magic-link ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Catch all для SPA
 app.get('*', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
@@ -102,7 +99,10 @@ if (!serverStarted) {
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 Health: http://localhost:${PORT}/health`);
-    console.log(`🔐 Auth: http://localhost:${PORT}/api/auth/magic-link`);
+    console.log(`🔐 Auth endpoints available:`);
+    console.log(`   POST /api/auth/magic-link`);
+    console.log(`   POST /auth/request-link`);
+    console.log(`   POST /auth/magic-link`);
   });
   
   process.on('SIGTERM', () => {
