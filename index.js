@@ -1,61 +1,58 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
+require('dotenv').config();
 
-// Import routes
-const publicRoutes = require("./routes/publicRoutes");
-const authRoutes = require("./routes/authRoutes");
-const appointmentRoutes = require("./routes/appointmentRoutes");
-const businessRoutes = require("./routes/businessRoutes");
-const uploadRoutes = require("./routes/uploadRoutes");
+const express = require('express');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
 
-// Import middleware
-const { requireAuth } = require("./middleware/authMiddleware");
-
-// Import Prisma
-const { prisma } = require("./services/prismaService");
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
-const PORT = Number(process.env.PORT || 3001);
+const PORT = process.env.PORT || 3001;
+
+// Защита от множественных запусков
+let serverStarted = false;
 
 // Middleware
 app.use(cors({
-  origin: true,
+  origin: ['https://bloknotservis.ru', 'http://localhost:3000'],
   credentials: true,
-  methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json({ limit: "10mb" }));
+
+app.use(cookieParser());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use("/api/public", publicRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api", appointmentRoutes);
-app.use("/api", businessRoutes);
-app.use("/api", uploadRoutes);
+// Static files
+app.use(express.static('public'));
 
 // Health check
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Routes
+app.use('/api/auth', authRoutes);
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
-process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully');
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
-module.exports = app;
+if (!serverStarted) {
+  serverStarted = true;
+  
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📊 Health: http://localhost:${PORT}/health`);
+    console.log(`🔐 Auth: http://localhost:${PORT}/api/auth/magic-link`);
+  });
+  
+  process.on('SIGTERM', () => {
+    console.log('📴 SIGTERM received, shutting down gracefully');
+    process.exit(0);
+  });
+  
+  process.on('SIGINT', () => {
+    console.log('📴 SIGINT received, shutting down gracefully');
+    process.exit(0);
+  });
+}

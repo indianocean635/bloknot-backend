@@ -775,14 +775,18 @@
         showNotice("");
         sendBtn.disabled = true;
         try {
-          const res = await fetch("/auth/request-link", {
+          const res = await fetch("/api/auth/magic-link", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email }),
           });
           if (!res.ok) {
-            const t = await res.text().catch(() => "");
-            throw new Error(t || ("HTTP " + res.status));
+            const t = await res.json().catch(() => ({}));
+            throw new Error(t.error || ("HTTP " + res.status));
+          }
+          const result = await res.json().catch(() => ({}));
+          if (result.error) {
+            throw new Error(result.error);
           }
           showNotice("Ссылка для входа отправлена на вашу почту. Проверьте входящие и папку «Спам». ");
         } catch (e) {

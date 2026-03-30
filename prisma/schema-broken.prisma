@@ -128,11 +128,11 @@ model WorkPhoto {
 
 model Schedule {
   id         Int      @id @default(autoincrement())
-  type       String
+  type       String   // 'owner' or 'master'
   email      String
   masterId   Int?
   businessId String
-  days       Json
+  days       Json     // { "dateString": { working: true, start: "09:00", end: "18:00" } }
   createdAt  DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
