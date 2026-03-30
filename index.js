@@ -36,6 +36,11 @@ app.get('/health', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 
+// Catch all for SPA
+app.get('*', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
 // Start server
 if (!serverStarted) {
   serverStarted = true;
