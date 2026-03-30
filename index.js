@@ -33,10 +33,10 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API Routes
+// API Routes FIRST
 app.use('/api/auth', authRoutes);
 
-// Catch all for SPA - ONLY for non-API routes
+// Catch all for SPA - ONLY for GET requests and non-API
 app.get('*', (req, res) => {
   // Don't catch API routes
   if (req.path.startsWith('/api/')) {
