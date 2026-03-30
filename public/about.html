@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="version" content="3">
+  <title>О нас — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Cache control -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- FAVICON -->
+  <link rel="icon" href="/favicon.png?v=2" type="image/png">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f4f5f6;
+      color: #0b0f14;
+      line-height: 1.5;
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo img {
+      height: 32px;
+      transition: opacity 160ms ease;
+    }
+
+    .logo:hover img {
+      opacity: 0.8;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 60px 20px;
+    }
+
+    .page-title {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .content-card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .content-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .content-card h2 {
+      font-size: 24px;
+      margin-bottom: 16px;
+      color: #0b0f14;
+    }
+
+    .content-card h3 {
+      font-size: 20px;
+      margin: 24px 0 12px 0;
+      color: #0b0f14;
+    }
+
+    .content-card p {
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .content-card ul {
+      color: #555;
+      line-height: 1.6;
+      margin-left: 20px;
+      margin-bottom: 16px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 32px 0;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: 700;
+      color: #0b0f14;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #555;
+    }
+
+    /* Footer styles (same as main page) */
+    .footer {
+      background: #ffffff;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      margin-top: 80px;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 20px 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 40px;
+    }
+
+    .footer-section h4 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #0b0f14;
+      margin: 0 0 16px 0;
+      letter-spacing: -0.02em;
+    }
+
+    .footer-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .footer-section li {
+      margin-bottom: 12px;
+    }
+
+    .footer-link {
+      color: #555;
+      text-decoration: none;
+      font-size: 14px;
+      line-height: 1.4;
+      transition: color 160ms ease;
+      display: inline-block;
+    }
+
+    .footer-link:hover {
+      color: #0b0f14;
+      text-decoration: underline;
+    }
+
+    
+    @media (max-width: 600px) {
+      .header-inner {
+        height: 64px;
+      }
+
+      .logo img {
+        height: 28px;
+      }
+
+      .container {
+        padding: 40px 20px;
+      }
+
+      .page-title {
+        font-size: 36px;
+      }
+
+      .page-subtitle {
+        font-size: 16px;
+      }
+
+      .content-card {
+        padding: 24px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+      }
+
+      .footer-content {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 32px;
+        padding: 40px 20px 30px;
+      }
+
+      .footer-section h4 {
+        font-size: 15px;
+      }
+
+      .footer-link {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <a href="/index.html">
+          <img src="/logo-wordmark.svg?v=10" alt="Bloknot">
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="container">
+    <h1 class="page-title">О нас</h1>
+    <p class="page-subtitle">Bloknot — это современный сервис онлайн-записи, который помогает бизнесу принимать клиентов 24/7 без лишних усилий.</p>
+
+    <div class="content-card">
+      <h2>Наша миссия</h2>
+      <p>Мы создаем простые и удобные инструменты для автоматизации записи клиентов. Наша цель — помочь малому и среднему бизнесу работать эффективнее, экономя время на рутинных операциях и фокусируясь на качестве услуг.</p>
+      
+      <h3>Что мы делаем:</h3>
+      <ul>
+        <li>Автоматизируем прием записей от клиентов</li>
+        <li>Отправляем напоминания и подтверждения</li>
+        <li>Управляем расписанием и календарем</li>
+        <li>Собираем статистику и аналитику</li>
+        <li>Интегрируемся с популярными мессенджерами</li>
+      </ul>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-number">10 000+</div>
+        <div class="stat-label">Активных бизнесов</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">50 000+</div>
+        <div class="stat-label">Записей в месяц</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">99.9%</div>
+        <div class="stat-label">Время работы</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Прием записей</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h2>Почему выбирают Bloknot?</h2>
+      
+      <h3>🚀 Простота</h3>
+      <p>Наш сервис работает сразу после регистрации — не нужно изучать сложные инструкции или проходить долгое обучение. Интуитивный интерфейс понятен даже тем, кто впервые использует подобные системы.</p>
+      
+      <h3>💰 Доступность</h3>
+      <p>Мы предлагаем гибкие тарифы для любого бизнеса — от индивидуальных мастеров до крупных салонов. Начать можно бесплатно, а платные функции доступны по разумной цене.</p>
+      
+      <h3>📱 Мобильность</h3>
+      <p>Работайте с любого устройства — телефона, планшета или компьютера. Наш сервис адаптирован для всех экранов и работает стабильно в любом браузере.</p>
+      
+      <h3>🤖 Автоматизация</h3>
+      <p>Система автоматически отправляет напоминания клиентам, подтверждает записи, управляет календарем и предотвращает накладки в расписании.</p>
+    </div>
+
+    <div class="content-card">
+      <h2>Для кого наш сервис?</h2>
+      <p>Bloknot идеально подходит для любого бизнеса, где важна предварительная запись клиентов:</p>
+      
+      <h3>💇‍♀️ Индустрия красоты</h3>
+      <p>Парикмахерские, салоны красоты, nail-студии, косметологические кабинеты, SPA-центры.</p>
+      
+      <h3>🏥 Медицина и здоровье</h3>
+      <p>Частные клиники, стоматологические кабинеты, массажные салоны, фитнес-центры, психологи.</p>
+      
+      <h3>🎓 Образование и консультации</h3>
+      <p>Репетиторы, тренеры, консультанты, образовательные центры, курсы и тренинги.</p>
+      
+      <h3>🚗 Сервисные центры</h3>
+      <p>Автосервисы, мастерские, ремонтные центры, консультационные услуги.</p>
+    </div>
+
+    <div class="content-card">
+      <h2>Наша команда</h2>
+      <p>Наша команда состоит из опытных разработчиков, дизайнеров и менеджеров, которые знают потребности бизнеса. Мы постоянно улучшаем наш сервис, добавляем новые функции и заботимся о каждом клиенте.</p>
+      
+      <h3>Ценности нашей компании:</h3>
+      <ul>
+        <li><strong>Простота</strong> — делаем сложные вещи понятными</li>
+        <li><strong>Надежность</strong> — работаем стабильно 24/7</li>
+        <li><strong>Забота о клиентах</strong> — всегда готовы помочь</li>
+        <li><strong>Инновации</strong> — постоянно развиваем сервис</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Контакты</h4>
+        <ul>
+          <li><span class="footer-email" onclick="copyEmail()" style="cursor: pointer; transition: color 160ms ease;">📧 info@bloknotservis.ru</span></li>
+          <li><a href="https://t.me/bloknotservis" class="footer-link" target="_blank">💬 Telegram</a></li>
+          <li><a href="https://wa.me/79999999999" class="footer-link" target="_blank">💚 WhatsApp</a></li>
+          <li><a href="https://max.com/write/bloknotservis" class="footer-link" target="_blank">✍️ MAX</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <ul>
+          <li><a href="/about.html" class="footer-link">О нас</a></li>
+          <li><a href="/knowledge.html" class="footer-link">База знаний</a></li>
+          <li><a href="/pricing.html" class="footer-link">Тарифы</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Для любого бизнеса</h4>
+        <ul>
+          <li><a href="/beauty.html" class="footer-link">Красота</a></li>
+          <li><a href="/medicine.html" class="footer-link">Медицина</a></li>
+          <li><a href="/sport.html" class="footer-link">Спорт</a></li>
+          <li><a href="/massage.html" class="footer-link">Массаж</a></li>
+          <li><a href="/leisure.html" class="footer-link">Досуг и отдых</a></li>
+          <li><a href="/education.html" class="footer-link">Образование</a></li>
+          <li><a href="/auto.html" class="footer-link">Авто</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Правовая информация</h4>
+        <ul>
+          <li><a href="/user-agreement.html" class="footer-link">Пользовательское соглашение</a></li>
+          <li><a href="/privacy.html" class="footer-link">Политика конфиденциальности</a></li>
+          <li><a href="/cookies.html" class="footer-link">Использование cookie</a></li>
+          <li><a href="/personal-data.html" class="footer-link">Согласие на обработку персональных данных</a></li>
+          <li><a href="/client-data-processing.html" class="footer-link">Обработка данных клиентов</a></li>
+        </ul>
+      </div>
+    </div>
+    
+      </footer>
+
+</body>
+</html>
+
+<script>
+  // Copy email function
+  function copyEmail() {
+    const email = 'info@bloknotservis.ru';
+    navigator.clipboard.writeText(email).then(function() {
+      // Show temporary feedback
+      const emailElement = document.querySelector('.footer-email');
+      const originalText = emailElement.textContent;
+      emailElement.textContent = '📧 Email скопирован!';
+      emailElement.style.color = '#22c55e';
+      
+      setTimeout(function() {
+        emailElement.textContent = originalText;
+        emailElement.style.color = '';
+      }, 2000);
+    }).catch(function(err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = email;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      const emailElement = document.querySelector('.footer-email');
+      const originalText = emailElement.textContent;
+      emailElement.textContent = '📧 Email скопирован!';
+      emailElement.style.color = '#22c55e';
+      
+      setTimeout(function() {
+        emailElement.textContent = originalText;
+        emailElement.style.color = '';
+      }, 2000);
+    });
+  }
+</script>

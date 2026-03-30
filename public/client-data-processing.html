@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Соглашение об обработке персональных данных клиентов — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #ffffff;
+      min-height: 100vh;
+      color: #0b0f14;
+      line-height: 1.6;
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: #0b0f14;
+      font-weight: 600;
+    }
+
+    .logo img {
+      height: 34px;
+      display: block;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 20px 80px;
+    }
+
+    .page-title {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+      color: #0b0f14;
+    }
+
+    .page-subtitle {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 60px;
+      line-height: 1.6;
+    }
+
+    .policy-content {
+      background: white;
+      border-radius: 16px;
+      padding: 48px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .policy-section {
+      margin-bottom: 48px;
+    }
+
+    .policy-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #0b0f14;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-number {
+      background: #667eea;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .section-content {
+      color: #374151;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .data-list {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0;
+    }
+
+    .data-list li {
+      padding: 8px 0;
+      color: #374151;
+      border-bottom: 1px solid #f4f5f6;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .data-list li:last-child {
+      border-bottom: none;
+    }
+
+    .data-list li::before {
+      content: '•';
+      color: #667eea;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .roles-info {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 24px;
+      margin: 16px 0;
+      border-left: 4px solid #667eea;
+    }
+
+    .roles-info h4 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #0b0f14;
+      margin-bottom: 12px;
+    }
+
+    .roles-info p {
+      margin: 8px 0;
+      color: #374151;
+    }
+
+    .roles-info strong {
+      color: #0b0f14;
+    }
+
+    .warning-box {
+      background: #fff3cd;
+      border-radius: 12px;
+      padding: 24px;
+      margin: 16px 0;
+      border-left: 4px solid #ffc107;
+    }
+
+    .warning-box p {
+      margin: 8px 0;
+      color: #856404;
+    }
+
+    .warning-box strong {
+      color: #0b0f14;
+    }
+
+    /* Footer styles */
+    .footer {
+      background: white;
+      color: #0b0f14;
+      padding: 60px 0 40px;
+      margin-top: 80px;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 40px;
+    }
+
+    .footer-section h4 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #0b0f14;
+    }
+
+    .footer-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .footer-section li {
+      margin-bottom: 12px;
+    }
+
+    .footer-link {
+      color: #555;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 160ms ease;
+    }
+
+    .footer-link:hover {
+      color: #667eea;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 40px 16px 60px;
+      }
+
+      .page-title {
+        font-size: 32px;
+      }
+
+      .policy-content {
+        padding: 32px 24px;
+      }
+
+      .section-title {
+        font-size: 20px;
+      }
+
+      .footer-content {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <a href="/index.html">
+          <img src="/logo-wordmark.svg?v=10" alt="Bloknot">
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <h1 class="page-title">Соглашение об обработке персональных данных клиентов</h1>
+    <p class="page-subtitle">Настоящее соглашение регулирует порядок обработки персональных данных клиентов пользователей сервиса «Bloknot»</p>
+
+    <div class="policy-content">
+      <!-- Section 1 -->
+      <div class="policy-section">
+        <h2 class="section-title">
+          <span class="section-number">1</span>
+          ОБЩИЕ ПОЛОЖЕНИЯ
+        </h2>
+        <div class="section-content">
+          <p>Настоящее соглашение регулирует порядок обработки персональных данных клиентов пользователей сервиса «Bloknot», размещенного по адресу https://bloknotservis.ru.</p>
+        </div>
+      </div>
+
+      <!-- Section 2 -->
+      <div class="policy-section">
+        <h2 class="section-title">
+          <span class="section-number">2</span>
+          РОЛИ СТОРОН
+        </h2>
+        <div class="section-content">
+          <div class="roles-info">
+            <h4>2.1. Пользователь сервиса является оператором персональных данных своих клиентов.</h4>
+            <p>Пользователь самостоятельно определяет цели и способы обработки персональных данных своих клиентов и несет ответственность за их законность.</p>
+          </div>
+          
+          <div class="roles-info">
+            <h4>2.2. Индивидуальный предприниматель Песков Александр Валерьевич (ИНН 420208173430, ОГРНИП 326420500029879) является обработчиком персональных данных.</h4>
+            <p>Исполнитель обрабатывает персональные данных клиентов по поручению пользователя в рамках предоставления сервиса.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3 -->
+      <div class="policy-section">
+        <h2 class="section-title">
+          <span class="section-number">3</span>
+          ПРЕДМЕТ ОБРАБОТКИ
+        </h2>
+        <div class="section-content">
+          <p>Пользователь может размещать в сервисе персональные данные своих клиентов, включая:</p>
+          <ul class="data-list">
+            <li>имя</li>
+            <li>номер телефона</li>
+            <li>записи на услуги</li>
+            <li>комментарии и заметки</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Section 4 -->
+      <div class="policy-section">
+        <h2 class="section-title">
+          <span class="section-number">4</span>
+          ОБЯЗАННОСТИ ПОЛЬЗОВАТЕЛЯ
+        </h2>
+        <div class="section-content">
+          <p>Пользователь обязуется:</p>
+          <ul class="data-list">
+            <li>получать согласие клиентов на обработку персональных данных</li>
+            <li>соблюдать требования законодательства Российской Федерации</li>
+            <li>использовать данные только в законных целях</li>
+          </ul>
+          
+          <div class="warning-box">
+            <p><strong>Важно:</strong> Пользователь несет полную ответственность за законность обработки персональных данных клиентов.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5 -->
+      <div class="policy-section">
+        <h2 class="section-title">
+          <span class="section-number">5</span>
+          ОБЯЗАННОСТИ ИСПОЛНИТЕЛЯ
+        </h2>
+        <div class="section-content">
+          <p>Исполнитель обязуется:</p>
+          <ul class="data-list">
+            <li>обеспечивать хранение данных</li>
+            <li>принимать разумные меры по защите информации</li>
+            <li>не использовать данные клиентов в собственных целях</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Section 6 -->
+      <div class="policy-section">
+        <h2 class="section-title">
+          <span class="section-number">6</span>
+          ОГРАНИЧЕНИЕ ОТВЕТСТВЕННОСТИ
+        </h2>
+        <div class="section-content">
+          <p>Исполнитель не несет ответственности за:</p>
+          <ul class="data-list">
+            <li>незаконные действия пользователя</li>
+            <li>отсутствие согласия клиентов пользователя</li>
+            <li>нарушение законодательства пользователем</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Section 7 -->
+      <div class="policy-section">
+        <h2 class="section-title">
+          <span class="section-number">7</span>
+          УДАЛЕНИЕ ДАННЫХ
+        </h2>
+        <div class="section-content">
+          <p>Пользователь вправе самостоятельно удалять данные клиентов через интерфейс сервиса.</p>
+        </div>
+      </div>
+
+      <!-- Section 8 -->
+      <div class="policy-section">
+        <h2 class="section-title">
+          <span class="section-number">8</span>
+          ЗАКЛЮЧИТЕЛЬНЫЕ ПОЛОЖЕНИЯ
+        </h2>
+        <div class="section-content">
+          <p>Использование сервиса означает согласие пользователя с настоящим соглашением.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Контакты</h4>
+        <ul>
+          <li><span class="footer-email" onclick="copyEmail()" style="cursor: pointer; transition: color 160ms ease;">📧 info@bloknotservis.ru</span></li>
+          <li><a href="https://t.me/bloknotservis" class="footer-link" target="_blank">💬 Telegram</a></li>
+          <li><a href="https://wa.me/79999999999" class="footer-link" target="_blank">💚 WhatsApp</a></li>
+          <li><a href="https://max.com/write/bloknotservis" class="footer-link" target="_blank">✍️ MAX</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <ul>
+          <li><a href="/about.html" class="footer-link">О нас</a></li>
+          <li><a href="/knowledge.html" class="footer-link">База знаний</a></li>
+          <li><a href="/pricing.html" class="footer-link">Тарифы</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Для любого бизнеса</h4>
+        <ul>
+          <li><a href="/beauty.html" class="footer-link">Красота</a></li>
+          <li><a href="/medicine.html" class="footer-link">Медицина</a></li>
+          <li><a href="/sport.html" class="footer-link">Спорт</a></li>
+          <li><a href="/massage.html" class="footer-link">Массаж</a></li>
+          <li><a href="/leisure.html" class="footer-link">Досуг и отдых</a></li>
+          <li><a href="/education.html" class="footer-link">Образование</a></li>
+          <li><a href="/auto.html" class="footer-link">Авто</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Правовая информация</h4>
+        <ul>
+          <li><a href="/user-agreement.html" class="footer-link">Пользовательское соглашение</a></li>
+          <li><a href="/privacy.html" class="footer-link">Политика конфиденциальности</a></li>
+          <li><a href="/cookies.html" class="footer-link">Использование cookie</a></li>
+          <li><a href="/personal-data.html" class="footer-link">Согласие на обработку персональных данных</a></li>
+          <li><a href="/client-data-processing.html" class="footer-link">Обработка данных клиентов</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
+
+<script>
+  // Copy email function
+  function copyEmail() {
+    const email = 'info@bloknotservis.ru';
+    navigator.clipboard.writeText(email).then(function() {
+      // Show temporary feedback
+      const emailElement = document.querySelector('.footer-email');
+      const originalText = emailElement.textContent;
+      emailElement.textContent = '📧 Email скопирован!';
+      emailElement.style.color = '#22c55e';
+      
+      setTimeout(function() {
+        emailElement.textContent = originalText;
+        emailElement.style.color = '';
+      }, 2000);
+    }).catch(function(err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = email;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      const emailElement = document.querySelector('.footer-email');
+      const originalText = emailElement.textContent;
+      emailElement.textContent = '📧 Email скопирован!';
+      emailElement.style.color = '#22c55e';
+      
+      setTimeout(function() {
+        emailElement.textContent = originalText;
+        emailElement.style.color = '';
+      }, 2000);
+    });
+  }
+</script>
