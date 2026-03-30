@@ -33,15 +33,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API Routes FIRST
-app.use('/api/auth', authRoutes);
+// API Routes - SPECIFIC PATH
+app.post('/api/auth/magic-link', authRoutes);
 
-// Catch all for SPA - ONLY for GET requests and non-API
+// Catch all for SPA - ONLY for GET requests
 app.get('*', (req, res) => {
-  // Don't catch API routes
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
   res.sendFile(__dirname + '/public/index.html');
 });
 
