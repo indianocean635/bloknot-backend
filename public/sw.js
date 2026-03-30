@@ -1,4 +1,4 @@
-const CACHE_NAME = "bloknot-pwa-v3";
+const CACHE_NAME = "bloknot-pwa-v4";
 
 const APP_SHELL = [
   "/styles.css",
