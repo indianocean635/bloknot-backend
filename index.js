@@ -33,8 +33,8 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API Routes - SPECIFIC PATH
-app.post('/api/auth/magic-link', authRoutes);
+// API Routes - FULL ROUTER
+app.use('/api/auth', authRoutes);
 
 // Catch all for SPA - ONLY for GET requests
 app.get('*', (req, res) => {
