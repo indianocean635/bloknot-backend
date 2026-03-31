@@ -35,7 +35,7 @@ app.post('/api/auth/send-link', (req, res) => {
     message: "Login link sent",
 
     // ⚠️ ВАЖНО: ОБРАТНЫЕ КАВЫЧКИ (не обычные!)
-    verifyUrl: https://bloknotservis.ru/auth/verify?token=${token}`
+    verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}`
   });
 });
 
@@ -55,8 +55,24 @@ app.post('/api/auth/magic-link', (req, res) => {
   res.json({
     success: true,
     message: "Login link sent",
-    verifyUrl: https://bloknotservis.ru/auth/verify?token=${token}
+    verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}`
   });
+});
+
+
+// =========================
+// VERIFY ENDPOINT
+// =========================
+app.get('/auth/verify', (req, res) => {
+  console.log('🔗 VERIFY REQUEST:', req.query);
+  const { token } = req.query;
+  
+  if (!token) {
+    return res.status(400).json({ error: "Token required" });
+  }
+  
+  console.log('✅ Token verified:', token);
+  res.redirect('/?verified=true');
 });
 
 

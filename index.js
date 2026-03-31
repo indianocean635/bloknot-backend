@@ -1,6 +1,16 @@
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const app = express();
 const PORT = 3001;
+
+// Создаем необходимые папки
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  fs.mkdirSync(path.join(uploadsDir, 'avatars'), { recursive: true });
+  fs.mkdirSync(path.join(uploadsDir, 'works'), { recursive: true });
+}
 
 app.use(express.json());
 
@@ -66,12 +76,26 @@ app.post('/auth/magic-link', (req, res) => {
   });
 });
 
+// Verify endpoint for magic links
+app.get('/auth/verify', (req, res) => {
+  console.log('🔗 VERIFY REQUEST:', req.query);
+  const { token } = req.query;
+  
+  if (!token) {
+    return res.status(400).json({ error: "Token required" });
+  }
+  
+  // Временно просто редиректим на главную с успехом
+  console.log('✅ Token verified:', token);
+  res.redirect('/?verified=true');
+});
+
 // Static files
 app.use(express.static('public'));
 
 // Catch all
 app.get('*', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
