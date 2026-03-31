@@ -661,159 +661,65 @@
   </div>
 
   <script>
-    (function () {
-      const modal = document.getElementById("authModal");
-      const emailInput = document.getElementById("authEmail");
-      const notice = document.getElementById("authNotice");
-      const sendBtn = document.getElementById("authSendBtn");
-      const closeBtn = document.getElementById("authCloseBtn");
-      const mainNav = document.getElementById("mainNav");
+    async function requestLogin() {
+  const email = String(emailInput.value || "").trim();
 
-      // Check if user is logged in
-      function checkAuthStatus() {
-        try {
-          const isLoggedIn = localStorage.getItem("bloknot_logged_in") === "1";
-          if (isLoggedIn) {
-            // Show "My Cabinet" button for logged-in users
-            mainNav.innerHTML = `
-              <a href="/dashboard.html" class="auth-pill">Мой кабинет</a>
-              <a href="#" id="logoutLink" class="auth-pill">Выйти</a>
-            `;
-            
-            // Update CTA section for logged-in users
-            const ctaSection = document.getElementById("ctaSection");
-            if (ctaSection) {
-              ctaSection.innerHTML = `
-                <h2>Добро пожаловать в ваш кабинет!</h2>
-                <p>Управляйте услугами, мастерами и принимайте онлайн-записи от клиентов.</p>
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
-                  <a href="/dashboard.html" class="btn">Перейти в кабинет</a>
-                  <a href="/booking-link.html" class="btn secondary">Моя ссылка записи</a>
-                </div>
-              `;
-            }
-            
-            // Add logout handler
-            document.getElementById("logoutLink").addEventListener("click", (e) => {
-              e.preventDefault();
-              localStorage.removeItem("bloknot_logged_in");
-              // Clear auth cookie by setting it to expire
-              document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-              checkAuthStatus(); // Refresh the navigation
-            });
-          } else {
-            // Show login/signup for non-logged-in users
-            mainNav.innerHTML = `
-              <a href="#" id="loginLink" class="auth-pill">Войти</a>
-              <a href="#" id="signupLink" class="auth-pill">Регистрация</a>
-            `;
-            
-            // Reset CTA section for non-logged-in users
-            const ctaSection = document.getElementById("ctaSection");
-            if (ctaSection) {
-              ctaSection.innerHTML = `
-                <h2>Клиенты могут записаться уже сегодня</h2>
-                <a href="#" class="btn" id="bookBtn">Создать ссылку онлайн записи</a>
-              `;
-            }
-            
-            // Re-attach event listeners for login/signup
-            document.getElementById("loginLink").addEventListener("click", (e) => {
-              e.preventDefault();
-              openModal();
-            });
-            document.getElementById("signupLink").addEventListener("click", (e) => {
-              e.preventDefault();
-              openModal();
-            });
-            
-            // Add bookBtn listener
-            const bookBtn = document.getElementById("bookBtn");
-            if (bookBtn) {
-              bookBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                openModal();
-              });
-            }
-          }
-        } catch (e) {
-          console.error('Error checking auth status:', e);
-        }
-      }
+  if (!email) {
+    showNotice("Введите email.");
+    return;
+  }
 
-      // Check auth status on page load
-      checkAuthStatus();
+  showNotice("");
+  sendBtn.disabled = true;
 
-      function showNotice(text) {
-        if (!text) {
-          notice.style.display = "none";
-          notice.textContent = "";
-          return;
-        }
-        notice.style.display = "block";
-        notice.textContent = text;
-      }
+  try {
+    const res = await fetch("/api/auth/send-link", { // ✅ исправили URL
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
 
-      function openModal() {
-        showNotice("");
-        modal.classList.add("open");
-        modal.setAttribute("aria-hidden", "false");
-        setTimeout(() => emailInput && emailInput.focus(), 0);
-      }
+    if (!res.ok) {
+      const t = await res.json().catch(() => ({}));
+      throw new Error(t.error || ("HTTP " + res.status)); // ✅ фикс
+    }
 
-      function closeModal() {
-        modal.classList.remove("open");
-        modal.setAttribute("aria-hidden", "true");
-      }
+    const result = await res.json().catch(() => ({}));
 
-      async function requestLogin() {
-        const email = String(emailInput.value || "").trim();
-        if (!email) {
-          showNotice("Введите email.");
-          return;
-        }
-        showNotice("");
-        sendBtn.disabled = true;
-        try {
-          const res = await fetch("/api/auth/magic-link", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
-          });
-          if (!res.ok) {
-            const t = await res.json().catch(() => ({}));
-            throw new Error(t.error || ("HTTP " + res.status));
-          }
-          const result = await res.json().catch(() => ({}));
-          if (result.error) {
-            throw new Error(result.error);
-          }
-          showNotice("Ссылка для входа отправлена на вашу почту. Проверьте входящие и папку «Спам». ");
-        } catch (e) {
-          showNotice("Не удалось отправить: " + (e && e.message ? e.message : "ошибка"));
-        } finally {
-          sendBtn.disabled = false;
-        }
-      }
+    if (result.error) {
+      throw new Error(result.error);
+    }
 
-      // Event listeners for buttons that always exist
-      document.getElementById("tryBtn").addEventListener("click", (e) => {
-        e.preventDefault();
-        openModal();
-      });
+    showNotice("Ссылка для входа отправлена на вашу почту. Проверьте входящие и папку «Спам».");
 
-      closeBtn.addEventListener("click", closeModal);
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) closeModal();
-      });
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeModal();
-      });
-      sendBtn.addEventListener("click", requestLogin);
-      emailInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") requestLogin();
-      });
-    })();
+  } catch (e) {
+    showNotice("Не удалось отправить: " + (e && e.message ? e.message : "ошибка"));
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+// Event listeners for buttons that always exist
+document.getElementById("tryBtn").addEventListener("click", (e) => {
+  e.preventDefault();
+  openModal();
+});
+
+closeBtn.addEventListener("click", closeModal);
+
+modal.addEventListener("click", (e) => {
+  if (e.target === modal) closeModal();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModal();
+});
+
+sendBtn.addEventListener("click", requestLogin);
+
+emailInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") requestLogin();
+});
   </script>
 
 </body>
