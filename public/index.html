@@ -661,6 +661,110 @@
   </div>
 
   <script>
+    // Получаем элементы DOM
+    const modal = document.getElementById("authModal");
+    const emailInput = document.getElementById("authEmail");
+    const notice = document.getElementById("authNotice");
+    const sendBtn = document.getElementById("authSendBtn");
+    const closeBtn = document.getElementById("authCloseBtn");
+    const mainNav = document.getElementById("mainNav");
+
+    // Проверяем статус авторизации
+    function checkAuthStatus() {
+      try {
+        const isLoggedIn = localStorage.getItem("bloknot_logged_in") === "1";
+        if (isLoggedIn) {
+          // Показываем "Мой кабинет" для авторизованных
+          mainNav.innerHTML = `
+            <a href="/dashboard.html" class="auth-pill">Мой кабинет</a>
+            <a href="#" id="logoutLink" class="auth-pill">Выйти</a>
+          `;
+          
+          // Обновляем CTA для авторизованных
+          const ctaSection = document.getElementById("ctaSection");
+          if (ctaSection) {
+            ctaSection.innerHTML = `
+              <h2>Добро пожаловать в ваш кабинет!</h2>
+              <p>Управляйте услугами, мастерами и принимайте онлайн-записи от клиентов.</p>
+              <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+                <a href="/dashboard.html" class="btn">Перейти в кабинет</a>
+                <a href="/booking-link.html" class="btn secondary">Моя ссылка записи</a>
+              </div>
+            `;
+          }
+          
+          // Добавляем обработчик выхода
+          document.getElementById("logoutLink").addEventListener("click", (e) => {
+            e.preventDefault();
+            localStorage.removeItem("bloknot_logged_in");
+            document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            checkAuthStatus();
+          });
+        } else {
+          // Показываем вход/регистрацию для неавторизованных
+          mainNav.innerHTML = `
+            <a href="#" id="loginLink" class="auth-pill">Войти</a>
+            <a href="#" id="signupLink" class="auth-pill">Регистрация</a>
+          `;
+          
+          // Восстанавливаем CTA для неавторизованных
+          const ctaSection = document.getElementById("ctaSection");
+          if (ctaSection) {
+            ctaSection.innerHTML = `
+              <h2>Клиенты могут записаться уже сегодня</h2>
+              <a href="#" class="btn" id="bookBtn">Создать ссылку онлайн записи</a>
+            `;
+          }
+          
+          // Добавляем обработчики для входа/регистрации
+          document.getElementById("loginLink").addEventListener("click", (e) => {
+            e.preventDefault();
+            openModal();
+          });
+          document.getElementById("signupLink").addEventListener("click", (e) => {
+            e.preventDefault();
+            openModal();
+          });
+          
+          // Добавляем обработчик для bookBtn
+          const bookBtn = document.getElementById("bookBtn");
+          if (bookBtn) {
+            bookBtn.addEventListener("click", (e) => {
+              e.preventDefault();
+              openModal();
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Error checking auth status:', e);
+      }
+    }
+
+    // Проверяем статус при загрузке
+    checkAuthStatus();
+
+    function showNotice(text) {
+      if (!text) {
+        notice.style.display = "none";
+        notice.textContent = "";
+        return;
+      }
+      notice.style.display = "block";
+      notice.textContent = text;
+    }
+
+    function openModal() {
+      showNotice("");
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      setTimeout(() => emailInput && emailInput.focus(), 0);
+    }
+
+    function closeModal() {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
     async function requestLogin() {
   const email = String(emailInput.value || "").trim();
 
@@ -681,7 +785,7 @@
 
     if (!res.ok) {
       const t = await res.json().catch(() => ({}));
-      throw new Error(t.error || ("HTTP " + res.status)); // ✅ фикс
+      throw new Error(t.error || ("HTTP " + res.status)); // 
     }
 
     const result = await res.json().catch(() => ({}));

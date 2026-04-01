@@ -94,7 +94,7 @@ app.get('/auth/verify', (req, res) => {
 app.use(express.static('public'));
 
 // Catch all
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
