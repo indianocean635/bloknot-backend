@@ -280,6 +280,60 @@
       text-decoration: underline;
     }
 
+    .footer {
+      background: #f8f9fa;
+      border-top: 1px solid #e5e7eb;
+      padding: 48px 0 24px;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 32px;
+    }
+
+    .footer-section h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #111;
+    }
+
+    .footer-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .footer-section li {
+      margin-bottom: 8px;
+    }
+
+    .footer-link {
+      color: #6b7280;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover {
+      color: #4c6fff;
+      text-decoration: underline;
+    }
+
+    .footer-email {
+      color: #6b7280;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .footer-email:hover {
+      color: #4c6fff;
+    }
+
     .modal {
       position: fixed;
       inset: 0;
@@ -629,13 +683,50 @@
       <a href="#" class="btn" id="bookBtn">Создать ссылку онлайн записи</a>
     </section>
 
-    <footer>
-      © 2026 Bloknot — сервис онлайн-записи клиентов
-      <div class="footer-links" aria-label="Юридическая информация">
-        <a href="/support.html">Поддержка</a>
-        <a href="/pricing.html">Тарифы</a>
-        <a href="/terms.html">Оферта</a>
-        <a href="/privacy.html">Политика конфиденциальности</a>
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Контакты</h4>
+          <ul>
+            <li><span class="footer-email" onclick="copyEmail()" style="cursor: pointer; transition: color 160ms ease;">📧 info@bloknotservis.ru</span></li>
+            <li><a href="https://t.me/bloknotservis" class="footer-link" target="_blank">💬 Telegram</a></li>
+            <li><a href="https://wa.me/79999999999" class="footer-link" target="_blank">💚 WhatsApp</a></li>
+            <li><a href="https://max.com/write/bloknotservis" class="footer-link" target="_blank">✍️ MAX</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Компания</h4>
+          <ul>
+            <li><a href="/about.html" class="footer-link">О нас</a></li>
+            <li><a href="/knowledge.html" class="footer-link">База знаний</a></li>
+            <li><a href="/pricing.html" class="footer-link">Тарифы</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Для любого бизнеса</h4>
+          <ul>
+            <li><a href="/beauty.html" class="footer-link">Красота</a></li>
+            <li><a href="/medicine.html" class="footer-link">Медицина</a></li>
+            <li><a href="/sport.html" class="footer-link">Спорт</a></li>
+            <li><a href="/massage.html" class="footer-link">Массаж</a></li>
+            <li><a href="/leisure.html" class="footer-link">Досуг и отдых</a></li>
+            <li><a href="/education.html" class="footer-link">Образование</a></li>
+            <li><a href="/auto.html" class="footer-link">Авто</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Правовая информация</h4>
+          <ul>
+            <li><a href="/user-agreement.html" class="footer-link">Пользовательское соглашение</a></li>
+            <li><a href="/privacy.html" class="footer-link">Политика конфиденциальности</a></li>
+            <li><a href="/cookies.html" class="footer-link">Использование cookie</a></li>
+            <li><a href="/personal-data.html" class="footer-link">Согласие на обработку персональных данных</a></li>
+            <li><a href="/client-data-processing.html" class="footer-link">Обработка данных клиентов</a></li>
+          </ul>
+        </div>
       </div>
     </footer>
 
@@ -824,6 +915,26 @@ sendBtn.addEventListener("click", requestLogin);
 emailInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") requestLogin();
 });
+
+// Функция копирования email из подвала
+function copyEmail() {
+  const email = 'info@bloknotservis.ru';
+  navigator.clipboard.writeText(email).then(() => {
+    // Меняем текст на "Скопировано!"
+    const emailElement = document.querySelector('.footer-email');
+    const originalText = emailElement.textContent;
+    emailElement.textContent = '📧 Скопировано!';
+    emailElement.style.color = '#4c6fff';
+    
+    // Возвращаем исходный текст через 2 секунды
+    setTimeout(() => {
+      emailElement.textContent = originalText;
+      emailElement.style.color = '#6b7280';
+    }, 2000);
+  }).catch(err => {
+    console.error('Не удалось скопировать email:', err);
+  });
+}
   </script>
 
 </body>
