@@ -41,7 +41,7 @@ router.post('/send-link', async (req, res) => {
   res.json({
     success: true,
     message: "Login link sent",
-    verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}`
+    verifyUrl: `https://bloknotservis.ru/auth/magic-link?token=${token}`
   });
 });
 
@@ -61,7 +61,7 @@ router.post('/magic-link', async (req, res) => {
   res.json({
     success: true,
     message: "Login link sent",
-    verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}`
+    verifyUrl: `https://bloknotservis.ru/auth/magic-link?token=${token}`
   });
 });
 

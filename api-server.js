@@ -35,7 +35,7 @@ app.post('/api/auth/send-link', (req, res) => {
     message: "Login link sent",
 
     // ⚠️ ВАЖНО: ОБРАТНЫЕ КАВЫЧКИ (не обычные!)
-    verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}`
+    verifyUrl: `https://bloknotservis.ru/auth/magic-link?token=${token}`
   });
 });
 

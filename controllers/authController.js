@@ -114,7 +114,7 @@ async function sendMagicLink(req, res) {
   }
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "15m" });
-  const magicLink = `${process.env.BASE_URL || "http://localhost:3001"}/magic/${token}`;
+  const magicLink = `https://bloknotservis.ru/auth/magic-link?token=${token}`;
 
   // TODO: Send email
   console.log("Magic link:", magicLink);
