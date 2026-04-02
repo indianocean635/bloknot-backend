@@ -75,6 +75,20 @@ app.get('/auth/verify', (req, res) => {
   res.redirect('/?verified=true');
 });
 
+// =========================
+// MAGIC LINK ENDPOINT
+// =========================
+app.get('/auth/magic-link', (req, res) => {
+  const token = req.query.token;
+  
+  if (!token) {
+    return res.status(400).send("No token");
+  }
+  
+  console.log("MAGIC LOGIN TOKEN:", token);
+  res.redirect('/dashboard.html');
+});
+
 
 // =========================
 // START SERVER

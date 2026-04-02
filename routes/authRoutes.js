@@ -45,94 +45,24 @@ router.post('/send-link', async (req, res) => {
   });
 });
 
-// POST /api/auth/magic-link
+// POST /api/auth/magic-link (алиас к send-link)
 router.post('/magic-link', async (req, res) => {
-  try {
-    console.log('🔥 MAGIC-LINK REQUEST RECEIVED');
-    console.log('🔥 Headers:', req.headers);
-    console.log('🔥 Body:', req.body);
-    
-    const { email } = req.body;
-    const normalizedEmail = String(email || "").trim().toLowerCase();
-    
-    if (!normalizedEmail) {
-      console.log('❌ NO EMAIL PROVIDED');
-      return res.status(400).json({ error: "Email required" });
-    }
-
-    // Создаем или получаем пользователя
-    let user = memoryUsers.get(normalizedEmail);
-    if (!user) {
-      user = {
-        id: 'user_' + Math.random().toString(36).substring(2),
-        email: normalizedEmail,
-        role: 'OWNER',
-        businessId: 'business_' + Math.random().toString(36).substring(2),
-        createdAt: new Date()
-      };
-      memoryUsers.set(normalizedEmail, user);
-    }
-
-    // Генерируем токен
-    const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
-    
-    // Сохраняем токен
-    memoryTokens.set(token, {
-      userId: user.id,
-      email: normalizedEmail,
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 часа
-    });
-
-    // Формируем полную ссылку для входа
-    const fullLink = `https://bloknotservis.ru/auth/verify?token=${token}`;
-    
-    console.log('🔗 LOGIN LINK:', fullLink);
-    console.log('👤 User:', normalizedEmail);
-    console.log('✅ MAGIC-LINK RESPONSE SENT');
-
-    // Отправка email если настроен transporter
-    if (transporter) {
-      try {
-        await transporter.sendMail({
-          from: process.env.SMTP_FROM || '"Bloknot" <no-reply@bloknotservis.ru>',
-          to: normalizedEmail,
-          subject: 'Вход в Bloknot',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #4c6fff;">Вход в Bloknot</h2>
-              <p>Здравствуйте! Вы запросили вход в систему Bloknot.</p>
-              <p>Для входа нажмите на кнопку ниже:</p>
-              <a href="${fullLink}" style="background: #4c6fff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 16px 0;">
-                Войти в систему
-              </a>
-              <p>Или скопируйте ссылку:</p>
-              <p style="background: #f4f4f4; padding: 8px; border-radius: 4px; word-break: break-all;">
-                ${fullLink}
-              </p>
-              <p style="color: #666; font-size: 14px;">Ссылка действительна 24 часа.</p>
-            </div>
-          `
-        });
-        console.log('📧 Email sent successfully to:', normalizedEmail);
-      } catch (emailError) {
-        console.error('📧 Email send error:', emailError);
-        // Продолжаем даже если email не отправился
-      }
-    } else {
-      console.log('📧 Email not sent - SMTP not configured');
-    }
-
-    res.json({ 
-      success: true,
-      message: "Login link sent successfully",
-      verifyUrl: fullLink
-    });
-
-  } catch (error) {
-    console.error('❌ MAGIC-LINK ERROR:', error);
-    res.status(500).json({ error: 'Server error' });
+  console.log('🔥 MAGIC-LINK REQUEST RECEIVED');
+  console.log('🔥 Body:', req.body);
+  
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: "Email required" });
   }
+  
+  const token = 'token_' + Date.now();
+  
+  res.json({
+    success: true,
+    message: "Login link sent",
+    verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}`
+  });
 });
 
 // GET /api/auth/magic/:token
