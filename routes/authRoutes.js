@@ -25,6 +25,26 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   console.log('📧 Email not configured - using console logs only');
 }
 
+// POST /api/auth/send-link (алиас для совместимости)
+router.post('/send-link', async (req, res) => {
+  console.log('🔥 SEND-LINK REQUEST RECEIVED');
+  console.log('🔥 Body:', req.body);
+  
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: "Email required" });
+  }
+  
+  const token = 'token_' + Date.now();
+  
+  res.json({
+    success: true,
+    message: "Login link sent",
+    verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}`
+  });
+});
+
 // POST /api/auth/magic-link
 router.post('/magic-link', async (req, res) => {
   try {

@@ -37,6 +37,19 @@ app.get('/auth/verify', (req, res) => {
   return res.redirect('/dashboard.html');
 });
 
+// Magic link endpoint (для совместимости)
+app.get('/auth/magic-link', (req, res) => {
+  const token = req.query.token;
+
+  if (!token) {
+    return res.status(400).send("No token");
+  }
+
+  console.log("MAGIC LOGIN TOKEN:", token);
+
+  return res.redirect('/dashboard.html');
+});
+
 // Static files
 app.use(express.static('public'));
 
@@ -50,5 +63,7 @@ app.listen(PORT, () => {
   console.log(`🚀 MINIMAL SERVER running on port ${PORT}`);
   console.log(`📊 Health: http://localhost:${PORT}/health`);
   console.log(`🔐 Auth: http://localhost:${PORT}/api/auth/magic-link`);
+  console.log(`🔐 Send: http://localhost:${PORT}/api/auth/send-link`);
   console.log(`🔐 Verify: http://localhost:${PORT}/auth/verify?token=TOKEN`);
+  console.log(`🔐 Magic: http://localhost:${PORT}/auth/magic-link?token=TOKEN`);
 });
