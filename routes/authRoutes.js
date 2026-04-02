@@ -1,9 +1,29 @@
 const express = require('express');
+const nodemailer = require('nodemailer');
 const router = express.Router();
 
 // Временное хранилище пользователей и токенов
 const memoryUsers = new Map();
 const memoryTokens = new Map();
+
+// Email transporter (если настроен SMTP)
+let transporter = null;
+
+// Инициализация nodemailer если есть SMTP настройки
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  transporter = nodemailer.createTransporter({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT || 587,
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+  console.log('📧 Email transporter configured');
+} else {
+  console.log('📧 Email not configured - using console logs only');
+}
 
 // POST /api/auth/magic-link
 router.post('/magic-link', async (req, res) => {
@@ -44,14 +64,49 @@ router.post('/magic-link', async (req, res) => {
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 часа
     });
 
-    console.log('🔗 LOGIN LINK:', `https://bloknotservis.ru/auth/verify?token=${token}`);
+    // Формируем полную ссылку для входа
+    const fullLink = `https://bloknotservis.ru/auth/verify?token=${token}`;
+    
+    console.log('🔗 LOGIN LINK:', fullLink);
     console.log('👤 User:', normalizedEmail);
     console.log('✅ MAGIC-LINK RESPONSE SENT');
+
+    // Отправка email если настроен transporter
+    if (transporter) {
+      try {
+        await transporter.sendMail({
+          from: process.env.SMTP_FROM || '"Bloknot" <no-reply@bloknotservis.ru>',
+          to: normalizedEmail,
+          subject: 'Вход в Bloknot',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #4c6fff;">Вход в Bloknot</h2>
+              <p>Здравствуйте! Вы запросили вход в систему Bloknot.</p>
+              <p>Для входа нажмите на кнопку ниже:</p>
+              <a href="${fullLink}" style="background: #4c6fff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 16px 0;">
+                Войти в систему
+              </a>
+              <p>Или скопируйте ссылку:</p>
+              <p style="background: #f4f4f4; padding: 8px; border-radius: 4px; word-break: break-all;">
+                ${fullLink}
+              </p>
+              <p style="color: #666; font-size: 14px;">Ссылка действительна 24 часа.</p>
+            </div>
+          `
+        });
+        console.log('📧 Email sent successfully to:', normalizedEmail);
+      } catch (emailError) {
+        console.error('📧 Email send error:', emailError);
+        // Продолжаем даже если email не отправился
+      }
+    } else {
+      console.log('📧 Email not sent - SMTP not configured');
+    }
 
     res.json({ 
       success: true,
       message: "Login link sent successfully",
-      verifyUrl: `https://bloknotservis.ru/auth/verify?token=${token}`
+      verifyUrl: fullLink
     });
 
   } catch (error) {
@@ -145,6 +200,38 @@ router.post('/logout', async (req, res) => {
     console.error('❌ LOGOUT ERROR:', error);
     res.status(500).json({ error: 'Server error' });
   }
+});
+
+// GET /auth/verify (для фронтенда)
+router.get('/verify', (req, res) => {
+  console.log('🔗 VERIFY REQUEST:', req.query);
+  const { token } = req.query;
+  
+  if (!token) {
+    console.log('❌ No token provided');
+    return res.status(400).json({ error: "Token required" });
+  }
+  
+  // Проверяем токен в памяти
+  const tokenData = memoryTokens.get(token);
+  
+  if (!tokenData) {
+    console.log('❌ Invalid token:', token);
+    return res.status(400).json({ error: "Invalid or expired token" });
+  }
+  
+  if (new Date() > tokenData.expiresAt) {
+    memoryTokens.delete(token);
+    console.log('❌ Token expired:', token);
+    return res.status(400).json({ error: "Token expired" });
+  }
+
+  const user = memoryUsers.get(tokenData.email);
+  
+  console.log('✅ Token verified:', token, 'for email:', tokenData.email);
+  
+  // Редирект на фронт с успехом
+  res.redirect('/?verified=true&token=' + token);
 });
 
 module.exports = router;
