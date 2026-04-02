@@ -24,6 +24,31 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Verify endpoint for magic links
+app.get('/auth/verify', async (req, res) => {
+  console.log("VERIFY TOKEN:", req.query.token);
+  const { token } = req.query;
+  
+  if (!token) {
+    console.log('❌ No token provided');
+    return res.status(400).send("No token");
+  }
+
+  // Временно принимаем любой токен для теста
+  console.log('✅ Token accepted:', token);
+  
+  // Временная заглушка пользователя
+  const user = {
+    id: 'user_' + Math.random().toString(36).substring(2),
+    email: 'user@example.com' // временная заглушка
+  };
+  
+  console.log('👤 User logged in:', user);
+  
+  // Редирект на дашборд
+  res.redirect('/dashboard.html');
+});
+
 // Static files
 app.use(express.static('public'));
 
