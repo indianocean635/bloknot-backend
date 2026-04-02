@@ -93,11 +93,6 @@ app.get('/auth/verify', (req, res) => {
 // Static files
 app.use(express.static('public'));
 
-// Catch all
-app.get('/*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 app.listen(PORT, () => {
   console.log(`🚀 MINIMAL SERVER running on port ${PORT}`);
   console.log(`📊 Health: http://localhost:${PORT}/health`);
