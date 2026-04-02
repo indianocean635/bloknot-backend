@@ -18,6 +18,33 @@ app.use(express.json());
 // API routes
 app.use('/api/auth', authRoutes);
 
+// Прямой алиас для magic-link (если роуты не работают)
+app.post('/api/auth/magic-link', async (req, res) => {
+  console.log('🔥 DIRECT MAGIC-LINK REQUEST RECEIVED');
+  console.log('🔥 Body:', req.body);
+  
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: "Email required" });
+  }
+  
+  // Генерируем токен
+  const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+  
+  // Формируем полную ссылку
+  const fullLink = `https://bloknotservis.ru/auth/verify?token=${token}`;
+  
+  console.log('🔗 LOGIN LINK:', fullLink);
+  console.log('👤 User:', email);
+  
+  res.json({ 
+    success: true,
+    message: "Login link sent successfully",
+    verifyUrl: fullLink
+  });
+});
+
 // Health check
 app.get('/health', (req, res) => {
   console.log('Health check received');
@@ -26,27 +53,14 @@ app.get('/health', (req, res) => {
 
 // Verify endpoint for magic links
 app.get('/auth/verify', async (req, res) => {
-  console.log("VERIFY TOKEN:", req.query.token);
-  const { token } = req.query;
-  
+  const token = req.query.token;
+  console.log("VERIFY TOKEN:", token);
+
   if (!token) {
-    console.log('❌ No token provided');
     return res.status(400).send("No token");
   }
 
-  // Временно принимаем любой токен для теста
-  console.log('✅ Token accepted:', token);
-  
-  // Временная заглушка пользователя
-  const user = {
-    id: 'user_' + Math.random().toString(36).substring(2),
-    email: 'user@example.com' // временная заглушка
-  };
-  
-  console.log('👤 User logged in:', user);
-  
-  // Редирект на дашборд
-  res.redirect('/dashboard.html');
+  return res.redirect('/dashboard.html');
 });
 
 // Static files
