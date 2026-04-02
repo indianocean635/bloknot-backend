@@ -13,37 +13,11 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(path.join(uploadsDir, 'works'), { recursive: true });
 }
 
+// Middleware
 app.use(express.json());
 
 // API routes
 app.use('/api/auth', authRoutes);
-
-// Прямой алиас для magic-link (если роуты не работают)
-app.post('/api/auth/magic-link', async (req, res) => {
-  console.log('🔥 DIRECT MAGIC-LINK REQUEST RECEIVED');
-  console.log('🔥 Body:', req.body);
-  
-  const { email } = req.body;
-  
-  if (!email) {
-    return res.status(400).json({ error: "Email required" });
-  }
-  
-  // Генерируем токен
-  const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
-  
-  // Формируем полную ссылку
-  const fullLink = `https://bloknotservis.ru/auth/verify?token=${token}`;
-  
-  console.log('🔗 LOGIN LINK:', fullLink);
-  console.log('👤 User:', email);
-  
-  res.json({ 
-    success: true,
-    message: "Login link sent successfully",
-    verifyUrl: fullLink
-  });
-});
 
 // Health check
 app.get('/health', (req, res) => {
@@ -52,7 +26,7 @@ app.get('/health', (req, res) => {
 });
 
 // Verify endpoint for magic links
-app.get('/auth/verify', async (req, res) => {
+app.get('/auth/verify', (req, res) => {
   const token = req.query.token;
   console.log("VERIFY TOKEN:", token);
 
@@ -66,6 +40,12 @@ app.get('/auth/verify', async (req, res) => {
 // Static files
 app.use(express.static('public'));
 
+// 404 fallback (в самом конце!)
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found', path: req.originalUrl });
+});
+
+// Start server
 app.listen(PORT, () => {
   console.log(`🚀 MINIMAL SERVER running on port ${PORT}`);
   console.log(`📊 Health: http://localhost:${PORT}/health`);
