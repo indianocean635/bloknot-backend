@@ -5,6 +5,9 @@ const authRoutes = require('./routes/authRoutes');
 const app = express();
 const PORT = 3001;
 
+console.log('🔥 AuthRoutes loaded:', typeof authRoutes);
+console.log('🔥 AuthRoutes methods:', Object.getOwnPropertyNames(authRoutes));
+
 // Создаем необходимые папки
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
