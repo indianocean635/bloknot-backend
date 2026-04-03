@@ -1,0 +1,54 @@
+# Команды для выполнения на сервере bloknotservis.ru
+# Подключиться: ssh root@bloknotservis.ru
+
+# 1. Найти конфиг сайта
+echo '🔧 Поиск nginx конфига...'
+if [ -f '/etc/nginx/sites-available/bloknotservis.ru' ]; then
+    NGINX_CONF='/etc/nginx/sites-available/bloknotservis.ru'
+elif [ -f '/etc/nginx/conf.d/bloknotservis.ru.conf' ]; then
+    NGINX_CONF='/etc/nginx/conf.d/bloknotservis.ru.conf'
+elif [ -f '/etc/nginx/sites-enabled/bloknotservis.ru' ]; then
+    NGINX_CONF='/etc/nginx/sites-enabled/bloknotservis.ru'
+else
+    echo '❌ Не найден конфиг сайта'
+    exit 1
+fi
+
+echo '📁 Найден конфиг: '$NGINX_CONF
+
+# 2. Создать бэкап
+cp '$NGINX_CONF' '$NGINX_CONF.backup.'$(date +%Y%m%d_%H%M%S)'
+echo '💾 Создан бэкап'
+
+# 3. Показать текущий блок
+echo '📋 Текущий блок location /api/:'
+grep -A 10 'location /api/' '$NGINX_CONF'
+
+# 4. Исправить proxy_pass (убрать слэш)
+sed -i 's|proxy_pass http://localhost:3001/;|proxy_pass http://localhost:3001;|g' '$NGINX_CONF'
+
+# 5. Закомментировать лишние headers
+sed -i '/proxy_set_header Upgrade \$http_upgrade;/s/^/# /' '$NGINX_CONF'
+sed -i '/proxy_set_header Connection \"upgrade\";/s/^/# /' '$NGINX_CONF'
+
+echo '✅ Исправлен proxy_pass'
+
+# 6. Показать исправленный блок
+echo '📋 Исправленный блок location /api/:'
+grep -A 10 'location /api/' '$NGINX_CONF'
+
+# 7. Проверить конфиг
+nginx -t
+
+# 8. Перезагрузить nginx
+systemctl reload nginx
+echo '✅ Nginx перезагружен'
+
+# 9. Тестировать API
+echo '🔍 Тестируем API...'
+curl -X POST https://bloknotservis.ru/api/auth/send-link \
+    -H 'Content-Type: application/json' \
+    -d '{"email":"test@test.com"}'
+
+echo ''
+echo '✅ Готово!'
