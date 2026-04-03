@@ -45,6 +45,8 @@ router.post('/send-link', async (req, res) => {
   });
 });
 
+console.log('🔥 SEND-LINK ROUTE REGISTERED');
+
 // POST /api/auth/magic-link (алиас к send-link)
 router.post('/magic-link', async (req, res) => {
   console.log('🔥 MAGIC-LINK REQUEST RECEIVED');
