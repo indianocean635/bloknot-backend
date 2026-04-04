@@ -27,9 +27,6 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
 
 // POST /api/auth/send-link (алиас для совместимости)
 router.post('/send-link', async (req, res) => {
-  console.log('🔥 SEND-LINK REQUEST RECEIVED');
-  console.log('🔥 Body:', req.body);
-  
   const { email } = req.body;
   
   if (!email) {
@@ -45,13 +42,8 @@ router.post('/send-link', async (req, res) => {
   });
 });
 
-console.log('🔥 SEND-LINK ROUTE REGISTERED');
-
 // POST /api/auth/magic-link (алиас к send-link)
 router.post('/magic-link', async (req, res) => {
-  console.log('🔥 MAGIC-LINK REQUEST RECEIVED');
-  console.log('🔥 Body:', req.body);
-  
   const { email } = req.body;
   
   if (!email) {

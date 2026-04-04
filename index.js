@@ -20,29 +20,8 @@ if (!fs.existsSync(uploadsDir)) {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Отладка middleware
-app.use((req, res, next) => {
-  console.log('🔥 REQUEST:', req.method, req.originalUrl);
-  console.log('🔥 HEADERS:', req.headers);
-  next();
-});
-
 // API routes
 app.use('/api/auth', authRoutes);
-
-console.log('🔥 AUTH ROUTES MOUNTED at /api/auth');
-
-// Тестовый маршрут для проверки
-app.post('/api/test', (req, res) => {
-  console.log('🔥 TEST ROUTE HIT');
-  res.json({ success: true, message: 'Test route works' });
-});
-
-// Тестовый маршрут без JSON
-app.post('/api/simple', (req, res) => {
-  console.log('🔥 SIMPLE ROUTE HIT');
-  res.json({ success: true, message: 'Simple route works' });
-});
 
 // Health check
 app.get('/health', (req, res) => {
@@ -80,9 +59,6 @@ app.use(express.static('public'));
 
 // 404 fallback (в самом конце!)
 app.use((req, res) => {
-  console.log('🔥 404 FALLBACK:', req.method, req.originalUrl);
-  console.log('🔥 404 HEADERS:', req.headers);
-  console.log('🔥 404 BODY:', req.body);
   res.status(404).json({ error: 'Not found', path: req.originalUrl });
 });
 

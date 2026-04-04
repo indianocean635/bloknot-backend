@@ -1,4 +1,4 @@
-const CACHE_NAME = "bloknot-pwa-v4";
+const CACHE_NAME = "bloknot-pwa-v5";
 
 const APP_SHELL = [
   "/styles.css",
@@ -33,7 +33,10 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
 
   // Never cache API calls and auth flows
-  if (req.url.includes("/api/") || req.url.includes("/auth/")) return;
+  if (req.url.includes("/api/")) return;
+
+  // Only block direct /auth/ calls (not /api/auth/)
+  if (req.url.includes("/auth/") && !req.url.includes("/api/")) return;
 
   if (req.method !== "GET") return;
 
