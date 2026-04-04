@@ -1,0 +1,30 @@
+# ПРОВЕРКА NGINX КОНФИГА НА СЕРВЕРЕ
+# Выполнять на сервере
+
+# 1. Найти конфиг сайта:
+if [ -f "/etc/nginx/sites-available/bloknotservis.ru" ]; then
+    NGINX_CONF="/etc/nginx/sites-available/bloknotservis.ru"
+elif [ -f "/etc/nginx/conf.d/bloknotservis.ru.conf" ]; then
+    NGINX_CONF="/etc/nginx/conf.d/bloknotservis.ru.conf"
+else
+    echo "❌ Не найден nginx конфиг сайта"
+    exit 1
+fi
+
+echo "📁 Найден конфиг: $NGINX_CONF"
+
+# 2. Показать текущий конфиг:
+echo "📋 Текущий nginx конфиг:"
+cat "$NGINX_CONF"
+
+# 3. Проверить синтаксис:
+nginx -t
+
+# 4. Проверить включен ли сайт:
+if [ -f "/etc/nginx/sites-enabled/bloknotservis.ru" ]; then
+    echo "✅ Сайт включен в sites-enabled"
+else
+    echo "❌ Сайт НЕ включен в sites-enabled"
+    echo "🔧 Включить сайт:"
+    echo "ln -s /etc/nginx/sites-available/bloknotservis.ru /etc/nginx/sites-enabled/"
+fi

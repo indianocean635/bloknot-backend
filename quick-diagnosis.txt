@@ -1,0 +1,23 @@
+# БЫСТРАЯ ДИАГНОСТИКА MAGIC LINK
+# Выполнять на сервере по SSH
+
+# 1. Проверить работает ли локально:
+curl -X POST http://localhost:3001/api/auth/send-link \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@test.com"}'
+
+# 2. Проверить работает ли через домен:
+curl -X POST http://bloknotservis.ru/api/auth/send-link \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@test.com"}'
+
+# 3. Проверить nginx:
+systemctl status nginx
+nginx -t
+
+# 4. Проверить порты:
+ss -tuln | grep -E ':(80|443|3001)'
+
+# 5. Проверить PM2:
+pm2 list
+pm2 logs bloknot --lines 10
