@@ -1,0 +1,76 @@
+# ИНСТРУКЦИЯ ПО НАСТРОЙКЕ HTTPS ДЛЯ bloknotservis.ru
+# Выполнять на сервере по SSH: ssh root@bloknotservis.ru
+
+# ==========================================
+# ШАГ 1: Установка certbot
+# ==========================================
+apt update
+apt install certbot python3-certbot-nginx -y
+
+# ==========================================
+# ШАГ 2: Проверка текущего nginx конфига
+# ==========================================
+# Найти конфиг сайта:
+if [ -f "/etc/nginx/sites-available/bloknotservis.ru" ]; then
+    NGINX_CONF="/etc/nginx/sites-available/bloknotservis.ru"
+elif [ -f "/etc/nginx/conf.d/bloknotservis.ru.conf" ]; then
+    NGINX_CONF="/etc/nginx/conf.d/bloknotservis.ru.conf"
+else
+    echo "❌ Не найден nginx конфиг сайта"
+    exit 1
+fi
+
+echo "📁 Найден конфиг: $NGINX_CONF"
+
+# Создать бэкап:
+cp "$NGINX_CONF" "$NGINX_CONF.backup.$(date +%Y%m%d_%H%M%S)"
+
+# Показать текущий конфиг:
+cat "$NGINX_CONF"
+
+# ==========================================
+# ШАГ 3: Получение SSL сертификата
+# ==========================================
+certbot --nginx -d bloknotservis.ru -d www.bloknotservis.ru
+
+# ==========================================
+# ШАГ 4: Проверка конфига
+# ==========================================
+nginx -t
+
+# ==========================================
+# ШАГ 5: Перезапуск nginx
+# ==========================================
+systemctl restart nginx
+
+# ==========================================
+# ШАГ 6: Проверка порта 443
+# ==========================================
+ss -tuln | grep 443
+
+# ==========================================
+# ШАГ 7: Проверка работы HTTPS
+# ==========================================
+curl -I https://bloknotservis.ru
+
+# ==========================================
+# ШАГ 8: Тестирование API
+# ==========================================
+curl -X POST https://bloknotservis.ru/api/auth/send-link \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@test.com"}'
+
+# ==========================================
+# ШАГ 9: Финальная проверка
+# ==========================================
+# Показать финальный конфиг:
+cat "$NGINX_CONF"
+
+# Проверить статус nginx:
+systemctl status nginx --no-pager
+
+# Проверить порт 443:
+ss -tuln | grep 443
+
+echo "✅ HTTPS настройка завершена!"
+echo "🌐 Сайт должен работать по: https://bloknotservis.ru"
