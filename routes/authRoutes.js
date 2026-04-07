@@ -6,23 +6,23 @@ const router = express.Router();
 const memoryUsers = new Map();
 const memoryTokens = new Map();
 
-// Email transporter (если настроен SMTP)
+// Email transporter (Yandex SMTP)
 let transporter = null;
 
-// Инициализация nodemailer если есть SMTP настройки
+// Always initialize with existing settings
 if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-  transporter = nodemailer.createTransporter({
+  transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT || 587,
+    port: parseInt(process.env.SMTP_PORT) || 465,
     secure: process.env.SMTP_SECURE === 'true',
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS
     }
   });
-  console.log('📧 Email transporter configured');
+  console.log('Email transporter configured with Yandex SMTP');
 } else {
-  console.log('📧 Email not configured - using console logs only');
+  console.log('Email not configured - missing SMTP settings');
 }
 
 // POST /api/auth/send-link (алиас для совместимости)
@@ -44,7 +44,7 @@ router.post('/send-link', async (req, res) => {
       const verifyUrl = `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`;
       
       await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
         to: email,
         subject: 'Bloknot - Link for login',
         html: `
@@ -91,7 +91,7 @@ router.post('/magic-link', async (req, res) => {
       const verifyUrl = `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`;
       
       await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
         to: email,
         subject: 'Bloknot - Link for login',
         html: `
