@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Login - Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1 class="page-title">Super Admin Login</h1>
+    <p class="page-subtitle">Only for Bloknot owner</p>
+
+    <div class="card" style="max-width:400px; margin:20px auto">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="apeskov635@gmail.com" autocomplete="email" />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="Enter admin password" autocomplete="current-password" />
+      </div>
+
+      <div class="notice" id="notice" style="display:none; margin-top:10px"></div>
+
+      <div class="actions" style="margin-top:14px">
+        <button class="btn" id="loginBtn" type="button">Login as Super Admin</button>
+      </div>
+
+      <div class="actions" style="margin-top:10px">
+        <a class="btn secondary" href="/">Back to Main Site</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const notice = document.getElementById('notice');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+
+    function showNotice(text) {
+      if (!text) {
+        notice.style.display = 'none';
+        notice.textContent = '';
+        return;
+      }
+      notice.style.display = 'block';
+      notice.textContent = text;
+    }
+
+    async function login() {
+      const email = String(emailInput.value || '').trim();
+      const password = String(passwordInput.value || '').trim();
+
+      if (!email || !password) {
+        showNotice('Please enter email and password');
+        return;
+      }
+
+      // Only allow apeskov635@gmail.com
+      if (email !== 'apeskov635@gmail.com') {
+        showNotice('Access denied. Only Bloknot owner can login.');
+        return;
+      }
+
+      showNotice('');
+      loginBtn.disabled = true;
+
+      try {
+        // Simple password check (you can change this)
+        if (password !== 'bloknot_admin_2024') {
+          throw new Error('Invalid password');
+        }
+
+        // Set admin session
+        localStorage.setItem('bloknot_admin_email', email);
+        localStorage.setItem('bloknot_admin_logged_in', '1');
+
+        showNotice('Login successful! Redirecting...');
+        setTimeout(() => {
+          window.location.href = '/admin.html';
+        }, 1000);
+
+      } catch (e) {
+        showNotice('Login failed: ' + (e && e.message ? e.message : 'Unknown error'));
+      } finally {
+        loginBtn.disabled = false;
+      }
+    }
+
+    loginBtn.addEventListener('click', login);
+    passwordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') login();
+    });
+
+    emailInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        passwordInput.focus();
+      }
+    });
+
+    // Auto-focus email
+    emailInput.focus();
+  </script>
+</body>
+</html>

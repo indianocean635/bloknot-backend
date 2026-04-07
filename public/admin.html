@@ -8,6 +8,17 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <script>
+    // Check if user is authenticated as super admin
+    const userEmail = localStorage.getItem('bloknot_admin_email');
+    const isLoggedIn = localStorage.getItem('bloknot_admin_logged_in') === '1';
+    
+    // Only allow apeskov635@gmail.com
+    if (!isLoggedIn || userEmail !== 'apeskov635@gmail.com') {
+      // Redirect to login page
+      window.location.href = '/admin-login.html';
+    }
+  </script>
   <main class="container">
     <h1 class="page-title">Super Admin</h1>
     <p class="page-subtitle">Статистика и пользователи</p>
