@@ -334,6 +334,21 @@
       color: #4c6fff;
     }
 
+    /* Responsive footer for mobile */
+    @media (max-width: 768px) {
+      .footer-content {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .footer-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+
     .modal {
       position: fixed;
       inset: 0;
