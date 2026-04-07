@@ -91,53 +91,6 @@
    </div>
  </main>
 
-    <footer class="footer">
-      <div class="footer-content">
-        <div class="footer-section">
-          <h4>Contacts</h4>
-          <ul>
-            <li><span class="footer-email" onclick="copyEmail()" style="cursor: pointer; transition: color 160ms ease;">info@bloknotservis.ru</span></li>
-            <li><a href="https://t.me/bloknotservis" class="footer-link" target="_blank">Telegram</a></li>
-            <li><a href="https://wa.me/79999999999" class="footer-link" target="_blank">WhatsApp</a></li>
-            <li><a href="https://max.com/write/bloknotservis" class="footer-link" target="_blank">MAX</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-section">
-          <h4>Company</h4>
-          <ul>
-            <li><a href="/about.html" class="footer-link">About us</a></li>
-            <li><a href="/knowledge.html" class="footer-link">Knowledge base</a></li>
-            <li><a href="/pricing.html" class="footer-link">Tariffs</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-section">
-          <h4>For any business</h4>
-          <ul>
-            <li><a href="/beauty.html" class="footer-link">Beauty</a></li>
-            <li><a href="/medicine.html" class="footer-link">Medicine</a></li>
-            <li><a href="/sport.html" class="footer-link">Sports</a></li>
-            <li><a href="/massage.html" class="footer-link">Massage</a></li>
-            <li><a href="/leisure.html" class="footer-link">Leisure</a></li>
-            <li><a href="/education.html" class="footer-link">Education</a></li>
-            <li><a href="/auto.html" class="footer-link">Auto</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-section">
-          <h4>Legal information</h4>
-          <ul>
-            <li><a href="/user-agreement.html" class="footer-link">User agreement</a></li>
-            <li><a href="/privacy.html" class="footer-link">Privacy policy</a></li>
-            <li><a href="/cookies.html" class="footer-link">Cookie usage</a></li>
-            <li><a href="/personal-data.html" class="footer-link">Personal data consent</a></li>
-            <li><a href="/client-data-processing.html" class="footer-link">Client data processing</a></li>
-          </ul>
-        </div>
-      </div>
-    </footer>
-
 <script src="/app.js?v=20260407"></script>
  <script>
    Bloknot.renderHeader("dashboard");
@@ -321,26 +274,6 @@
 
   setRevenueDefaults();
   calcRevenue().catch(() => {});
-
-  // Function to copy email from footer
-  function copyEmail() {
-    const email = 'info@bloknotservis.ru';
-    navigator.clipboard.writeText(email).then(() => {
-      // Change text to "Copied!"
-      const emailElement = document.querySelector('.footer-email');
-      const originalText = emailElement.textContent;
-      emailElement.textContent = 'Email copied!';
-      emailElement.style.color = '#4c6fff';
-      
-      // Return original text after 2 seconds
-      setTimeout(() => {
-        emailElement.textContent = originalText;
-        emailElement.style.color = '#6b7280';
-      }, 2000);
-    }).catch(err => {
-      console.error('Failed to copy email:', err);
-    });
-  }
  </script>
 
 </body>
