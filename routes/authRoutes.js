@@ -35,10 +35,40 @@ router.post('/send-link', async (req, res) => {
   
   const token = 'token_' + Date.now();
   
+  // Store token in memory
+  memoryTokens.set(token, { email, createdAt: new Date(), expiresAt: new Date(Date.now() + 3600000) });
+  
+  // Send email if transporter is configured
+  if (transporter) {
+    try {
+      const verifyUrl = `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`;
+      
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: 'Bloknot - Link for login',
+        html: `
+          <h2>Welcome to Bloknot!</h2>
+          <p>Click on the link below to login to your account:</p>
+          <p><a href="${verifyUrl}">Login to account</a></p>
+          <p>If you didn't request this link, please ignore this email.</p>
+          <p>Link is valid for 1 hour.</p>
+        `
+      });
+      
+      console.log('Email sent to:', email);
+    } catch (error) {
+      console.error('Email sending error:', error);
+    }
+  } else {
+    console.log('Email not sent - transporter not configured');
+    console.log('Login link for', email, ':', `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`);
+  }
+  
   res.json({
     success: true,
     message: "Login link sent",
-    verifyUrl: `https://bloknotservis.ru/auth/magic-link?token=${token}`
+    verifyUrl: `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`
   });
 });
 
@@ -52,10 +82,40 @@ router.post('/magic-link', async (req, res) => {
   
   const token = 'token_' + Date.now();
   
+  // Store token in memory
+  memoryTokens.set(token, { email, createdAt: new Date(), expiresAt: new Date(Date.now() + 3600000) });
+  
+  // Send email if transporter is configured
+  if (transporter) {
+    try {
+      const verifyUrl = `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`;
+      
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: 'Bloknot - Link for login',
+        html: `
+          <h2>Welcome to Bloknot!</h2>
+          <p>Click on the link below to login to your account:</p>
+          <p><a href="${verifyUrl}">Login to account</a></p>
+          <p>If you didn't request this link, please ignore this email.</p>
+          <p>Link is valid for 1 hour.</p>
+        `
+      });
+      
+      console.log('Email sent to:', email);
+    } catch (error) {
+      console.error('Email sending error:', error);
+    }
+  } else {
+    console.log('Email not sent - transporter not configured');
+    console.log('Login link for', email, ':', `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`);
+  }
+  
   res.json({
     success: true,
     message: "Login link sent",
-    verifyUrl: `https://bloknotservis.ru/auth/magic-link?token=${token}`
+    verifyUrl: `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`
   });
 });
 
