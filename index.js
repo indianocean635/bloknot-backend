@@ -38,7 +38,7 @@ app.get('/auth/verify', (req, res) => {
     return res.status(400).send("No token");
   }
 
-  return res.redirect('/dashboard.html');
+  return res.redirect('/business-dashboard.html');
 });
 
 // Magic link endpoint (для совместимости)
@@ -51,7 +51,7 @@ app.get('/auth/magic-link', (req, res) => {
 
   console.log("MAGIC LOGIN TOKEN:", token);
 
-  return res.redirect('/dashboard.html');
+  return res.redirect('/business-dashboard.html');
 });
 
 // Static files (в самом конце!)
