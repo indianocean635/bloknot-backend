@@ -121,23 +121,6 @@
     return res.text();
   }
 
-  function renderFooter() {
-    if (document.querySelector("footer.site-footer")) return;
-    const el = document.createElement("footer");
-    el.className = "site-footer";
-    el.innerHTML = `
-      <div class="container" style="padding:16px 16px">
-        <div class="nav" style="justify-content:center">
-          <a href="/support.html">Поддержка</a>
-          <a href="/pricing.html">Тарифы</a>
-          <a href="/terms.html">Пользовательское соглашение</a>
-          <a href="/privacy.html">Политика конфиденциальности</a>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(el);
-  }
-
   let deferredInstallPrompt = null;
   try {
     window.addEventListener("beforeinstallprompt", (e) => {
@@ -343,7 +326,6 @@
       });
     }
 
-    renderFooter();
   }
 
   window.Bloknot = {
