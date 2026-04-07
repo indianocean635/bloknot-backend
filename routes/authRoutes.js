@@ -2,6 +2,9 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const router = express.Router();
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 // Временное хранилище пользователей и токенов
 const memoryUsers = new Map();
 const memoryTokens = new Map();
