@@ -1,30 +1,10 @@
 const express = require("express");
 const { prisma } = require("../services/prismaService");
-const { requireAuth } = require("../middleware/authMiddleware");
+const { requireMagicAuth, getBusinessFromUser } = require("../middleware/magicAuthMiddleware");
 const router = express.Router();
 
-// Middleware to get business from user
-async function getBusiness(req, res, next) {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { email: req.user.email },
-      include: { business: true }
-    });
-    
-    if (!user || !user.business) {
-      return res.status(404).json({ error: "Business not found" });
-    }
-    
-    req.business = user.business;
-    next();
-  } catch (error) {
-    console.error("Error getting business:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-}
-
 // Get business settings
-router.get("/business", requireAuth, getBusiness, async (req, res) => {
+router.get("/business", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const business = await prisma.business.findUnique({
       where: { id: req.business.id },
@@ -48,7 +28,7 @@ router.get("/business", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Update business name
-router.patch("/business/name", requireAuth, getBusiness, async (req, res) => {
+router.patch("/business/name", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { name } = req.body;
     
@@ -69,7 +49,7 @@ router.patch("/business/name", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Get branches
-router.get("/branches", requireAuth, getBusiness, async (req, res) => {
+router.get("/branches", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const branches = await prisma.branch.findMany({
       where: { businessId: req.business.id },
@@ -84,7 +64,7 @@ router.get("/branches", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Create branch
-router.post("/branches", requireAuth, getBusiness, async (req, res) => {
+router.post("/branches", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { name, address } = req.body;
     
@@ -108,7 +88,7 @@ router.post("/branches", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Update branch
-router.patch("/branches/:id", requireAuth, getBusiness, async (req, res) => {
+router.patch("/branches/:id", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, address } = req.body;
@@ -140,7 +120,7 @@ router.patch("/branches/:id", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Delete branch
-router.delete("/branches/:id", requireAuth, getBusiness, async (req, res) => {
+router.delete("/branches/:id", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -167,7 +147,7 @@ router.delete("/branches/:id", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Get categories
-router.get("/categories", requireAuth, getBusiness, async (req, res) => {
+router.get("/categories", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const categories = await prisma.category.findMany({
       where: { businessId: req.business.id },
@@ -187,7 +167,7 @@ router.get("/categories", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Create category
-router.post("/categories", requireAuth, getBusiness, async (req, res) => {
+router.post("/categories", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { name } = req.body;
     
@@ -210,7 +190,7 @@ router.post("/categories", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Update category
-router.patch("/categories/:id", requireAuth, getBusiness, async (req, res) => {
+router.patch("/categories/:id", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
@@ -241,7 +221,7 @@ router.patch("/categories/:id", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Delete category
-router.delete("/categories/:id", requireAuth, getBusiness, async (req, res) => {
+router.delete("/categories/:id", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -268,7 +248,7 @@ router.delete("/categories/:id", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Get services
-router.get("/services", requireAuth, getBusiness, async (req, res) => {
+router.get("/services", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const services = await prisma.service.findMany({
       where: { businessId: req.business.id },
@@ -286,7 +266,7 @@ router.get("/services", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Create service
-router.post("/services", requireAuth, getBusiness, async (req, res) => {
+router.post("/services", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { name, duration, price, categoryId } = req.body;
     
@@ -323,7 +303,7 @@ router.post("/services", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Update service
-router.patch("/services/:id", requireAuth, getBusiness, async (req, res) => {
+router.patch("/services/:id", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, duration, price, categoryId } = req.body;
@@ -360,7 +340,7 @@ router.patch("/services/:id", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Delete service
-router.delete("/services/:id", requireAuth, getBusiness, async (req, res) => {
+router.delete("/services/:id", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -387,7 +367,7 @@ router.delete("/services/:id", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Get masters
-router.get("/masters", requireAuth, getBusiness, async (req, res) => {
+router.get("/masters", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const masters = await prisma.master.findMany({
       where: { businessId: req.business.id },
@@ -402,7 +382,7 @@ router.get("/masters", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Create master
-router.post("/masters", requireAuth, getBusiness, async (req, res) => {
+router.post("/masters", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { name, email } = req.body;
     
@@ -433,7 +413,7 @@ router.post("/masters", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Update master
-router.patch("/masters/:id", requireAuth, getBusiness, async (req, res) => {
+router.patch("/masters/:id", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, active } = req.body;
@@ -469,7 +449,7 @@ router.patch("/masters/:id", requireAuth, getBusiness, async (req, res) => {
 });
 
 // Delete master
-router.delete("/masters/:id", requireAuth, getBusiness, async (req, res) => {
+router.delete("/masters/:id", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
     const { id } = req.params;
     
