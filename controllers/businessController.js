@@ -98,7 +98,7 @@ async function getWorks(req, res) {
   })));
 }
 
-// Получить название компании
+// Получить название// Get business slug for booking link
 async function getBusinessName(req, res) {
   const user = await prisma.user.findUnique({ where: { id: req.user.id } });
   
@@ -114,7 +114,8 @@ async function getBusinessName(req, res) {
     return res.status(404).json({ error: "Business not found" });
   }
   
-  res.json({ name: business.name });
+  // Return slug for booking link generation
+  res.json({ slug: business.slug });
 }
 
 // Обновить название компании

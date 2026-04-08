@@ -1,11 +1,11 @@
 const express = require("express");
 const { getBusinessName, updateBusinessName } = require("../controllers/businessController");
-const { requireAuth } = require("../middleware/authMiddleware");
+const { requireMagicAuth } = require("../middleware/magicAuthMiddleware");
 
 const router = express.Router();
 
-router.get("/business/slug", requireAuth, getBusinessName);
-router.get("/business", requireAuth, getBusinessName);
-router.patch("/business/name", requireAuth, updateBusinessName);
+router.get("/business/slug", requireMagicAuth, getBusinessName);
+router.get("/business", requireMagicAuth, getBusinessName);
+router.patch("/business/name", requireMagicAuth, updateBusinessName);
 
 module.exports = router;
