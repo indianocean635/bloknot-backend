@@ -1,20 +1,27 @@
-<svg width="40" height="40" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+<svg width="50" height="50" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <clipPath id="circle-clip">
       <circle cx="100" cy="100" r="80"/>
     </clipPath>
   </defs>
   
-  <!-- Background circle -->
-  <circle cx="100" cy="100" r="80" fill="#4c6fff" opacity="0.1"/>
+  <!-- Background circle with white background -->
+  <circle cx="100" cy="100" r="80" fill="white" stroke="#4c6fff" stroke-width="2"/>
   
-  <!-- Main content (simulating the uploaded image) -->
+  <!-- Bloknot logo content -->
   <g clip-path="url(#circle-clip)">
-    <!-- Replace this with your actual image content -->
-    <rect x="20" y="20" width="160" height="160" fill="#4c6fff" rx="20"/>
-    <text x="100" y="110" font-family="Arial, sans-serif" font-size="60" font-weight="bold" text-anchor="middle" fill="white">SA</text>
+    <!-- Blue background rectangle -->
+    <rect x="30" y="50" width="140" height="100" fill="#4c6fff" rx="15"/>
+    
+    <!-- Book pages effect -->
+    <rect x="40" y="60" width="120" height="80" fill="#5a7dff" rx="10"/>
+    <rect x="50" y="70" width="100" height="60" fill="#6b8fff" rx="8"/>
+    
+    <!-- Text "Bloknot" -->
+    <text x="100" y="105" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">Bloknot</text>
+    
+    <!-- Small decoration lines -->
+    <line x1="60" y1="115" x2="140" y2="115" stroke="white" stroke-width="2" opacity="0.7"/>
+    <line x1="60" y1="125" x2="120" y2="125" stroke="white" stroke-width="2" opacity="0.5"/>
   </g>
-  
-  <!-- Border -->
-  <circle cx="100" cy="100" r="78" fill="none" stroke="#4c6fff" stroke-width="2"/>
 </svg>
