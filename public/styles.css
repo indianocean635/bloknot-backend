@@ -65,6 +65,9 @@ body {
   max-width: 980px;
   margin: 0 auto;
   padding: 20px 16px;
+}
+
+.admin-container {
   margin-left: 80px;
 }
 
