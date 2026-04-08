@@ -1,27 +1,49 @@
-<svg width="50" height="50" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+<svg width="60" height="60" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <clipPath id="circle-clip">
-      <circle cx="100" cy="100" r="80"/>
+      <circle cx="100" cy="100" r="90"/>
     </clipPath>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0f4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e0e7ff;stop-opacity:1" />
+    </linearGradient>
   </defs>
   
-  <!-- Background circle with white background -->
-  <circle cx="100" cy="100" r="80" fill="white" stroke="#4c6fff" stroke-width="2"/>
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="url(#bg-gradient)" stroke="#4c6fff" stroke-width="2"/>
   
-  <!-- Bloknot logo content -->
+  <!-- Person with suitcase and money -->
   <g clip-path="url(#circle-clip)">
-    <!-- Blue background rectangle -->
-    <rect x="30" y="50" width="140" height="100" fill="#4c6fff" rx="15"/>
+    <!-- Person body -->
+    <ellipse cx="100" cy="140" rx="35" ry="45" fill="#1e293b"/>
     
-    <!-- Book pages effect -->
-    <rect x="40" y="60" width="120" height="80" fill="#5a7dff" rx="10"/>
-    <rect x="50" y="70" width="100" height="60" fill="#6b8fff" rx="8"/>
+    <!-- Person head -->
+    <circle cx="100" cy="85" r="25" fill="#fbbf24"/>
     
-    <!-- Text "Bloknot" -->
-    <text x="100" y="105" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">Bloknot</text>
+    <!-- Suitcase -->
+    <rect x="65" y="120" width="25" height="35" fill="#dc2626" rx="3"/>
+    <rect x="65" y="120" width="25" height="8" fill="#991b1b" rx="2"/>
+    <line x1="77" y1="128" x2="77" y2="155" stroke="#fbbf24" stroke-width="2"/>
     
-    <!-- Small decoration lines -->
-    <line x1="60" y1="115" x2="140" y2="115" stroke="white" stroke-width="2" opacity="0.7"/>
-    <line x1="60" y1="125" x2="120" y2="125" stroke="white" stroke-width="2" opacity="0.5"/>
+    <!-- Money/flying cash -->
+    <rect x="120" y="70" width="20" height="12" fill="#10b981" rx="2" transform="rotate(15 130 76)"/>
+    <rect x="125" y="85" width="20" height="12" fill="#10b981" rx="2" transform="rotate(-10 135 91)"/>
+    <rect x="115" y="95" width="20" height="12" fill="#10b981" rx="2" transform="rotate(20 125 101)"/>
+    
+    <!-- Dollar signs on money -->
+    <text x="130" y="78" font-family="Arial" font-size="8" font-weight="bold" text-anchor="middle" fill="white">$</text>
+    <text x="135" y="93" font-family="Arial" font-size="8" font-weight="bold" text-anchor="middle" fill="white">$</text>
+    <text x="125" y="103" font-family="Arial" font-size="8" font-weight="bold" text-anchor="middle" fill="white">$</text>
+    
+    <!-- Person face details -->
+    <circle cx="92" cy="82" r="2" fill="#1e293b"/>
+    <circle cx="108" cy="82" r="2" fill="#1e293b"/>
+    <path d="M 95 92 Q 100 95 105 92" stroke="#1e293b" stroke-width="2" fill="none"/>
+    
+    <!-- Tie -->
+    <path d="M 100 105 L 95 130 L 100 135 L 105 130 Z" fill="#dc2626"/>
+    
+    <!-- Shirt collar -->
+    <path d="M 85 105 Q 100 110 115 105" stroke="white" stroke-width="3" fill="none"/>
   </g>
 </svg>
