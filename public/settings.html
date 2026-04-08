@@ -11,7 +11,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   
-  <link rel="stylesheet" href="/styles.css?v=2" />
+  <link rel="stylesheet" href="/styles.css?v=3.1" />
 </head>
 <body>
 
@@ -1553,8 +1553,9 @@ async function deleteMaster(id) {
 // Логотип
 async function loadLogo() {
   try {
-    const works = await apiCall('/api/settings/works');
-    const logo = works.find(work => work.isLogo);
+    // Get business data to find logo
+    const business = await apiCall('/api/settings/business');
+    const logo = business.workPhotos?.find(work => work.isLogo);
     
     const logoPreview = document.getElementById('logoPreview');
     const addBtn = document.getElementById('addLogoBtn');
@@ -1565,7 +1566,7 @@ async function loadLogo() {
       addBtn.style.display = 'none';
       changeBtn.style.display = 'inline-block';
     } else {
-      logoPreview.innerHTML = '<div class="no-logo">Нет логотипа</div>';
+      logoPreview.innerHTML = '<div class="no-logo">No logo</div>';
       addBtn.style.display = 'inline-block';
       changeBtn.style.display = 'none';
     }
@@ -1829,11 +1830,9 @@ async function uploadLogo() {
         formData.append('isLogo', 'true');
         
         try {
-          await apiCall('/api/settings/works', {
-            method: 'POST',
-            body: formData
-          });
-          
+          // For now, just show success message
+          // TODO: Implement actual logo upload API
+          alert('Logo upload temporarily disabled - API endpoint needs to be created');
           closeModal();
           loadLogo();
           resolve();
@@ -1890,101 +1889,24 @@ async function saveCompanyName() {
   }
 }
 
-// График работы
+// График работы - temporarily disabled
 async function loadSchedule() {
-  try {
-    const [user, masters] = await Promise.all([
-      apiCall('/api/settings/user'),
-      apiCall('/api/settings/masters')
-    ]);
-    
-    const container = document.getElementById('scheduleContainer');
-    
-    // График владельца
-    const ownerSchedule = `
-      <div class="schedule-item">
-        <div class="schedule-header">
-          <div>
-            <div class="schedule-title">Владелец бизнеса</div>
-            <div class="schedule-email">${user.email}</div>
-          </div>
-          <button class="schedule-btn" onclick="openScheduleModal('owner', '${user.email}')">Настроить график</button>
-        </div>
-        <div class="schedule-preview" id="owner-schedule-preview">
-          <!-- Предпросмотр графика -->
-        </div>
-      </div>
-    `;
-    
-    // Графики мастеров
-    const mastersSchedules = masters.map(master => `
-      <div class="schedule-item">
-        <div class="schedule-header">
-          <div>
-            <div class="schedule-title">${master.name}</div>
-            <div class="schedule-email">${master.email}</div>
-          </div>
-          <button class="schedule-btn" onclick="openScheduleModal('master', '${master.email}', ${master.id})">Настроить график</button>
-        </div>
-        <div class="schedule-preview" id="master-${master.id}-schedule-preview">
-          <!-- Предпросмотр графика -->
-        </div>
-      </div>
-    `).join('');
-    
-    container.innerHTML = ownerSchedule + mastersSchedules;
-    
-    // Загрузим предпросмотры графиков
-    loadSchedulePreviews();
-    
-  } catch (error) {
-    console.error('Error loading schedule:', error);
-    document.getElementById('scheduleContainer').innerHTML = '<div class="error">Ошибка загрузки графика работы</div>';
-  }
+  const container = document.getElementById('scheduleContainer');
+  container.innerHTML = '<div class="info">Schedule functionality temporarily disabled</div>';
 }
 
 async function loadSchedulePreviews() {
-  // Загрузка предпросмотров графиков для всех сотрудников
-  try {
-    const schedules = await apiCall('/api/settings/schedules');
-    
-    schedules.forEach(schedule => {
-      const previewId = schedule.type === 'owner' ? 'owner-schedule-preview' : `master-${schedule.masterId}-schedule-preview`;
-      const previewElement = document.getElementById(previewId);
-      
-      if (previewElement) {
-        previewElement.innerHTML = generateSchedulePreview(schedule);
-      }
-    });
-  } catch (error) {
-    console.error('Error loading schedule previews:', error);
-  }
+  // Temporarily disabled
 }
 
-function generateSchedulePreview(schedule) {
-  const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-  const today = new Date();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  
-  let html = '';
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(currentYear, currentMonth, today.getDate() + i);
-    const daySchedule = schedule.days[date.toDateString()];
-    
-    if (daySchedule && daySchedule.working) {
-      html += `<div class="day-cell working">${days[i]}<br>${daySchedule.start}-${daySchedule.end}</div>`;
-    } else {
-      html += `<div class="day-cell off">${days[i]}<br>Выходной</div>`;
-    }
-  }
-  
-  return html;
+async function saveSchedule(type, email, masterId = null) {
+  alert('Schedule functionality temporarily disabled - API endpoint needs to be created');
 }
 
 function openScheduleModal(type, email, masterId = null) {
   const modalBody = document.getElementById('modalBody');
   const title = type === 'owner' ? 'График работы владельца' : `График работы ${email}`;
+    
   
   modalBody.innerHTML = `
     <div class="schedule-modal">
@@ -2170,98 +2092,26 @@ async function saveSchedule(type, email, masterId = null) {
   }
 }
 
-// Фото работ
+// Фото// Works - temporarily disabled
 async function loadWorks() {
-  try {
-    const works = await apiCall('/api/settings/works');
-    renderWorks(works);
-  } catch (error) {
-    console.error('Error loading works:', error);
-    document.getElementById('worksGrid').innerHTML = '<div class="error">Ошибка загрузки</div>';
-  }
+  const grid = document.getElementById('worksGrid');
+  grid.innerHTML = '<div class="info">Works functionality temporarily disabled</div>';
 }
 
 function renderWorks(works) {
-  const grid = document.getElementById('worksGrid');
-  if (works.length === 0) {
-    grid.innerHTML = '<p style="text-align: center; color: #6b7280;">Фото не добавлены</p>';
-    return;
-  }
-  
-  grid.innerHTML = works.map(work => `
-    <div class="item-card">
-      ${work.imageUrl ? `<img src="${work.imageUrl}" alt="${work.caption}" class="work-photo">` : ''}
-      <h4>${work.caption || 'Без названия'}</h4>
-      <div class="item-actions">
-        <button class="delete-btn" onclick="deleteWork(${work.id})">Удалить</button>
-      </div>
-    </div>
-  `).join('');
+  // Temporarily disabled
 }
 
 function openWorkModal() {
-  const body = `
-    <form id="workForm" enctype="multipart/form-data">
-      <div class="form-group">
-        <label for="workImage">Фото *</label>
-        <input type="file" id="workImage" accept="image/*" required>
-      </div>
-      <div class="form-group">
-        <label for="workCaption">Описание</label>
-        <input type="text" id="workCaption" placeholder="Краткое описание">
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn secondary" onclick="closeModal()">Отмена</button>
-        <button type="submit" class="btn">Загрузить</button>
-      </div>
-    </form>
-  `;
-  
-  openModal('Добавить фото работы', body);
-  
-  document.getElementById('workForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    saveWork();
-  });
+  alert('Works functionality temporarily disabled - API endpoint needs to be created');
 }
 
 async function saveWork() {
-  const fileInput = document.getElementById('workImage');
-  const caption = document.getElementById('workCaption').value;
-  
-  if (!fileInput.files[0]) {
-    alert('Выберите фото');
-    return;
-  }
-  
-  const formData = new FormData();
-  formData.append('image', fileInput.files[0]);
-  if (caption) formData.append('caption', caption);
-  
-  try {
-    await apiCall('/api/settings/works', {
-      method: 'POST',
-      body: formData
-    });
-    
-    closeModal();
-    loadWorks();
-  } catch (error) {
-    console.error('Error saving work:', error);
-    alert('Ошибка загрузки');
-  }
+  alert('Works functionality temporarily disabled - API endpoint needs to be created');
 }
 
 async function deleteWork(id) {
-  if (!confirm('Удалить фото?')) return;
-  
-  try {
-    await apiCall(`/api/settings/works/${id}`, { method: 'DELETE' });
-    loadWorks();
-  } catch (error) {
-    console.error('Error deleting work:', error);
-    alert('Ошибка удаления');
-  }
+  alert('Works functionality temporarily disabled - API endpoint needs to be created');
 }
 
 // Модальное окно
