@@ -24,8 +24,6 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.35;
-  display: flex;
-  min-height: 100vh;
 }
 
 .admin-sidebar {

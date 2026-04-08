@@ -7,7 +7,7 @@
   <link rel="icon" href="/favicon.png" type="image/png" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body>
+<body class="admin-page">
   <script>
     // Check if user is authenticated as super admin
     const userEmail = localStorage.getItem('bloknot_admin_email');
@@ -19,6 +19,12 @@
       window.location.href = '/admin-login.html';
     }
   </script>
+  <style>
+    body.admin-page {
+      display: flex;
+      min-height: 100vh;
+    }
+  </style>
   <div class="admin-sidebar">
     <img src="/admin-icon.svg" alt="Admin Icon" class="admin-icon">
   </div>
