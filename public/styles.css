@@ -24,6 +24,47 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.35;
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  width: 80px;
+  background: linear-gradient(135deg, #4c6fff 0%, #6366f1 100%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 40px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 1000;
+  box-shadow: 2px 0 20px rgba(76, 108, 255, 0.1);
+}
+
+.admin-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.admin-icon:hover {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.container {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  margin-left: 80px;
 }
 
 a {
