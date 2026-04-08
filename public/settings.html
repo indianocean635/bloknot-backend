@@ -923,6 +923,17 @@ document.addEventListener('DOMContentLoaded', function() {
 async function apiCall(url, options = {}) {
   console.log('API Call:', url, options);
   
+  // Get user email from localStorage
+  const userEmail = localStorage.getItem('bloknot_logged_in_email') || 
+                   localStorage.getItem('user_email') || 
+                   'peskov142@mail.ru'; // Fallback for testing
+  
+  // Add authentication headers
+  const headers = {
+    'x-user-email': userEmail,
+    ...options.headers
+  };
+  
   // Try to use Bloknot.api first
   if (typeof Bloknot !== 'undefined' && Bloknot.api) {
     console.log('Using Bloknot.api');
@@ -931,21 +942,24 @@ async function apiCall(url, options = {}) {
       if (options.method === 'POST') {
         result = await Bloknot.api(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...headers },
           body: options.body
         });
       } else if (options.method === 'PATCH') {
         result = await Bloknot.api(url, {
           method: 'PATCH', 
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...headers },
           body: options.body
         });
       } else if (options.method === 'DELETE') {
         result = await Bloknot.api(url, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: { ...headers }
         });
       } else {
-        result = await Bloknot.api(url);
+        result = await Bloknot.api(url, {
+          headers: { ...headers }
+        });
       }
       console.log('Bloknot.api Success:', result);
       return result;
@@ -961,9 +975,11 @@ async function apiCall(url, options = {}) {
   // Fallback to fetch
   try {
     const response = await fetch(url, {
-      headers: options.body instanceof FormData ? {} : {
+      headers: options.body instanceof FormData ? {
+        'x-user-email': userEmail
+      } : {
         'Content-Type': 'application/json',
-        ...options.headers
+        ...headers
       },
       ...options
     });
@@ -1021,7 +1037,7 @@ function setupEventListeners() {
 // Название компании
 async function loadCompanyName() {
   try {
-    const business = await apiCall('/api/business');
+    const business = await apiCall('/api/settings/business');
     
     const container = document.getElementById('companyNameContainer');
     
@@ -1049,7 +1065,7 @@ async function saveCompanyName() {
   }
   
   try {
-    await apiCall('/api/business/name', {
+    await apiCall('/api/settings/business/name', {
       method: 'PATCH',
       body: JSON.stringify({ name })
     });
@@ -1096,7 +1112,7 @@ async function deleteLogo(id) {
 // Филиалы
 async function loadBranches() {
   try {
-    const branches = await apiCall('/api/branches');
+    const branches = await apiCall('/api/settings/branches');
     renderBranches(branches);
   } catch (error) {
     console.error('Error loading branches:', error);
@@ -1146,7 +1162,7 @@ function openBranchModal(id = null) {
   
   if (id) {
     // Загрузить данные филиала для редактирования
-    apiCall('/api/branches').then(branches => {
+    apiCall('/api/settings/branches').then(branches => {
       const branch = branches.find(b => b.id === id);
       if (branch) {
         document.getElementById('branchName').value = branch.name;
@@ -1169,12 +1185,12 @@ async function saveBranch(id = null) {
   
   try {
     if (id) {
-      await apiCall(`/api/branches/${id}`, {
+      await apiCall(`/api/settings/branches/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ name, address })
       });
     } else {
-      await apiCall('/api/branches', {
+      await apiCall('/api/settings/branches', {
         method: 'POST',
         body: JSON.stringify({ name, address })
       });
@@ -1192,7 +1208,7 @@ async function deleteBranch(id) {
   if (!confirm('Удалить филиал?')) return;
   
   try {
-    await apiCall(`/api/branches/${id}`, { method: 'DELETE' });
+    await apiCall(`/api/settings/branches/${id}`, { method: 'DELETE' });
     loadBranches();
   } catch (error) {
     console.error('Error deleting branch:', error);
@@ -1203,7 +1219,7 @@ async function deleteBranch(id) {
 // Категории
 async function loadCategories() {
   try {
-    const categories = await apiCall('/api/categories');
+    const categories = await apiCall('/api/settings/categories');
     renderCategories(categories);
   } catch (error) {
     console.error('Error loading categories:', error);
@@ -1257,12 +1273,12 @@ async function saveCategory(id = null) {
   
   try {
     if (id) {
-      await apiCall(`/api/categories/${id}`, {
+      await apiCall(`/api/settings/categories/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ name })
       });
     } else {
-      await apiCall('/api/categories', {
+      await apiCall('/api/settings/categories', {
         method: 'POST',
         body: JSON.stringify({ name })
       });
@@ -1280,7 +1296,7 @@ async function deleteCategory(id) {
   if (!confirm('Удалить категорию?')) return;
   
   try {
-    await apiCall(`/api/categories/${id}`, { method: 'DELETE' });
+    await apiCall(`/api/settings/categories/${id}`, { method: 'DELETE' });
     loadCategories();
   } catch (error) {
     console.error('Error deleting category:', error);
@@ -1291,7 +1307,7 @@ async function deleteCategory(id) {
 // Услуги
 async function loadServices() {
   try {
-    const services = await apiCall('/api/services');
+    const services = await apiCall('/api/settings/services');
     renderServices(services);
   } catch (error) {
     console.error('Error loading services:', error);
@@ -1320,12 +1336,12 @@ function renderServices(services) {
 }
 
 async function openServiceModal(id = null) {
-  const categories = await apiCall('/api/categories');
+  const categories = await apiCall('/api/settings/categories');
   const title = id ? 'Редактировать услугу' : 'Добавить услугу';
   
   let service = null;
   if (id) {
-    const services = await apiCall('/api/services');
+    const services = await apiCall('/api/settings/services');
     service = services.find(s => s.id === id);
   }
   
@@ -1378,13 +1394,13 @@ async function saveService(id = null) {
   try {
     if (id) {
       console.log('Updating service:', id);
-      await apiCall(`/api/services/${id}`, {
+      await apiCall(`/api/settings/services/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ name, duration: Number(duration), price: Number(price), categoryId: categoryId ? Number(categoryId) : null })
       });
     } else {
       console.log('Creating new service');
-      await apiCall('/api/services', {
+      await apiCall('/api/settings/services', {
         method: 'POST',
         body: JSON.stringify({ name, duration: Number(duration), price: Number(price), categoryId: categoryId ? Number(categoryId) : null })
       });
@@ -1403,7 +1419,7 @@ async function deleteService(id) {
   if (!confirm('Удалить услугу?')) return;
   
   try {
-    await apiCall(`/api/services/${id}`, { method: 'DELETE' });
+    await apiCall(`/api/settings/services/${id}`, { method: 'DELETE' });
     loadServices();
   } catch (error) {
     console.error('Error deleting service:', error);
@@ -1414,7 +1430,7 @@ async function deleteService(id) {
 // Мастера
 async function loadMasters() {
   try {
-    const masters = await apiCall('/api/masters');
+    const masters = await apiCall('/api/settings/masters');
     renderMasters(masters);
   } catch (error) {
     console.error('Error loading masters:', error);
@@ -1451,7 +1467,7 @@ async function openMasterModal(id = null) {
   
   let master = null;
   if (id) {
-    const masters = await apiCall('/api/masters');
+    const masters = await apiCall('/api/settings/masters');
     master = masters.find(m => m.id === id);
   }
   
@@ -1501,13 +1517,13 @@ async function saveMaster(id = null) {
   try {
     if (id) {
       console.log('Updating master:', id);
-      await apiCall(`/api/masters/${id}`, {
+      await apiCall(`/api/settings/masters/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ name, email, active })
       });
     } else {
       console.log('Creating new master');
-      await apiCall('/api/masters', {
+      await apiCall('/api/settings/masters', {
         method: 'POST',
         body: JSON.stringify({ name, email, active })
       });
@@ -1526,7 +1542,7 @@ async function deleteMaster(id) {
   if (!confirm('Удалить специалиста?')) return;
   
   try {
-    await apiCall(`/api/masters/${id}`, { method: 'DELETE' });
+    await apiCall(`/api/settings/masters/${id}`, { method: 'DELETE' });
     loadMasters();
   } catch (error) {
     console.error('Error deleting master:', error);
@@ -1537,7 +1553,7 @@ async function deleteMaster(id) {
 // Логотип
 async function loadLogo() {
   try {
-    const works = await apiCall('/api/works');
+    const works = await apiCall('/api/settings/works');
     const logo = works.find(work => work.isLogo);
     
     const logoPreview = document.getElementById('logoPreview');
@@ -1813,7 +1829,7 @@ async function uploadLogo() {
         formData.append('isLogo', 'true');
         
         try {
-          await apiCall('/api/works', {
+          await apiCall('/api/settings/works', {
             method: 'POST',
             body: formData
           });
@@ -1841,7 +1857,7 @@ async function uploadLogo() {
 // Название компании
 async function loadCompanyName() {
   try {
-    const business = await apiCall('/api/business/name');
+    const business = await apiCall('/api/settings/business/name');
     const input = document.getElementById('companyNameInput');
     
     if (business && business.name) {
@@ -1862,7 +1878,7 @@ async function saveCompanyName() {
   }
   
   try {
-    await apiCall('/api/business/name', {
+    await apiCall('/api/settings/business/name', {
       method: 'PATCH',
       body: JSON.stringify({ name })
     });
@@ -1878,8 +1894,8 @@ async function saveCompanyName() {
 async function loadSchedule() {
   try {
     const [user, masters] = await Promise.all([
-      apiCall('/api/user'),
-      apiCall('/api/masters')
+      apiCall('/api/settings/user'),
+      apiCall('/api/settings/masters')
     ]);
     
     const container = document.getElementById('scheduleContainer');
@@ -1930,7 +1946,7 @@ async function loadSchedule() {
 async function loadSchedulePreviews() {
   // Загрузка предпросмотров графиков для всех сотрудников
   try {
-    const schedules = await apiCall('/api/schedules');
+    const schedules = await apiCall('/api/settings/schedules');
     
     schedules.forEach(schedule => {
       const previewId = schedule.type === 'owner' ? 'owner-schedule-preview' : `master-${schedule.masterId}-schedule-preview`;
@@ -2136,7 +2152,7 @@ async function saveSchedule(type, email, masterId = null) {
   }
   
   try {
-    await apiCall('/api/schedules', {
+    await apiCall('/api/settings/schedules', {
       method: 'POST',
       body: JSON.stringify({
         type,
@@ -2157,7 +2173,7 @@ async function saveSchedule(type, email, masterId = null) {
 // Фото работ
 async function loadWorks() {
   try {
-    const works = await apiCall('/api/works');
+    const works = await apiCall('/api/settings/works');
     renderWorks(works);
   } catch (error) {
     console.error('Error loading works:', error);
@@ -2223,7 +2239,7 @@ async function saveWork() {
   if (caption) formData.append('caption', caption);
   
   try {
-    await apiCall('/api/works', {
+    await apiCall('/api/settings/works', {
       method: 'POST',
       body: formData
     });
@@ -2240,7 +2256,7 @@ async function deleteWork(id) {
   if (!confirm('Удалить фото?')) return;
   
   try {
-    await apiCall(`/api/works/${id}`, { method: 'DELETE' });
+    await apiCall(`/api/settings/works/${id}`, { method: 'DELETE' });
     loadWorks();
   } catch (error) {
     console.error('Error deleting work:', error);
