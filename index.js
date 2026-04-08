@@ -29,6 +29,9 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/business', businessRoutes);
 
+console.log('Business routes loaded:', typeof businessRoutes);
+console.log('Business routes methods:', Object.getOwnPropertyNames(businessRoutes));
+
 // Health check
 app.get('/health', (req, res) => {
   console.log('Health check received');
