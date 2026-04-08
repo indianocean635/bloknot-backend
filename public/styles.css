@@ -44,20 +44,20 @@ body {
 }
 
 .admin-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 15px;
-  object-fit: cover;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
   background: white;
+  padding: 5px;
 }
 
 .admin-icon:hover {
-  transform: scale(1.1);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
 }
 
 .container {
