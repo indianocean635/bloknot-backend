@@ -4,12 +4,11 @@ const { requireMagicAuth } = require("../middleware/magicAuthMiddleware");
 
 const router = express.Router();
 
-router.get("/business/slug", requireMagicAuth, (req, res, next) => {
+router.get("/slug", requireMagicAuth, (req, res, next) => {
   console.log('GET /api/business/slug called');
   next();
 }, getBusinessName);
-router.get("/business", requireMagicAuth, getBusinessName);
 router.get("/booking/:email", getBusinessByEmail);
-router.patch("/business/name", requireMagicAuth, updateBusinessName);
+router.patch("/name", requireMagicAuth, updateBusinessName);
 
 module.exports = router;
