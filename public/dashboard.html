@@ -214,7 +214,7 @@
      fetch('/api/business/slug')
        .then(r => r.json())
        .then(data => {
-         const link = String(location.origin || "").replace(/\/$/, "") + "/book-template/" + data.slug;
+         const link = String(location.origin || "").replace(/\/$/, "") + "/booking-new.html";
          const input = Bloknot.qs("#bookingLink");
          const isSubscribed = localStorage.getItem("bloknot_subscription_active") === "1";
 
