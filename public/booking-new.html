@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Online booking - Bloknot</title>
+  <title>Онлайн запись - Bloknot</title>
   <link rel="icon" href="/favicon.png" type="image/png">
   <style>
     * {
@@ -412,38 +412,38 @@
         <div class="business-logo" id="business-logo">
           <span> Salon </span>
         </div>
-        <div class="business-name" id="business-name">Loading...</div>
-        <div class="business-address" id="business-address">Loading...</div>
+        <div class="business-name" id="business-name">Загрузка...</div>
+        <div class="business-address" id="business-address">Загрузка...</div>
       </div>
       
       <div class="booking-content">
-        <div id="loading" class="loading">Loading business data...</div>
+        <div id="loading" class="loading">Загрузка данных бизнеса...</div>
         
         <div id="error" class="error" style="display: none;">
-          Failed to load business information
+          Не удалось загрузить информацию о бизнесе
         </div>
         
         <div id="booking-form" style="display: none;">
           <!-- Services Section -->
           <div class="services-section">
-            <h2 class="section-title">Select service</h2>
+            <h2 class="section-title">Выберите услугу</h2>
             <div class="services-grid" id="services-grid"></div>
           </div>
           
           <!-- Masters Section -->
           <div class="masters-section" style="display: none;">
-            <h2 class="section-title">Select master</h2>
+            <h2 class="section-title">Выберите мастера</h2>
             <div class="masters-grid" id="masters-grid"></div>
           </div>
           
           <!-- Calendar Section -->
           <div class="calendar-section" style="display: none;">
-            <h2 class="section-title">Select date</h2>
+            <h2 class="section-title">Выберите дату</h2>
             <div class="calendar-header">
-              <h3 id="calendar-month">Month</h3>
+              <h3 id="calendar-month">Месяц</h3>
               <div class="calendar-nav">
-                <button id="prev-month">Previous</button>
-                <button id="next-month">Next</button>
+                <button id="prev-month">Предыдущий</button>
+                <button id="next-month">Следующий</button>
               </div>
             </div>
             <div class="calendar-grid" id="calendar-grid"></div>
@@ -451,21 +451,21 @@
           
           <!-- Time Section -->
           <div class="time-section" style="display: none;">
-            <h2 class="section-title">Select time</h2>
+            <h2 class="section-title">Выберите время</h2>
             <div class="time-slots-grid" id="time-slots-grid"></div>
           </div>
           
           <!-- Contact Form -->
           <div class="contact-form" style="display: none;">
-            <h2 class="section-title">Contact information</h2>
+            <h2 class="section-title">Контактная информация</h2>
             <form id="contact-form">
               <div class="form-grid">
                 <div class="form-group">
-                  <label class="form-label" for="client-name">Name</label>
+                  <label class="form-label" for="client-name">Имя</label>
                   <input type="text" class="form-input" id="client-name" required>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="client-phone">Phone</label>
+                  <label class="form-label" for="client-phone">Телефон</label>
                   <input type="tel" class="form-input" id="client-phone" required>
                 </div>
                 <div class="form-group">
@@ -473,11 +473,11 @@
                   <input type="email" class="form-input" id="client-email">
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="client-comment">Comment</label>
-                  <input type="text" class="form-input" id="client-comment" placeholder="Optional">
+                  <label class="form-label" for="client-comment">Комментарий</label>
+                  <input type="text" class="form-input" id="client-comment" placeholder="Необязательно">
                 </div>
               </div>
-              <button type="submit" class="book-button" id="book-button">Book appointment</button>
+              <button type="submit" class="book-button" id="book-button">Забронировать</button>
             </form>
           </div>
         </div>
@@ -499,7 +499,7 @@
       try {
         const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);
         if (!response.ok) {
-          throw new Error('Failed to load business data');
+          throw new Error('Не удалось загрузить данные бизнеса');
         }
         
         businessData = await response.json();
@@ -507,7 +507,7 @@
         
         // Update business info
         document.getElementById('business-name').textContent = businessData.business.name;
-        document.getElementById('business-address').textContent = 'Address will be here';
+        document.getElementById('business-address').textContent = 'Адрес будет здесь';
         
         // Update logo if available
         if (businessData.business.logo) {
@@ -541,7 +541,7 @@
         <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}">
           <div class="service-info">
             <div class="service-name">${service.name}</div>
-            <div class="service-duration">${service.duration} min</div>
+            <div class="service-duration">${service.duration} мин</div>
           </div>
           <div class="service-price">${service.price} RUB</div>
         </div>
@@ -587,7 +587,7 @@
             ${master.photoUrl ? `<img src="${master.photoUrl}" alt="${master.name}">` : '<span>?</span>'}
           </div>
           <div class="master-name">${master.name}</div>
-          <div class="master-specialization">${master.specializations || 'Master'}</div>
+          <div class="master-specialization">${master.specializations || 'Мастер'}</div>
         </div>
       `).join('');
       
@@ -627,7 +627,7 @@
       monthElement.textContent = new Date(year, month).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
       
       // Day headers
-      const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const dayHeaders = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
       calendarGrid.innerHTML = dayHeaders.map(day => 
         `<div class="calendar-day-header">${day}</div>`
       ).join('');
