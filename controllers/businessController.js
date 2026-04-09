@@ -171,7 +171,6 @@ async function getBusinessByEmail(req, res) {
     select: {
       id: true,
       name: true,
-      photoUrl: true,
       specializations: true
     }
   });
