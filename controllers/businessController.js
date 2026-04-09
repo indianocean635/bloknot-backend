@@ -161,8 +161,7 @@ async function getBusinessByEmail(req, res) {
       id: true,
       name: true,
       duration: true,
-      price: true,
-      description: true
+      price: true
     }
   });
   
