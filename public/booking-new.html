@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online booking - Bloknot</title>
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f8fafc;
+      color: #1f2937;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .booking-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .booking-header {
+      background: white;
+      padding: 24px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: center;
+    }
+
+    .business-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      margin: 0 auto 16px;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: #6b7280;
+    }
+
+    .business-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+
+    .business-name {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+
+    .business-address {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .booking-content {
+      padding: 32px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1f2937;
+    }
+
+    .services-grid {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .service-item {
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .service-item:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+    }
+
+    .service-item.selected {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .service-info {
+      flex: 1;
+    }
+
+    .service-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .service-duration {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .service-price {
+      font-weight: 600;
+      color: #059669;
+      font-size: 18px;
+    }
+
+    .masters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .master-item {
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .master-item:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+    }
+
+    .master-item.selected {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .master-photo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #6b7280;
+      overflow: hidden;
+    }
+
+    .master-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .master-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .master-specialization {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .calendar-section {
+      margin-bottom: 32px;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .calendar-nav button {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .calendar-nav button:hover {
+      background: #f3f4f6;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+
+    .calendar-day-header {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      padding: 8px 0;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .calendar-day:hover {
+      background: #f3f4f6;
+    }
+
+    .calendar-day.available {
+      background: white;
+    }
+
+    .calendar-day.available:hover {
+      background: #eff6ff;
+      border-color: #3b82f6;
+    }
+
+    .calendar-day.selected {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    .calendar-day.disabled {
+      color: #d1d5db;
+      cursor: not-allowed;
+      background: #f9fafb;
+    }
+
+    .time-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 8px;
+    }
+
+    .time-slot {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+
+    .time-slot:hover {
+      background: #f3f4f6;
+    }
+
+    .time-slot.available {
+      border-color: #10b981;
+      color: #059669;
+    }
+
+    .time-slot.available:hover {
+      background: #ecfdf5;
+    }
+
+    .time-slot.selected {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    .time-slot.disabled {
+      background: #f9fafb;
+      color: #d1d5db;
+      cursor: not-allowed;
+    }
+
+    .contact-form {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-label {
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #374151;
+    }
+
+    .form-input {
+      padding: 12px 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .book-button {
+      width: 100%;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .book-button:hover {
+      background: #2563eb;
+    }
+
+    .book-button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 32px;
+      color: #6b7280;
+    }
+
+    .error {
+      text-align: center;
+      padding: 60px 32px;
+      color: #ef4444;
+    }
+
+    .success {
+      text-align: center;
+      padding: 60px 32px;
+      color: #10b981;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+      }
+
+      .booking-content {
+        padding: 24px;
+      }
+
+      .masters-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .time-slots-grid {
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="booking-card">
+      <div class="booking-header">
+        <div class="business-logo" id="business-logo">
+          <span> Salon </span>
+        </div>
+        <div class="business-name" id="business-name">Loading...</div>
+        <div class="business-address" id="business-address">Loading...</div>
+      </div>
+      
+      <div class="booking-content">
+        <div id="loading" class="loading">Loading business data...</div>
+        
+        <div id="error" class="error" style="display: none;">
+          Failed to load business information
+        </div>
+        
+        <div id="booking-form" style="display: none;">
+          <!-- Services Section -->
+          <div class="services-section">
+            <h2 class="section-title">Select service</h2>
+            <div class="services-grid" id="services-grid"></div>
+          </div>
+          
+          <!-- Masters Section -->
+          <div class="masters-section" style="display: none;">
+            <h2 class="section-title">Select master</h2>
+            <div class="masters-grid" id="masters-grid"></div>
+          </div>
+          
+          <!-- Calendar Section -->
+          <div class="calendar-section" style="display: none;">
+            <h2 class="section-title">Select date</h2>
+            <div class="calendar-header">
+              <h3 id="calendar-month">Month</h3>
+              <div class="calendar-nav">
+                <button id="prev-month">Previous</button>
+                <button id="next-month">Next</button>
+              </div>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+          </div>
+          
+          <!-- Time Section -->
+          <div class="time-section" style="display: none;">
+            <h2 class="section-title">Select time</h2>
+            <div class="time-slots-grid" id="time-slots-grid"></div>
+          </div>
+          
+          <!-- Contact Form -->
+          <div class="contact-form" style="display: none;">
+            <h2 class="section-title">Contact information</h2>
+            <form id="contact-form">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label" for="client-name">Name</label>
+                  <input type="text" class="form-input" id="client-name" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="client-phone">Phone</label>
+                  <input type="tel" class="form-input" id="client-phone" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="client-email">Email</label>
+                  <input type="email" class="form-input" id="client-email">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="client-comment">Comment</label>
+                  <input type="text" class="form-input" id="client-comment" placeholder="Optional">
+                </div>
+              </div>
+              <button type="submit" class="book-button" id="book-button">Book appointment</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Business data
+    const BUSINESS_EMAIL = 'peskov142@mail.ru';
+    let businessData = null;
+    let selectedService = null;
+    let selectedMaster = null;
+    let selectedDate = null;
+    let selectedTime = null;
+
+    // Load business data
+    async function loadBusinessData() {
+      try {
+        const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);
+        if (!response.ok) {
+          throw new Error('Failed to load business data');
+        }
+        
+        businessData = await response.json();
+        console.log('Business data loaded:', businessData);
+        
+        // Update business info
+        document.getElementById('business-name').textContent = businessData.business.name;
+        document.getElementById('business-address').textContent = 'Address will be here';
+        
+        // Update logo if available
+        if (businessData.business.logo) {
+          document.getElementById('business-logo').innerHTML = `<img src="${businessData.business.logo}" alt="Logo">`;
+        }
+        
+        // Load services
+        loadServices();
+        
+        // Show booking form
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('booking-form').style.display = 'block';
+        
+      } catch (error) {
+        console.error('Error loading business data:', error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+      }
+    }
+
+    // Load services
+    function loadServices() {
+      const servicesGrid = document.getElementById('services-grid');
+      
+      if (!businessData.services || businessData.services.length === 0) {
+        servicesGrid.innerHTML = '<div class="error">No services available</div>';
+        return;
+      }
+      
+      servicesGrid.innerHTML = businessData.services.map(service => `
+        <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}">
+          <div class="service-info">
+            <div class="service-name">${service.name}</div>
+            <div class="service-duration">${service.duration} min</div>
+          </div>
+          <div class="service-price">${service.price} RUB</div>
+        </div>
+      `).join('');
+      
+      // Add click handlers
+      document.querySelectorAll('.service-item').forEach(item => {
+        item.addEventListener('click', () => selectService(item));
+      });
+    }
+
+    // Select service
+    function selectService(element) {
+      // Remove previous selection
+      document.querySelectorAll('.service-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      // Add selection
+      element.classList.add('selected');
+      selectedService = {
+        id: element.dataset.serviceId,
+        duration: parseInt(element.dataset.duration)
+      };
+      
+      // Show masters section
+      loadMasters();
+      document.querySelector('.masters-section').style.display = 'block';
+    }
+
+    // Load masters
+    function loadMasters() {
+      const mastersGrid = document.getElementById('masters-grid');
+      
+      if (!businessData.masters || businessData.masters.length === 0) {
+        mastersGrid.innerHTML = '<div class="error">No masters available</div>';
+        return;
+      }
+      
+      mastersGrid.innerHTML = businessData.masters.map(master => `
+        <div class="master-item" data-master-id="${master.id}">
+          <div class="master-photo">
+            ${master.photoUrl ? `<img src="${master.photoUrl}" alt="${master.name}">` : '<span>?</span>'}
+          </div>
+          <div class="master-name">${master.name}</div>
+          <div class="master-specialization">${master.specializations || 'Master'}</div>
+        </div>
+      `).join('');
+      
+      // Add click handlers
+      document.querySelectorAll('.master-item').forEach(item => {
+        item.addEventListener('click', () => selectMaster(item));
+      });
+    }
+
+    // Select master
+    function selectMaster(element) {
+      // Remove previous selection
+      document.querySelectorAll('.master-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      // Add selection
+      element.classList.add('selected');
+      selectedMaster = {
+        id: element.dataset.masterId
+      };
+      
+      // Show calendar section
+      loadCalendar();
+      document.querySelector('.calendar-section').style.display = 'block';
+    }
+
+    // Load calendar
+    function loadCalendar() {
+      const calendarGrid = document.getElementById('calendar-grid');
+      const monthElement = document.getElementById('calendar-month');
+      
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      
+      monthElement.textContent = new Date(year, month).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+      
+      // Day headers
+      const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      calendarGrid.innerHTML = dayHeaders.map(day => 
+        `<div class="calendar-day-header">${day}</div>`
+      ).join('');
+      
+      // Calendar days
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      // Adjust for Monday start
+      const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+      
+      // Empty cells for alignment
+      for (let i = 0; i < adjustedFirstDay; i++) {
+        calendarGrid.innerHTML += '<div class="calendar-day disabled"></div>';
+      }
+      
+      // Days of month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const isToday = date.toDateString() === now.toDateString();
+        const isPast = date < now && !isToday;
+        
+        calendarGrid.innerHTML += `
+          <div class="calendar-day ${isToday ? 'today' : ''} ${isPast ? 'disabled' : 'available'}" 
+               data-date="${date.toISOString().split('T')[0]}"
+               ${isPast ? 'disabled' : ''}>
+            ${day}
+          </div>
+        `;
+      }
+      
+      // Add click handlers
+      document.querySelectorAll('.calendar-day.available').forEach(day => {
+        day.addEventListener('click', () => selectDate(day));
+      });
+    }
+
+    // Select date
+    function selectDate(element) {
+      // Remove previous selection
+      document.querySelectorAll('.calendar-day').forEach(day => {
+        day.classList.remove('selected');
+      });
+      
+      // Add selection
+      element.classList.add('selected');
+      selectedDate = element.dataset.date;
+      
+      // Show time section
+      loadTimeSlots();
+      document.querySelector('.time-section').style.display = 'block';
+    }
+
+    // Load time slots
+    function loadTimeSlots() {
+      const timeSlotsGrid = document.getElementById('time-slots-grid');
+      
+      const timeSlots = [
+        '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+        '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+        '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+        '18:00', '18:30', '19:00', '19:30'
+      ];
+      
+      timeSlotsGrid.innerHTML = timeSlots.map(time => `
+        <div class="time-slot available" data-time="${time}">${time}</div>
+      `).join('');
+      
+      // Add click handlers
+      document.querySelectorAll('.time-slot').forEach(slot => {
+        slot.addEventListener('click', () => selectTime(slot));
+      });
+    }
+
+    // Select time
+    function selectTime(element) {
+      // Remove previous selection
+      document.querySelectorAll('.time-slot').forEach(slot => {
+        slot.classList.remove('selected');
+      });
+      
+      // Add selection
+      element.classList.add('selected');
+      selectedTime = element.dataset.time;
+      
+      // Show contact form
+      document.querySelector('.contact-form').style.display = 'block';
+    }
+
+    // Handle contact form submission
+    document.getElementById('contact-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        serviceId: selectedService.id,
+        masterId: selectedMaster.id,
+        date: selectedDate,
+        time: selectedTime,
+        customerName: document.getElementById('client-name').value,
+        customerPhone: document.getElementById('client-phone').value,
+        customerEmail: document.getElementById('client-email').value,
+        customerComment: document.getElementById('client-comment').value
+      };
+      
+      console.log('Booking data:', formData);
+      
+      // Here you would send the booking data to your API
+      // For now, just show success message
+      document.getElementById('booking-form').innerHTML = `
+        <div class="success">
+          <h2>Booking confirmed!</h2>
+          <p>We'll contact you soon to confirm your appointment.</p>
+          <p>Thank you for choosing ${businessData.business.name}!</p>
+        </div>
+      `;
+    });
+
+    // Load data when page loads
+    document.addEventListener('DOMContentLoaded', loadBusinessData);
+  </script>
+</body>
+</html>
