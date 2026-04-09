@@ -7,6 +7,110 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Онлайн запись v3.0 - Step by Step</title>
+  <script>
+    // Load business data by email
+    const BUSINESS_EMAIL = 'peskov142@mail.ru';
+    
+    async function loadBusinessData() {
+      try {
+        const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);
+        if (!response.ok) {
+          throw new Error('Failed to load business data');
+        }
+        
+        const data = await response.json();
+        console.log('Business data loaded:', data);
+        
+        // Update business info in header
+        if (data.business) {
+          document.title = `Онлайн запись - ${data.business.name}`;
+          const businessNameEl = document.querySelector('.business-name');
+          if (businessNameEl) {
+            businessNameEl.textContent = data.business.name;
+          }
+          
+          // Update logo if available
+          if (data.business.logo) {
+            const logoEl = document.querySelector('#business-logo');
+            if (logoEl) {
+              logoEl.src = data.business.logo;
+            }
+          }
+        }
+        
+        // Load services
+        if (data.services && data.services.length > 0) {
+          loadServices(data.services);
+        }
+        
+        // Load masters
+        if (data.masters && data.masters.length > 0) {
+          loadMasters(data.masters);
+        }
+        
+      } catch (error) {
+        console.error('Error loading business data:', error);
+        showError('Failed to load business information');
+      }
+    }
+    
+    function loadServices(services) {
+      const servicesContainer = document.querySelector('#services-container');
+      if (!servicesContainer) return;
+      
+      servicesContainer.innerHTML = services.map(service => `
+        <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
+          <div class="service-info">
+            <div class="service-name">${service.name}</div>
+            <div class="service-details">
+              <span class="service-duration">${service.duration} min</span>
+              <span class="service-price">${service.price} RUB</span>
+            </div>
+            ${service.description ? `<div class="service-description">${service.description}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function loadMasters(masters) {
+      const mastersContainer = document.querySelector('#masters-container');
+      if (!mastersContainer) return;
+      
+      mastersContainer.innerHTML = masters.map(master => `
+        <div class="master-item" data-master-id="${master.id}">
+          <div class="master-photo">
+            ${master.photoUrl ? `<img src="${master.photoUrl}" alt="${master.name}">` : '<div class="no-photo">No photo</div>'}
+          </div>
+          <div class="master-info">
+            <div class="master-name">${master.name}</div>
+            ${master.specializations ? `<div class="master-specializations">${master.specializations}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function showError(message) {
+      const errorEl = document.createElement('div');
+      errorEl.className = 'error-message';
+      errorEl.textContent = message;
+      errorEl.style.cssText = `
+        background: #fee;
+        color: #c00;
+        padding: 12px;
+        border-radius: 8px;
+        margin: 16px 0;
+        text-align: center;
+      `;
+      
+      const container = document.querySelector('.container');
+      if (container) {
+        container.insertBefore(errorEl, container.firstChild);
+      }
+    }
+    
+    // Load data when page loads
+    document.addEventListener('DOMContentLoaded', loadBusinessData);
+  </script>
   <style>
     * {
       margin: 0;
@@ -408,6 +512,76 @@
       
       <div id="step-content">
         <div class="loading">Загрузка данных...</div>
+        
+        <!-- Services Step -->
+        <div id="services-step" style="display: none;">
+          <div class="step-content">
+            <h2 class="step-title">Choose service</h2>
+            <p class="step-subtitle">Select the service you want to book</p>
+            <div id="services-container" class="options-grid"></div>
+            <button class="continue-button" id="services-continue" disabled>Continue</button>
+          </div>
+        </div>
+        
+        <!-- Masters Step -->
+        <div id="masters-step" style="display: none;">
+          <div class="step-content">
+            <h2 class="step-title">Choose master</h2>
+            <p class="step-subtitle">Select who will provide the service</p>
+            <div id="masters-container" class="options-grid"></div>
+            <button class="continue-button" id="masters-continue" disabled>Continue</button>
+          </div>
+        </div>
+        
+        <!-- Calendar Step -->
+        <div id="calendar-step" style="display: none;">
+          <div class="step-content">
+            <h2 class="step-title">Choose date</h2>
+            <p class="step-subtitle">Select when you want to visit</p>
+            <div class="calendar-container">
+              <div class="calendar-header">
+                <h3 id="calendar-month">Month</h3>
+                <div class="calendar-nav">
+                  <button id="prev-month">Previous</button>
+                  <button id="next-month">Next</button>
+                </div>
+              </div>
+              <div id="calendar-grid"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Time Step -->
+        <div id="time-step" style="display: none;">
+          <div class="step-content">
+            <h2 class="step-title">Choose time</h2>
+            <p class="step-subtitle">Select convenient time</p>
+            <div id="time-slots-container"></div>
+          </div>
+        </div>
+        
+        <!-- Contact Step -->
+        <div id="contact-step" style="display: none;">
+          <div class="step-content">
+            <h2 class="step-title">Contact information</h2>
+            <p class="step-subtitle">Enter your details to confirm booking</p>
+            <form id="contact-form">
+              <div class="field">
+                <label for="client-name">Name</label>
+                <input type="text" id="client-name" required>
+              </div>
+              <div class="field">
+                <label for="client-phone">Phone</label>
+                <input type="tel" id="client-phone" required>
+              </div>
+              <div class="field">
+                <label for="client-email">Email</label>
+                <input type="email" id="client-email">
+              </div>
+              <button type="submit" class="continue-button">Confirm booking</button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   </div>

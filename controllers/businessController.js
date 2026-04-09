@@ -140,6 +140,69 @@ async function updateBusinessName(req, res) {
   res.json({ name: business.name });
 }
 
+// Find business by email for booking page
+async function getBusinessByEmail(req, res) {
+  const { email } = req.params;
+  
+  const business = await prisma.business.findFirst({
+    where: {
+      owner: {
+        email: email
+      }
+    }
+  });
+  
+  if (!business) return res.status(404).json({ error: "Business not found" });
+  
+  // Get services
+  const services = await prisma.service.findMany({
+    where: { businessId: business.id },
+    select: {
+      id: true,
+      name: true,
+      duration: true,
+      price: true,
+      description: true
+    }
+  });
+  
+  // Get masters
+  const masters = await prisma.master.findMany({
+    where: { businessId: business.id },
+    select: {
+      id: true,
+      name: true,
+      photoUrl: true,
+      specializations: true
+    }
+  });
+  
+  // Get logo
+  const logoPhoto = await prisma.workPhoto.findFirst({
+    where: {
+      businessId: business.id,
+      isLogo: true
+    },
+    select: {
+      imageUrl: true
+    }
+  });
+  
+  const result = {
+    business: {
+      id: business.id,
+      name: business.name,
+      slug: business.slug,
+      logo: logoPhoto?.imageUrl || null
+    },
+    services: services,
+    masters: masters
+  };
+  
+  console.log('Business data for booking:', result);
+  res.json(result);
+}
+
 module.exports = {
   getBusinessBySlug,
   getBranches,
@@ -147,5 +210,6 @@ module.exports = {
   getMasters,
   getWorks,
   getBusinessName,
-  updateBusinessName
+  updateBusinessName,
+  getBusinessByEmail
 };
