@@ -170,8 +170,7 @@ async function getBusinessByEmail(req, res) {
     where: { businessId: business.id },
     select: {
       id: true,
-      name: true,
-      specializations: true
+      name: true
     }
   });
   
