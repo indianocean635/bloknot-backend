@@ -1,37 +1,23 @@
 const multer = require("multer");
 const crypto = require("crypto");
-const fs = require("fs");
 const path = require("path");
 const { prisma } = require("../services/prismaService");
+const { uploadFile } = require("../lib/s3");
 
-const AVATARS_PATH = path.join(__dirname, "..", "public", "uploads", "avatars");
-const WORKS_PATH = path.join(__dirname, "..", "public", "uploads", "works");
-
-// Создаем папки если их нет
-if (!fs.existsSync(AVATARS_PATH)) fs.mkdirSync(AVATARS_PATH, { recursive: true });
-if (!fs.existsSync(WORKS_PATH)) fs.mkdirSync(WORKS_PATH, { recursive: true });
-
-function safeFileName(originalName) {
+function safeFileName(originalName, userId) {
   const ext = path.extname(String(originalName || "")).toLowerCase();
-  const token = crypto.randomBytes(12).toString("hex");
   const allowedExt = [".png", ".jpg", ".jpeg", ".webp", ".gif"];
   const finalExt = allowedExt.includes(ext) ? ext : ".jpg";
-  return `${Date.now()}_${token}${finalExt}`;
+  return `${userId}-${Date.now()}${finalExt}`;
 }
 
 const avatarUpload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, AVATARS_PATH),
-    filename: (req, file, cb) => cb(null, safeFileName(file.originalname)),
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 6 * 1024 * 1024 },
 });
 
 const worksUpload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, WORKS_PATH),
-    filename: (req, file, cb) => cb(null, safeFileName(file.originalname)),
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 6 * 1024 * 1024 },
 });
 
@@ -49,17 +35,12 @@ async function uploadMasterAvatar(req, res) {
     });
     if (!master) return res.status(404).json({ error: "Мастер не найден" });
 
-    // Удаляем старый аватар если есть
-    if (master.avatarUrl) {
-      try {
-        const oldPath = path.join(__dirname, "..", "public", master.avatarUrl);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-      } catch (e) {
-        console.error("Failed to delete old avatar:", e);
-      }
-    }
-
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    // Generate S3 filename
+    const fileName = safeFileName(req.file.originalname, master.id);
+    const mimeType = req.file.mimetype || 'image/jpeg';
+    
+    // Upload to S3
+    const avatarUrl = await uploadFile(req.file.buffer, fileName, mimeType);
     await prisma.master.update({
       where: { id },
       data: { avatarUrl },
@@ -80,7 +61,13 @@ async function uploadWork(req, res) {
 
   try {
     const { caption, isLogo } = req.body;
-    const imageUrl = `/uploads/works/${req.file.filename}`;
+    
+    // Generate S3 filename
+    const fileName = safeFileName(req.file.originalname, req.user.businessId);
+    const mimeType = req.file.mimetype || 'image/jpeg';
+    
+    // Upload to S3
+    const imageUrl = await uploadFile(req.file.buffer, fileName, mimeType);
 
     // Если это логотип, сначала убираем старый логотип
     if (isLogo === "true") {
