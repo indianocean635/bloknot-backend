@@ -5,6 +5,9 @@ const router = express.Router();
 // Load environment variables from .env file
 require('dotenv').config();
 
+// Debug: Output S3_BUCKET to console
+console.log('S3_BUCKET:', process.env.S3_BUCKET);
+
 // Временное хранилище пользователей и токенов
 const memoryUsers = new Map();
 const memoryTokens = new Map();
