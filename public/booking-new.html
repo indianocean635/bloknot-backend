@@ -71,6 +71,64 @@
       color: #6b7280;
     }
 
+    .branch-selector {
+      margin-bottom: 8px;
+    }
+
+    .branch-selected {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .branch-selected:hover {
+      background: #f1f5f9;
+      border-color: #d1d5db;
+    }
+
+    .branch-arrow {
+      font-size: 16px;
+      transition: transform 0.2s;
+    }
+
+    .branch-selector.open .branch-arrow {
+      transform: rotate(180deg);
+    }
+
+    .branch-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-top: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+
+    .branch-option {
+      padding: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .branch-option:hover {
+      background: #f8fafc;
+    }
+
+    .branch-option.selected {
+      background: #eff6ff;
+      color: #3b82f6;
+    }
+
     .booking-content {
       padding: 32px;
     }
@@ -129,14 +187,14 @@
       font-size: 18px;
     }
 
-    .masters-grid {
+    .specialists-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 16px;
       margin-bottom: 32px;
     }
 
-    .master-item {
+    .specialist-item {
       border: 2px solid #e5e7eb;
       border-radius: 12px;
       padding: 16px;
@@ -145,17 +203,17 @@
       text-align: center;
     }
 
-    .master-item:hover {
+    .specialist-item:hover {
       border-color: #3b82f6;
       background: #f8fafc;
     }
 
-    .master-item.selected {
+    .specialist-item.selected {
       border-color: #3b82f6;
       background: #eff6ff;
     }
 
-    .master-photo {
+    .specialist-photo {
       width: 60px;
       height: 60px;
       border-radius: 50%;
@@ -169,18 +227,18 @@
       overflow: hidden;
     }
 
-    .master-photo img {
+    .specialist-photo img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    .master-name {
+    .specialist-name {
       font-weight: 600;
       margin-bottom: 4px;
     }
 
-    .master-specialization {
+    .specialist-specialization {
       font-size: 14px;
       color: #6b7280;
     }
@@ -412,8 +470,19 @@
         <div class="business-logo" id="business-logo">
           <span> Salon </span>
         </div>
-        <div class="business-name" id="business-name">Загрузка...</div>
-        <div class="business-address" id="business-address">Загрузка...</div>
+        <div class="business-name" id="business-name">Loading...</div>
+        <div class="branch-selector" id="branch-selector">
+          <div class="branch-selected">
+            <span id="selected-branch">Main Branch</span>
+            <span class="branch-arrow">+</span>
+          </div>
+          <div class="branch-dropdown" id="branch-dropdown" style="display: none;">
+            <div class="branch-option" data-branch="main">Main Branch</div>
+            <div class="branch-option" data-branch="branch1">Branch 1</div>
+            <div class="branch-option" data-branch="branch2">Branch 2</div>
+          </div>
+        </div>
+        <div class="business-address" id="business-address">Loading...</div>
       </div>
       
       <div class="booking-content">
@@ -430,15 +499,15 @@
             <div class="services-grid" id="services-grid"></div>
           </div>
           
-          <!-- Masters Section -->
-          <div class="masters-section" style="display: none;">
-            <h2 class="section-title">Выберите мастера</h2>
-            <div class="masters-grid" id="masters-grid"></div>
+          <!-- Specialists Section -->
+          <div class="specialists-section">
+            <h2 class="section-title">Выберите специалиста</h2>
+            <div class="specialists-grid" id="specialists-grid"></div>
           </div>
           
           <!-- Calendar Section -->
-          <div class="calendar-section" style="display: none;">
-            <h2 class="section-title">Выберите дату</h2>
+          <div class="calendar-section">
+            <h2 class="section-title">Выберите дату и время</h2>
             <div class="calendar-header">
               <h3 id="calendar-month">Месяц</h3>
               <div class="calendar-nav">
@@ -450,8 +519,7 @@
           </div>
           
           <!-- Time Section -->
-          <div class="time-section" style="display: none;">
-            <h2 class="section-title">Выберите время</h2>
+          <div class="time-section">
             <div class="time-slots-grid" id="time-slots-grid"></div>
           </div>
           
@@ -490,7 +558,8 @@
     const BUSINESS_EMAIL = 'peskov142@mail.ru';
     let businessData = null;
     let selectedService = null;
-    let selectedMaster = null;
+    let selectedSpecialist = null;
+    let selectedBranch = 'main';
     let selectedDate = null;
     let selectedTime = null;
 
@@ -509,13 +578,19 @@
         document.getElementById('business-name').textContent = businessData.business.name;
         document.getElementById('business-address').textContent = 'Адрес будет здесь';
         
+        // Initialize branch selector
+        initializeBranchSelector();
+        
         // Update logo if available
         if (businessData.business.logo) {
           document.getElementById('business-logo').innerHTML = `<img src="${businessData.business.logo}" alt="Logo">`;
         }
         
-        // Load services
+        // Load all sections
         loadServices();
+        loadSpecialists();
+        loadCalendar();
+        loadTimeSlots();
         
         // Show booking form
         document.getElementById('loading').style.display = 'none';
@@ -553,6 +628,75 @@
       });
     }
 
+    // Load specialists
+    function loadSpecialists() {
+      const specialistsGrid = document.getElementById('specialists-grid');
+      
+      if (!businessData.masters || businessData.masters.length === 0) {
+        specialistsGrid.innerHTML = '<div class="error">No specialists available</div>';
+        return;
+      }
+      
+      specialistsGrid.innerHTML = businessData.masters.map(master => `
+        <div class="specialist-item" data-specialist-id="${master.id}">
+          <div class="specialist-photo">
+            ${master.photoUrl ? `<img src="${master.photoUrl}" alt="${master.name}">` : '<span>?</span>'}
+          </div>
+          <div class="specialist-name">${master.name}</div>
+          <div class="specialist-specialization">${master.specializations || 'Specialist'}</div>
+        </div>
+      `).join('');
+      
+      // Add click handlers
+      document.querySelectorAll('.specialist-item').forEach(item => {
+        item.addEventListener('click', () => selectSpecialist(item));
+      });
+    }
+
+    // Initialize branch selector
+    function initializeBranchSelector() {
+      const branchSelector = document.getElementById('branch-selector');
+      const branchDropdown = document.getElementById('branch-dropdown');
+      const selectedBranchSpan = document.getElementById('selected-branch');
+      
+      branchSelector.addEventListener('click', () => {
+        branchDropdown.style.display = branchDropdown.style.display === 'none' ? 'block' : 'none';
+        branchSelector.classList.toggle('open');
+      });
+      
+      document.querySelectorAll('.branch-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectedBranch = option.dataset.branch;
+          selectedBranchSpan.textContent = option.textContent;
+          branchDropdown.style.display = 'none';
+          branchSelector.classList.remove('open');
+          
+          // Update data for selected branch
+          updateDataForBranch(selectedBranch);
+        });
+      });
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!branchSelector.contains(e.target)) {
+          branchDropdown.style.display = 'none';
+          branchSelector.classList.remove('open');
+        }
+      });
+    }
+
+    // Update data for selected branch
+    function updateDataForBranch(branch) {
+      console.log('Loading data for branch:', branch);
+      // Here you would load branch-specific data
+      // For now, just reload all sections
+      loadServices();
+      loadSpecialists();
+      loadCalendar();
+      loadTimeSlots();
+    }
+
     // Select service
     function selectService(element) {
       // Remove previous selection
@@ -567,52 +711,25 @@
         duration: parseInt(element.dataset.duration)
       };
       
-      // Show masters section
-      loadMasters();
-      document.querySelector('.masters-section').style.display = 'block';
+      // Service selected - suggest next step
+      showNextStepSuggestion('specialist');
     }
 
-    // Load masters
-    function loadMasters() {
-      const mastersGrid = document.getElementById('masters-grid');
-      
-      if (!businessData.masters || businessData.masters.length === 0) {
-        mastersGrid.innerHTML = '<div class="error">No masters available</div>';
-        return;
-      }
-      
-      mastersGrid.innerHTML = businessData.masters.map(master => `
-        <div class="master-item" data-master-id="${master.id}">
-          <div class="master-photo">
-            ${master.photoUrl ? `<img src="${master.photoUrl}" alt="${master.name}">` : '<span>?</span>'}
-          </div>
-          <div class="master-name">${master.name}</div>
-          <div class="master-specialization">${master.specializations || 'Мастер'}</div>
-        </div>
-      `).join('');
-      
-      // Add click handlers
-      document.querySelectorAll('.master-item').forEach(item => {
-        item.addEventListener('click', () => selectMaster(item));
-      });
-    }
-
-    // Select master
-    function selectMaster(element) {
+    // Select specialist
+    function selectSpecialist(element) {
       // Remove previous selection
-      document.querySelectorAll('.master-item').forEach(item => {
+      document.querySelectorAll('.specialist-item').forEach(item => {
         item.classList.remove('selected');
       });
       
       // Add selection
       element.classList.add('selected');
-      selectedMaster = {
-        id: element.dataset.masterId
+      selectedSpecialist = {
+        id: element.dataset.specialistId
       };
       
-      // Show calendar section
-      loadCalendar();
-      document.querySelector('.calendar-section').style.display = 'block';
+      // Specialist selected - suggest next step
+      showNextStepSuggestion('datetime');
     }
 
     // Load calendar
@@ -676,9 +793,8 @@
       element.classList.add('selected');
       selectedDate = element.dataset.date;
       
-      // Show time section
-      loadTimeSlots();
-      document.querySelector('.time-section').style.display = 'block';
+      // Date selected - suggest next step
+      showNextStepSuggestion('contact');
     }
 
     // Load time slots
@@ -723,7 +839,8 @@
       
       const formData = {
         serviceId: selectedService.id,
-        masterId: selectedMaster.id,
+        specialistId: selectedSpecialist.id,
+        branchId: selectedBranch,
         date: selectedDate,
         time: selectedTime,
         customerName: document.getElementById('client-name').value,
