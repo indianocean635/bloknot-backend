@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact information - Bloknot</title>
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .booking-card {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .booking-header {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      padding: 32px;
+      text-align: center;
+      position: relative;
+    }
+
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .back-button:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .business-logo {
+      width: 80px;
+      height: 80px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .business-name {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .booking-summary {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .business-address {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    .booking-content {
+      padding: 32px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #1f2937;
+      text-align: center;
+    }
+
+    .contact-form {
+      margin-bottom: 32px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .form-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .booking-summary-details {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .summary-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .summary-label {
+      color: #6b7280;
+    }
+
+    .summary-value {
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .submit-button {
+      width: 100%;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      border: none;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .submit-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    }
+
+    .submit-button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 32px;
+      color: #6b7280;
+    }
+
+    .success {
+      text-align: center;
+      padding: 60px 32px;
+      color: #10b981;
+    }
+
+    .success h2 {
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+
+    .success p {
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .back-to-home {
+      display: inline-block;
+      background: #3b82f6;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      margin-top: 20px;
+      transition: background 0.2s;
+    }
+
+    .back-to-home:hover {
+      background: #1d4ed8;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+      }
+
+      .booking-content {
+        padding: 24px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="booking-card">
+      <div class="booking-header">
+        <a href="/booking-datetime.html" class="back-button">
+          <span>+</span>
+          <span>Back</span>
+        </a>
+        
+        <div class="business-logo" id="business-logo">
+          <span> Salon </span>
+        </div>
+        <div class="business-name" id="business-name">Loading...</div>
+        <div class="booking-summary" id="booking-summary">Loading...</div>
+        <div class="business-address" id="business-address">Loading...</div>
+      </div>
+      
+      <div class="booking-content">
+        <div id="loading" class="loading">Loading contact form...</div>
+        
+        <div id="contact-container" style="display: none;">
+          <h2 class="section-title">Contact information</h2>
+          
+          <div class="booking-summary-details">
+            <div class="summary-title">Booking summary</div>
+            <div class="summary-item">
+              <span class="summary-label">Service:</span>
+              <span class="summary-value" id="summary-service">-</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Specialist:</span>
+              <span class="summary-value" id="summary-specialist">-</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Date:</span>
+              <span class="summary-value" id="summary-date">-</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Time:</span>
+              <span class="summary-value" id="summary-time">-</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Total:</span>
+              <span class="summary-value" id="summary-price">-</span>
+            </div>
+          </div>
+          
+          <form id="contact-form" class="contact-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="client-name">Name</label>
+                <input type="text" class="form-input" id="client-name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="client-phone">Phone</label>
+                <input type="tel" class="form-input" id="client-phone" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="client-email">Email</label>
+                <input type="email" class="form-input" id="client-email">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="client-comment">Comment</label>
+                <input type="text" class="form-input" id="client-comment" placeholder="Optional">
+              </div>
+            </div>
+            <button type="submit" class="submit-button" id="submit-button">Complete booking</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Business data
+    const BUSINESS_EMAIL = 'peskov142@mail.ru';
+    let businessData = null;
+    let selectedService = null;
+    let selectedSpecialist = null;
+    let selectedDate = null;
+    let selectedTime = null;
+
+    // Load business data
+    async function loadBusinessData() {
+      try {
+        // Get selected data from localStorage
+        const savedService = localStorage.getItem('selectedService');
+        const savedSpecialist = localStorage.getItem('selectedSpecialist');
+        const savedDate = localStorage.getItem('selectedDate');
+        const savedTime = localStorage.getItem('selectedTime');
+        
+        if (savedService && savedSpecialist && savedDate && savedTime) {
+          selectedService = JSON.parse(savedService);
+          selectedSpecialist = JSON.parse(savedSpecialist);
+          selectedDate = savedDate;
+          selectedTime = savedTime;
+          
+          // Update summary
+          document.getElementById('summary-service').textContent = selectedService.name;
+          document.getElementById('summary-specialist').textContent = selectedSpecialist.name;
+          document.getElementById('summary-date').textContent = new Date(selectedDate).toLocaleDateString('ru-RU');
+          document.getElementById('summary-time').textContent = selectedTime;
+          document.getElementById('summary-price').textContent = selectedService.price;
+          
+          // Update header summary
+          document.getElementById('booking-summary').textContent = 
+            `${selectedService.name} with ${selectedSpecialist.name} on ${new Date(selectedDate).toLocaleDateString('ru-RU')} at ${selectedTime}`;
+        }
+
+        const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);
+        if (!response.ok) {
+          throw new Error('Failed to load business data');
+        }
+        
+        businessData = await response.json();
+        console.log('Business data loaded:', businessData);
+        
+        // Update business info
+        document.getElementById('business-name').textContent = businessData.business.name;
+        document.getElementById('business-address').textContent = 'Address will be here';
+        
+        // Update logo if available
+        if (businessData.business.logo) {
+          document.getElementById('business-logo').innerHTML = `<img src="${businessData.business.logo}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+        }
+        
+        // Show contact form
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('contact-container').style.display = 'block';
+        
+      } catch (error) {
+        console.error('Error loading business data:', error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+      }
+    }
+
+    // Handle form submission
+    document.getElementById('contact-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        serviceId: selectedService.id,
+        specialistId: selectedSpecialist.id,
+        date: selectedDate,
+        time: selectedTime,
+        customerName: document.getElementById('client-name').value,
+        customerPhone: document.getElementById('client-phone').value,
+        customerEmail: document.getElementById('client-email').value,
+        customerComment: document.getElementById('client-comment').value
+      };
+      
+      console.log('Booking data:', formData);
+      
+      // Here you would send the booking data to your API
+      // For now, just show success message
+      document.getElementById('contact-container').innerHTML = `
+        <div class="success">
+          <h2>Booking confirmed!</h2>
+          <p>We'll contact you soon to confirm your appointment.</p>
+          <p>Thank you for choosing ${businessData.business.name}!</p>
+          <a href="/booking-new.html" class="back-to-home">Back to booking</a>
+        </div>
+      `;
+      
+      // Clear localStorage
+      localStorage.removeItem('selectedService');
+      localStorage.removeItem('selectedSpecialist');
+      localStorage.removeItem('selectedDate');
+      localStorage.removeItem('selectedTime');
+    });
+
+    // Load data when page loads
+    document.addEventListener('DOMContentLoaded', loadBusinessData);
+  </script>
+</body>
+</html>

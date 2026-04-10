@@ -444,6 +444,51 @@
       color: #10b981;
     }
 
+    .booking-nav-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 32px;
+    }
+
+    .booking-nav-item {
+      display: block;
+      padding: 24px;
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .booking-nav-item:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .nav-icon {
+      font-size: 32px;
+      color: #3b82f6;
+      margin-bottom: 16px;
+    }
+
+    .nav-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+
+    .nav-description {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+
     @media (max-width: 768px) {
       .container {
         padding: 16px;
@@ -492,61 +537,33 @@
           Не удалось загрузить информацию о бизнесе
         </div>
         
-        <div id="booking-form" style="display: none;">
-          <!-- Services Section -->
-          <div class="services-section">
-            <h2 class="section-title">Выберите услугу</h2>
-            <div class="services-grid" id="services-grid"></div>
-          </div>
+        <div id="booking-navigation" style="display: none;">
+          <h2 class="section-title" style="text-align: center; margin-bottom: 32px;">Choose service</h2>
           
-          <!-- Specialists Section -->
-          <div class="specialists-section">
-            <h2 class="section-title">Выберите специалиста</h2>
-            <div class="specialists-grid" id="specialists-grid"></div>
-          </div>
-          
-          <!-- Calendar Section -->
-          <div class="calendar-section">
-            <h2 class="section-title">Выберите дату и время</h2>
-            <div class="calendar-header">
-              <h3 id="calendar-month">Месяц</h3>
-              <div class="calendar-nav">
-                <button id="prev-month">Предыдущий</button>
-                <button id="next-month">Следующий</button>
-              </div>
-            </div>
-            <div class="calendar-grid" id="calendar-grid"></div>
-          </div>
-          
-          <!-- Time Section -->
-          <div class="time-section">
-            <div class="time-slots-grid" id="time-slots-grid"></div>
-          </div>
-          
-          <!-- Contact Form -->
-          <div class="contact-form" style="display: none;">
-            <h2 class="section-title">Контактная информация</h2>
-            <form id="contact-form">
-              <div class="form-grid">
-                <div class="form-group">
-                  <label class="form-label" for="client-name">Имя</label>
-                  <input type="text" class="form-input" id="client-name" required>
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="client-phone">Телефон</label>
-                  <input type="tel" class="form-input" id="client-phone" required>
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="client-email">Email</label>
-                  <input type="email" class="form-input" id="client-email">
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="client-comment">Комментарий</label>
-                  <input type="text" class="form-input" id="client-comment" placeholder="Необязательно">
-                </div>
-              </div>
-              <button type="submit" class="book-button" id="book-button">Забронировать</button>
-            </form>
+          <div class="booking-nav-grid">
+            <a href="/booking-service.html" class="booking-nav-item">
+              <div class="nav-icon">+</div>
+              <div class="nav-title">Choose service</div>
+              <div class="nav-description">Select the service you need</div>
+            </a>
+            
+            <a href="/booking-specialist.html" class="booking-nav-item">
+              <div class="nav-icon">+</div>
+              <div class="nav-title">Choose specialist</div>
+              <div class="nav-description">Select a specialist for the service</div>
+            </a>
+            
+            <a href="/booking-datetime.html" class="booking-nav-item">
+              <div class="nav-icon">+</div>
+              <div class="nav-title">Choose date and time</div>
+              <div class="nav-description">Select convenient date and time</div>
+            </a>
+            
+            <a href="/booking-contact.html" class="booking-nav-item">
+              <div class="nav-icon">+</div>
+              <div class="nav-title">Contact information</div>
+              <div class="nav-description">Leave your contact details</div>
+            </a>
           </div>
         </div>
       </div>
@@ -586,15 +603,9 @@
           document.getElementById('business-logo').innerHTML = `<img src="${businessData.business.logo}" alt="Logo">`;
         }
         
-        // Load all sections
-        loadServices();
-        loadSpecialists();
-        loadCalendar();
-        loadTimeSlots();
-        
-        // Show booking form
+        // Show booking navigation
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('booking-form').style.display = 'block';
+        document.getElementById('booking-navigation').style.display = 'block';
         
       } catch (error) {
         console.error('Error loading business data:', error);

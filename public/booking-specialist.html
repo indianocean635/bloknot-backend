@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Choose specialist - Bloknot</title>
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .booking-card {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .booking-header {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      padding: 32px;
+      text-align: center;
+      position: relative;
+    }
+
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .back-button:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .business-logo {
+      width: 80px;
+      height: 80px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .business-name {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .selected-service {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 8px;
+    }
+
+    .business-address {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    .booking-content {
+      padding: 32px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #1f2937;
+      text-align: center;
+    }
+
+    .specialists-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .specialist-item {
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: white;
+      text-align: center;
+    }
+
+    .specialist-item:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .specialist-item.selected {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .specialist-photo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: #6b7280;
+      overflow: hidden;
+    }
+
+    .specialist-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .specialist-name {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1f2937;
+    }
+
+    .specialist-specialization {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .continue-button {
+      width: 100%;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      border: none;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 32px;
+      transition: all 0.3s ease;
+    }
+
+    .continue-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    }
+
+    .continue-button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 32px;
+      color: #6b7280;
+    }
+
+    .error {
+      text-align: center;
+      padding: 60px 32px;
+      color: #ef4444;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+      }
+
+      .booking-content {
+        padding: 24px;
+      }
+
+      .specialists-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="booking-card">
+      <div class="booking-header">
+        <a href="/booking-service.html" class="back-button">
+          <span>+</span>
+          <span>Back</span>
+        </a>
+        
+        <div class="business-logo" id="business-logo">
+          <span> Salon </span>
+        </div>
+        <div class="business-name" id="business-name">Loading...</div>
+        <div class="selected-service" id="selected-service">Loading...</div>
+        <div class="business-address" id="business-address">Loading...</div>
+      </div>
+      
+      <div class="booking-content">
+        <div id="loading" class="loading">Loading specialists...</div>
+        
+        <div id="error" class="error" style="display: none;">
+          Failed to load specialists
+        </div>
+        
+        <div id="specialists-container" style="display: none;">
+          <h2 class="section-title">Choose specialist</h2>
+          <div class="specialists-grid" id="specialists-grid"></div>
+          <button class="continue-button" id="continue-button" disabled>Continue to date and time</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Business data
+    const BUSINESS_EMAIL = 'peskov142@mail.ru';
+    let businessData = null;
+    let selectedService = null;
+    let selectedSpecialist = null;
+
+    // Load business data
+    async function loadBusinessData() {
+      try {
+        // Get selected service from localStorage
+        const savedService = localStorage.getItem('selectedService');
+        if (savedService) {
+          selectedService = JSON.parse(savedService);
+          document.getElementById('selected-service').textContent = `${selectedService.name} - ${selectedService.price}`;
+        }
+
+        const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);
+        if (!response.ok) {
+          throw new Error('Failed to load business data');
+        }
+        
+        businessData = await response.json();
+        console.log('Business data loaded:', businessData);
+        
+        // Update business info
+        document.getElementById('business-name').textContent = businessData.business.name;
+        document.getElementById('business-address').textContent = 'Address will be here';
+        
+        // Update logo if available
+        if (businessData.business.logo) {
+          document.getElementById('business-logo').innerHTML = `<img src="${businessData.business.logo}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+        }
+        
+        // Load specialists
+        loadSpecialists();
+        
+      } catch (error) {
+        console.error('Error loading business data:', error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+      }
+    }
+
+    // Load specialists
+    function loadSpecialists() {
+      const specialistsGrid = document.getElementById('specialists-grid');
+      
+      if (!businessData.masters || businessData.masters.length === 0) {
+        specialistsGrid.innerHTML = '<div class="error">No specialists available</div>';
+        return;
+      }
+      
+      specialistsGrid.innerHTML = businessData.masters.map(master => `
+        <div class="specialist-item" data-specialist-id="${master.id}">
+          <div class="specialist-photo">
+            ${master.photoUrl ? `<img src="${master.photoUrl}" alt="${master.name}">` : '<span>?</span>'}
+          </div>
+          <div class="specialist-name">${master.name}</div>
+          <div class="specialist-specialization">${master.specializations || 'Specialist'}</div>
+        </div>
+      `).join('');
+      
+      // Add click handlers
+      document.querySelectorAll('.specialist-item').forEach(item => {
+        item.addEventListener('click', () => selectSpecialist(item));
+      });
+      
+      // Show specialists
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('specialists-container').style.display = 'block';
+    }
+
+    // Select specialist
+    function selectSpecialist(element) {
+      // Remove previous selection
+      document.querySelectorAll('.specialist-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      // Add selection
+      element.classList.add('selected');
+      selectedSpecialist = {
+        id: element.dataset.specialistId,
+        name: element.querySelector('.specialist-name').textContent,
+        specialization: element.querySelector('.specialist-specialization').textContent
+      };
+      
+      // Enable continue button
+      document.getElementById('continue-button').disabled = false;
+    }
+
+    // Continue to date and time
+    document.getElementById('continue-button').addEventListener('click', () => {
+      // Save selected specialist to localStorage
+      localStorage.setItem('selectedSpecialist', JSON.stringify(selectedSpecialist));
+      
+      // Navigate to datetime page
+      window.location.href = '/booking-datetime.html';
+    });
+
+    // Load data when page loads
+    document.addEventListener('DOMContentLoaded', loadBusinessData);
+  </script>
+</body>
+</html>
