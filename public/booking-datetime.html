@@ -330,7 +330,7 @@
           selectedSpecialist = JSON.parse(savedSpecialist);
           
           document.getElementById('booking-summary').textContent = 
-            `${selectedService.name} with ${selectedSpecialist.name}`;
+            `${selectedService.name} со специалистом ${selectedSpecialist.name}`;
         }
 
         const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);

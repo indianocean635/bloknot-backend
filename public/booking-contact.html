@@ -359,7 +359,7 @@
           
           // Update header summary
           document.getElementById('booking-summary').textContent = 
-            `${selectedService.name} with ${selectedSpecialist.name} on ${new Date(selectedDate).toLocaleDateString('ru-RU')} at ${selectedTime}`;
+            `${selectedService.name} со специалистом ${selectedSpecialist.name} на ${new Date(selectedDate).toLocaleDateString('ru-RU')} в ${selectedTime}`;
         }
 
         const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);
