@@ -108,6 +108,8 @@ model Master {
   email      String   @unique
   active     Boolean  @default(true)
   businessId String
+  specializations String?
+  avatarUrl  String?
   createdAt  DateTime @default(now())
 
   business  Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
