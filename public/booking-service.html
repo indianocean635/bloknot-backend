@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Choose service - Bloknot</title>
+  <title>Выбор услуги - Bloknot</title>
   <link rel="icon" href="/favicon.png" type="image/png">
   <style>
     * {
@@ -206,27 +206,27 @@
       <div class="booking-header">
         <a href="/booking-new.html" class="back-button">
           <span>+</span>
-          <span>Back</span>
+          <span>Назад</span>
         </a>
         
         <div class="business-logo" id="business-logo">
           <span> Salon </span>
         </div>
-        <div class="business-name" id="business-name">Loading...</div>
-        <div class="business-address" id="business-address">Loading...</div>
+        <div class="business-name" id="business-name">Загрузка...</div>
+        <div class="business-address" id="business-address">Загрузка...</div>
       </div>
       
       <div class="booking-content">
-        <div id="loading" class="loading">Loading services...</div>
+        <div id="loading" class="loading">Загрузка услуг...</div>
         
         <div id="error" class="error" style="display: none;">
-          Failed to load services
+          Не удалось загрузить услуги
         </div>
         
         <div id="services-container" style="display: none;">
-          <h2 class="section-title">Choose service</h2>
+          <h2 class="section-title">Выберите услугу</h2>
           <div class="services-grid" id="services-grid"></div>
-          <button class="continue-button" id="continue-button" disabled>Continue to specialist</button>
+          <button class="continue-button" id="continue-button" disabled>Продолжить к специалисту</button>
         </div>
       </div>
     </div>
@@ -243,7 +243,7 @@
       try {
         const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);
         if (!response.ok) {
-          throw new Error('Failed to load business data');
+          throw new Error('Не удалось загрузить данные бизнеса');
         }
         
         businessData = await response.json();
@@ -251,7 +251,7 @@
         
         // Update business info
         document.getElementById('business-name').textContent = businessData.business.name;
-        document.getElementById('business-address').textContent = 'Address will be here';
+        document.getElementById('business-address').textContent = 'Адрес будет здесь';
         
         // Update logo if available
         if (businessData.business.logo) {
@@ -273,7 +273,7 @@
       const servicesGrid = document.getElementById('services-grid');
       
       if (!businessData.services || businessData.services.length === 0) {
-        servicesGrid.innerHTML = '<div class="error">No services available</div>';
+        servicesGrid.innerHTML = '<div class="error">Услуги недоступны</div>';
         return;
       }
       
@@ -281,7 +281,7 @@
         <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}">
           <div class="service-info">
             <div class="service-name">${service.name}</div>
-            <div class="service-duration">${service.duration} min</div>
+            <div class="service-duration">${service.duration} мин</div>
           </div>
           <div class="service-price">${service.price} RUB</div>
         </div>

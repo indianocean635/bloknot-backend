@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Choose date and time - Bloknot</title>
+  <title>Выбор даты и времени - Bloknot</title>
   <link rel="icon" href="/favicon.png" type="image/png">
   <style>
     * {
@@ -270,22 +270,22 @@
       <div class="booking-header">
         <a href="/booking-specialist.html" class="back-button">
           <span>+</span>
-          <span>Back</span>
+          <span>Назад</span>
         </a>
         
         <div class="business-logo" id="business-logo">
           <span> Salon </span>
         </div>
-        <div class="business-name" id="business-name">Loading...</div>
-        <div class="booking-summary" id="booking-summary">Loading...</div>
-        <div class="business-address" id="business-address">Loading...</div>
+        <div class="business-name" id="business-name">Загрузка...</div>
+        <div class="booking-summary" id="booking-summary">Загрузка...</div>
+        <div class="business-address" id="business-address">Загрузка...</div>
       </div>
       
       <div class="booking-content">
-        <div id="loading" class="loading">Loading calendar...</div>
+        <div id="loading" class="loading">Загрузка календаря...</div>
         
         <div id="datetime-container" style="display: none;">
-          <h2 class="section-title">Choose date and time</h2>
+          <h2 class="section-title">Выберите дату и время</h2>
           
           <div class="calendar-section">
             <div class="calendar-header">
@@ -299,11 +299,11 @@
           </div>
           
           <div class="time-section">
-            <h3 style="margin-bottom: 16px; text-align: center;">Available time slots</h3>
+            <h3 style="margin-bottom: 16px; text-align: center;">Доступное время</h3>
             <div class="time-slots-grid" id="time-slots-grid"></div>
           </div>
           
-          <button class="continue-button" id="continue-button" disabled>Continue to contact information</button>
+          <button class="continue-button" id="continue-button" disabled>Продолжить к контактной информации</button>
         </div>
       </div>
     </div>
@@ -335,7 +335,7 @@
 
         const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);
         if (!response.ok) {
-          throw new Error('Failed to load business data');
+          throw new Error('Не удалось загрузить данные бизнеса');
         }
         
         businessData = await response.json();
@@ -343,7 +343,7 @@
         
         // Update business info
         document.getElementById('business-name').textContent = businessData.business.name;
-        document.getElementById('business-address').textContent = 'Address will be here';
+        document.getElementById('business-address').textContent = 'Адрес будет здесь';
         
         // Update logo if available
         if (businessData.business.logo) {

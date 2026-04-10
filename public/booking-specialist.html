@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Choose specialist - Bloknot</title>
+  <title>Выбор специалиста - Bloknot</title>
   <link rel="icon" href="/favicon.png" type="image/png">
   <style>
     * {
@@ -223,28 +223,28 @@
       <div class="booking-header">
         <a href="/booking-service.html" class="back-button">
           <span>+</span>
-          <span>Back</span>
+          <span>Назад</span>
         </a>
         
         <div class="business-logo" id="business-logo">
           <span> Salon </span>
         </div>
-        <div class="business-name" id="business-name">Loading...</div>
-        <div class="selected-service" id="selected-service">Loading...</div>
-        <div class="business-address" id="business-address">Loading...</div>
+        <div class="business-name" id="business-name">Загрузка...</div>
+        <div class="selected-service" id="selected-service">Загрузка...</div>
+        <div class="business-address" id="business-address">Загрузка...</div>
       </div>
       
       <div class="booking-content">
-        <div id="loading" class="loading">Loading specialists...</div>
+        <div id="loading" class="loading">Загрузка специалистов...</div>
         
         <div id="error" class="error" style="display: none;">
-          Failed to load specialists
+          Не удалось загрузить специалистов
         </div>
         
         <div id="specialists-container" style="display: none;">
-          <h2 class="section-title">Choose specialist</h2>
+          <h2 class="section-title">Выберите специалиста</h2>
           <div class="specialists-grid" id="specialists-grid"></div>
-          <button class="continue-button" id="continue-button" disabled>Continue to date and time</button>
+          <button class="continue-button" id="continue-button" disabled>Продолжить к дате и времени</button>
         </div>
       </div>
     </div>
@@ -269,7 +269,7 @@
 
         const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);
         if (!response.ok) {
-          throw new Error('Failed to load business data');
+          throw new Error('Не удалось загрузить данные бизнеса');
         }
         
         businessData = await response.json();
@@ -277,7 +277,7 @@
         
         // Update business info
         document.getElementById('business-name').textContent = businessData.business.name;
-        document.getElementById('business-address').textContent = 'Address will be here';
+        document.getElementById('business-address').textContent = 'Адрес будет здесь';
         
         // Update logo if available
         if (businessData.business.logo) {
@@ -299,7 +299,7 @@
       const specialistsGrid = document.getElementById('specialists-grid');
       
       if (!businessData.masters || businessData.masters.length === 0) {
-        specialistsGrid.innerHTML = '<div class="error">No specialists available</div>';
+        specialistsGrid.innerHTML = '<div class="error">Специалисты недоступны</div>';
         return;
       }
       

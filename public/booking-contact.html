@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact information - Bloknot</title>
+  <title>Контактная информация - Bloknot</title>
   <link rel="icon" href="/favicon.png" type="image/png">
   <style>
     * {
@@ -259,43 +259,43 @@
       <div class="booking-header">
         <a href="/booking-datetime.html" class="back-button">
           <span>+</span>
-          <span>Back</span>
+          <span>Назад</span>
         </a>
         
         <div class="business-logo" id="business-logo">
           <span> Salon </span>
         </div>
-        <div class="business-name" id="business-name">Loading...</div>
-        <div class="booking-summary" id="booking-summary">Loading...</div>
-        <div class="business-address" id="business-address">Loading...</div>
+        <div class="business-name" id="business-name">Загрузка...</div>
+        <div class="booking-summary" id="booking-summary">Загрузка...</div>
+        <div class="business-address" id="business-address">Загрузка...</div>
       </div>
       
       <div class="booking-content">
-        <div id="loading" class="loading">Loading contact form...</div>
+        <div id="loading" class="loading">Загрузка контактной формы...</div>
         
         <div id="contact-container" style="display: none;">
-          <h2 class="section-title">Contact information</h2>
+          <h2 class="section-title">Контактная информация</h2>
           
           <div class="booking-summary-details">
-            <div class="summary-title">Booking summary</div>
+            <div class="summary-title">Сводка записи</div>
             <div class="summary-item">
-              <span class="summary-label">Service:</span>
+              <span class="summary-label">Услуга:</span>
               <span class="summary-value" id="summary-service">-</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">Specialist:</span>
+              <span class="summary-label">Специалист:</span>
               <span class="summary-value" id="summary-specialist">-</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">Date:</span>
+              <span class="summary-label">Дата:</span>
               <span class="summary-value" id="summary-date">-</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">Time:</span>
+              <span class="summary-label">Время:</span>
               <span class="summary-value" id="summary-time">-</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">Total:</span>
+              <span class="summary-label">Итого:</span>
               <span class="summary-value" id="summary-price">-</span>
             </div>
           </div>
@@ -303,11 +303,11 @@
           <form id="contact-form" class="contact-form">
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label" for="client-name">Name</label>
+                <label class="form-label" for="client-name">Имя</label>
                 <input type="text" class="form-input" id="client-name" required>
               </div>
               <div class="form-group">
-                <label class="form-label" for="client-phone">Phone</label>
+                <label class="form-label" for="client-phone">Телефон</label>
                 <input type="tel" class="form-input" id="client-phone" required>
               </div>
               <div class="form-group">
@@ -315,11 +315,11 @@
                 <input type="email" class="form-input" id="client-email">
               </div>
               <div class="form-group">
-                <label class="form-label" for="client-comment">Comment</label>
-                <input type="text" class="form-input" id="client-comment" placeholder="Optional">
+                <label class="form-label" for="client-comment">Комментарий</label>
+                <input type="text" class="form-input" id="client-comment" placeholder="Необязательно">
               </div>
             </div>
-            <button type="submit" class="submit-button" id="submit-button">Complete booking</button>
+            <button type="submit" class="submit-button" id="submit-button">Завершить запись</button>
           </form>
         </div>
       </div>
@@ -364,7 +364,7 @@
 
         const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);
         if (!response.ok) {
-          throw new Error('Failed to load business data');
+          throw new Error('Не удалось загрузить данные бизнеса');
         }
         
         businessData = await response.json();
@@ -372,7 +372,7 @@
         
         // Update business info
         document.getElementById('business-name').textContent = businessData.business.name;
-        document.getElementById('business-address').textContent = 'Address will be here';
+        document.getElementById('business-address').textContent = 'Адрес будет здесь';
         
         // Update logo if available
         if (businessData.business.logo) {
@@ -411,10 +411,10 @@
       // For now, just show success message
       document.getElementById('contact-container').innerHTML = `
         <div class="success">
-          <h2>Booking confirmed!</h2>
-          <p>We'll contact you soon to confirm your appointment.</p>
-          <p>Thank you for choosing ${businessData.business.name}!</p>
-          <a href="/booking-new.html" class="back-to-home">Back to booking</a>
+          <h2>Запись подтверждена!</h2>
+          <p>Мы свяжемся с вами в ближайшее время для подтверждения записи.</p>
+          <p>Спасибо, что выбрали ${businessData.business.name}!</p>
+          <a href="/booking-new.html" class="back-to-home">Вернуться к записи</a>
         </div>
       `;
       
