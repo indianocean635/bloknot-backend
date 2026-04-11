@@ -40,6 +40,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// API version endpoint
+app.get('/api/version', (req, res) => {
+  res.json({ version: '1.0.0' });
+});
+
 // Verify endpoint for magic links
 app.get('/auth/verify', (req, res) => {
   const token = req.query.token;
