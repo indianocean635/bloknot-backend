@@ -1495,6 +1495,11 @@ async function openMasterModal(id = null) {
         <input type="email" id="masterEmail" value="${master?.email || ''}" required>
       </div>
       <div class="form-group">
+        <label for="masterAvatar">Аватар</label>
+        <input type="file" id="masterAvatar" accept="image/*">
+        ${master?.avatarUrl ? `<img src="${master.avatarUrl}" style="max-width: 100px; max-height: 100px; margin-top: 10px; border-radius: 50%; object-fit: cover;" alt="Current avatar">` : ''}
+      </div>
+      <div class="form-group">
         <label>
           <input type="checkbox" id="masterActive" ${master?.active ? 'checked' : ''}>
           Активен
@@ -1519,6 +1524,7 @@ async function saveMaster(id = null) {
   const name = document.getElementById('masterName').value;
   const email = document.getElementById('masterEmail').value;
   const active = document.getElementById('masterActive').checked;
+  const avatarFile = document.getElementById('masterAvatar').files[0];
   
   if (!name || !email) {
     alert('Имя и email обязательны');
@@ -1528,18 +1534,37 @@ async function saveMaster(id = null) {
   console.log('Saving master:', { name, email, active, id });
   
   try {
+    // First save/update master basic info
+    let master;
     if (id) {
       console.log('Updating master:', id);
-      await apiCall(`/api/settings/masters/${id}`, {
+      master = await apiCall(`/api/settings/masters/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ name, email, active })
       });
     } else {
       console.log('Creating new master');
-      await apiCall('/api/settings/masters', {
+      master = await apiCall('/api/settings/masters', {
         method: 'POST',
         body: JSON.stringify({ name, email, active })
       });
+    }
+    
+    // Then upload avatar if provided
+    if (avatarFile) {
+      const formData = new FormData();
+      formData.append('avatar', avatarFile);
+      
+      const avatarResponse = await fetch(`/api/upload/masters/${master.id}/avatar`, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!avatarResponse.ok) {
+        throw new Error(`Avatar upload failed: ${avatarResponse.status}`);
+      }
+      
+      console.log('Avatar uploaded successfully');
     }
     
     console.log('Master saved successfully');
@@ -1843,9 +1868,19 @@ async function uploadLogo() {
         formData.append('isLogo', 'true');
         
         try {
-          // For now, just show success message
-          // TODO: Implement actual logo upload API
-          alert('Logo upload temporarily disabled - API endpoint needs to be created');
+          // Upload logo to S3 via API
+          const response = await fetch('/api/upload/works', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+          const result = await response.json();
+          console.log('Logo uploaded successfully:', result);
+          
           closeModal();
           loadLogo();
           resolve();
@@ -2105,22 +2140,109 @@ async function saveSchedule(type, email, masterId = null) {
   }
 }
 
-// Фото// Works - temporarily disabled
+// Фото// Works
 async function loadWorks() {
-  const grid = document.getElementById('worksGrid');
-  grid.innerHTML = '<div class="info">Works functionality temporarily disabled</div>';
+  try {
+    const works = await apiCall('/api/settings/works');
+    renderWorks(works);
+  } catch (error) {
+    console.error('Error loading works:', error);
+    document.getElementById('worksGrid').innerHTML = '<div class="error">Error loading works</div>';
+  }
 }
 
 function renderWorks(works) {
-  // Temporarily disabled
+  const grid = document.getElementById('worksGrid');
+  if (!works || works.length === 0) {
+    grid.innerHTML = '<div style="color: #6b7280;">No works</div>';
+    return;
+  }
+  
+  grid.innerHTML = works.map(work => `
+    <div class="item-card">
+      ${work.imageUrl ? `<img src="${work.imageUrl}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;" alt="${work.caption || 'Work photo'}">` : ''}
+      <div class="item-header">
+        <div class="item-name">${work.caption || 'Untitled'}</div>
+      </div>
+      <div class="item-actions">
+        <button class="delete-btn" onclick="deleteWork(${work.id})">Delete</button>
+      </div>
+    </div>
+  `).join('');
 }
 
 function openWorkModal() {
-  alert('Works functionality temporarily disabled - API endpoint needs to be created');
+  const body = `
+    <form id="workForm">
+      <div class="form-group">
+        <label for="workImage">Image *</label>
+        <input type="file" id="workImage" accept="image/*" required>
+      </div>
+      <div class="form-group">
+        <label for="workCaption">Caption</label>
+        <input type="text" id="workCaption" placeholder="Enter photo description">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn">Save</button>
+      </div>
+    </form>
+  `;
+  
+  openModal('Add Work Photo', body);
+  
+  document.getElementById('workForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveWork();
+  });
 }
 
 async function saveWork() {
-  alert('Works functionality temporarily disabled - API endpoint needs to be created');
+  const imageFile = document.getElementById('workImage').files[0];
+  const caption = document.getElementById('workCaption').value;
+  
+  if (!imageFile) {
+    alert('Please select an image');
+    return;
+  }
+  
+  try {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    if (caption) {
+      formData.append('caption', caption);
+    }
+    
+    const response = await fetch('/api/upload/works', {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    console.log('Work uploaded successfully');
+    closeModal();
+    loadWorks();
+  } catch (error) {
+    console.error('Error saving work:', error);
+    alert('Error saving work: ' + error.message);
+  }
+}
+
+async function deleteWork(id) {
+  if (!confirm('Are you sure you want to delete this work photo?')) {
+    return;
+  }
+  
+  try {
+    await apiCall(`/api/settings/works/${id}`, { method: 'DELETE' });
+    loadWorks();
+  } catch (error) {
+    console.error('Error deleting work:', error);
+    alert('Error deleting work: ' + error.message);
+  }
 }
 
 async function deleteWork(id) {
