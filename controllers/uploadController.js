@@ -58,6 +58,10 @@ async function uploadWork(req, res) {
   if (!req.file) {
     return res.status(400).json({ error: "Файл не выбран" });
   }
+  
+  if (!req.user || !req.user.businessId) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
 
   try {
     const { caption, isLogo } = req.body;
