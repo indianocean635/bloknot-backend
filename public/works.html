@@ -122,7 +122,7 @@
         fd.append("image", file);
         if (caption) fd.append("caption", caption);
 
-        await fetch("/api/works", {
+        await fetch("/api/upload/works", {
           method: "POST",
           body: fd,
         }).then(async (res) => {
