@@ -27,6 +27,21 @@ router.get("/business", requireMagicAuth, getBusinessFromUser, async (req, res) 
   }
 });
 
+// Get business name
+router.get("/business/name", requireMagicAuth, getBusinessFromUser, async (req, res) => {
+  try {
+    const business = await prisma.business.findUnique({
+      where: { id: req.business.id },
+      select: { name: true }
+    });
+    
+    res.json(business);
+  } catch (error) {
+    console.error("Error getting business name:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Update business name
 router.patch("/business/name", requireMagicAuth, getBusinessFromUser, async (req, res) => {
   try {
