@@ -490,4 +490,28 @@ router.delete("/masters/:id", requireMagicAuth, getBusinessFromUser, async (req,
   }
 });
 
+// Get works
+router.get("/works", requireMagicAuth, getBusinessFromUser, async (req, res) => {
+  try {
+    const works = await prisma.workPhoto.findMany({
+      where: { businessId: req.business.id },
+      orderBy: { id: "desc" }
+    });
+
+    const transformedWorks = works.map(work => ({
+      id: work.id,
+      url: work.imageUrl,
+      description: work.caption,
+      type: work.imageUrl.toLowerCase().includes('.mp4') || work.imageUrl.toLowerCase().includes('.mov') ? 'video' : 'image',
+      isLogo: work.isLogo,
+      createdAt: work.createdAt
+    }));
+
+    res.json(transformedWorks);
+  } catch (error) {
+    console.error("Error getting works:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

@@ -1,12 +1,12 @@
 const express = require("express");
 const { uploadMasterAvatar, uploadWork, getWorks, avatarUpload, worksUpload } = require("../controllers/uploadController");
-const { requireAuth } = require("../middleware/authMiddleware");
+const { requireMagicAuth, getBusinessFromUser } = require("../middleware/magicAuthMiddleware");
 
 const router = express.Router();
 
-// Загрузка файлов
-router.post("/masters/:id/avatar", requireAuth, avatarUpload.single("avatar"), uploadMasterAvatar);
-router.post("/works", requireAuth, worksUpload.single("image"), uploadWork);
-router.get("/works", requireAuth, getWorks);
+// Upload files
+router.post("/masters/:id/avatar", requireMagicAuth, getBusinessFromUser, avatarUpload.single("avatar"), uploadMasterAvatar);
+router.post("/works", requireMagicAuth, getBusinessFromUser, worksUpload.single("image"), uploadWork);
+router.get("/works", requireMagicAuth, getBusinessFromUser, getWorks);
 
 module.exports = router;
