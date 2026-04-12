@@ -150,31 +150,51 @@
 <style>
 .settings-section {
   background: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #f3f4f6;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .section-header h2 {
   margin: 0;
-  font-size: 20px;
-  color: #111;
+  font-size: 16px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.section-header .btn {
+  padding: 4px 12px;
+  background: white;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 400;
+  transition: all 0.2s;
+}
+
+.section-header .btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #374151;
 }
 
 .items-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
 }
 
 .company-name-container {
@@ -186,45 +206,45 @@
 .company-name-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   background: #f9fafb;
 }
 
 .company-name-input {
   flex: 1;
-  padding: 12px 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 16px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
   transition: border-color 0.2s;
 }
 
 .company-name-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #9ca3af;
 }
 
 .company-name-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .logo-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .logo-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   background: #f9fafb;
 }
 
@@ -465,33 +485,34 @@
 .branding-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 16px;
 }
 
 .branding-item {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 16px;
-  padding: 24px;
-  color: white;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  color: #374151;
   text-align: center;
+  border: 1px solid #e5e7eb;
 }
 
 .branding-item h3 {
-  margin: 0 0 16px 0;
-  font-size: 18px;
-  font-weight: 600;
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .logo-preview {
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 16px;
-  border: 2px dashed rgba(255, 255, 255, 0.5);
-  border-radius: 12px;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 12px;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
+  background: white;
   overflow: hidden;
 }
 
@@ -502,29 +523,32 @@
 }
 
 .no-logo {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
+  color: #9ca3af;
+  font-size: 12px;
 }
 
 .logo-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
 }
 
-.branding-item .btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
+.logo-actions button {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  color: #6b7280;
 }
 
-.branding-item .btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.branding-item .btn.secondary {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+.logo-actions button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #374151;
 }
 
 .company-info {
@@ -727,8 +751,8 @@
 
 .item-card {
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 6px;
+  padding: 12px;
   background: #f9fafb;
   transition: all 0.2s;
 }
@@ -739,21 +763,22 @@
 }
 
 .item-card h4 {
-  margin: 0 0 8px 0;
-  color: #111;
-  font-size: 16px;
+  margin: 0 0 6px 0;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .item-card p {
   margin: 0;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .item-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .item-actions button {
@@ -765,21 +790,37 @@
 }
 
 .edit-btn {
-  background: #3b82f6;
-  color: white;
+  background: white;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .edit-btn:hover {
-  background: #2563eb;
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #374151;
 }
 
 .delete-btn {
-  background: #ef4444;
-  color: white;
+  background: white;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .delete-btn:hover {
-  background: #dc2626;
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
 }
 
 .modal {
