@@ -108,7 +108,22 @@
   }
 
   async function api(path, opts) {
-    const res = await fetch(API_BASE + path, opts);
+    // Add authentication headers
+    const userEmail = localStorage.getItem('bloknot_logged_in_email') || 
+                     localStorage.getItem('user_email') || 
+                     'peskov142@mail.ru'; // Fallback for testing
+    
+    const headers = {
+      'x-user-email': userEmail,
+      ...opts?.headers
+    };
+    
+    const options = {
+      ...opts,
+      headers: headers
+    };
+    
+    const res = await fetch(API_BASE + path, options);
     if (!res.ok) {
       let text = "";
       try {
