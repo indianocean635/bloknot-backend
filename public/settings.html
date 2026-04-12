@@ -994,11 +994,20 @@ async function apiCall(url, options = {}) {
     try {
       let result;
       if (options.method === 'POST') {
-        result = await Bloknot.api(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...headers },
-          body: options.body
-        });
+        // Handle FormData for file uploads
+        if (options.body instanceof FormData) {
+          result = await Bloknot.api(url, {
+            method: 'POST',
+            headers: { ...headers },
+            body: options.body
+          });
+        } else {
+          result = await Bloknot.api(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...headers },
+            body: options.body
+          });
+        }
       } else if (options.method === 'PATCH') {
         result = await Bloknot.api(url, {
           method: 'PATCH', 
@@ -1596,7 +1605,7 @@ async function saveMaster(id = null) {
       const formData = new FormData();
       formData.append('avatar', avatarFile);
       
-      const avatarResponse = await fetch(`/api/upload/masters/${master.id}/avatar`, {
+      const avatarResponse = await apiCall(`/api/upload/masters/${master.id}/avatar`, {
         method: 'POST',
         body: formData
       });
@@ -1909,15 +1918,11 @@ async function uploadLogo() {
         formData.append('isLogo', 'true');
         
         try {
-          // Upload logo to S3 via API
-          const response = await fetch('/api/upload/works', {
+          // Upload logo to S3 via API with authentication
+          const response = await apiCall('/api/upload/works', {
             method: 'POST',
             body: formData
           });
-          
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
           
           const result = await response.json();
           console.log('Logo uploaded successfully:', result);
@@ -2254,7 +2259,7 @@ async function saveWork() {
       formData.append('caption', caption);
     }
     
-    const response = await fetch('/api/upload/works', {
+    const response = await apiCall('/api/upload/works', {
       method: 'POST',
       body: formData
     });
