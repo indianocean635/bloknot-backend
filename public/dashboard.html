@@ -14,27 +14,6 @@
    <h1 class="page-title">Кабинет владельца</h1>
    <p class="page-subtitle">Управляйте услугами, мастерами, фото работ и записями клиентов.</p>
 
-   <div class="row two">
-     <div class="card" style="display:block">
-       <div class="item-title">Доход</div>
-       <div class="item-meta">Считается по прошедшим записям за выбранный период.</div>
-       <div class="row two" style="margin-top:12px">
-         <div class="field">
-           <label for="revFrom">С</label>
-           <input id="revFrom" type="date" />
-         </div>
-         <div class="field">
-           <label for="revTo">По</label>
-           <input id="revTo" type="date" />
-         </div>
-       </div>
-       <div class="actions" style="justify-content:space-between">
-         <div class="badge" id="revenueBadge">0 ₽</div>
-         <button class="btn secondary" id="revenueBtn" type="button">Посчитать</button>
-       </div>
-     </div>
-   </div>
-
    <div class="card" style="margin-top:12px">
      <div class="actions" style="justify-content:space-between">
        <div>
@@ -63,6 +42,25 @@
           <div class="item-meta" id="clientsCount">—</div>
         </div>
       </a>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="item-title">Доход</div>
+      <div class="item-meta">Считается по прошедшим записям за выбранный период.</div>
+      <div class="row two" style="margin-top:12px">
+        <div class="field">
+          <label for="revFrom">С</label>
+          <input id="revFrom" type="date" />
+        </div>
+        <div class="field">
+          <label for="revTo">По</label>
+          <input id="revTo" type="date" />
+        </div>
+      </div>
+      <div class="actions" style="justify-content:space-between">
+        <div class="badge" id="revenueBadge">0 ₽</div>
+        <button class="btn secondary" id="revenueBtn" type="button">Посчитать</button>
+      </div>
     </div>
 
      <div id="notice" class="notice" style="display:none; margin-top:10px"></div>
