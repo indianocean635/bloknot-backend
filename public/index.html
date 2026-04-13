@@ -913,6 +913,10 @@
       const email = String(emailInput.value || "").trim();
       const phone = String(document.getElementById("authPhone").value || "").trim();
 
+      // Debug: log the email being used
+      console.log('DEBUG: Email from input:', email);
+      console.log('DEBUG: Phone from input:', phone);
+
       if (!email) {
         showNotice("Enter email.");
         return;
@@ -948,16 +952,16 @@
 
         if (result.magicLink) {
           showNotice(`Magic link: ${result.magicLink}`);
-          showNotice("Magic link sent to your email. Check your inbox and spam folder.");
+          showNotice("Ссылка для входа отправлена на ваш email. Проверьте почту и папку спам.");
         } else {
-          showNotice("Magic link sent to your email. Check your inbox and spam folder.");
+          showNotice("Ссылка для входа отправлена на ваш email. Проверьте почту и папку спам.");
         }
 
       } catch (e) {
-        showNotice("Failed to send: " + (e && e.message ? e.message : "error"));
+        showNotice("Ошибка отправки: " + (e && e.message ? e.message : "ошибка"));
       } finally {
         sendBtn.disabled = false;
-        sendBtn.textContent = "Send Link";
+        sendBtn.textContent = "Отправить ссылку";
       }
     }
 
@@ -966,8 +970,8 @@
 
     function openLoginModal() {
       currentModalMode = 'login';
-      document.getElementById('authTitle').textContent = 'Login';
-      document.getElementById('authSub').textContent = 'Enter your credentials to login.';
+      document.getElementById('authTitle').textContent = 'Вход';
+      document.getElementById('authSub').textContent = 'Введите ваши данные для входа.';
       document.getElementById('loginFields').style.display = 'block';
       document.getElementById('registrationFields').style.display = 'none';
       document.getElementById('authLoginBtn').style.display = 'inline-block';
@@ -977,12 +981,17 @@
 
     function openRegistrationModal() {
       currentModalMode = 'registration';
-      document.getElementById('authTitle').textContent = 'Registration';
-      document.getElementById('authSub').textContent = 'Enter email and phone - we\'ll send you a login link.';
+      document.getElementById('authTitle').textContent = 'Регистрация';
+      document.getElementById('authSub').textContent = 'Введите email и телефон - мы отправим вам ссылку для входа.';
       document.getElementById('loginFields').style.display = 'none';
       document.getElementById('registrationFields').style.display = 'block';
       document.getElementById('authLoginBtn').style.display = 'none';
       document.getElementById('authSendBtn').style.display = 'inline-block';
+      
+      // Clear any cached email values to prevent fallbacks
+      emailInput.value = '';
+      document.getElementById("authPhone").value = '';
+      
       openModal();
     }
 
@@ -1034,19 +1043,19 @@
       const password = String(document.getElementById("authPassword").value || "").trim();
 
       if (!email) {
-        showNotice("Enter email.");
+        showNotice("Введите email.");
         return;
       }
 
       if (!password) {
-        showNotice("Enter password.");
+        showNotice("Введите пароль.");
         return;
       }
 
       try {
         const loginBtn = document.getElementById("authLoginBtn");
         loginBtn.disabled = true;
-        loginBtn.textContent = "Logging in...";
+        loginBtn.textContent = "Вход...";
 
         const response = await fetch("/api/auth/login", {
           method: "POST",
@@ -1070,7 +1079,7 @@
         if (result.success) {
           localStorage.setItem("bloknot_logged_in", "1");
           localStorage.setItem("bloknot_user_email", email);
-          showNotice("Login successful!");
+          showNotice("Вход выполнен успешно!");
           closeModal();
           checkAuthStatus();
           // Redirect to dashboard
@@ -1078,15 +1087,15 @@
             window.location.href = "/dashboard.html";
           }, 1000);
         } else {
-          showNotice("Login failed. Please check your credentials.");
+          showNotice("Ошибка входа. Проверьте ваши данные.");
         }
 
       } catch (e) {
-        showNotice("Login failed: " + (e && e.message ? e.message : "error"));
+        showNotice("Ошибка входа: " + (e && e.message ? e.message : "ошибка"));
       } finally {
         const loginBtn = document.getElementById("authLoginBtn");
         loginBtn.disabled = false;
-        loginBtn.textContent = "Login";
+        loginBtn.textContent = "Войти";
       }
     }
 
