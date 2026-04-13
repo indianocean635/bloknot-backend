@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm Login - Bloknot</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .message {
+      color: #666;
+      font-size: 16px;
+    }
+
+    .error {
+      color: #e53e3e;
+      background: #fee2e2;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .success {
+      color: #38a169;
+      background: #d4f4dd;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .btn:hover {
+      background: #5a67d8;
+    }
+
+    .btn.secondary {
+      background: #6b7280;
+    }
+
+    .btn.secondary:hover {
+      background: #4b5563;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">Bloknot</div>
+    
+    <div id="loadingState" class="loading">
+      <div class="spinner"></div>
+      <div class="message">Confirming your login...</div>
+    </div>
+
+    <div id="errorState" style="display: none;">
+      <div class="error" id="errorMessage"></div>
+      <a href="/" class="btn">Back to Home</a>
+    </div>
+
+    <div id="setPasswordState" style="display: none;">
+      <div class="success">Email confirmed! Please set your password to continue.</div>
+      <a href="/set-password.html" class="btn">Set Password</a>
+    </div>
+
+    <div id="loginSuccessState" style="display: none;">
+      <div class="success">Login successful! Redirecting to your dashboard...</div>
+      <a href="/dashboard.html" class="btn">Go to Dashboard</a>
+    </div>
+  </div>
+
+  <script>
+    // Get token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (!token) {
+      showError('Invalid link. Please request a new magic link.');
+    } else {
+      confirmLogin();
+    }
+
+    async function confirmLogin() {
+      try {
+        const response = await fetch(`/api/auth/confirm?token=${token}`);
+        const data = await response.json();
+
+        if (data.status === 'SET_PASSWORD_REQUIRED') {
+          // Store user info for set password page
+          localStorage.setItem('pendingUser', JSON.stringify(data.user));
+          showSetPassword();
+        } else if (data.status === 'LOGIN_SUCCESS') {
+          // Store user session
+          localStorage.setItem('bloknot_logged_in_email', data.user.email);
+          localStorage.setItem('bloknot_user_id', data.user.id);
+          localStorage.setItem('bloknot_business_id', data.user.businessId || '');
+          localStorage.setItem('bloknot_logged_in', '1');
+          
+          showLoginSuccess();
+          
+          // Redirect after 2 seconds
+          setTimeout(() => {
+            window.location.href = '/dashboard.html';
+          }, 2000);
+        } else {
+          showError('Invalid or expired link. Please request a new magic link.');
+        }
+      } catch (error) {
+        console.error('Confirm login error:', error);
+        showError('Error confirming login. Please try again.');
+      }
+    }
+
+    function showError(message) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'block';
+      document.getElementById('errorMessage').textContent = message;
+    }
+
+    function showSetPassword() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('setPasswordState').style.display = 'block';
+    }
+
+    function showLoginSuccess() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('loginSuccessState').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

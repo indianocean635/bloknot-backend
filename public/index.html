@@ -907,7 +907,17 @@
       throw new Error(result.error);
     }
 
-    showNotice("Ссылка для входа отправлена на вашу почту. Проверьте входящие и папку «Спам».");
+    if (result.magicLink) {
+      // For development - show the magic link
+      showNotice(`Magic link: ${result.magicLink}`);
+      
+      // Auto-redirect to magic link in development
+      setTimeout(() => {
+        window.location.href = result.magicLink;
+      }, 2000);
+    } else {
+      showNotice("Ссылка для входа отправлена на вашу почту. Проверьте входящие и папку «Спам».");
+    }
 
   } catch (e) {
     showNotice("Не удалось отправить: " + (e && e.message ? e.message : "ошибка"));

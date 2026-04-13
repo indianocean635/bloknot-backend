@@ -110,8 +110,13 @@
   async function api(path, opts) {
     // Add authentication headers
     const userEmail = localStorage.getItem('bloknot_logged_in_email') || 
-                     localStorage.getItem('user_email') || 
-                     'peskov142@mail.ru'; // Fallback for testing
+                     localStorage.getItem('user_email');
+    
+    if (!userEmail) {
+      // Not authenticated, redirect to login
+      window.location.href = '/';
+      throw new Error('Not authenticated');
+    }
     
     const headers = {
       'x-user-email': userEmail,
