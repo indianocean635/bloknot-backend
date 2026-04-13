@@ -101,45 +101,74 @@ router.patch('/users/:id', async (req, res) => {
 router.delete('/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`[ADMIN DELETE] Attempting to delete user: ${id}`);
     
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: { id },
-      include: { ownedBusiness: true }
+      include: { 
+        ownedBusiness: true,
+        business: true,
+        staff: true,
+        loginTokens: true
+      }
     });
     
     if (!user) {
+      console.log(`[ADMIN DELETE] User not found: ${id}`);
       return res.status(404).json({ error: 'User not found' });
     }
     
+    console.log(`[ADMIN DELETE] Found user:`, {
+      email: user.email,
+      hasBusiness: !!user.ownedBusiness,
+      hasStaffProfile: !!user.staff,
+      loginTokensCount: user.loginTokens.length
+    });
+    
     // Check if user owns a business
     if (user.ownedBusiness) {
+      console.log(`[ADMIN DELETE] Cannot delete - user owns business: ${user.ownedBusiness.id}`);
       return res.status(400).json({ 
         error: 'Cannot delete user who owns a business. Delete the business first.' 
       });
     }
     
     // Delete related data first
+    console.log(`[ADMIN DELETE] Deleting login tokens for user: ${id}`);
     await prisma.loginToken.deleteMany({
       where: { userId: id }
     });
     
-    await prisma.staff.delete({
-      where: { userId: id }
-    });
+    if (user.staff) {
+      console.log(`[ADMIN DELETE] Deleting staff profile for user: ${id}`);
+      await prisma.staff.delete({
+        where: { userId: id }
+      });
+    }
     
     // Delete the user
+    console.log(`[ADMIN DELETE] Deleting user: ${id}`);
     await prisma.user.delete({
       where: { id }
     });
     
+    console.log(`[ADMIN DELETE] Successfully deleted user: ${id}`);
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin delete user error:', error);
+    console.error('[ADMIN DELETE] Error:', error);
+    console.error('[ADMIN DELETE] Error details:', {
+      code: error.code,
+      message: error.message,
+      meta: error.meta
+    });
+    
     if (error.code === 'P2002') {
       res.status(400).json({ error: 'Cannot delete user - related data exists' });
     } else if (error.code === 'P2025') {
       res.status(404).json({ error: 'User not found' });
+    } else if (error.code === 'P2003') {
+      res.status(400).json({ error: 'Cannot delete user - foreign key constraint' });
     } else {
       res.status(500).json({ error: 'Internal server error' });
     }
