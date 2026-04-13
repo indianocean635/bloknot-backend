@@ -31,7 +31,56 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   console.log('Email not configured - missing SMTP settings');
 }
 
-// POST /api/auth/send-link (алиас для совместимости)
+// POST /api/auth/request-login (main endpoint)
+router.post('/request-login', async (req, res) => {
+  const { email, phone } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+  
+  console.log(`[AUTH REQUEST] Email: ${email}, Phone: ${phone || 'not provided'}`);
+  
+  const token = 'token_' + Date.now();
+  
+  // Store token in memory
+  memoryTokens.set(token, { email, phone, createdAt: new Date(), expiresAt: new Date(Date.now() + 3600000) });
+  
+  // Send email if transporter is configured
+  if (transporter) {
+    try {
+      const verifyUrl = `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`;
+      
+      await transporter.sendMail({
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: 'Bloknot - Link for login',
+        html: `
+          <h2>Welcome to Bloknot!</h2>
+          <p>Click the link below to login to your account:</p>
+          <p><a href="${verifyUrl}">Login to Bloknot</a></p>
+          <p>If you didn't request this link, please ignore this email.</p>
+          <p>This link will expire in 1 hour.</p>
+        `
+      });
+      
+      console.log('Email sent to:', email);
+    } catch (error) {
+      console.error('Email sending error:', error);
+    }
+  } else {
+    console.log('Email not sent - transporter not configured');
+    console.log('Login link for', email, ':', `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`);
+  }
+  
+  res.json({
+    success: true,
+    message: "Login link sent",
+    verifyUrl: `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`
+  });
+});
+
+// POST /api/auth/send-link (alias for compatibility)
 router.post('/send-link', async (req, res) => {
   const { email } = req.body;
   
