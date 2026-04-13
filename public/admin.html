@@ -221,7 +221,7 @@
         nextBillingAt: nextBillingAtEl && nextBillingAtEl.value ? nextBillingAtEl.value : "",
       };
 
-      await api(`/api/admin/users/${encodeURIComponent(id)}`, {
+      await api(`/api/admin/users/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -229,7 +229,7 @@
     }
 
     async function deleteUser(id) {
-      await api(`/api/admin/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      await api(`/api/admin/users/${id}`, { method: 'DELETE' });
     }
 
     document.getElementById('refreshBtn').addEventListener('click', async () => {
