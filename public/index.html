@@ -756,6 +756,10 @@
         <label for="authEmail">Email</label>
         <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
       </div>
+      <div class="field">
+        <label for="authPhone">Phone</label>
+        <input id="authPhone" type="tel" placeholder="+7XXXXXXXXXX" autocomplete="tel" />
+      </div>
 
       <div class="notice" id="authNotice"></div>
 
@@ -873,28 +877,31 @@
 
     async function requestLogin() {
   const email = String(emailInput.value || "").trim();
+  const phone = String(document.getElementById("authPhone").value || "").trim();
 
   if (!email) {
     showNotice("Введите email.");
     return;
   }
 
-  showNotice("");
-  sendBtn.disabled = true;
-
   try {
-    const res = await fetch("/api/auth/send-link", {
+    sendBtn.disabled = true;
+    sendBtn.textContent = "Sending...";
+
+    const response = await fetch("/api/auth/request-login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, phone }),
     });
 
-    if (!res.ok) {
-      const t = await res.json().catch(() => ({}));
-      throw new Error(t.error || ("HTTP " + res.status)); // 
+    if (!response.ok) {
+      const t = await response.json().catch(() => ({}));
+      throw new Error(t.error || ("HTTP " + response.status)); // 
     }
 
-    const result = await res.json().catch(() => ({}));
+    const result = await response.json().catch(() => ({}));
 
     if (result.error) {
       throw new Error(result.error);

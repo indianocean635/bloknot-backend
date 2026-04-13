@@ -1818,6 +1818,10 @@ async function openMasterModal(id = null) {
         <input type="email" id="masterEmail" value="${master?.email || ''}" required>
       </div>
       <div class="form-group">
+        <label for="masterPhone">Phone</label>
+        <input type="tel" id="masterPhone" value="${master?.phone || ''}" placeholder="+7XXXXXXXXXX">
+      </div>
+      <div class="form-group">
         <label for="masterAvatar">Avatar</label>
         <div style="display: flex; gap: 10px; align-items: center;">
           <input type="file" id="masterAvatar" accept="image/*" style="display: none;">
@@ -1856,6 +1860,7 @@ async function openMasterModal(id = null) {
 async function saveMaster(id = null) {
   const name = document.getElementById('masterName').value;
   const email = document.getElementById('masterEmail').value;
+  const phone = document.getElementById('masterPhone').value;
   const active = document.getElementById('masterActive').checked;
   const avatarFile = document.getElementById('masterAvatar').files[0];
   
@@ -1873,13 +1878,13 @@ async function saveMaster(id = null) {
       console.log('Updating master:', id);
       master = await apiCall(`/api/settings/masters/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ name, email, active })
+        body: JSON.stringify({ name, email, phone, active })
       });
     } else {
       console.log('Creating new master');
       master = await apiCall('/api/settings/masters', {
         method: 'POST',
-        body: JSON.stringify({ name, email, active })
+        body: JSON.stringify({ name, email, phone, active })
       });
     }
     
