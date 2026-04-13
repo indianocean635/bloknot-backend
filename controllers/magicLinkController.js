@@ -101,6 +101,12 @@ async function confirmLogin(req, res) {
 
     // Check if user has password
     if (!user.password) {
+      // For browser requests, redirect to frontend
+      if (req.headers.accept && req.headers.accept.includes('text/html')) {
+        return res.redirect(`/auth-confirm.html?token=${token}`);
+      }
+      
+      // For API requests, return JSON
       return res.json({
         status: 'SET_PASSWORD_REQUIRED',
         user: {
@@ -112,7 +118,17 @@ async function confirmLogin(req, res) {
     }
 
     // User has password, create session
-    // For simplicity, return user info (in production, use JWT/session)
+    // For browser requests, redirect to dashboard
+    if (req.headers.accept && req.headers.accept.includes('text/html')) {
+      // Set session cookies and redirect
+      res.cookie('bloknot_logged_in_email', user.email, { maxAge: 24 * 60 * 60 * 1000 });
+      res.cookie('bloknot_user_id', user.id, { maxAge: 24 * 60 * 60 * 1000 });
+      res.cookie('bloknot_business_id', user.businessId || '', { maxAge: 24 * 60 * 60 * 1000 });
+      res.cookie('bloknot_logged_in', '1', { maxAge: 24 * 60 * 60 * 1000 });
+      return res.redirect('/dashboard.html');
+    }
+
+    // For API requests, return JSON
     res.json({
       status: 'LOGIN_SUCCESS',
       user: {
