@@ -56,10 +56,13 @@ async function requestLogin(req, res) {
       }
     });
 
-    // In production, send email with magic link
-    // For now, return the link directly
+    // Send email with magic link
     const magicLink = `${req.protocol}://${req.get('host')}/api/auth/confirm?token=${token}`;
-
+    
+    // TODO: Configure real email service
+    // For now, return the link for development
+    console.log(`[MAGIC LINK] Generated for ${user.email}: ${magicLink}`);
+    
     res.json({
       message: 'Magic link sent',
       magicLink, // Remove this in production
