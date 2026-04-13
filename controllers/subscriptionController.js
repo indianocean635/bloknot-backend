@@ -4,6 +4,10 @@ const prisma = new PrismaClient();
 // Get current subscription
 async function getSubscription(req, res) {
   try {
+    if (!req.user || !req.user.businessId) {
+      return res.json({ plan: 'FREE', maxUsers: 1 });
+    }
+
     const subscription = await prisma.subscription.findUnique({
       where: { businessId: req.user.businessId }
     });

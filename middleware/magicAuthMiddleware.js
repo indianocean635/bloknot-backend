@@ -20,9 +20,15 @@ function requireMagicAuth(req, res, next) {
       return res.status(401).json({ error: "Unauthorized - User not found" });
     }
     
-    req.user = { email: user.email, id: user.id };
+    req.user = { 
+      email: user.email, 
+      id: user.id,
+      businessId: user.businessId,
+      role: user.role
+    };
     if (user.business) {
       req.business = user.business;
+      req.user.businessId = user.business.id;
     }
     
     next();
