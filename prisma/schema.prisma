@@ -44,6 +44,19 @@ model Business {
   schedules    Schedule[]
   branches     Branch[]
   appointments Appointment[]
+  subscription Subscription?
+}
+
+model Subscription {
+  id         String   @id @default(uuid())
+  businessId String   @unique
+  plan       String   // SOLO, STUDIO, PRO
+  maxUsers   Int      // 1, 5, 15
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
 }
 
 model Staff {

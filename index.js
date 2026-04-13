@@ -6,6 +6,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const businessRoutes = require('./routes/businessRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const app = express();
 const PORT = 3001;
 
@@ -30,6 +31,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api', subscriptionRoutes);
 
 console.log('Business routes loaded:', typeof businessRoutes);
 console.log('Business routes methods:', Object.getOwnPropertyNames(businessRoutes));

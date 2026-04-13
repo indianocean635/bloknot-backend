@@ -105,6 +105,17 @@
       <button class="btn" id="addMasterBtn">+ Добавить специалиста</button>
     </div>
     
+    <!-- Subscription Plan -->
+    <div id="subscriptionSection" style="margin-bottom: 16px;">
+      <div class="subscription-info">
+        <p style="margin: 0; color: #6b7280; font-size: 14px;">
+          Current plan: <strong id="currentPlan">Loading...</strong> | 
+          Users: <strong id="currentUsers">0</strong>/<strong id="maxUsers">1</strong>
+        </p>
+      </div>
+      <button class="btn secondary" id="changePlanBtn" style="margin-top: 8px;">Change Plan</button>
+    </div>
+    
     <div class="items-grid" id="mastersGrid">
       <div class="loading">Загрузка...</div>
     </div>
@@ -823,6 +834,146 @@
   color: #dc2626;
 }
 
+/* Subscription Plans */
+.subscription-info {
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.plan-card {
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.plan-card:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+}
+
+.plan-card.selected {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.plan-header h4 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #111;
+}
+
+.plan-price {
+  font-size: 24px;
+  font-weight: bold;
+  color: #667eea;
+  margin-bottom: 12px;
+}
+
+.plan-description {
+  color: #6b7280;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.plan-users {
+  color: #374151;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.plan-select-btn {
+  width: 100%;
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.plan-select-btn:hover {
+  background: #5a67d8;
+}
+
+/* Payment Form */
+.payment-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.plan-summary {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.plan-summary p {
+  margin: 4px 0;
+  color: #374151;
+}
+
+.payment-methods {
+  margin-bottom: 20px;
+}
+
+.payment-methods h4 {
+  margin: 0 0 16px 0;
+  color: #111;
+}
+
+.card-form {
+  background: #f9fafb;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 4px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
 .modal {
   display: none;
   position: fixed;
@@ -1064,6 +1215,137 @@ async function apiCall(url, options = {}) {
   }
 }
 
+// Subscription management
+async function loadSubscription() {
+  try {
+    const subscription = await apiCall('/api/subscription');
+    const masters = await apiCall('/api/settings/masters');
+    
+    const currentPlanEl = document.getElementById('currentPlan');
+    const currentUsersEl = document.getElementById('currentUsers');
+    const maxUsersEl = document.getElementById('maxUsers');
+    
+    currentPlanEl.textContent = subscription.plan || 'FREE';
+    currentUsersEl.textContent = masters ? masters.length : 0;
+    maxUsersEl.textContent = subscription.maxUsers || 1;
+    
+    // Update add master button based on plan
+    updateMasterButton(subscription.maxUsers || 1, masters ? masters.length : 0);
+  } catch (error) {
+    console.error('Error loading subscription:', error);
+  }
+}
+
+function updateMasterButton(maxUsers, currentUsers) {
+  const addBtn = document.getElementById('addMasterBtn');
+  if (currentUsers >= maxUsers) {
+    addBtn.textContent = 'Plan limit reached';
+    addBtn.disabled = true;
+    addBtn.style.opacity = '0.5';
+    addBtn.style.cursor = 'not-allowed';
+  } else {
+    addBtn.textContent = '+ Add Specialist';
+    addBtn.disabled = false;
+    addBtn.style.opacity = '1';
+    addBtn.style.cursor = 'pointer';
+  }
+}
+
+// Plan selection modal
+async function openPlanSelection() {
+  try {
+    const plans = await apiCall('/api/plans');
+    
+    const body = `
+      <div class="plan-selection">
+        <h3>Choose Your Plan</h3>
+        <div class="plans-grid">
+          ${plans.map(plan => `
+            <div class="plan-card" data-plan="${plan.id}">
+              <div class="plan-header">
+                <h4>${plan.name}</h4>
+                <div class="plan-price">${plan.price} RUB</div>
+              </div>
+              <div class="plan-description">${plan.description}</div>
+              <div class="plan-users">${plan.users} users</div>
+              <button class="btn plan-select-btn" onclick="selectPlan('${plan.id}', '${plan.name}', '${plan.price}')">Select</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    
+    openModal('Choose Plan', body);
+  } catch (error) {
+    console.error('Error loading plans:', error);
+    alert('Error loading plans');
+  }
+}
+
+async function selectPlan(planId, planName, planPrice) {
+  const body = `
+    <div class="payment-form">
+      <h3>Complete Your Subscription</h3>
+      <div class="plan-summary">
+        <p><strong>Plan:</strong> ${planName}</p>
+        <p><strong>Price:</strong> ${planPrice} RUB</p>
+      </div>
+      
+      <div class="payment-methods">
+        <h4>Payment Method</h4>
+        <div class="card-form">
+          <div class="form-group">
+            <label>Card Number</label>
+            <input type="text" placeholder="1234 5678 9012 3456" maxlength="19">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>MM/YY</label>
+              <input type="text" placeholder="12/25" maxlength="5">
+            </div>
+            <div class="form-group">
+              <label>CVV</label>
+              <input type="text" placeholder="123" maxlength="3">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Cardholder Name</label>
+            <input type="text" placeholder="John Doe">
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Cancel</button>
+        <button type="button" class="btn" onclick="completePayment('${planId}')">Pay ${planPrice} RUB</button>
+      </div>
+    </div>
+  `;
+  
+  openModal('Payment', body);
+}
+
+async function completePayment(planId) {
+  try {
+    // Simulate payment processing
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Create subscription
+    await apiCall('/api/subscription', {
+      method: 'POST',
+      body: JSON.stringify({ plan: planId })
+    });
+    
+    closeModal();
+    loadSubscription();
+    loadMasters();
+    alert('Subscription activated successfully!');
+  } catch (error) {
+    console.error('Payment error:', error);
+    alert('Payment failed. Please try again.');
+  }
+}
+
 // Загрузка всех данных
 async function loadAllData() {
   await Promise.all([
@@ -1074,7 +1356,8 @@ async function loadAllData() {
     loadServices(),
     loadMasters(),
     loadSchedule(),
-    loadWorks()
+    loadWorks(),
+    loadSubscription()
   ]);
 }
 
