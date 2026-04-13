@@ -54,13 +54,13 @@ router.post('/request-login', async (req, res) => {
       await transporter.sendMail({
         from: process.env.MAIL_FROM || process.env.SMTP_USER,
         to: email,
-        subject: 'Bloknot - Link for login',
+        subject: 'Bloknot - Ссылка для входа',
         html: `
-          <h2>Welcome to Bloknot!</h2>
-          <p>Click the link below to login to your account:</p>
-          <p><a href="${verifyUrl}">Login to Bloknot</a></p>
-          <p>If you didn't request this link, please ignore this email.</p>
-          <p>This link will expire in 1 hour.</p>
+          <h2>Добро пожаловать в Bloknot!</h2>
+          <p>Нажмите на ссылку ниже, чтобы войти в свой аккаунт:</p>
+          <p><a href="${verifyUrl}">Войти в Bloknot</a></p>
+          <p>Если вы не запрашивали эту ссылку, просто проигнорируйте это письмо.</p>
+          <p>Ссылка действительна в течение 1 часа.</p>
         `
       });
       

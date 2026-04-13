@@ -760,12 +760,17 @@
         <label for="authPhone">Phone</label>
         <input id="authPhone" type="tel" placeholder="+7XXXXXXXXXX" autocomplete="tel" />
       </div>
+      <div class="field">
+        <label for="authPassword">Password</label>
+        <input id="authPassword" type="password" placeholder="password" autocomplete="current-password" />
+      </div>
 
       <div class="notice" id="authNotice"></div>
 
       <div class="modal-actions">
         <button class="btn secondary" id="authCloseBtn" type="button">Закрыть</button>
         <button class="btn" id="authSendBtn" type="button">Отправить ссылку</button>
+        <button class="btn primary" id="authLoginBtn" type="button">Войти</button>
       </div>
     </div>
   </div>
@@ -875,52 +880,75 @@
       modal.setAttribute("aria-hidden", "true");
     }
 
+    // Phone validation function
+    function validatePhone(phone) {
+      // Remove all non-digit characters
+      const digits = phone.replace(/\D/g, '');
+      
+      // Check if it's a valid Russian phone number
+      if (digits.length === 11 && digits.startsWith('7')) {
+        return true;
+      }
+      
+      // Check if it's a valid phone number without country code (10 digits)
+      if (digits.length === 10) {
+        return true;
+      }
+      
+      return false;
+    }
+
     async function requestLogin() {
-  const email = String(emailInput.value || "").trim();
-  const phone = String(document.getElementById("authPhone").value || "").trim();
+      const email = String(emailInput.value || "").trim();
+      const phone = String(document.getElementById("authPhone").value || "").trim();
 
-  if (!email) {
-    showNotice("Введите email.");
-    return;
-  }
+      if (!email) {
+        showNotice("Enter email.");
+        return;
+      }
 
-  try {
-    sendBtn.disabled = true;
-    sendBtn.textContent = "Sending...";
+      if (phone && !validatePhone(phone)) {
+        showNotice("Enter valid phone number (e.g., +7XXXXXXXXXX).");
+        return;
+      }
 
-    const response = await fetch("/api/auth/request-login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, phone }),
-    });
+      try {
+        sendBtn.disabled = true;
+        sendBtn.textContent = "Sending...";
 
-    if (!response.ok) {
-      const t = await response.json().catch(() => ({}));
-      throw new Error(t.error || ("HTTP " + response.status)); // 
+        const response = await fetch("/api/auth/request-login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, phone }),
+        });
+
+        if (!response.ok) {
+          const t = await response.json().catch(() => ({}));
+          throw new Error(t.error || ("HTTP " + response.status));
+        }
+
+        const result = await response.json().catch(() => ({}));
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        if (result.magicLink) {
+          showNotice(`Magic link: ${result.magicLink}`);
+          showNotice("Magic link sent to your email. Check your inbox and spam folder.");
+        } else {
+          showNotice("Magic link sent to your email. Check your inbox and spam folder.");
+        }
+
+      } catch (e) {
+        showNotice("Failed to send: " + (e && e.message ? e.message : "error"));
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = "Send Link";
+      }
     }
-
-    const result = await response.json().catch(() => ({}));
-
-    if (result.error) {
-      throw new Error(result.error);
-    }
-
-    if (result.magicLink) {
-      // For development - show the magic link
-      showNotice(`Magic link: ${result.magicLink}`);
-      showNotice("Ссылка для входа отправлена на вашу почту. Проверьте входящие и папку «Спам».");
-    } else {
-      showNotice("Ссылка для входа отправлена на вашу почту. Проверьте входящие и папку «Спам».");
-    }
-
-  } catch (e) {
-    showNotice("Не удалось отправить: " + (e && e.message ? e.message : "ошибка"));
-  } finally {
-    sendBtn.disabled = false;
-  }
-}
 
 // Event listeners for buttons that always exist
 document.getElementById("tryBtn").addEventListener("click", (e) => {
