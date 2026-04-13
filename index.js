@@ -33,7 +33,6 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api', subscriptionRoutes);
-app.use('/api/auth', magicLinkRoutes);
 
 console.log('Business routes loaded:', typeof businessRoutes);
 console.log('Business routes methods:', Object.getOwnPropertyNames(businessRoutes));

@@ -59,15 +59,55 @@ async function requestLogin(req, res) {
     // Send email with magic link
     const magicLink = `${req.protocol}://${req.get('host')}/api/auth/confirm?token=${token}`;
     
-    // TODO: Configure real email service
-    // For now, return the link for development
-    console.log(`[MAGIC LINK] Generated for ${user.email}: ${magicLink}`);
+    // Configure email service
+    const nodemailer = require('nodemailer');
     
-    res.json({
-      message: 'Magic link sent',
-      magicLink, // Remove this in production
-      debug: true // Remove this in production
+    // For development, use ethereal email or test account
+    const transporter = nodemailer.createTransporter({
+      host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+      port: process.env.SMTP_PORT || 587,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER || 'test@ethereal.email',
+        pass: process.env.SMTP_PASS || 'testpassword'
+      }
     });
+    
+    // Send email
+    try {
+      await transporter.sendMail({
+        from: `"Bloknot" <${process.env.SMTP_FROM || 'noreply@bloknotservis.ru'}>`,
+        to: user.email,
+        subject: 'Bloknot - Link for login',
+        html: `
+          <h2>Welcome to Bloknot!</h2>
+          <p>Click the link below to login to your account:</p>
+          <p><a href="${magicLink}">Login to Bloknot</a></p>
+          <p>If you didn't request this link, please ignore this email.</p>
+          <p>This link will expire in 15 minutes.</p>
+        `
+      });
+      
+      console.log(`[EMAIL SENT] Magic link sent to ${user.email}`);
+      
+      res.json({
+        message: 'Magic link sent',
+        magicLink: process.env.NODE_ENV === 'development' ? magicLink : undefined,
+        debug: process.env.NODE_ENV === 'development'
+      });
+      
+    } catch (emailError) {
+      console.error('[EMAIL ERROR] Failed to send email:', emailError);
+      
+      // Fallback: show magic link in logs for development
+      console.log(`[MAGIC LINK] Generated for ${user.email}: ${magicLink}`);
+      
+      res.json({
+        message: 'Magic link sent',
+        magicLink, // Show in development for testing
+        debug: true
+      });
+    }
 
   } catch (error) {
     console.error('Request login error:', error);
