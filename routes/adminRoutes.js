@@ -109,7 +109,7 @@ router.delete('/users/:id', async (req, res) => {
       include: { 
         ownedBusiness: true,
         business: true,
-        staff: true,
+        staffProfile: true,
         loginTokens: true
       }
     });
@@ -122,7 +122,7 @@ router.delete('/users/:id', async (req, res) => {
     console.log(`[ADMIN DELETE] Found user:`, {
       email: user.email,
       hasBusiness: !!user.ownedBusiness,
-      hasStaffProfile: !!user.staff,
+      hasStaffProfile: !!user.staffProfile,
       loginTokensCount: user.loginTokens.length
     });
     
@@ -140,7 +140,7 @@ router.delete('/users/:id', async (req, res) => {
       where: { userId: id }
     });
     
-    if (user.staff) {
+    if (user.staffProfile) {
       console.log(`[ADMIN DELETE] Deleting staff profile for user: ${id}`);
       await prisma.staff.delete({
         where: { userId: id }
