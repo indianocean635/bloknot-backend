@@ -910,13 +910,9 @@
     if (result.magicLink) {
       // For development - show the magic link
       showNotice(`Magic link: ${result.magicLink}`);
-      
-      // Auto-redirect to magic link in development
-      setTimeout(() => {
-        window.location.href = result.magicLink;
-      }, 2000);
+      showNotice("Magic link sent to your email. Check your inbox and spam folder.");
     } else {
-      showNotice("Ссылка для входа отправлена на вашу почту. Проверьте входящие и папку «Спам».");
+      showNotice("Magic link sent to your email. Check your inbox and spam folder.");
     }
 
   } catch (e) {
