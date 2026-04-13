@@ -55,21 +55,21 @@ async function getPlans(req, res) {
       {
         id: 'SOLO',
         name: 'Solo',
-        price: '990',
+        price: '690',
         users: 1,
         description: '1 specialist'
       },
       {
         id: 'STUDIO',
         name: 'Studio',
-        price: '2490',
+        price: '990',
         users: 5,
         description: 'Up to 5 specialists'
       },
       {
         id: 'PRO',
         name: 'Pro',
-        price: '4990',
+        price: '1490',
         users: 15,
         description: 'Up to 15 specialists'
       }
