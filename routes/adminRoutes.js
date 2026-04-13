@@ -102,6 +102,33 @@ router.delete('/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { ownedBusiness: true }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Check if user owns a business
+    if (user.ownedBusiness) {
+      return res.status(400).json({ 
+        error: 'Cannot delete user who owns a business. Delete the business first.' 
+      });
+    }
+    
+    // Delete related data first
+    await prisma.loginToken.deleteMany({
+      where: { userId: id }
+    });
+    
+    await prisma.staff.delete({
+      where: { userId: id }
+    });
+    
+    // Delete the user
     await prisma.user.delete({
       where: { id }
     });
@@ -109,7 +136,13 @@ router.delete('/users/:id', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('Admin delete user error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (error.code === 'P2002') {
+      res.status(400).json({ error: 'Cannot delete user - related data exists' });
+    } else if (error.code === 'P2025') {
+      res.status(404).json({ error: 'User not found' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 });
 
