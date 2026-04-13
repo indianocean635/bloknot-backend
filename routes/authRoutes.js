@@ -1,6 +1,9 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
+const { PrismaClient } = require('@prisma/client');
 const router = express.Router();
+
+const prisma = new PrismaClient();
 
 // Load environment variables from .env file
 require('dotenv').config();
@@ -30,6 +33,63 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
 } else {
   console.log('Email not configured - missing SMTP settings');
 }
+
+// POST /api/auth/login (password authentication)
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+  
+  console.log(`[LOGIN ATTEMPT] Email: ${email}`);
+  
+  try {
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        business: true,
+        ownedBusiness: true,
+        staffProfile: true
+      }
+    });
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    // Check if user has password
+    if (!user.password) {
+      return res.status(401).json({ error: 'Please use magic link to login first' });
+    }
+    
+    // Verify password
+    const bcrypt = require('bcrypt');
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    console.log(`[LOGIN SUCCESS] Email: ${email}`);
+    
+    res.json({
+      success: true,
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        businessId: user.businessId
+      }
+    });
+    
+  } catch (error) {
+    console.error('[LOGIN ERROR]', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // POST /api/auth/request-login (main endpoint)
 router.post('/request-login', async (req, res) => {

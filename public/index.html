@@ -749,28 +749,39 @@
 
   <div class="modal" id="authModal" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-      <div class="modal-title" id="authTitle">Вход / регистрация</div>
-      <div class="modal-sub">Введите email — отправим ссылку для входа.</div>
+      <div class="modal-title" id="authTitle">Login</div>
+      <div class="modal-sub" id="authSub">Enter your credentials to login.</div>
 
-      <div class="field">
-        <label for="authEmail">Email</label>
-        <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+      <!-- Login Fields -->
+      <div id="loginFields">
+        <div class="field">
+          <label for="authEmail">Email</label>
+          <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="authPassword">Password</label>
+          <input id="authPassword" type="password" placeholder="Enter your password" autocomplete="current-password" />
+        </div>
       </div>
-      <div class="field">
-        <label for="authPhone">Phone</label>
-        <input id="authPhone" type="tel" placeholder="+7XXXXXXXXXX" autocomplete="tel" />
-      </div>
-      <div class="field">
-        <label for="authPassword">Password</label>
-        <input id="authPassword" type="password" placeholder="password" autocomplete="current-password" />
+
+      <!-- Registration Fields -->
+      <div id="registrationFields" style="display: none;">
+        <div class="field">
+          <label for="authEmail">Email</label>
+          <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="authPhone">Phone</label>
+          <input id="authPhone" type="tel" placeholder="+7XXXXXXXXXX" autocomplete="tel" />
+        </div>
       </div>
 
       <div class="notice" id="authNotice"></div>
 
       <div class="modal-actions">
-        <button class="btn secondary" id="authCloseBtn" type="button">Закрыть</button>
-        <button class="btn" id="authSendBtn" type="button">Отправить ссылку</button>
-        <button class="btn primary" id="authLoginBtn" type="button">Войти</button>
+        <button class="btn secondary" id="authCloseBtn" type="button">Close</button>
+        <button class="btn primary" id="authLoginBtn" type="button">Login</button>
+        <button class="btn" id="authSendBtn" type="button" style="display: none;">Send Link</button>
       </div>
     </div>
   </div>
@@ -950,27 +961,157 @@
       }
     }
 
-// Event listeners for buttons that always exist
-document.getElementById("tryBtn").addEventListener("click", (e) => {
-  e.preventDefault();
-  openModal();
-});
+// Modal state management
+    let currentModalMode = 'login'; // 'login' or 'registration'
 
-closeBtn.addEventListener("click", closeModal);
+    function openLoginModal() {
+      currentModalMode = 'login';
+      document.getElementById('authTitle').textContent = 'Login';
+      document.getElementById('authSub').textContent = 'Enter your credentials to login.';
+      document.getElementById('loginFields').style.display = 'block';
+      document.getElementById('registrationFields').style.display = 'none';
+      document.getElementById('authLoginBtn').style.display = 'inline-block';
+      document.getElementById('authSendBtn').style.display = 'none';
+      openModal();
+    }
 
-modal.addEventListener("click", (e) => {
-  if (e.target === modal) closeModal();
-});
+    function openRegistrationModal() {
+      currentModalMode = 'registration';
+      document.getElementById('authTitle').textContent = 'Registration';
+      document.getElementById('authSub').textContent = 'Enter email and phone - we\'ll send you a login link.';
+      document.getElementById('loginFields').style.display = 'none';
+      document.getElementById('registrationFields').style.display = 'block';
+      document.getElementById('authLoginBtn').style.display = 'none';
+      document.getElementById('authSendBtn').style.display = 'inline-block';
+      openModal();
+    }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeModal();
-});
+    // Update event listeners
+    document.getElementById("loginLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      openLoginModal();
+    });
 
-sendBtn.addEventListener("click", requestLogin);
+    document.getElementById("signupLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      openRegistrationModal();
+    });
 
-emailInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") requestLogin();
-});
+    // Update bookBtn to use registration modal
+    const bookBtn = document.getElementById("bookBtn");
+    if (bookBtn) {
+      bookBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        openRegistrationModal();
+      });
+    }
+
+    // Add tryBtn if it exists (for "Try Free" button)
+    const tryBtn = document.getElementById("tryBtn");
+    if (tryBtn) {
+      tryBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        openRegistrationModal();
+      });
+    }
+
+    closeBtn.addEventListener("click", closeModal);
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeModal();
+    });
+
+    // Update button event listeners
+    sendBtn.addEventListener("click", requestLogin);
+
+    // Add login with password function
+    async function loginWithPassword() {
+      const email = String(emailInput.value || "").trim();
+      const password = String(document.getElementById("authPassword").value || "").trim();
+
+      if (!email) {
+        showNotice("Enter email.");
+        return;
+      }
+
+      if (!password) {
+        showNotice("Enter password.");
+        return;
+      }
+
+      try {
+        const loginBtn = document.getElementById("authLoginBtn");
+        loginBtn.disabled = true;
+        loginBtn.textContent = "Logging in...";
+
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+          const t = await response.json().catch(() => ({}));
+          throw new Error(t.error || ("HTTP " + response.status));
+        }
+
+        const result = await response.json().catch(() => ({}));
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        if (result.success) {
+          localStorage.setItem("bloknot_logged_in", "1");
+          localStorage.setItem("bloknot_user_email", email);
+          showNotice("Login successful!");
+          closeModal();
+          checkAuthStatus();
+          // Redirect to dashboard
+          setTimeout(() => {
+            window.location.href = "/dashboard.html";
+          }, 1000);
+        } else {
+          showNotice("Login failed. Please check your credentials.");
+        }
+
+      } catch (e) {
+        showNotice("Login failed: " + (e && e.message ? e.message : "error"));
+      } finally {
+        const loginBtn = document.getElementById("authLoginBtn");
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Login";
+      }
+    }
+
+    document.getElementById("authLoginBtn").addEventListener("click", loginWithPassword);
+
+    // Handle Enter key based on current mode
+    emailInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        if (currentModalMode === 'login') {
+          loginWithPassword();
+        } else {
+          requestLogin();
+        }
+      }
+    });
+
+    // Add Enter key handler for password field
+    const passwordInput = document.getElementById("authPassword");
+    if (passwordInput) {
+      passwordInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          loginWithPassword();
+        }
+      });
+    }
 
 // Функция копирования email из подвала
 function copyEmail() {
