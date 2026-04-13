@@ -105,15 +105,16 @@
       <button class="btn" id="addMasterBtn">+ Добавить специалиста</button>
     </div>
     
-    <!-- Subscription Plan -->
-    <div id="subscriptionSection" style="margin-bottom: 16px;">
-      <div class="subscription-info">
-        <p style="margin: 0; color: #6b7280; font-size: 14px;">
-          Current plan: <strong id="currentPlan">Loading...</strong> | 
-          Users: <strong id="currentUsers">0</strong>/<strong id="maxUsers">1</strong>
-        </p>
+    <!-- Tariff Selection -->
+    <div id="tariffSelection" style="margin-bottom: 16px;">
+      <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px;">
+        <strong>Choose tariff 1, 5 or more specialists?</strong>
+      </p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn secondary" onclick="selectTariff('SOLO', '990')">1 specialist</button>
+        <button class="btn secondary" onclick="selectTariff('STUDIO', '2490')">5 specialists</button>
+        <button class="btn secondary" onclick="selectTariff('PRO', '4990')">More than 5 specialists</button>
       </div>
-      <button class="btn secondary" id="changePlanBtn" style="margin-top: 8px;">Change Plan</button>
     </div>
     
     <div class="items-grid" id="mastersGrid">
@@ -1215,79 +1216,19 @@ async function apiCall(url, options = {}) {
   }
 }
 
-// Subscription management
-async function loadSubscription() {
-  try {
-    const subscription = await apiCall('/api/subscription');
-    const masters = await apiCall('/api/settings/masters');
-    
-    const currentPlanEl = document.getElementById('currentPlan');
-    const currentUsersEl = document.getElementById('currentUsers');
-    const maxUsersEl = document.getElementById('maxUsers');
-    
-    currentPlanEl.textContent = subscription.plan || 'FREE';
-    currentUsersEl.textContent = masters ? masters.length : 0;
-    maxUsersEl.textContent = subscription.maxUsers || 1;
-    
-    // Update add master button based on plan
-    updateMasterButton(subscription.maxUsers || 1, masters ? masters.length : 0);
-  } catch (error) {
-    console.error('Error loading subscription:', error);
-  }
-}
-
-function updateMasterButton(maxUsers, currentUsers) {
-  const addBtn = document.getElementById('addMasterBtn');
-  if (currentUsers >= maxUsers) {
-    addBtn.textContent = 'Plan limit reached';
-    addBtn.disabled = true;
-    addBtn.style.opacity = '0.5';
-    addBtn.style.cursor = 'not-allowed';
-  } else {
-    addBtn.textContent = '+ Add Specialist';
-    addBtn.disabled = false;
-    addBtn.style.opacity = '1';
-    addBtn.style.cursor = 'pointer';
-  }
-}
-
-// Plan selection modal
-async function openPlanSelection() {
-  try {
-    const plans = await apiCall('/api/plans');
-    
-    const body = `
-      <div class="plan-selection">
-        <h3>Choose Your Plan</h3>
-        <div class="plans-grid">
-          ${plans.map(plan => `
-            <div class="plan-card" data-plan="${plan.id}">
-              <div class="plan-header">
-                <h4>${plan.name}</h4>
-                <div class="plan-price">${plan.price} RUB</div>
-              </div>
-              <div class="plan-description">${plan.description}</div>
-              <div class="plan-users">${plan.users} users</div>
-              <button class="btn plan-select-btn" onclick="selectPlan('${plan.id}', '${plan.name}', '${plan.price}')">Select</button>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-    
-    openModal('Choose Plan', body);
-  } catch (error) {
-    console.error('Error loading plans:', error);
-    alert('Error loading plans');
-  }
-}
-
-async function selectPlan(planId, planName, planPrice) {
+// Tariff selection
+async function selectTariff(planId, planPrice) {
+  const planNames = {
+    'SOLO': '1 specialist',
+    'STUDIO': '5 specialists',
+    'PRO': 'More than 5 specialists'
+  };
+  
   const body = `
     <div class="payment-form">
       <h3>Complete Your Subscription</h3>
       <div class="plan-summary">
-        <p><strong>Plan:</strong> ${planName}</p>
+        <p><strong>Tariff:</strong> ${planNames[planId]}</p>
         <p><strong>Price:</strong> ${planPrice} RUB</p>
       </div>
       
@@ -1310,14 +1251,14 @@ async function selectPlan(planId, planName, planPrice) {
           </div>
           <div class="form-group">
             <label>Cardholder Name</label>
-            <input type="text" placeholder="John Doe">
+            <input type="text" placeholder="Ivan Ivanov">
           </div>
         </div>
       </div>
       
       <div class="modal-actions">
         <button type="button" class="btn secondary" onclick="closeModal()">Cancel</button>
-        <button type="button" class="btn" onclick="completePayment('${planId}')">Pay ${planPrice} RUB</button>
+        <button type="button" class="btn" onclick="completePayment('${planId}', '${planPrice}')">Pay ${planPrice} RUB</button>
       </div>
     </div>
   `;
@@ -1325,7 +1266,7 @@ async function selectPlan(planId, planName, planPrice) {
   openModal('Payment', body);
 }
 
-async function completePayment(planId) {
+async function completePayment(planId, planPrice) {
   try {
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1337,12 +1278,61 @@ async function completePayment(planId) {
     });
     
     closeModal();
-    loadSubscription();
-    loadMasters();
-    alert('Subscription activated successfully!');
+    
+    // Show success message and redirect to settings
+    const body = `
+      <div class="payment-success">
+        <h3>Payment Successful!</h3>
+        <p>Your subscription has been activated.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn" onclick="backToSettings()">Back to Settings</button>
+        </div>
+      </div>
+    `;
+    
+    openModal('Success', body);
   } catch (error) {
     console.error('Payment error:', error);
     alert('Payment failed. Please try again.');
+  }
+}
+
+function backToSettings() {
+  closeModal();
+  loadSubscription();
+  loadMasters();
+}
+
+async function loadSubscription() {
+  try {
+    const subscription = await apiCall('/api/subscription');
+    const masters = await apiCall('/api/settings/masters');
+    
+    // Hide tariff selection if subscription exists
+    const tariffSelection = document.getElementById('tariffSelection');
+    if (subscription && subscription.plan !== 'FREE') {
+      tariffSelection.style.display = 'none';
+    }
+    
+    // Update add master button based on plan
+    updateMasterButton(subscription.maxUsers || 1, masters ? masters.length : 0);
+  } catch (error) {
+    console.error('Error loading subscription:', error);
+  }
+}
+
+function updateMasterButton(maxUsers, currentUsers) {
+  const addBtn = document.getElementById('addMasterBtn');
+  if (currentUsers >= maxUsers) {
+    addBtn.textContent = 'Tariff limit reached';
+    addBtn.disabled = true;
+    addBtn.style.opacity = '0.5';
+    addBtn.style.cursor = 'not-allowed';
+  } else {
+    addBtn.textContent = '+ Add Specialist';
+    addBtn.disabled = false;
+    addBtn.style.opacity = '1';
+    addBtn.style.cursor = 'pointer';
   }
 }
 
