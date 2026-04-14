@@ -9,16 +9,24 @@
 </head>
 <body>
   <main class="container">
-    <h1 class="page-title">Super Admin Login</h1>
-    <p class="page-subtitle">Only for Bloknot owner</p>
-
-    <div class="card" style="max-width:400px; margin:20px auto">
-      <div class="field">
-        <label for="email">Email</label>
-        <input id="email" type="email" placeholder="admin@bloknotservis.ru" autocomplete="email" />
+    <div class="admin-login-container">
+      <div class="admin-login-header">
+        <h1 class="page-title">Super Admin Login</h1>
+        <p class="page-subtitle">Only for Bloknot owner</p>
+        <button onclick="clearCache()" style="background: #ff6b6b; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 10px;">
+          Clear Cache
+        </button>
       </div>
+      <div class="card" style="max-width:400px; margin:20px auto">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="admin@bloknotservis.ru" autocomplete="email" />
+        </div>
 
-      <div class="field">
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="Enter admin password" autocomplete="current-password" />
+        </div>
         <label for="password">Password</label>
         <input id="password" type="password" placeholder="Enter admin password" autocomplete="current-password" />
       </div>
@@ -89,6 +97,26 @@
       } finally {
         loginBtn.disabled = false;
       }
+    }
+
+    function clearCache() {
+      // Clear all localStorage data
+      localStorage.clear();
+      
+      // Clear all sessionStorage data
+      sessionStorage.clear();
+      
+      // Clear all cookies
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
+      
+      showNotice('Cache cleared! Please refresh the page.');
+      
+      // Reload page after 2 seconds
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     }
 
     loginBtn.addEventListener('click', login);
