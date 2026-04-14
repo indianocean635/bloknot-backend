@@ -144,16 +144,29 @@ async function confirmLogin(req, res) {
 
     // Check if user has password
     if (!user.password) {
-      // Always redirect to frontend for password setup
-      return res.redirect(`/auth-confirm.html?token=${token}`);
+      // Return JSON for frontend to handle password setup
+      return res.json({
+        status: 'SET_PASSWORD_REQUIRED',
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          businessId: user.businessId
+        },
+        token
+      });
     }
 
-    // User has password, create session and redirect
-    res.cookie('bloknot_logged_in_email', user.email, { maxAge: 24 * 60 * 60 * 1000 });
-    res.cookie('bloknot_user_id', user.id, { maxAge: 24 * 60 * 60 * 1000 });
-    res.cookie('bloknot_business_id', user.businessId || '', { maxAge: 24 * 60 * 60 * 1000 });
-    res.cookie('bloknot_logged_in', '1', { maxAge: 24 * 60 * 60 * 1000 });
-    return res.redirect('/dashboard.html');
+    // User has password, return success for frontend to handle
+    return res.json({
+      status: 'LOGIN_SUCCESS',
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        businessId: user.businessId
+      }
+    });
 
   } catch (error) {
     console.error('Confirm login error:', error);
