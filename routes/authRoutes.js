@@ -293,6 +293,7 @@ router.get('/magic/:token', async (req, res) => {
     console.error('❌ VERIFY MAGIC LINK ERROR:', error);
     res.status(500).json({ error: 'Server error' });
   }
+});
 
 // GET /api/auth/me
 router.get('/me', async (req, res) => {
