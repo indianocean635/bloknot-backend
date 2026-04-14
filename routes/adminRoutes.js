@@ -1,5 +1,6 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
 const router = express.Router();
 
 const prisma = new PrismaClient();
@@ -56,7 +57,14 @@ router.get('/users', async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    const usersWithStaff = users.map(user => ({
+    // Add password status to each user
+    const usersWithPassword = users.map(user => ({
+      ...user,
+      password: user.password ? '***' : null,
+      hasPassword: !!user.password
+    }));
+
+    const usersWithStaff = usersWithPassword.map(user => ({
       id: user.id,
       email: user.email,
       phone: user.phone,
@@ -64,12 +72,45 @@ router.get('/users', async (req, res) => {
       isPaying: user.isPaying,
       totalPaid: user.totalPaid,
       nextBillingAt: user.nextBillingAt,
+      password: user.password,
+      hasPassword: user.hasPassword,
       staffUsers: user.business?.users || []
     }));
 
     res.json(usersWithStaff);
   } catch (error) {
     console.error('Admin users error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get single user
+router.get('/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        business: true
+      }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Return user with password (for admin copying)
+    res.json({
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      createdAt: user.createdAt,
+      password: user.password, // Include actual password for admin
+      hasPassword: !!user.password
+    });
+  } catch (error) {
+    console.error('Admin get user error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -195,6 +236,33 @@ router.get('/impersonate/:id', async (req, res) => {
     res.redirect('/dashboard.html?logged=1');
   } catch (error) {
     console.error('Admin impersonate error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Reset user password
+router.post('/users/:id/reset-password', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+    
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Update user password
+    await prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword }
+    });
+    
+    console.log(`[ADMIN] Password reset for user: ${id}`);
+    res.json({ success: true, message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Admin password reset error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

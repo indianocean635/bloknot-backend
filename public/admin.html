@@ -13,8 +13,8 @@
     const userEmail = localStorage.getItem('bloknot_admin_email');
     const isLoggedIn = localStorage.getItem('bloknot_admin_logged_in') === '1';
     
-    // Allow apeskov635@gmail.com (owner) and admin@bloknotservis.ru
-    if (!isLoggedIn || (userEmail !== 'apeskov635@gmail.com' && userEmail !== 'admin@bloknotservis.ru')) {
+    // Allow any logged in admin
+    if (!isLoggedIn) {
       // Redirect to login page
       window.location.href = '/admin-login.html';
     }
@@ -88,6 +88,7 @@
             <tr>
               <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Email</th>
               <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Phone</th>
+              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Password</th>
               <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Registration</th>
               <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Paying</th>
               <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Paid (RUB)</th>
@@ -180,6 +181,21 @@
               <a href="#" data-action="impersonate" data-id="${esc(u.id)}" style="font-weight:800">${esc(u.email)}</a>
             </td>
             <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">${esc(u.phone || '-')}</td>
+            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 12px; color: #666; font-family: monospace;">
+                  ${u.password ? '***' : 'No password'}
+                </span>
+                ${u.password ? `
+                  <button class="btn secondary" onclick="copyPassword('${esc(u.id)}', '${esc(u.email)}')" style="padding: 4px 8px; font-size: 11px;">
+                    Copy
+                  </button>
+                  <button class="btn secondary" onclick="resetPassword('${esc(u.id)}', '${esc(u.email)}')" style="padding: 4px 8px; font-size: 11px;">
+                    Reset
+                  </button>
+                ` : ''}
+              </div>
+            </td>
             <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">${fmtDate(u.createdAt)}</td>
             <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
               <label style="display:inline-flex; align-items:center; gap:8px; user-select:none">
@@ -230,6 +246,39 @@
 
     async function deleteUser(id) {
       await api(`/api/admin/users/${id}`, { method: 'DELETE' });
+    }
+
+    // Copy password to clipboard
+    async function copyPassword(userId, userEmail) {
+      try {
+        const user = await api(`/api/admin/users/${userId}`);
+        if (user.password) {
+          await navigator.clipboard.writeText(user.password);
+          showNotice(`Password copied for ${userEmail}`);
+        } else {
+          showNotice('No password set for this user');
+        }
+      } catch (error) {
+        showNotice('Failed to copy password: ' + error.message);
+      }
+    }
+
+    // Reset user password
+    async function resetPassword(userId, userEmail) {
+      const newPassword = prompt(`Enter new password for ${userEmail}:`);
+      if (!newPassword) return;
+      
+      try {
+        await api(`/api/admin/users/${userId}/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: newPassword })
+        });
+        showNotice(`Password reset for ${userEmail}`);
+        await loadUsers(); // Refresh the table
+      } catch (error) {
+        showNotice('Failed to reset password: ' + error.message);
+      }
     }
 
     document.getElementById('refreshBtn').addEventListener('click', async () => {
