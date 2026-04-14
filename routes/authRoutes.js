@@ -101,6 +101,29 @@ router.post('/request-login', async (req, res) => {
   
   console.log(`[AUTH REQUEST] Email: ${email}, Phone: ${phone || 'not provided'}`);
   
+  // Check if user exists in database, create if not
+  let user = await prisma.user.findUnique({
+    where: { email },
+    include: { business: true, ownedBusiness: true, staffProfile: true }
+  });
+  
+  if (!user) {
+    // Create new user in database
+    user = await prisma.user.create({
+      data: {
+        email,
+        phone: phone || null,
+        role: 'OWNER',
+        businessId: null
+      },
+      include: { business: true, ownedBusiness: true, staffProfile: true }
+    });
+    console.log(`[NEW USER CREATED] Email: ${email}, Role: ${user.role}`);
+  }
+  
+  // Store user in memory for magic link system
+  memoryUsers.set(email, user);
+  
   const token = 'token_' + Date.now();
   
   // Store token in memory
@@ -295,7 +318,8 @@ router.get('/me', async (req, res) => {
         id: user.id,
         email: user.email,
         role: user.role,
-        businessId: user.businessId
+        businessId: user.businessId,
+        requiresPassword: !user.password
       }
     });
 

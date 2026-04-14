@@ -1131,8 +1131,7 @@ async function apiCall(url, options = {}) {
   
   // Get user email from localStorage
   const userEmail = localStorage.getItem('bloknot_logged_in_email') || 
-                   localStorage.getItem('user_email') || 
-                   'peskov142@mail.ru'; // Fallback for testing
+                   localStorage.getItem('user_email');
   
   // Add authentication headers
   const headers = {
