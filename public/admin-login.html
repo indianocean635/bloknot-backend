@@ -60,8 +60,8 @@
         return;
       }
 
-      // Only allow admin@bloknotservis.ru
-      if (email !== 'admin@bloknotservis.ru') {
+      // Allow apeskov635@gmail.com (owner) and admin@bloknotservis.ru
+      if (email !== 'apeskov635@gmail.com' && email !== 'admin@bloknotservis.ru') {
         showNotice('Access denied. Only Bloknot owner can login.');
         return;
       }

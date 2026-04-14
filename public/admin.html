@@ -13,8 +13,8 @@
     const userEmail = localStorage.getItem('bloknot_admin_email');
     const isLoggedIn = localStorage.getItem('bloknot_admin_logged_in') === '1';
     
-    // Only allow admin@bloknotservis.ru
-    if (!isLoggedIn || userEmail !== 'admin@bloknotservis.ru') {
+    // Allow apeskov635@gmail.com (owner) and admin@bloknotservis.ru
+    if (!isLoggedIn || (userEmail !== 'apeskov635@gmail.com' && userEmail !== 'admin@bloknotservis.ru')) {
       // Redirect to login page
       window.location.href = '/admin-login.html';
     }
