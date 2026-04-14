@@ -352,10 +352,17 @@
 
    // Check if user needs to set password on page load
    async function checkPasswordRequired() {
+     console.log('Checking password requirement...');
      try {
        const response = await api('/api/auth/me');
+       console.log('Auth response:', response);
+       console.log('Requires password:', response.requiresPassword);
+       
        if (response.requiresPassword) {
+         console.log('Showing password modal for:', response.email);
          showPasswordModal(response.email);
+       } else {
+         console.log('Password not required');
        }
      } catch (error) {
        console.error('Error checking password requirement:', error);
