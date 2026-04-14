@@ -767,8 +767,8 @@
       <!-- Registration Fields -->
       <div id="registrationFields" style="display: none;">
         <div class="field">
-          <label for="authEmail">Email</label>
-          <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+          <label for="authEmailReg">Email</label>
+          <input id="authEmailReg" type="email" placeholder="you@example.com" autocomplete="email" />
         </div>
         <div class="field">
           <label for="authPhone">Phone</label>
@@ -883,7 +883,13 @@
       showNotice("");
       modal.classList.add("open");
       modal.setAttribute("aria-hidden", "false");
-      setTimeout(() => emailInput && emailInput.focus(), 0);
+      // Focus on correct email input based on modal mode
+      setTimeout(() => {
+        const emailInput = currentModalMode === 'registration' 
+          ? document.getElementById("authEmailReg")
+          : document.getElementById("authEmail");
+        if (emailInput) emailInput.focus();
+      }, 0);
     }
 
     function closeModal() {
@@ -910,12 +916,18 @@
     }
 
     async function requestLogin() {
+      // Use registration email input for registration mode
+      const emailInput = currentModalMode === 'registration' 
+        ? document.getElementById("authEmailReg")
+        : document.getElementById("authEmail");
+      
       const email = String(emailInput.value || "").trim();
       const phone = String(document.getElementById("authPhone").value || "").trim();
 
       // Debug: log the email being used
       console.log('DEBUG: Email from input:', email);
       console.log('DEBUG: Phone from input:', phone);
+      console.log('DEBUG: Modal mode:', currentModalMode);
 
       if (!email) {
         showNotice("Enter email.");
@@ -989,7 +1001,7 @@
       document.getElementById('authSendBtn').style.display = 'inline-block';
       
       // Clear any cached email values to prevent fallbacks
-      emailInput.value = '';
+      document.getElementById("authEmailReg").value = '';
       document.getElementById("authPhone").value = '';
       
       openModal();
@@ -1039,11 +1051,13 @@
 
     // Add login with password function
     async function loginWithPassword() {
+      // Use login email input for login mode
+      const emailInput = document.getElementById("authEmail");
       const email = String(emailInput.value || "").trim();
       const password = String(document.getElementById("authPassword").value || "").trim();
 
       if (!email) {
-        showNotice("Введите email.");
+        showNotice("Enter email.");
         return;
       }
 
@@ -1102,11 +1116,17 @@
     document.getElementById("authLoginBtn").addEventListener("click", loginWithPassword);
 
     // Handle Enter key based on current mode
-    emailInput.addEventListener("keydown", (e) => {
+    document.getElementById("authEmail").addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         if (currentModalMode === 'login') {
           loginWithPassword();
-        } else {
+        }
+      }
+    });
+    
+    document.getElementById("authEmailReg").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        if (currentModalMode === 'registration') {
           requestLogin();
         }
       }
