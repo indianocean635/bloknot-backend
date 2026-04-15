@@ -749,8 +749,8 @@
 
   <div class="modal" id="authModal" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-      <div class="modal-title" id="authTitle">Login</div>
-      <div class="modal-sub" id="authSub">Enter your credentials to login.</div>
+      <div class="modal-title" id="authTitle">Вход</div>
+      <div class="modal-sub" id="authSub">Введите ваши данные для входа.</div>
 
       <!-- Login Fields -->
       <div id="loginFields">
@@ -771,17 +771,17 @@
           <input id="authEmailReg" type="email" placeholder="you@example.com" autocomplete="email" />
         </div>
         <div class="field">
-          <label for="authPhone">Phone</label>
-          <input id="authPhone" type="tel" placeholder="+7XXXXXXXXXX" autocomplete="tel" />
+          <label for="authPhone">Телефон</label>
+          <input id="authPhone" type="tel" value="+7" autocomplete="tel" />
         </div>
       </div>
 
       <div class="notice" id="authNotice"></div>
 
       <div class="modal-actions">
-        <button class="btn secondary" id="authCloseBtn" type="button">Close</button>
-        <button class="btn primary" id="authLoginBtn" type="button">Login</button>
-        <button class="btn" id="authSendBtn" type="button" style="display: none;">Send Link</button>
+        <button class="btn secondary" id="authCloseBtn" type="button">Закрыть</button>
+        <button class="btn primary" id="authLoginBtn" type="button">Войти</button>
+        <button class="btn" id="authSendBtn" type="button" style="display: none;">Отправить ссылку</button>
       </div>
     </div>
   </div>
@@ -935,13 +935,13 @@
       }
 
       if (phone && !validatePhone(phone)) {
-        showNotice("Enter valid phone number (e.g., +7XXXXXXXXXX).");
+        showNotice("Введите корректный номер телефона (например, +7XXXXXXXXXX).");
         return;
       }
 
       try {
         sendBtn.disabled = true;
-        sendBtn.textContent = "Sending...";
+        sendBtn.textContent = "Отправка...";
 
         const response = await fetch("/api/auth/request-login", {
           method: "POST",
@@ -1002,7 +1002,7 @@
       
       // Clear any cached email values to prevent fallbacks
       document.getElementById("authEmailReg").value = '';
-      document.getElementById("authPhone").value = '';
+      document.getElementById("authPhone").value = '+7';
       
       openModal();
     }
