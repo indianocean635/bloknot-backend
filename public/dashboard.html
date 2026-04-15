@@ -152,9 +152,16 @@
 
      // Load user profile information
      try {
+       // Debug: Check what email is in localStorage
+       const storedEmail = localStorage.getItem('bloknot_logged_in_email');
+       console.log('Stored email in localStorage:', storedEmail);
+
        const user = await Bloknot.api("/api/auth/me");
+       console.log('User data from API:', user);
+
        if (user.email) {
          document.getElementById("userEmail").textContent = user.email;
+         console.log('Displaying email:', user.email);
        }
        if (user.phone) {
          document.getElementById("userPhone").textContent = user.phone;

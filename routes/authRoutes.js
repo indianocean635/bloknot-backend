@@ -363,41 +363,55 @@ router.post('/logout', async (req, res) => {
     
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
-    console.error('❌ LOGOUT ERROR:', error);
+    console.error('LOGOUT ERROR:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// GET /auth/verify (для фронтенда)
-router.get('/verify', (req, res) => {
-  console.log('🔗 VERIFY REQUEST:', req.query);
-  const { token } = req.query;
-  
-  if (!token) {
-    console.log('❌ No token provided');
-    return res.status(400).json({ error: "Token required" });
-  }
-  
-  // Проверяем токен в памяти
-  const tokenData = memoryTokens.get(token);
-  
-  if (!tokenData) {
-    console.log('❌ Invalid token:', token);
-    return res.status(400).json({ error: "Invalid or expired token" });
-  }
-  
-  if (new Date() > tokenData.expiresAt) {
-    memoryTokens.delete(token);
-    console.log('❌ Token expired:', token);
-    return res.status(400).json({ error: "Token expired" });
-  }
+// GET /auth/verify (frontend)
+router.get('/verify', async (req, res) => {
+  try {
+    console.log('VERIFY REQUEST:', req.query);
+    const { token } = req.query;
+    
+    if (!token) {
+      console.log('No token provided');
+      return res.status(400).json({ error: "Token required" });
+    }
+    
+    // Check token in memory
+    const tokenData = memoryTokens.get(token);
+    
+    if (!tokenData) {
+      console.log('Invalid token:', token);
+      return res.status(400).json({ error: "Invalid or expired token" });
+    }
+    
+    if (new Date() > tokenData.expiresAt) {
+      memoryTokens.delete(token);
+      console.log('Token expired:', token);
+      return res.status(400).json({ error: "Token expired" });
+    }
 
-  const user = memoryUsers.get(tokenData.email);
-  
-  console.log('✅ Token verified:', token, 'for email:', tokenData.email);
-  
-  // Редирект на фронт с успехом
-  res.redirect('/?verified=true&token=' + token);
+    // Find real user in database using email from token
+    const realUser = await prisma.user.findUnique({
+      where: { email: tokenData.email },
+      include: { business: true }
+    });
+    
+    if (!realUser) {
+      console.log('User not found in database:', tokenData.email);
+      return res.status(400).json({ error: "User not found" });
+    }
+    
+    console.log('Token verified:', token, 'for email:', tokenData.email, 'real user:', realUser.email);
+    
+    // Redirect to frontend with success
+    res.redirect('/?verified=true&token=' + token);
+  } catch (error) {
+    console.error('Verify error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // POST /auth/update-profile
