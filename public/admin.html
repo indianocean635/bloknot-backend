@@ -39,7 +39,7 @@
           src="/suitcase-money.jpg" 
           alt="Admin Image"
           style="
-            max-width: 600px; 
+            max-width: 400px; 
             width: 100%;
             height: auto;
             border-radius: 12px; 
@@ -68,7 +68,7 @@
           onclick="document.getElementById('imageUpload').click()"
           style="margin-right: 10px;"
         >
-          <span id="uploadButtonText">Upload Image</span>
+          <span id="uploadButtonText">Загрузить картинку</span>
         </button>
         <button 
           class="btn secondary" 
@@ -76,7 +76,7 @@
           onclick="resetImage()"
           style="display: none;"
         >
-          Reset to Default
+          Сбросить
         </button>
       </div>
       
@@ -125,14 +125,14 @@
           <thead>
             <tr>
               <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Email</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Phone</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Password</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Registration</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Paying</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Paid (RUB)</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Next billing</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Staff</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Actions</th>
+              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Телефон</th>
+              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Пароль</th>
+              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Регистрация</th>
+              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Платящий</th>
+              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Оплачено (₽)</th>
+              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">След. списание</th>
+              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Сотрудник</th>
+              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Действия</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -416,15 +416,18 @@
         const result = await response.json();
         
         if (result.success) {
-          // Update the image src
-          document.getElementById('adminImage').src = result.imageUrl + '?t=' + Date.now();
+          // Get the actual filename with extension
+          const imageUrl = '/admin-custom-image.' + file.name.split('.').pop();
+          
+          // Update the image src with timestamp to force reload
+          document.getElementById('adminImage').src = imageUrl + '?t=' + Date.now();
           showUploadStatus('Image uploaded successfully!', 'success');
           
           // Show reset button
           document.getElementById('resetImageBtn').style.display = 'inline-block';
           
           // Store in localStorage
-          localStorage.setItem('admin_custom_image', result.imageUrl);
+          localStorage.setItem('admin_custom_image', imageUrl);
         } else {
           throw new Error(result.error || 'Upload failed');
         }

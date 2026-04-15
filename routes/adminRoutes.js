@@ -307,9 +307,13 @@ router.post('/upload-image', upload.single('image'), (req, res) => {
     
     console.log(`[ADMIN] Image uploaded: ${req.file.filename}`);
     
+    // Return the actual filename with extension
+    const imageUrl = '/admin-custom-image.' + req.file.originalname.split('.').pop();
+    
     res.json({
       success: true,
-      imageUrl: '/admin-custom-image.jpg',
+      imageUrl: imageUrl,
+      filename: req.file.filename,
       message: 'Image uploaded successfully'
     });
   } catch (error) {
@@ -321,12 +325,18 @@ router.post('/upload-image', upload.single('image'), (req, res) => {
 // Reset admin image
 router.delete('/reset-image', (req, res) => {
   try {
-    const imagePath = path.join(__dirname, '../public/admin-custom-image.jpg');
+    const publicDir = path.join(__dirname, '../public');
     
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
-      console.log('[ADMIN] Custom image deleted');
-    }
+    // Delete all possible admin-custom-image files
+    const extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    
+    extensions.forEach(ext => {
+      const imagePath = path.join(publicDir, `admin-custom-image.${ext}`);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+        console.log(`[ADMIN] Custom image deleted: admin-custom-image.${ext}`);
+      }
+    });
     
     res.json({
       success: true,
