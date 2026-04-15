@@ -357,7 +357,7 @@
      }
      
      try {
-       const response = await api('/api/auth/set-password', {
+       const response = await Bloknot.api('/api/auth/set-password', {
          method: 'POST',
          body: JSON.stringify({ password })
        });
@@ -379,7 +379,7 @@
    async function checkPasswordRequired() {
      console.log('Checking password requirement...');
      try {
-       const response = await api('/api/auth/me');
+       const response = await Bloknot.api('/api/auth/me');
        console.log('Auth response:', response);
        console.log('Requires password:', response.requiresPassword);
        
@@ -405,9 +405,6 @@
    checkPasswordRequired();
 
    loadDashboard().catch(() => showNotice("Could not load dashboard data. Try refreshing the page later."));
-
-   setRevenueDefaults();
-   calcRevenue().catch(() => {});
  </script>
 
 </body>
