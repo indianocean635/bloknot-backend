@@ -169,6 +169,8 @@ async function confirmLogin(req, res) {
         user: {
           id: user.id,
           email: user.email,
+          name: user.name,
+          phone: user.phone,
           role: user.role,
           businessId: user.businessId
         },
@@ -182,6 +184,8 @@ async function confirmLogin(req, res) {
       user: {
         id: user.id,
         email: user.email,
+        name: user.name,
+        phone: user.phone,
         role: user.role,
         businessId: user.businessId
       }
@@ -221,6 +225,7 @@ async function setPassword(req, res) {
       user: {
         id: user.id,
         email: user.email,
+        name: user.name,
         phone: user.phone,
         role: user.role,
         businessId: user.businessId

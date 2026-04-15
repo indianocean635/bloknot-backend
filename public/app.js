@@ -111,6 +111,8 @@
     // Add authentication headers
     const userEmail = localStorage.getItem('bloknot_logged_in_email');
     
+    console.log(`[API] Making request to ${path} with email: ${userEmail}`);
+    
     if (!userEmail) {
       // Not authenticated, redirect to login
       window.location.href = '/';

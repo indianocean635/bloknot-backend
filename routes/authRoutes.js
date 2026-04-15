@@ -322,6 +322,9 @@ router.get('/me', async (req, res) => {
     // Use x-user-email header instead of Bearer token
     const userEmail = req.headers['x-user-email'];
     
+    console.log(`[AUTH /me] Request for user: ${userEmail}`);
+    console.log(`[AUTH /me] Headers:`, req.headers);
+    
     if (!userEmail) {
       return res.status(401).json({ error: 'No email provided' });
     }
@@ -331,6 +334,8 @@ router.get('/me', async (req, res) => {
       where: { email: userEmail },
       include: { business: true }
     });
+    
+    console.log(`[AUTH /me] Found user:`, user ? { id: user.id, email: user.email, name: user.name, phone: user.phone } : null);
     
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
