@@ -895,12 +895,15 @@
       showNotice("");
       modal.classList.add("open");
       modal.setAttribute("aria-hidden", "false");
-      // Focus on correct email input based on modal mode
+      // Focus on correct input based on modal mode
       setTimeout(() => {
-        const emailInput = currentModalMode === 'registration' 
-          ? document.getElementById("authEmailReg")
-          : document.getElementById("authEmail");
-        if (emailInput) emailInput.focus();
+        let focusInput;
+        if (currentModalMode === 'registration') {
+          focusInput = document.getElementById("authNameReg"); // Focus on name field for registration
+        } else {
+          focusInput = document.getElementById("authEmail"); // Focus on email for login
+        }
+        if (focusInput) focusInput.focus();
       }, 0);
     }
 
