@@ -1,9 +1,40 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 
 const prisma = new PrismaClient();
+
+// Configure multer for image uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../public');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, 'admin-custom-image.' + file.originalname.split('.').pop());
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  }
+});
 
 // Get admin stats
 router.get('/stats', async (req, res) => {
@@ -264,6 +295,46 @@ router.post('/users/:id/reset-password', async (req, res) => {
   } catch (error) {
     console.error('Admin password reset error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Upload admin image
+router.post('/upload-image', upload.single('image'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    console.log(`[ADMIN] Image uploaded: ${req.file.filename}`);
+    
+    res.json({
+      success: true,
+      imageUrl: '/admin-custom-image.jpg',
+      message: 'Image uploaded successfully'
+    });
+  } catch (error) {
+    console.error('Admin image upload error:', error);
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
+// Reset admin image
+router.delete('/reset-image', (req, res) => {
+  try {
+    const imagePath = path.join(__dirname, '../public/admin-custom-image.jpg');
+    
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+      console.log('[ADMIN] Custom image deleted');
+    }
+    
+    res.json({
+      success: true,
+      message: 'Image reset successfully'
+    });
+  } catch (error) {
+    console.error('Admin image reset error:', error);
+    res.status(500).json({ error: 'Reset failed' });
   }
 });
 

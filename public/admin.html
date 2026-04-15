@@ -33,18 +33,54 @@
     <p class="page-subtitle">Статистика и пользователи</p>
 
     <div style="text-align: center; margin-top: 20px;">
-      <img 
-        src="/suitcase-money.jpg" 
-        alt="Open Suitcase with Money"
-        style="
-          max-width: 600px; 
-          width: 100%;
-          height: auto;
-          border-radius: 12px; 
-          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        "
-        onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDYwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjMwMCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjY2IiBmb250LXNpemU9IjI0Ij7Ql9C10L3QtdGA0L7QstC+INC00L7QsdCw0YDQvtC80LXQvdC40Lg8L3RleHQ+Cjwvc3ZnPg=='"
+      <div id="adminImageContainer">
+        <img 
+          id="adminImage" 
+          src="/suitcase-money.jpg" 
+          alt="Admin Image"
+          style="
+            max-width: 600px; 
+            width: 100%;
+            height: auto;
+            border-radius: 12px; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: transform 0.2s;
+          "
+          onmouseover="this.style.transform='scale(1.02)'"
+          onmouseout="this.style.transform='scale(1)'"
+          onclick="document.getElementById('imageUpload').click()"
+          onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDYwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjMwMCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjY2IiBmb250LXNpemU9IjI0Ij7Ql9C10L3QtdGA0L7QstC+INC00L7QsdCw0YDQvtC80LXQvdC40Lg8L3RleHQ+Cjwvc3ZnPg=='"
+        />
+      </div>
+      
+      <input 
+        type="file" 
+        id="imageUpload" 
+        accept="image/*" 
+        style="display: none;"
+        onchange="handleImageUpload(event)"
       />
+      
+      <div style="margin-top: 15px;">
+        <button 
+          class="btn primary" 
+          onclick="document.getElementById('imageUpload').click()"
+          style="margin-right: 10px;"
+        >
+          <span id="uploadButtonText">Upload Image</span>
+        </button>
+        <button 
+          class="btn secondary" 
+          id="resetImageBtn" 
+          onclick="resetImage()"
+          style="display: none;"
+        >
+          Reset to Default
+        </button>
+      </div>
+      
+      <div id="uploadStatus" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
     </div>
 
     <div class="actions" style="margin-top:10px">
@@ -341,11 +377,117 @@
       }
     });
 
+    // Image upload functions
+    async function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showUploadStatus('Please select an image file', 'error');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showUploadStatus('File size must be less than 5MB', 'error');
+        return;
+      }
+      
+      showUploadStatus('Uploading...', 'loading');
+      
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      try {
+        const response = await fetch('/api/admin/upload-image', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'x-admin-email': localStorage.getItem('bloknot_admin_email'),
+            'x-admin-logged-in': '1'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Update the image src
+          document.getElementById('adminImage').src = result.imageUrl + '?t=' + Date.now();
+          showUploadStatus('Image uploaded successfully!', 'success');
+          
+          // Show reset button
+          document.getElementById('resetImageBtn').style.display = 'inline-block';
+          
+          // Store in localStorage
+          localStorage.setItem('admin_custom_image', result.imageUrl);
+        } else {
+          throw new Error(result.error || 'Upload failed');
+        }
+      } catch (error) {
+        showUploadStatus('Upload failed: ' + error.message, 'error');
+      }
+      
+      // Reset file input
+      event.target.value = '';
+    }
+    
+    function resetImage() {
+      if (confirm('Reset to default image?')) {
+        // Reset to default
+        document.getElementById('adminImage').src = '/suitcase-money.jpg';
+        document.getElementById('resetImageBtn').style.display = 'none';
+        showUploadStatus('Image reset to default', 'success');
+        
+        // Remove from localStorage
+        localStorage.removeItem('admin_custom_image');
+        
+        // Also delete from server
+        fetch('/api/admin/reset-image', {
+          method: 'DELETE',
+          headers: {
+            'x-admin-email': localStorage.getItem('bloknot_admin_email'),
+            'x-admin-logged-in': '1'
+          }
+        }).catch(() => {}); // Ignore errors
+      }
+    }
+    
+    function showUploadStatus(message, type) {
+      const statusDiv = document.getElementById('uploadStatus');
+      statusDiv.textContent = message;
+      statusDiv.style.color = type === 'error' ? '#e74c3c' : type === 'success' ? '#27ae60' : '#666';
+      
+      // Clear message after 3 seconds
+      if (type !== 'loading') {
+        setTimeout(() => {
+          statusDiv.textContent = '';
+        }, 3000);
+      }
+    }
+    
+    // Load custom image on page load
+    function loadCustomImage() {
+      const customImage = localStorage.getItem('admin_custom_image');
+      if (customImage) {
+        document.getElementById('adminImage').src = customImage + '?t=' + Date.now();
+        document.getElementById('resetImageBtn').style.display = 'inline-block';
+      }
+    }
+
     (async function init() {
       try {
+        // Load custom image if exists
+        loadCustomImage();
+        
+        // Load admin data
         await Promise.all([loadStats(), loadUsers()]);
       } catch (e) {
-        showNotice('Ошибка: ' + (e && e.message ? e.message : ''));
+        showNotice('Error: ' + (e && e.message ? e.message : ''));
       }
     })();
   </script>
