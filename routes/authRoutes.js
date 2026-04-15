@@ -93,7 +93,7 @@ router.post('/login', async (req, res) => {
 
 // POST /api/auth/request-login (main endpoint)
 router.post('/request-login', async (req, res) => {
-  const { email, phone } = req.body;
+  const { email, phone, password } = req.body;
   
   if (!email) {
     return res.status(400).json({ error: 'Email is required' });
@@ -108,17 +108,38 @@ router.post('/request-login', async (req, res) => {
   });
   
   if (!user) {
-    // Create new user in database
+    // Create new user in database with password if provided
+    let userData = {
+      email,
+      phone: phone || null,
+      role: 'OWNER',
+      businessId: null
+    };
+    
+    // Add password if provided during registration
+    if (password) {
+      const bcrypt = require('bcrypt');
+      const hashedPassword = await bcrypt.hash(password, 10);
+      userData.password = hashedPassword;
+      console.log(`[NEW USER WITH PASSWORD] Email: ${email}`);
+    }
+    
     user = await prisma.user.create({
-      data: {
-        email,
-        phone: phone || null,
-        role: 'OWNER',
-        businessId: null
-      },
+      data: userData,
       include: { business: true, ownedBusiness: true, staffProfile: true }
     });
-    console.log(`[NEW USER CREATED] Email: ${email}, Role: ${user.role}`);
+    console.log(`[NEW USER CREATED] Email: ${email}, Role: ${user.role}, Has password: ${!!password}`);
+  } else if (password && !user.password) {
+    // Update existing user with password if they didn't have one
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    user = await prisma.user.update({
+      where: { email },
+      data: { password: hashedPassword },
+      include: { business: true, ownedBusiness: true, staffProfile: true }
+    });
+    console.log(`[USER PASSWORD UPDATED] Email: ${email}`);
   }
   
   // Store user in memory for magic link system

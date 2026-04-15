@@ -774,6 +774,14 @@
           <label for="authPhone">Телефон</label>
           <input id="authPhone" type="tel" value="+7" autocomplete="tel" />
         </div>
+        <div class="field">
+          <label for="authPasswordReg">Password</label>
+          <input id="authPasswordReg" type="password" placeholder="Minimum 6 characters" autocomplete="new-password" minlength="6" required />
+        </div>
+        <div class="field">
+          <label for="authPasswordConfirm">Confirm Password</label>
+          <input id="authPasswordConfirm" type="password" placeholder="Repeat password" autocomplete="new-password" minlength="6" required />
+        </div>
       </div>
 
       <div class="notice" id="authNotice"></div>
@@ -923,11 +931,34 @@
       
       const email = String(emailInput.value || "").trim();
       const phone = String(document.getElementById("authPhone").value || "").trim();
+      
+      // For registration mode, get passwords
+      let password = null;
+      if (currentModalMode === 'registration') {
+        password = String(document.getElementById("authPasswordReg").value || "").trim();
+        const confirmPassword = String(document.getElementById("authPasswordConfirm").value || "").trim();
+        
+        if (!password) {
+          showNotice("Password is required.");
+          return;
+        }
+        
+        if (password.length < 6) {
+          showNotice("Password must be at least 6 characters.");
+          return;
+        }
+        
+        if (password !== confirmPassword) {
+          showNotice("Passwords do not match.");
+          return;
+        }
+      }
 
       // Debug: log the email being used
       console.log('DEBUG: Email from input:', email);
       console.log('DEBUG: Phone from input:', phone);
       console.log('DEBUG: Modal mode:', currentModalMode);
+      console.log('DEBUG: Has password:', !!password);
 
       if (!email) {
         showNotice("Enter email.");
@@ -935,20 +966,25 @@
       }
 
       if (phone && !validatePhone(phone)) {
-        showNotice("Введите корректный номер телефона (например, +7XXXXXXXXXX).");
+        showNotice("Enter valid phone number (e.g., +7XXXXXXXXXX).");
         return;
       }
 
       try {
         sendBtn.disabled = true;
-        sendBtn.textContent = "Отправка...";
+        sendBtn.textContent = "Sending...";
+
+        const requestBody = { email, phone };
+        if (password) {
+          requestBody.password = password;
+        }
 
         const response = await fetch("/api/auth/request-login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email, phone }),
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
@@ -993,16 +1029,18 @@
 
     function openRegistrationModal() {
       currentModalMode = 'registration';
-      document.getElementById('authTitle').textContent = 'Регистрация';
-      document.getElementById('authSub').textContent = 'Введите email и телефон - мы отправим вам ссылку для входа.';
+      document.getElementById('authTitle').textContent = 'Registration';
+      document.getElementById('authSub').textContent = 'Enter email and phone - we will send you a login link.';
       document.getElementById('loginFields').style.display = 'none';
       document.getElementById('registrationFields').style.display = 'block';
       document.getElementById('authLoginBtn').style.display = 'none';
       document.getElementById('authSendBtn').style.display = 'inline-block';
       
-      // Clear any cached email values to prevent fallbacks
+      // Clear all cached values to prevent fallbacks
       document.getElementById("authEmailReg").value = '';
       document.getElementById("authPhone").value = '+7';
+      document.getElementById("authPasswordReg").value = '';
+      document.getElementById("authPasswordConfirm").value = '';
       
       openModal();
     }
