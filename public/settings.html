@@ -1130,8 +1130,13 @@ async function apiCall(url, options = {}) {
   console.log('API Call:', url, options);
   
   // Get user email from localStorage
-  const userEmail = localStorage.getItem('bloknot_logged_in_email') || 
-                   localStorage.getItem('user_email');
+  const userEmail = localStorage.getItem('bloknot_logged_in_email');
+  
+  if (!userEmail) {
+    console.error('No user email found in localStorage');
+    window.location.href = '/';
+    return;
+  }
   
   // Add authentication headers
   const headers = {
