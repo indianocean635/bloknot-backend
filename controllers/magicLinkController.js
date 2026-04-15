@@ -9,6 +9,8 @@ async function requestLogin(req, res) {
   try {
     const { email, phone, name } = req.body;
     
+    console.log(`[MAGIC LINK] Request login for email: ${email}, phone: ${phone}, name: ${name}`);
+    
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
@@ -18,6 +20,8 @@ async function requestLogin(req, res) {
       where: { email },
       include: { business: true }
     });
+    
+    console.log(`[MAGIC LINK] Found user:`, user ? { id: user.id, email: user.email, name: user.name, phone: user.phone } : null);
 
     if (!user) {
       // Create new user
@@ -33,8 +37,15 @@ async function requestLogin(req, res) {
     } else {
       // Update existing user with new data if provided
       const updateData = {};
-      if (phone && phone !== user.phone) updateData.phone = phone;
-      if (name && name !== user.name) updateData.name = name;
+      
+      // Always update if new data is provided and it's different from current
+      if (phone && (!user.phone || phone !== user.phone)) {
+        updateData.phone = phone;
+      }
+      
+      if (name && (!user.name || name !== user.name)) {
+        updateData.name = name;
+      }
       
       if (Object.keys(updateData).length > 0) {
         user = await prisma.user.update({

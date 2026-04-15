@@ -98,6 +98,7 @@ router.get('/users', async (req, res) => {
     const usersWithStaff = usersWithPassword.map(user => ({
       id: user.id,
       email: user.email,
+      name: user.name,
       phone: user.phone,
       createdAt: user.createdAt,
       isPaying: user.isPaying,
@@ -135,6 +136,7 @@ router.get('/users/:id', async (req, res) => {
     res.json({
       id: user.id,
       email: user.email,
+      name: user.name,
       phone: user.phone,
       createdAt: user.createdAt,
       password: user.password, // Include actual password for admin

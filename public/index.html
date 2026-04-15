@@ -1026,6 +1026,8 @@
           requestBody.password = password;
         }
 
+        console.log('DEBUG: Sending request body:', requestBody);
+
         const response = await fetch("/api/auth/request-login", {
           method: "POST",
           headers: {
