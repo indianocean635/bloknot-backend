@@ -400,4 +400,47 @@ router.get('/verify', (req, res) => {
   res.redirect('/?verified=true&token=' + token);
 });
 
+// POST /auth/update-profile
+router.post('/update-profile', async (req, res) => {
+  try {
+    const { name } = req.body;
+    
+    // Get user from headers
+    const userEmail = req.headers['x-user-email'];
+    if (!userEmail) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    // Find user in database
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Update user name
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { name: name || null }
+    });
+    
+    console.log(`[AUTH] Profile updated for user: ${userEmail}, name: ${name}`);
+    
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name
+      }
+    });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Income - Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="cache-control" content="no-cache, no-store, must-revalidate">
+  <meta name="pragma" content="no-cache">
+  <meta name="expires" content="0">
+  <link rel="stylesheet" href="/styles.css?v=20260408" />
+</head>
+<body>
+
+<div id="app-header"></div>
+
+<main class="container">
+  <h1 class="page-title">Income</h1>
+  <p class="page-subtitle">View your revenue for selected period</p>
+
+  <div class="card" style="margin-top:12px">
+    <div class="item-title">Revenue Calculation</div>
+    <div class="item-meta">Select date range to calculate your income</div>
+    
+    <div class="row two" style="margin-top:12px">
+      <div class="field">
+        <label for="revFrom">From</label>
+        <input id="revFrom" type="date" />
+      </div>
+      <div class="field">
+        <label for="revTo">To</label>
+        <input id="revTo" type="date" />
+      </div>
+    </div>
+    
+    <div class="actions" style="justify-content:space-between">
+      <div class="badge" id="revenueBadge">0 RUB</div>
+      <button class="btn secondary" id="revenueBtn" type="button">Calculate</button>
+    </div>
+  </div>
+
+  <div id="notice" class="notice" style="display:none; margin-top:10px"></div>
+</main>
+
+<script src="/app.js?v=20260407"></script>
+<script>
+  Bloknot.renderHeader("income");
+
+  const notice = document.querySelector("#notice");
+  function showNotice(text) {
+    if (!text) {
+      notice.style.display = "none";
+      notice.textContent = "";
+      return;
+    }
+    notice.style.display = "block";
+    notice.textContent = text;
+  }
+
+  // Set default date range (last 30 days)
+  function setDefaultDates() {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    document.getElementById("revFrom").value = thirtyDaysAgo.toISOString().split('T')[0];
+    document.getElementById("revTo").value = today.toISOString().split('T')[0];
+  }
+
+  // Calculate revenue
+  async function calculateRevenue() {
+    const from = document.getElementById("revFrom").value;
+    const to = document.getElementById("revTo").value;
+    const revenueBtn = document.getElementById("revenueBtn");
+    
+    if (!from || !to) {
+      showNotice("Please select both dates");
+      return;
+    }
+    
+    if (new Date(from) > new Date(to)) {
+      showNotice("Start date cannot be after end date");
+      return;
+    }
+    
+    revenueBtn.disabled = true;
+    revenueBtn.textContent = "Calculating...";
+    showNotice("");
+    
+    try {
+      const response = await Bloknot.api(`/api/business/revenue?from=${from}&to=${to}`);
+      
+      if (response.revenue !== undefined) {
+        document.getElementById("revenueBadge").textContent = `${response.revenue} RUB`;
+        showNotice(`Revenue calculated for ${from} to ${to}`);
+      } else {
+        throw new Error("Invalid response");
+      }
+    } catch (error) {
+      console.error("Revenue calculation error:", error);
+      showNotice("Failed to calculate revenue. Please try again.");
+    } finally {
+      revenueBtn.disabled = false;
+      revenueBtn.textContent = "Calculate";
+    }
+  }
+
+  // Event listeners
+  document.getElementById("revenueBtn").addEventListener("click", calculateRevenue);
+  
+  // Initialize
+  document.addEventListener("DOMContentLoaded", () => {
+    setDefaultDates();
+    calculateRevenue(); // Auto-calculate with default dates
+  });
+</script>
+
+</body>
+</html>

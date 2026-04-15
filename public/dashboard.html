@@ -39,7 +39,7 @@
  </div>
 
  <main class="container">
-   <h1 class="page-title">Кабинет владельца</h1>
+   <h1 class="page-title" style="font-size: 28px; margin-bottom: 8px;">Кабинет владельца</h1>
    <p class="page-subtitle">Управляйте услугами, мастерами, фото работ и записями клиентов.</p>
 
    <div class="card" style="margin-top:12px">
@@ -52,12 +52,21 @@
      </div>
 
      <div id="stats" class="row three" style="margin-top:12px">
-      <a class="item" href="/masters.html" style="display:flex">
-        <div>
-          <div class="item-title">Мастера</div>
-          <div class="item-meta" id="mastersCount">—</div>
+      <div class="item" style="display:flex; cursor: default;">
+        <div style="width: 100%;">
+          <div class="item-title">Ваш профиль</div>
+          <div class="item-meta" style="margin-bottom: 8px;">
+            <div id="userEmail" style="font-size: 14px; color: #666;">—</div>
+            <div id="userPhone" style="font-size: 14px; color: #666;">—</div>
+          </div>
+          <div class="field" style="margin-top: 8px; margin-bottom: 0;">
+            <input id="userName" type="text" placeholder="Ваше имя" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" />
+          </div>
+          <div style="margin-top: 8px;">
+            <button class="btn secondary" onclick="saveUserName()" style="font-size: 12px; padding: 4px 8px;">Сохранить имя</button>
+          </div>
         </div>
-      </a>
+      </div>
       <a class="item" href="/calendar.html" style="display:flex">
         <div>
           <div class="item-title">Записи сегодня</div>
@@ -73,22 +82,15 @@
     </div>
 
     <div class="card" style="margin-top:12px">
-      <div class="item-title">Доход</div>
-      <div class="item-meta">Считается по прошедшим записям за выбранный период.</div>
-      <div class="row two" style="margin-top:12px">
-        <div class="field">
-          <label for="revFrom">С</label>
-          <input id="revFrom" type="date" />
+      <a href="/income.html" class="item" style="display:flex; text-decoration: none; color: inherit;">
+        <div style="width: 100%;">
+          <div class="item-title">Доход</div>
+          <div class="item-meta">Посмотреть доход за период</div>
         </div>
-        <div class="field">
-          <label for="revTo">По</label>
-          <input id="revTo" type="date" />
+        <div style="margin-left: auto;">
+          <div style="font-size: 20px;">→</div>
         </div>
-      </div>
-      <div class="actions" style="justify-content:space-between">
-        <div class="badge" id="revenueBadge">0 ₽</div>
-        <button class="btn secondary" id="revenueBtn" type="button">Посчитать</button>
-      </div>
+      </a>
     </div>
 
      <div id="notice" class="notice" style="display:none; margin-top:10px"></div>
@@ -148,6 +150,24 @@
    async function loadDashboard() {
      showNotice("");
 
+     // Load user profile information
+     try {
+       const user = await Bloknot.api("/api/auth/me");
+       if (user.email) {
+         document.getElementById("userEmail").textContent = user.email;
+       }
+       if (user.phone) {
+         document.getElementById("userPhone").textContent = user.phone;
+       } else {
+         document.getElementById("userPhone").textContent = "No phone";
+       }
+       if (user.name) {
+         document.getElementById("userName").value = user.name;
+       }
+     } catch (e) {
+       console.error("Failed to load user profile:", e);
+     }
+
      async function safeCount(label, fn) {
        try {
          const items = await fn();
@@ -183,57 +203,42 @@
      }
    }
 
-   function setRevenueDefaults() {
-     const now = new Date();
-     const from = new Date(now.getFullYear(), now.getMonth(), 1);
-     const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-     Bloknot.qs("#revFrom").value = from.toISOString().slice(0, 10);
-     Bloknot.qs("#revTo").value = to.toISOString().slice(0, 10);
-   }
-
-   async function calcRevenue() {
-     const fromStr = Bloknot.qs("#revFrom").value;
-     const toStr = Bloknot.qs("#revTo").value;
-     if (!fromStr || !toStr) {
-       showNotice("Выберите период.");
+   // Save user name function
+   async function saveUserName() {
+     const userName = document.getElementById("userName").value.trim();
+     const button = event.target;
+     
+     if (!userName) {
+       showNotice("Please enter your name");
        return;
      }
-
-     const from = new Date(fromStr + "T00:00:00");
-     const to = new Date(toStr + "T23:59:59");
-     if (to < from) {
-       showNotice("Период выбран некорректно.");
-       return;
-     }
-
-     showNotice("");
-     Bloknot.qs("#revenueBtn").disabled = true;
+     
+     button.disabled = true;
+     button.textContent = "Saving...";
+     
      try {
-       const items = await Bloknot.api(
-         "/api/appointments?" + new URLSearchParams({ from: from.toISOString(), to: to.toISOString() }).toString()
-       );
-
-       const now = new Date();
-       const done = items.filter((a) => new Date(a.endsAt) < now);
-       const sum = done.reduce((acc, a) => {
-         const p = a.priceAtBooking != null ? Number(a.priceAtBooking) : (a.service && a.service.price != null ? Number(a.service.price) : 0);
-         return acc + (Number.isFinite(p) ? p : 0);
-       }, 0);
-
-       Bloknot.qs("#revenueBadge").textContent = sum.toLocaleString("ru-RU") + " ₽";
-     } catch (e) {
-       showNotice("Не удалось посчитать доход: " + e.message);
+       const response = await Bloknot.api("/api/auth/update-profile", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({ name: userName })
+       });
+       
+       if (response.success) {
+         showNotice("Name saved successfully!");
+       } else {
+         throw new Error(response.error || "Failed to save name");
+       }
+     } catch (error) {
+       console.error("Save name error:", error);
+       showNotice("Failed to save name: " + error.message);
      } finally {
-       Bloknot.qs("#revenueBtn").disabled = false;
+       button.disabled = false;
+       button.textContent = "Save Name";
      }
    }
 
    Bloknot.qs("#refreshBtn").addEventListener("click", () => {
-     loadDashboard().catch((e) => showNotice("Не удалось загрузить данные: " + e.message));
-   });
-
-   Bloknot.qs("#revenueBtn").addEventListener("click", () => {
-     calcRevenue().catch((e) => showNotice("Не удалось посчитать доход: " + e.message));
+     loadDashboard().catch((e) => showNotice("Failed to load data: " + e.message));
    });
 
    (function initBookingLink() {
