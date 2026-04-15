@@ -151,18 +151,26 @@
        const storedEmail = localStorage.getItem('bloknot_logged_in_email');
        console.log('Stored email in localStorage:', storedEmail);
 
-       const user = await Bloknot.api("/api/auth/me");
-       console.log('User data from API:', user);
+       const response = await Bloknot.api("/api/auth/me");
+       console.log('User data from API:', response);
+
+       // Handle both response formats (direct user object or wrapped in user property)
+       const user = response.user || response;
+       console.log('Extracted user data:', user);
 
        if (user.email) {
          document.getElementById("userEmail").textContent = user.email;
          console.log('Displaying email:', user.email);
+       } else {
+         document.getElementById("userEmail").textContent = "No email";
        }
+       
        if (user.phone) {
          document.getElementById("userPhone").textContent = user.phone;
        } else {
          document.getElementById("userPhone").textContent = "No phone";
        }
+       
        if (user.name) {
          document.getElementById("userName").textContent = user.name;
        } else {
