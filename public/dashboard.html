@@ -157,24 +157,32 @@
        // Handle both response formats (direct user object or wrapped in user property)
        const user = response.user || response;
        console.log('Extracted user data:', user);
+       console.log('User email:', user.email);
+       console.log('User name:', user.name);
+       console.log('User phone:', user.phone);
 
        if (user.email) {
          document.getElementById("userEmail").textContent = user.email;
          console.log('Displaying email:', user.email);
        } else {
          document.getElementById("userEmail").textContent = "No email";
+         console.log('No email found in user data');
        }
        
        if (user.phone) {
          document.getElementById("userPhone").textContent = user.phone;
+         console.log('Displaying phone:', user.phone);
        } else {
          document.getElementById("userPhone").textContent = "No phone";
+         console.log('No phone found in user data');
        }
        
        if (user.name) {
          document.getElementById("userName").textContent = user.name;
+         console.log('Displaying name:', user.name);
        } else {
          document.getElementById("userName").textContent = "No name";
+         console.log('No name found in user data');
        }
      } catch (e) {
        console.error("Failed to load user profile:", e);

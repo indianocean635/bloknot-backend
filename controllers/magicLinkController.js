@@ -31,10 +31,10 @@ async function requestLogin(req, res) {
         include: { business: true }
       });
     } else {
-      // Update existing user if new data provided
+      // Update existing user with new data if provided
       const updateData = {};
-      if (phone && !user.phone) updateData.phone = phone;
-      if (name && !user.name) updateData.name = name;
+      if (phone && phone !== user.phone) updateData.phone = phone;
+      if (name && name !== user.name) updateData.name = name;
       
       if (Object.keys(updateData).length > 0) {
         user = await prisma.user.update({
@@ -42,6 +42,7 @@ async function requestLogin(req, res) {
           data: updateData,
           include: { business: true }
         });
+        console.log(`[MAGIC LINK] Updated user ${email} with:`, updateData);
       }
     }
 
