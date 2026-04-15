@@ -767,20 +767,24 @@
       <!-- Registration Fields -->
       <div id="registrationFields" style="display: none;">
         <div class="field">
-          <label for="authEmailReg">Email</label>
-          <input id="authEmailReg" type="email" placeholder="ваш@email.com" autocomplete="email" />
+          <label for="authNameReg">Name</label>
+          <input id="authNameReg" type="text" placeholder="Your name" autocomplete="name" required />
         </div>
         <div class="field">
-          <label for="authPhone">Телефон</label>
+          <label for="authEmailReg">Email</label>
+          <input id="authEmailReg" type="email" placeholder="your@email.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="authPhone">Phone</label>
           <input id="authPhone" type="tel" value="+7" autocomplete="tel" />
         </div>
         <div class="field">
-          <label for="authPasswordReg">Пароль</label>
-          <input id="authPasswordReg" type="password" placeholder="Минимум 6 символов" autocomplete="new-password" minlength="6" required />
+          <label for="authPasswordReg">Password</label>
+          <input id="authPasswordReg" type="password" placeholder="Minimum 6 characters" autocomplete="new-password" minlength="6" required />
         </div>
         <div class="field">
-          <label for="authPasswordConfirm">Подтвердите пароль</label>
-          <input id="authPasswordConfirm" type="password" placeholder="Повторите пароль" autocomplete="new-password" minlength="6" required />
+          <label for="authPasswordConfirm">Confirm Password</label>
+          <input id="authPasswordConfirm" type="password" placeholder="Repeat password" autocomplete="new-password" minlength="6" required />
         </div>
       </div>
 
@@ -905,7 +909,37 @@
       modal.setAttribute("aria-hidden", "true");
     }
 
-    // Phone validation function
+    // Phone formatting and validation
+    function formatPhone(input) {
+      // Remove all non-digit characters
+      let digits = input.value.replace(/\D/g, '');
+      
+      // Ensure it starts with 7 (Russian country code)
+      if (digits.length > 0 && !digits.startsWith('7')) {
+        digits = '7' + digits;
+      }
+      
+      // Limit to 11 digits (7 + 10 digit number)
+      digits = digits.substring(0, 11);
+      
+      // Format as +7 (XXX) - (XXX) - (XX) - (XX)
+      let formatted = '+7';
+      if (digits.length > 1) {
+        formatted += ' (' + digits.substring(1, 4);
+      }
+      if (digits.length > 4) {
+        formatted += ') - ' + digits.substring(4, 7);
+      }
+      if (digits.length > 7) {
+        formatted += ' - ' + digits.substring(7, 9);
+      }
+      if (digits.length > 9) {
+        formatted += ' - ' + digits.substring(9, 11);
+      }
+      
+      input.value = formatted;
+    }
+
     function validatePhone(phone) {
       // Remove all non-digit characters
       const digits = phone.replace(/\D/g, '');
@@ -932,11 +966,18 @@
       const email = String(emailInput.value || "").trim();
       const phone = String(document.getElementById("authPhone").value || "").trim();
       
-      // For registration mode, get passwords
+      // For registration mode, get name and passwords
+      let name = null;
       let password = null;
       if (currentModalMode === 'registration') {
+        name = String(document.getElementById("authNameReg").value || "").trim();
         password = String(document.getElementById("authPasswordReg").value || "").trim();
         const confirmPassword = String(document.getElementById("authPasswordConfirm").value || "").trim();
+        
+        if (!name) {
+          showNotice("Name is required.");
+          return;
+        }
         
         if (!password) {
           showNotice("Password is required.");
@@ -975,6 +1016,9 @@
         sendBtn.textContent = "Sending...";
 
         const requestBody = { email, phone };
+        if (name) {
+          requestBody.name = name;
+        }
         if (password) {
           requestBody.password = password;
         }
@@ -1037,6 +1081,7 @@
       document.getElementById('authSendBtn').style.display = 'inline-block';
       
       // Clear all cached values to prevent fallbacks
+      document.getElementById("authNameReg").value = '';
       document.getElementById("authEmailReg").value = '';
       document.getElementById("authPhone").value = '+7';
       document.getElementById("authPasswordReg").value = '';
@@ -1083,6 +1128,20 @@
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeModal();
     });
+
+    // Add phone formatting
+    const phoneInput = document.getElementById("authPhone");
+    if (phoneInput) {
+      phoneInput.addEventListener("input", (e) => {
+        formatPhone(e.target);
+      });
+      
+      phoneInput.addEventListener("focus", (e) => {
+        if (e.target.value === "+7") {
+          e.target.select();
+        }
+      });
+    }
 
     // Update button event listeners
     sendBtn.addEventListener("click", requestLogin);

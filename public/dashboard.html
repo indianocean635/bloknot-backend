@@ -56,14 +56,9 @@
         <div style="width: 100%;">
           <div class="item-title">Ваш профиль</div>
           <div class="item-meta" style="margin-bottom: 8px;">
-            <div id="userEmail" style="font-size: 14px; color: #666;">—</div>
-            <div id="userPhone" style="font-size: 14px; color: #666;">—</div>
-          </div>
-          <div class="field" style="margin-top: 8px; margin-bottom: 0;">
-            <input id="userName" type="text" placeholder="Ваше имя" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" />
-          </div>
-          <div style="margin-top: 8px;">
-            <button class="btn secondary" onclick="saveUserName()" style="font-size: 12px; padding: 4px 8px;">Сохранить имя</button>
+            <div id="userName" style="font-size: 14px; color: #666; font-weight: 500;">-</div>
+            <div id="userEmail" style="font-size: 14px; color: #666;">-</div>
+            <div id="userPhone" style="font-size: 14px; color: #666;">-</div>
           </div>
         </div>
       </div>
@@ -169,7 +164,9 @@
          document.getElementById("userPhone").textContent = "No phone";
        }
        if (user.name) {
-         document.getElementById("userName").value = user.name;
+         document.getElementById("userName").textContent = user.name;
+       } else {
+         document.getElementById("userName").textContent = "No name";
        }
      } catch (e) {
        console.error("Failed to load user profile:", e);

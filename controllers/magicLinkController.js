@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // Request magic link
 async function requestLogin(req, res) {
   try {
-    const { email, phone } = req.body;
+    const { email, phone, name } = req.body;
     
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
@@ -25,17 +25,24 @@ async function requestLogin(req, res) {
         data: {
           email,
           phone: phone || null,
+          name: name || null,
           role: 'OWNER'
         },
         include: { business: true }
       });
-    } else if (phone && !user.phone) {
-      // Update phone if provided and not set
-      user = await prisma.user.update({
-        where: { email },
-        data: { phone },
-        include: { business: true }
-      });
+    } else {
+      // Update existing user if new data provided
+      const updateData = {};
+      if (phone && !user.phone) updateData.phone = phone;
+      if (name && !user.name) updateData.name = name;
+      
+      if (Object.keys(updateData).length > 0) {
+        user = await prisma.user.update({
+          where: { email },
+          data: updateData,
+          include: { business: true }
+        });
+      }
     }
 
     // Generate magic link token
