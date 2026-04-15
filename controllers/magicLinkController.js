@@ -66,6 +66,17 @@ async function requestLogin(req, res) {
       where: { userId: user.id }
     });
 
+    // Clean up any orphaned tokens (tokens without users)
+    const deletedOrphaned = await prisma.loginToken.deleteMany({
+      where: {
+        user: null
+      }
+    });
+    
+    if (deletedOrphaned.count > 0) {
+      console.log(`[MAGIC LINK] Cleaned up ${deletedOrphaned.count} orphaned tokens`);
+    }
+
     // Create new login token
     await prisma.loginToken.create({
       data: {
@@ -150,7 +161,22 @@ async function confirmLogin(req, res) {
     });
 
     if (!loginToken || loginToken.used || loginToken.expiresAt < new Date()) {
+      console.log(`[AUTH] Invalid token: ${token}`, {
+        found: !!loginToken,
+        used: loginToken?.used,
+        expired: loginToken?.expiresAt < new Date()
+      });
       return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+
+    // Check if user still exists
+    if (!loginToken.user) {
+      console.log(`[AUTH] Token references deleted user: ${token}`);
+      // Clean up orphaned token
+      await prisma.loginToken.delete({
+        where: { id: loginToken.id }
+      });
+      return res.status(400).json({ error: 'User account no longer exists' });
     }
 
     // Mark token as used
