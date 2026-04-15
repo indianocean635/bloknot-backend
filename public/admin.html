@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Super Admin — Bloknot</title>
+  <title>Супер Админ — Bloknot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="/favicon.png" type="image/png" />
   <link rel="stylesheet" href="/styles.css" />
@@ -21,20 +21,19 @@
   </script>
   <style>
     body.admin-page {
-      display: flex;
       min-height: 100vh;
     }
+    .admin-sidebar {
+      display: none;
+    }
   </style>
-  <div class="admin-sidebar">
-    <img src="/admin-icon.svg" alt="Admin Icon" class="admin-icon">
-  </div>
   
   <main class="container admin-container">
-    <h1 class="page-title">Super Admin</h1>
-    <p class="page-subtitle">Statistica i pol'zovateli</p>
+    <h1 class="page-title">Супер Админ</h1>
+    <p class="page-subtitle">Статистика и пользователи</p>
 
     <div style="text-align: center; margin-top: 20px;">
-      <h3>Admin mood </h3>
+      <h3>Админ настроение</h3>
       <img 
         src="/admin.jpg" 
         style="
@@ -42,6 +41,7 @@
           border-radius: 12px; 
           box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         "
+        onerror="this.src='/admin-icon.png'"
       />
     </div>
 

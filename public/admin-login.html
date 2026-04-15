@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin Login - Bloknot</title>
+  <title>Вход Админа - Bloknot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="/favicon.png" type="image/png" />
   <link rel="stylesheet" href="/styles.css" />
@@ -11,10 +11,10 @@
   <main class="container">
     <div class="admin-login-container">
       <div class="admin-login-header">
-        <h1 class="page-title">Super Admin Login</h1>
-        <p class="page-subtitle">Only for Bloknot owner</p>
+        <h1 class="page-title">Вход Супер Админа</h1>
+        <p class="page-subtitle">Только для владельца Bloknot</p>
         <button onclick="clearCache()" style="background: #ff6b6b; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 10px;">
-          Clear Cache
+          Очистить кэш
         </button>
       </div>
       <div class="card" style="max-width:400px; margin:20px auto">
@@ -24,21 +24,19 @@
         </div>
 
         <div class="field">
-          <label for="password">Password</label>
-          <input id="password" type="password" placeholder="Enter admin password" autocomplete="current-password" />
+          <label for="password">Пароль</label>
+          <input id="password" type="password" placeholder="Введите пароль админа" autocomplete="current-password" />
         </div>
-        <label for="password">Password</label>
-        <input id="password" type="password" placeholder="Enter admin password" autocomplete="current-password" />
       </div>
 
       <div class="notice" id="notice" style="display:none; margin-top:10px"></div>
 
       <div class="actions" style="margin-top:14px">
-        <button class="btn" id="loginBtn" type="button">Login as Super Admin</button>
+        <button class="btn" id="loginBtn" type="button">Войти как Супер Админ</button>
       </div>
 
       <div class="actions" style="margin-top:10px">
-        <a class="btn secondary" href="/">Back to Main Site</a>
+        <a class="btn secondary" href="/">Вернуться на главный сайт</a>
       </div>
     </div>
   </main>
