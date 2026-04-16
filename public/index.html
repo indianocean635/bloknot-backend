@@ -1023,14 +1023,22 @@
         sendBtn.textContent = "Sending...";
 
         const requestBody = { email, phone };
+        console.log('DEBUG: Name variable before adding to requestBody:', name);
+        console.log('DEBUG: Name type:', typeof name);
+        console.log('DEBUG: Name length:', name ? name.length : 'null');
+        
         if (name) {
           requestBody.name = name;
+          console.log('DEBUG: Added name to requestBody:', name);
+        } else {
+          console.log('DEBUG: Name is null/empty, not adding to requestBody');
         }
+        
         if (password) {
           requestBody.password = password;
         }
 
-        console.log('DEBUG: Sending request body:', requestBody);
+        console.log('DEBUG: Final request body:', requestBody);
 
         const response = await fetch("/api/auth/request-login", {
           method: "POST",
