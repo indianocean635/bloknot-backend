@@ -10,6 +10,7 @@ async function requestLogin(req, res) {
     const { email, phone, name } = req.body;
     
     console.log(`[MAGIC LINK] Request login for email: ${email}, phone: ${phone}, name: ${name}`);
+    console.log(`[MAGIC LINK] Full request body:`, req.body);
     
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
