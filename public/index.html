@@ -973,7 +973,10 @@
       let name = null;
       let password = null;
       if (currentModalMode === 'registration') {
-        name = String(document.getElementById("authNameReg").value || "").trim();
+        const nameInput = document.getElementById("authNameReg");
+        console.log('DEBUG: Name input element:', nameInput);
+        console.log('DEBUG: Name input value:', nameInput ? nameInput.value : 'INPUT NOT FOUND');
+        name = String(nameInput ? nameInput.value : "").trim();
         password = String(document.getElementById("authPasswordReg").value || "").trim();
         const confirmPassword = String(document.getElementById("authPasswordConfirm").value || "").trim();
         
