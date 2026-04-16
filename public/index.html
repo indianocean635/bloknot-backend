@@ -983,7 +983,6 @@
         if (!name || name.length < 2) {
           showNotice("Name is required (minimum 2 characters).");
           // Focus back on name field
-          const nameInput = document.getElementById("authNameReg");
           if (nameInput) {
             nameInput.focus();
             nameInput.style.border = '2px solid red';
