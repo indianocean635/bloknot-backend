@@ -980,8 +980,17 @@
         password = String(document.getElementById("authPasswordReg").value || "").trim();
         const confirmPassword = String(document.getElementById("authPasswordConfirm").value || "").trim();
         
-        if (!name) {
-          showNotice("Name is required.");
+        if (!name || name.length < 2) {
+          showNotice("Name is required (minimum 2 characters).");
+          // Focus back on name field
+          const nameInput = document.getElementById("authNameReg");
+          if (nameInput) {
+            nameInput.focus();
+            nameInput.style.border = '2px solid red';
+            setTimeout(() => {
+              nameInput.style.border = '';
+            }, 3000);
+          }
           return;
         }
         
