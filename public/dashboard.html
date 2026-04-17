@@ -145,23 +145,7 @@
    async function loadDashboard() {
     showNotice("");
 
-    // Check if user is logged in
-    const isLoggedIn = localStorage.getItem('bloknot_logged_in');
-    const storedEmail = localStorage.getItem('bloknot_logged_in_email');
-    const userId = localStorage.getItem('bloknot_user_id');
-    
-    console.log('Login status:', isLoggedIn);
-    console.log('Stored email in localStorage:', storedEmail);
-    console.log('User ID in localStorage:', userId);
-    
-    // More lenient check - if we have email, try to load user data
-    if (!storedEmail) {
-      console.log('No stored email, redirecting to main page');
-      window.location.href = '/';
-      return;
-    }
-    
-    // Try to load user data first, then check if valid
+    // Try to load user data first
     console.log('Attempting to load user data...');
 
     // Load user profile information
