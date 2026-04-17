@@ -102,9 +102,26 @@ async function requestLogin(req, res) {
       }
     });
     
-    // Skip email sending for faster response
-    console.log(`[EMAIL] Magic link generated (email sending disabled): ${magicLink}`);
-    console.log(`[EMAIL] User ${user.email} can use this link to login`);
+    // Send email with improved timeout handling
+    try {
+      await transporter.sendMail({
+        from: `"Bloknot" <${process.env.SMTP_FROM || 'noreply@bloknotservis.ru'}>`,
+        to: user.email,
+        subject: 'Your Login Link',
+        html: `
+          <h2>Welcome to Bloknot!</h2>
+          <p>Click the link below to log in to your account:</p>
+          <p><a href="${magicLink}">${magicLink}</a></p>
+          <p>This link will expire in 15 minutes.</p>
+        `
+      });
+      
+      console.log(`[EMAIL] Magic link sent to ${user.email}`);
+    } catch (emailError) {
+      console.error('[EMAIL ERROR] Failed to send email:', emailError);
+      // Continue anyway - user can still use the link from logs
+      console.log(`[EMAIL] User ${user.email} can use this link to login: ${magicLink}`);
+    }
     
     // Show magic link in logs for development
     console.log(`[MAGIC LINK] Generated for ${user.email}: ${magicLink}`);
