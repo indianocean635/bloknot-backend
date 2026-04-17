@@ -110,12 +110,12 @@ async function requestLogin(req, res) {
       await transporter.sendMail({
         from: `"Bloknot" <${process.env.SMTP_FROM || 'noreply@bloknotservis.ru'}>`,
         to: user.email,
-        subject: 'Your Login Link',
+        subject: '\u0412\u0430\u0448\u0430 \u0441\u0441\u044b\u043b\u043a\u0430 \u0434\u043b\u044f \u0432\u0445\u043e\u0434\u0430',
         html: `
-          <h2>Welcome to Bloknot!</h2>
-          <p>Click the link below to log in to your account:</p>
+          <h2>\u0414\u043e\u0431\u0440\u043e \u043f\u043e\u0436\u0430\u043b\u043e\u0432\u0430\u0442\u044c \u0432 Bloknot!</h2>
+          <p>\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043d\u0430 \u0441\u0441\u044b\u043b\u043a\u0443 \u043d\u0438\u0436\u0435, \u0447\u0442\u043e\u0431\u044b \u0432\u043e\u0439\u0442\u0438 \u0432 \u0441\u0432\u043e\u0439 \u0430\u043a\u043a\u0430\u0443\u043d\u0442:</p>
           <p><a href="${magicLink}">${magicLink}</a></p>
-          <p>This link will expire in 15 minutes.</p>
+          <p>\u042d\u0442\u0430 \u0441\u0441\u044b\u043b\u043a\u0430 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u044c\u043d\u0430 15 \u043c\u0438\u043d\u0443\u0442.</p>
         `
       });
       

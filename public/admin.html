@@ -103,19 +103,19 @@
       <div class="notice" id="notice" style="display:none; margin-top:12px"></div>
 
       <div style="overflow:auto; margin-top:12px">
-        <table style="width:100%; border-collapse:separate; border-spacing:0">
+        <table style="width:180%; border-collapse:separate; border-spacing:0; font-size:13px">
           <thead>
             <tr>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Email</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Name</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Phone</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Пароль</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Регистрация</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Платящий</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Оплачено (₽)</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">След. списание</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Сотрудник</th>
-              <th style="text-align:left; padding:10px 10px; border-bottom:1px solid var(--border)">Действия</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Email</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Name</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Phone</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Password</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Registration</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Paying</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Paid (RUB)</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Next billing</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Staff</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Actions</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -198,50 +198,50 @@
         const next = u.nextBillingAt ? fmtDate(u.nextBillingAt) : '';
         return `
           <tr>
-            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
-              <a href="#" data-action="impersonate" data-id="${esc(u.id)}" style="font-weight:800">${esc(u.email)}</a>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
+              <a href="#" data-action="impersonate" data-id="${esc(u.id)}" style="font-weight:700; font-size:12px">${esc(u.email)}</a>
             </td>
-            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">${esc(u.name || '-')}</td>
-            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">${esc(u.phone || '-')}</td>
-            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 12px; color: #666; font-family: monospace;">
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${esc(u.name || '-')}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${esc(u.phone || '-')}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 11px; color: #666; font-family: monospace;">
                   ${u.password ? '***' : 'No password'}
                 </span>
                 ${u.password ? `
-                  <button class="btn secondary" onclick="copyPassword('${esc(u.id)}', '${esc(u.email)}')" style="padding: 4px 8px; font-size: 11px;">
+                  <button class="btn secondary" onclick="copyPassword('${esc(u.id)}', '${esc(u.email)}')" style="padding: 3px 6px; font-size: 10px;">
                     Copy
                   </button>
-                  <button class="btn secondary" onclick="resetPassword('${esc(u.id)}', '${esc(u.email)}')" style="padding: 4px 8px; font-size: 11px;">
+                  <button class="btn secondary" onclick="resetPassword('${esc(u.id)}', '${esc(u.email)}')" style="padding: 3px 6px; font-size: 10px;">
                     Reset
                   </button>
                 ` : ''}
               </div>
             </td>
-            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">${fmtDate(u.createdAt)}</td>
-            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
-              <label style="display:inline-flex; align-items:center; gap:8px; user-select:none">
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${fmtDate(u.createdAt)}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
+              <label style="display:inline-flex; align-items:center; gap:6px; user-select:none; font-size:12px">
                 <input type="checkbox" data-id="${esc(u.id)}" data-field="isPaying" ${u.isPaying ? 'checked' : ''} />
-                <span>${u.isPaying ? 'Yes' : 'No'}</span>
+                <span style="font-size:12px">${u.isPaying ? 'Yes' : 'No'}</span>
               </label>
             </td>
-            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
-              <input data-id="${esc(u.id)}" data-field="totalPaid" value="${Number(u.totalPaid||0)}" style="width:120px; padding:8px 10px; border-radius:12px; border:1px solid var(--border)" />
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
+              <input data-id="${esc(u.id)}" data-field="totalPaid" value="${Number(u.totalPaid||0)}" style="width:100px; padding:4px 6px; border-radius:8px; border:1px solid var(--border); font-size:12px" />
             </td>
-            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
-              <input data-id="${esc(u.id)}" data-field="nextBillingAt" value="${u.nextBillingAt ? new Date(u.nextBillingAt).toISOString().slice(0,10) : ''}" placeholder="YYYY-MM-DD" style="width:140px; padding:8px 10px; border-radius:12px; border:1px solid var(--border)" />
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
+              <input data-id="${esc(u.id)}" data-field="nextBillingAt" value="${u.nextBillingAt ? new Date(u.nextBillingAt).toISOString().slice(0,10) : ''}" placeholder="YYYY-MM-DD" style="width:120px; padding:4px 6px; border-radius:8px; border:1px solid var(--border); font-size:12px" />
             </td>
-            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
-              <div style="font-size:12px; color:#666">
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
+              <div style="font-size:11px; color:#666">
                 ${u.staffUsers ? u.staffUsers.length : 0} users
                 ${u.staffUsers && u.staffUsers.length > 0 ? 
                   `<br>${u.staffUsers.map(s => `${s.email}${s.phone ? ` (${s.phone})` : ''}`).join('<br>')}` 
                   : ''}
               </div>
             </td>
-            <td style="padding:10px 10px; border-bottom:1px solid rgba(229,231,235,0.7)">
-              <button class="btn secondary" data-action="save" data-id="${esc(u.id)}" type="button">Save</button>
-              <button class="btn danger" data-action="delete" data-id="${esc(u.id)}" type="button" style="margin-left:8px">Delete</button>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
+              <button class="btn secondary" data-action="save" data-id="${esc(u.id)}" type="button" style="padding:4px 8px; font-size:11px">Save</button>
+              <button class="btn danger" data-action="delete" data-id="${esc(u.id)}" type="button" style="margin-left:6px; padding:4px 8px; font-size:11px">Delete</button>
             </td>
           </tr>
         `;
