@@ -75,7 +75,7 @@ app.get('/auth/magic-link', (req, res) => {
 });
 
 // Auth confirm endpoint (for magic links)
-app.get('/auth/confirm', (req, res) => {
+app.get('/auth/confirm', async (req, res) => {
   const token = req.query.token;
 
   if (!token) {
@@ -84,7 +84,62 @@ app.get('/auth/confirm', (req, res) => {
 
   console.log("AUTH CONFIRM TOKEN:", token);
 
-  return res.redirect('/dashboard.html');
+  try {
+    // Find the login token
+    const loginToken = await prisma.loginToken.findFirst({
+      where: {
+        token: token,
+        expiresAt: {
+          gt: new Date()
+        }
+      },
+      include: {
+        user: true
+      }
+    });
+
+    if (!loginToken) {
+      return res.status(400).send("Invalid or expired token");
+    }
+
+    console.log("AUTH CONFIRM USER FOUND:", loginToken.user.email);
+
+    // Delete the used token
+    await prisma.loginToken.delete({
+      where: { id: loginToken.id }
+    });
+
+    // Create HTML page that sets localStorage and redirects
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Confirm</title>
+    <script>
+        // Set localStorage data
+        localStorage.setItem('bloknot_logged_in_email', '${loginToken.user.email}');
+        localStorage.setItem('bloknot_user_id', '${loginToken.user.id}');
+        localStorage.setItem('bloknot_business_id', '${loginToken.user.businessId || ''}');
+        localStorage.setItem('bloknot_logged_in', '1');
+        localStorage.setItem('bloknot_user_email', '${loginToken.user.email}');
+        
+        console.log('localStorage set for user:', '${loginToken.user.email}');
+        
+        // Redirect to dashboard
+        window.location.href = '/dashboard.html';
+    </script>
+</head>
+<body>
+    <p>Redirecting to dashboard...</p>
+</body>
+</html>
+    `;
+
+    res.send(html);
+  } catch (error) {
+    console.error("AUTH CONFIRM ERROR:", error);
+    res.status(500).send("Server error");
+  }
 });
 
 // Static files (в самом конце!)
