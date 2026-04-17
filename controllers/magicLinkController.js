@@ -83,7 +83,7 @@ async function requestLogin(req, res) {
     const nodemailer = require('nodemailer');
     
     // For development, use ethereal email or test account
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.ethereal.email',
       port: process.env.SMTP_PORT || 587,
       secure: false,
