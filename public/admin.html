@@ -22,9 +22,20 @@
   <style>
     body.admin-page {
       min-height: 100vh;
+      margin: 0;
+      padding: 0;
     }
     .admin-sidebar {
       display: none;
+    }
+    .container.admin-container {
+      max-width: none !important;
+      width: 100% !important;
+      padding: 20px !important;
+      margin: 0 !important;
+    }
+    .card {
+      width: 100% !important;
     }
   </style>
   
@@ -103,19 +114,19 @@
       <div class="notice" id="notice" style="display:none; margin-top:12px"></div>
 
       <div style="overflow:auto; margin-top:12px">
-        <table style="width:180%; border-collapse:separate; border-spacing:0; font-size:13px">
+        <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:13px">
           <thead>
             <tr>
-              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Email</th>
-              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Name</th>
-              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Phone</th>
-              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Password</th>
-              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Registration</th>
-              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Paying</th>
-              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Paid (RUB)</th>
-              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Next billing</th>
-              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Staff</th>
-              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px">Actions</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:25%">Email</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:12%">Name</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:12%">Phone</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:12%">Password</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:10%">Registration</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:6%">Paying</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:8%">Paid (RUB)</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:8%">Next billing</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:8%">Staff</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:11%">Actions</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
