@@ -86,7 +86,7 @@ async function requestLogin(req, res) {
     });
 
     // Send email with magic link
-    const magicLink = `${req.protocol}://${req.get('host')}/auth/confirm?token=${token}`;
+    const magicLink = `http://bloknotservis.ru/auth/confirm?token=${token}`;
     
     // Configure email service
     const nodemailer = require('nodemailer');
