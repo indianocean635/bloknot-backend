@@ -148,15 +148,21 @@
     // Check if user is logged in
     const isLoggedIn = localStorage.getItem('bloknot_logged_in');
     const storedEmail = localStorage.getItem('bloknot_logged_in_email');
+    const userId = localStorage.getItem('bloknot_user_id');
     
     console.log('Login status:', isLoggedIn);
     console.log('Stored email in localStorage:', storedEmail);
+    console.log('User ID in localStorage:', userId);
     
-    if (!isLoggedIn || isLoggedIn !== '1' || !storedEmail) {
-      console.log('User not logged in, redirecting to main page');
+    // More lenient check - if we have email, try to load user data
+    if (!storedEmail) {
+      console.log('No stored email, redirecting to main page');
       window.location.href = '/';
       return;
     }
+    
+    // Try to load user data first, then check if valid
+    console.log('Attempting to load user data...');
 
     // Load user profile information
     try {
@@ -169,6 +175,19 @@
        console.log('User email:', user.email);
        console.log('User name:', user.name);
        console.log('User phone:', user.phone);
+
+       // Validate user data
+       if (!user || !user.email) {
+         console.log('Invalid user data, redirecting to main page');
+         window.location.href = '/';
+         return;
+       }
+
+       // Update localStorage with fresh data
+       localStorage.setItem('bloknot_logged_in_email', user.email);
+       localStorage.setItem('bloknot_user_id', user.id);
+       localStorage.setItem('bloknot_logged_in', '1');
+       console.log('Updated localStorage with fresh user data');
 
        if (user.email) {
          document.getElementById("userEmail").textContent = user.email;
