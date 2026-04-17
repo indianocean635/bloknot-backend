@@ -105,12 +105,12 @@
     <!-- Tariff Selection -->
     <div id="tariffSelection" style="margin-bottom: 16px;">
       <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px;">
-        <strong>\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0430\u0440\u0438\u0444 1, 5 \u0438\u043b\u0438 \u0431\u043e\u043b\u0435\u0435 \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u043e\u0432?</strong>
+        <strong>Choose tariff 1, 5 or more specialists?</strong>
       </p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button class="btn secondary" onclick="selectTariff('SOLO', '690')">1 \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442</button>
-        <button class="btn secondary" onclick="selectTariff('STUDIO', '990')">5 \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u043e\u0432</button>
-        <button class="btn secondary" onclick="selectTariff('PRO', '1490')">\u0411\u043e\u043b\u0435\u0435 5 \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u043e\u0432</button>
+        <button class="btn secondary" onclick="selectTariff('SOLO', '690')">1 specialist</button>
+        <button class="btn secondary" onclick="selectTariff('STUDIO', '990')">5 specialists</button>
+        <button class="btn secondary" onclick="selectTariff('PRO', '1490')">More than 5 specialists</button>
       </div>
     </div>
     
@@ -118,7 +118,7 @@
     <div id="paymentModal" class="modal" style="display: none;">
       <div class="modal-content" style="max-width: 400px;">
         <div class="modal-header">
-          <h3>\u041f\u043e\u0434\u043f\u0438\u0441\u043a\u0430 \u043d\u0430 \u043f\u043b\u0430\u043d \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u043e\u0432</h3>
+          <h3>Subscribe to Specialist Plan</h3>
           <button class="modal-close" onclick="closePaymentModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -127,15 +127,15 @@
               <strong id="selectedPlanName">Plan Name</strong>
             </p>
             <p style="margin: 0 0 12px 0; color: #666; font-size: 14px;">
-              Цена: <span id="selectedPlanPrice">0</span> руб/год
+              Price: <span id="selectedPlanPrice">0</span> RUB/year
             </p>
           </div>
           <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Номер карты:</label>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Card Number:</label>
             <input type="text" id="cardNumber" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="1234 5678 9012 3456" maxlength="19">
           </div>
           <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Срок действия:</label>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Expiry Date:</label>
             <input type="text" id="cardExpiry" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="MM/YY" maxlength="5">
           </div>
           <div style="margin-bottom: 20px;">
@@ -145,8 +145,8 @@
           <div id="paymentError" style="color: #e74c3c; margin-bottom: 10px; font-size: 14px;"></div>
         </div>
         <div class="modal-footer">
-          <button class="btn secondary" onclick="closePaymentModal()" style="margin-right: 10px;">Отмена</button>
-          <button class="btn primary" onclick="processPayment()">Оплатить</button>
+          <button class="btn secondary" onclick="closePaymentModal()" style="margin-right: 10px;">Cancel</button>
+          <button class="btn primary" onclick="processPayment()">Subscribe</button>
         </div>
       </div>
     </div>
@@ -1351,40 +1351,40 @@ function createSpecialistForm(index) {
   form.innerHTML = `
     <div class="card" style="margin-bottom: 16px;">
       <div class="card-header">
-        <h3>\u0421\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442 ${index}</h3>
-        ${index > 1 ? '<button class="btn danger" onclick="removeSpecialist(this)" style="float: right;">\u0423\u0434\u0430\u043b\u0438\u0442\u044c</button>' : ''}
+        <h3>Specialist ${index}</h3>
+        ${index > 1 ? '<button class="btn danger" onclick="removeSpecialist(this)" style="float: right;">Remove</button>' : ''}
       </div>
       <div class="card-body">
         <div class="row two">
           <div class="field">
-            <label>\u0418\u043c\u044f:</label>
-            <input type="text" id="specialistName${index}" placeholder="\u0418\u043c\u044f \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u0430">
+            <label>Name:</label>
+            <input type="text" id="specialistName${index}" placeholder="Specialist name">
           </div>
           <div class="field">
-            <label>\u041f\u043e\u0447\u0442\u0430:</label>
+            <label>Email:</label>
             <input type="email" id="specialistEmail${index}" placeholder="specialist@example.com">
           </div>
         </div>
         <div class="row two">
           <div class="field">
-            <label>\u0422\u0435\u043b\u0435\u0444\u043e\u043d:</label>
+            <label>Phone:</label>
             <input type="tel" id="specialistPhone${index}" placeholder="+7 (999) 123-45-67">
           </div>
           <div class="field">
-            <label>\u0410\u0432\u0430\u0442\u0430\u0440:</label>
+            <label>Avatar:</label>
             <input type="file" id="specialistAvatar${index}" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
           </div>
         </div>
         <div class="field">
-          <label>\u0413\u0440\u0430\u0444\u0438\u043a \u0440\u0430\u0431\u043e\u0442\u044b:</label>
-          <button class="btn secondary" onclick="openScheduleSettings(${index})" style="width: 100%; margin-bottom: 8px;"> \u041d\u0430\u0441\u0442\u0440\u043e\u0438\u0442\u044c \u0433\u0440\u0430\u0444\u0438\u043a </button>
+          <label>Work Schedule:</label>
+          <button class="btn secondary" onclick="openScheduleSettings(${index})" style="width: 100%; margin-bottom: 8px;"> Set Schedule </button>
           <div id="schedulePreview${index}" style="padding: 8px; background: #f5f5f5; border-radius: 4px; font-size: 14px; color: #666;">
-            \u0413\u0440\u0430\u0444\u0438\u043a \u043d\u0435 \u043d\u0430\u0441\u0442\u0440\u043e\u0435\u043d
+            Schedule not set
           </div>
         </div>
         <div style="margin-top: 12px;">
-          <button class="btn primary" onclick="saveSpecialist(${index})">\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u0430</button>
-          <button class="btn success" onclick="inviteSpecialist(${index})" style="margin-left: 8px; font-size: 12px; padding: 8px 16px;"> \u041f\u0440\u0438\u0433\u043b\u0430\u0441\u0438\u0442\u044c </button>
+          <button class="btn primary" onclick="saveSpecialist(${index})">Save Specialist</button>
+          <button class="btn success" onclick="inviteSpecialist(${index})" style="margin-left: 8px; font-size: 12px; padding: 8px 16px;"> Invite </button>
         </div>
       </div>
     </div>
@@ -1414,15 +1414,15 @@ async function saveSpecialist(index) {
       body: JSON.stringify(specialistData)
     });
     
-    alert('\u0421\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d \u0443\u0441\u043f\u0435\u0448\u043d\u043e!');
+    alert('Specialist saved successfully!');
   } catch (error) {
-    alert('\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u044f \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u0430: ' + error.message);
+    alert('Error saving specialist: ' + error.message);
   }
 }
 
 function openScheduleSettings(index) {
   // Open schedule settings page (will be implemented later)
-  alert('\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430 \u0433\u0440\u0430\u0444\u0438\u043a\u0430 \u0431\u0443\u0434\u0435\u0442 \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u0430 \u0432 \u0441\u043b\u0435\u0434\u0443\u044e\u0449\u0435\u0439 \u0432\u0435\u0440\u0441\u0438\u0438');
+  alert('Schedule settings will be available in the next version');
 }
 
 async function inviteSpecialist(index) {
@@ -1430,7 +1430,7 @@ async function inviteSpecialist(index) {
   const name = document.getElementById(`specialistName${index}`).value;
   
   if (!email) {
-    alert('\u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u0443\u043a\u0430\u0436\u0438\u0442\u0435 \u043f\u043e\u0447\u0442\u0443 \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u0430');
+    alert('Please specify specialist email');
     return;
   }
   
@@ -1446,17 +1446,28 @@ async function inviteSpecialist(index) {
       })
     });
     
-    alert(`\u041f\u0440\u0438\u0433\u043b\u0430\u0448\u0435\u043d\u0438\u0435 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043e \u043d\u0430 ${email}`);
+    alert(`Invitation sent to ${email}`);
   } catch (error) {
-    alert(`\u041e\u0448\u0438\u0431\u043a\u0430 \u043e\u0442\u043f\u0440\u0430\u0432\u043a\u0438 \u043f\u0440\u0438\u0433\u043b\u0430\u0448\u0435\u043d\u0438\u044f: ${error.message}`);
+    alert(`Error sending invitation: ${error.message}`);
   }
 }
 
 // Initialize specialist forms on page load
 document.addEventListener('DOMContentLoaded', function() {
+  // Initialize header
+  if (typeof Bloknot !== 'undefined' && Bloknot.renderHeader) {
+    Bloknot.renderHeader("settings");
+  }
+  
   const specialistLimit = localStorage.getItem('specialistLimit');
   if (specialistLimit) {
     updateSpecialistForms(parseInt(specialistLimit));
+  } else {
+    // Hide add specialist button if no tariff selected
+    const addBtn = document.getElementById('addMasterBtn');
+    if (addBtn) {
+      addBtn.style.display = 'none';
+    }
   }
 });
 
