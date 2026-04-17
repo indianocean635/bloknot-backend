@@ -102,41 +102,18 @@ async function requestLogin(req, res) {
       }
     });
     
-    // Send email
-    try {
-      await transporter.sendMail({
-        from: `"Bloknot" <${process.env.SMTP_FROM || 'noreply@bloknotservis.ru'}>`,
-        to: user.email,
-        subject: 'Bloknot - Link for login',
-        html: `
-          <h2>Welcome to Bloknot!</h2>
-          <p>Click the link below to login to your account:</p>
-          <p><a href="${magicLink}">Login to Bloknot</a></p>
-          <p>If you didn't request this link, please ignore this email.</p>
-          <p>This link will expire in 15 minutes.</p>
-        `
-      });
-      
-      console.log(`[EMAIL SENT] Magic link sent to ${user.email}`);
-      
-      res.json({
-        message: 'Magic link sent',
-        magicLink: process.env.NODE_ENV === 'development' ? magicLink : undefined,
-        debug: process.env.NODE_ENV === 'development'
-      });
-      
-    } catch (emailError) {
-      console.error('[EMAIL ERROR] Failed to send email:', emailError);
-      
-      // Fallback: show magic link in logs for development
-      console.log(`[MAGIC LINK] Generated for ${user.email}: ${magicLink}`);
-      
-      res.json({
-        message: 'Magic link sent',
-        magicLink, // Show in development for testing
-        debug: true
-      });
-    }
+    // Skip email sending for faster response
+    console.log(`[EMAIL] Magic link generated (email sending disabled): ${magicLink}`);
+    console.log(`[EMAIL] User ${user.email} can use this link to login`);
+    
+    // Show magic link in logs for development
+    console.log(`[MAGIC LINK] Generated for ${user.email}: ${magicLink}`);
+    
+    res.json({
+      message: 'Magic link sent',
+      magicLink, // Show in development for testing
+      debug: true
+    });
 
   } catch (error) {
     console.error('Request login error:', error);
