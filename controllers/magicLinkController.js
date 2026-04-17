@@ -67,17 +67,6 @@ async function requestLogin(req, res) {
       where: { userId: user.id }
     });
 
-    // Clean up any orphaned tokens (tokens without users)
-    const deletedOrphaned = await prisma.loginToken.deleteMany({
-      where: {
-        user: null
-      }
-    });
-    
-    if (deletedOrphaned.count > 0) {
-      console.log(`[MAGIC LINK] Cleaned up ${deletedOrphaned.count} orphaned tokens`);
-    }
-
     // Create new login token
     await prisma.loginToken.create({
       data: {
