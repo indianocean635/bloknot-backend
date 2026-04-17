@@ -74,6 +74,19 @@ app.get('/auth/magic-link', (req, res) => {
   return res.redirect('/dashboard.html');
 });
 
+// Auth confirm endpoint (for magic links)
+app.get('/auth/confirm', (req, res) => {
+  const token = req.query.token;
+
+  if (!token) {
+    return res.status(400).send("No token");
+  }
+
+  console.log("AUTH CONFIRM TOKEN:", token);
+
+  return res.redirect('/dashboard.html');
+});
+
 // Static files (в самом конце!)
 app.use(express.static('public'));
 
