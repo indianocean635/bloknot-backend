@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const { PrismaClient } = require('@prisma/client');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
@@ -10,6 +11,7 @@ const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const magicLinkRoutes = require('./routes/magicLinkRoutes');
 const app = express();
 const PORT = 3001;
+const prisma = new PrismaClient();
 
 console.log('🔥 AuthRoutes loaded:', typeof authRoutes);
 console.log('🔥 AuthRoutes methods:', Object.getOwnPropertyNames(authRoutes));
