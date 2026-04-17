@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // Request magic link
 async function requestLogin(req, res) {
   try {
-    const { email, phone, name } = req.body;
+    const { email, phone, name, password } = req.body;
     
     console.log(`[MAGIC LINK] Request login for email: ${email}, phone: ${phone}, name: ${name}`);
     console.log(`[MAGIC LINK] Full request body:`, req.body);
@@ -26,13 +26,22 @@ async function requestLogin(req, res) {
 
     if (!user) {
       // Create new user
+      let userData = {
+        email,
+        phone: phone || null,
+        name: name || null,
+        role: 'OWNER'
+      };
+      
+      // Add password if provided
+      if (password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        userData.password = hashedPassword;
+        console.log(`[MAGIC LINK] New user with password: ${email}`);
+      }
+      
       user = await prisma.user.create({
-        data: {
-          email,
-          phone: phone || null,
-          name: name || null,
-          role: 'OWNER'
-        },
+        data: userData,
         include: { business: true }
       });
     } else {
