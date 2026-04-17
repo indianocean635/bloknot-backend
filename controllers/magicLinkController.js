@@ -93,12 +93,12 @@ async function requestLogin(req, res) {
     
     // For development, use ethereal email or test account
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: process.env.SMTP_PORT || 587,
-      secure: false,
+      host: process.env.SMTP_HOST || 'smtp.yandex.ru',
+      port: process.env.SMTP_PORT || 465,
+      secure: process.env.SMTP_SECURE === 'true' || true,
       auth: {
-        user: process.env.SMTP_USER || 'bloknotservis@gmail.com',
-        pass: process.env.SMTP_PASS || 'your-app-password'
+        user: process.env.SMTP_USER || 'your-yandex-email@yandex.ru',
+        pass: process.env.SMTP_PASS || 'your-yandex-password'
       },
       connectionTimeout: 10000,
       greetingTimeout: 5000,
@@ -122,15 +122,15 @@ async function requestLogin(req, res) {
       console.log(`[EMAIL] Magic link sent to ${user.email}`);
     } catch (emailError) {
       console.error('[EMAIL ERROR] Failed to send email:', emailError);
-      console.log('[EMAIL INFO] To fix email sending, set up Gmail SMTP:');
-      console.log('[EMAIL INFO] 1. Enable 2-factor authentication on Gmail');
-      console.log('[EMAIL INFO] 2. Generate App Password: https://myaccount.google.com/apppasswords');
-      console.log('[EMAIL INFO] 3. Set environment variables:');
-      console.log('[EMAIL INFO]    export SMTP_HOST=smtp.gmail.com');
-      console.log('[EMAIL INFO]    export SMTP_PORT=587');
-      console.log('[EMAIL INFO]    export SMTP_USER=your-gmail@gmail.com');
-      console.log('[EMAIL INFO]    export SMTP_PASS=your-app-password');
-      console.log('[EMAIL INFO]    export SMTP_FROM=noreply@bloknotservis.ru');
+      console.log('[EMAIL INFO] To fix email sending, set up Yandex SMTP:');
+      console.log('[EMAIL INFO] 1. Use your Yandex email account');
+      console.log('[EMAIL INFO] 2. Set environment variables:');
+      console.log('[EMAIL INFO]    export SMTP_HOST=smtp.yandex.ru');
+      console.log('[EMAIL INFO]    export SMTP_PORT=465');
+      console.log('[EMAIL INFO]    export SMTP_SECURE=true');
+      console.log('[EMAIL INFO]    export SMTP_USER=your-yandex-email@yandex.ru');
+      console.log('[EMAIL INFO]    export SMTP_PASS=your-yandex-password');
+      console.log('[EMAIL INFO]    export SMTP_FROM="Bloknot <no-reply@bloknotservis.ru>"');
       // Continue anyway - user can still use the link from logs
       console.log(`[EMAIL] User ${user.email} can use this link to login: ${magicLink}`);
     }
