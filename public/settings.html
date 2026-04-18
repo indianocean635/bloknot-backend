@@ -82,13 +82,12 @@
     
     <div class="branding-container">
       <div class="branding-item">
-        <h3>Логотип</h3>
-        <div class="logo-preview" id="logoPreview">
-          <div class="no-logo">Нет логотипа</div>
-        </div>
-        <div class="logo-actions">
-          <button class="btn" id="addLogoBtn">+ Добавить логотип</button>
-          <button class="btn secondary" id="changeLogoBtn" style="display: none;">Изменить логотип</button>
+        <h3>Logo</h3>
+        <div class="logo-upload" onclick="document.getElementById('logoInput').click()">
+          <div class="logo-circle">
+            <div class="logo-plus">+</div>
+          </div>
+          <input type="file" id="logoInput" accept="image/*" style="display: none;" onchange="handleLogoSelect(this)">
         </div>
       </div>
       
@@ -409,6 +408,35 @@
   font-weight: 300;
 }
 
+/* Logo Upload Styles */
+.logo-upload {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.logo-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.logo-circle:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.logo-plus {
+  font-size: 32px;
+  color: #9ca3af;
+  font-weight: 300;
+}
+
 .btn {
   padding: 8px 16px;
   border: none;
@@ -692,6 +720,17 @@ function handleAvatarSelect(index, input) {
     reader.onload = function(e) {
       const avatarCircle = input.previousElementSibling;
       avatarCircle.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function handleLogoSelect(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const logoCircle = input.previousElementSibling;
+      logoCircle.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
     };
     reader.readAsDataURL(input.files[0]);
   }
