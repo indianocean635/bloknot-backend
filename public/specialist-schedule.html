@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Specialist Schedule - Bloknot</title>
+  <link rel="stylesheet" href="/styles.css?v=3.2&t=202604081231" />
+</head>
+<body>
+
+<div id="app-header"></div>
+
+<main class="container">
+  <h1 class="page-title">Specialist Schedule</h1>
+  <p class="page-subtitle">Manage specialist schedule</p>
+
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>Schedule Settings</h2>
+    </div>
+    
+    <div class="schedule-container" id="scheduleContainer">
+      <!-- Schedule settings content will be loaded here -->
+    </div>
+  </section>
+</main>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add</h3>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <!-- Dynamic content -->
+    </div>
+  </div>
+</div>
+
+<style>
+/* Settings Sections */
+.settings-section {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #f3f4f6;
+}
+
+.schedule-container {
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn.primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn.primary:hover {
+  background: #2563eb;
+}
+
+.btn.secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn.secondary:hover {
+  background: #e5e7eb;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 10% auto;
+  padding: 0;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #374151;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: #374151;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 24px 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+</style>
+
+<script src="/app.js?v=20260408"></script>
+<script>
+// Initialize schedule settings on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize header
+  if (typeof Bloknot !== 'undefined' && Bloknot.renderHeader) {
+    Bloknot.renderHeader("specialist-schedule");
+  }
+  
+  const specialistIndex = parseInt(window.location.search.split('specialist=')[1]);
+  if (specialistIndex) {
+    loadScheduleSettings(specialistIndex);
+  }
+});
+
+// Load schedule settings for specific specialist
+async function loadScheduleSettings(index) {
+  try {
+    // Load schedule settings from backend
+    const response = await api(`/api/specialists/${index}/schedule`, {
+      method: 'GET'
+    });
+    
+    const scheduleContainer = document.getElementById('scheduleContainer');
+    scheduleContainer.innerHTML = `
+      <h3>Schedule Settings for Specialist ${index}</h3>
+      <div>
+        <label>Work Schedule:</label>
+        <input type="text" id="schedule" value="${response.schedule}" placeholder="Enter work schedule">
+      </div>
+      <button class="btn primary" onclick="saveScheduleSettings(${index})">Save</button>
+    `;
+  } catch (error) {
+    alert('Error loading schedule settings: ' + error.message);
+  }
+}
+
+// Save schedule settings for specific specialist
+async function saveScheduleSettings(index) {
+  const schedule = document.getElementById('schedule').value;
+  
+  try {
+    // Save schedule settings to backend
+    const response = await api(`/api/specialists/${index}/schedule`, {
+      method: 'POST',
+      body: JSON.stringify({
+        schedule: schedule
+      })
+    });
+    
+    alert('Schedule settings saved successfully!');
+  } catch (error) {
+    alert('Error saving schedule settings: ' + error.message);
+  }
+}
+
+// API helper
+async function api(url, options = {}) {
+  const defaultOptions = {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+  
+  const finalOptions = { ...defaultOptions, ...options };
+  
+  if (finalOptions.body && typeof finalOptions.body === 'string') {
+    finalOptions.body = finalOptions.body;
+  }
+  
+  const response = await fetch(url, finalOptions);
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return response.json();
+}
+</script>
+
+</body>
+</html>
