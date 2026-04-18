@@ -8,21 +8,7 @@
 </head>
 <body>
 
-<!-- Top Navigation Menu -->
-<nav class="top-nav">
-  <div class="nav-container">
-    <div class="nav-brand">
-      <img src="/logo.png" alt="Logo" class="nav-logo" />
-      <span class="nav-title">Bloknot</span>
-    </div>
-    <div class="nav-menu">
-      <a href="/dashboard.html" class="nav-link">Dashboard</a>
-      <a href="/settings.html" class="nav-link active">Settings</a>
-      <a href="/calendar.html" class="nav-link">Calendar</a>
-      <a href="/profile.html" class="nav-link">Profile</a>
-    </div>
-  </div>
-</nav>
+<div id="app-header"></div>
 
 <main class="container">
   <h1 class="page-title">Настройки</h1>
@@ -186,68 +172,6 @@
 </div>
 
 <style>
-/* Top Navigation */
-.top-nav {
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 60px;
-}
-
-.nav-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.nav-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-}
-
-.nav-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.nav-menu {
-  display: flex;
-  gap: 30px;
-}
-
-.nav-link {
-  text-decoration: none;
-  color: #6b7280;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-
-.nav-link:hover {
-  color: #374151;
-  background: #f3f4f6;
-}
-
-.nav-link.active {
-  color: #3b82f6;
-  background: #eff6ff;
-}
 
 /* Settings Sections */
 .settings-section {
@@ -589,6 +513,7 @@
 }
 </style>
 
+<script src="/app.js?v=20260408"></script>
 <script>
 // Initialize specialist forms on page load
 document.addEventListener('DOMContentLoaded', function() {
