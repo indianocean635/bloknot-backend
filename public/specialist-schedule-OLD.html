@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Bloknot</title>
+  <link rel="stylesheet" href="/styles.css?v=3.2&t=202604081231" />
+</head>
+<body>
+
+<div id="app-header"></div>
+
+<main class="container">
+  <h1 class="page-title">Settings</h1>
+  <p class="page-subtitle">Manage branches, categories, services, specialists and work photos</p>
+
+  <!-- Specialists -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>Specialists</h2>
+      <button class="btn" id="addMasterBtn">+ Add Specialist</button>
+    </div>
+    
+    <!-- Tariff Selection -->
+    <div id="tariffSelection" style="margin-bottom: 16px;">
+      <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px;">
+        <strong>Choose tariff 1, 5 or more specialists?</strong>
+      </p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn secondary" onclick="selectTariff('SOLO', '690')">1 specialist</button>
+        <button class="btn secondary" onclick="selectTariff('STUDIO', '990')">5 specialists</button>
+        <button class="btn secondary" onclick="selectTariff('PRO', '1490')">More than 5 specialists</button>
+      </div>
+    </div>
+    
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal" style="display: none;">
+      <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+          <h3>Subscribe to Specialist Plan</h3>
+          <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom: 20px;">
+            <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px;">
+              <strong id="selectedPlanName">Plan Name</strong>
+            </p>
+            <p style="margin: 0 0 12px 0; color: #666; font-size: 14px;">
+              Price: <span id="selectedPlanPrice">0</span> RUB/year
+            </p>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Card Number:</label>
+            <input type="text" id="cardNumber" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="1234 5678 9012 3456" maxlength="19">
+          </div>
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Expiry Date:</label>
+            <input type="text" id="cardExpiry" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="MM/YY" maxlength="5">
+          </div>
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">CVV:</label>
+            <input type="text" id="cardCVV" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="123" maxlength="3">
+          </div>
+          <div id="paymentError" style="color: #e74c3c; margin-bottom: 10px; font-size: 14px;"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn secondary" onclick="closePaymentModal()" style="margin-right: 10px;">Cancel</button>
+          <button class="btn primary" onclick="processPayment()">Subscribe</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="items-grid" id="mastersGrid">
+    </div>
+  </section>
+
+  <!-- Branding -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>Branding</h2>
+    </div>
+    
+    <div class="branding-container">
+      <div class="branding-item">
+        <h3>Logo</h3>
+        <div class="logo-preview" id="logoPreview">
+          <div class="no-logo">No logo</div>
+        </div>
+        <div class="logo-actions">
+          <button class="btn" id="addLogoBtn">+ Add Logo</button>
+          <button class="btn secondary" id="changeLogoBtn" style="display: none;">Change Logo</button>
+        </div>
+      </div>
+      
+      <div class="branding-item">
+        <h3>Company Name</h3>
+        <div class="company-info">
+          <input type="text" id="companyNameInput" placeholder="Enter company name">
+          <button class="btn" id="saveCompanyNameBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Compact Layout Container -->
+  <div class="compact-settings-grid">
+    <!-- Categories + Services -->
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Service Categories</h2>
+        <button class="btn" id="addCategoryBtn">+ Add Category</button>
+      </div>
+      
+      <div class="items-grid" id="categoriesGrid">
+      </div>
+    </section>
+
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Services</h2>
+        <button class="btn" id="addServiceBtn">+ Add Service</button>
+      </div>
+      
+      <div class="items-grid" id="servicesGrid">
+      </div>
+    </section>
+
+    <!-- Work Schedule + Work Photos -->
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Work Schedule</h2>
+      </div>
+      
+      <div class="schedule-container" id="scheduleContainer">
+      </div>
+    </section>
+
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Work Photos</h2>
+        <button class="btn" id="addWorkBtn">+ Add Photo</button>
+      </div>
+      
+      <div class="items-grid" id="worksGrid">
+      </div>
+    </section>
+  </div>
+
+  <!-- Branches (separate) -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>Branches</h2>
+      <button class="btn" id="addBranchBtn">+ Add Branch</button>
+    </div>
+    
+    <div class="items-grid" id="branchesGrid">
+    </div>
+  </section>
+</main>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add</h3>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <!-- Dynamic content -->
+    </div>
+  </div>
+</div>
+
+<style>
+/* Settings Sections */
+.settings-section {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #f3f4f6;
+}
+
+.compact-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.settings-section.compact {
+  margin-bottom: 0;
+  padding: 12px;
+  font-size: 14px;
+}
+
+.settings-section.compact h2 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.settings-section.compact h3 {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.settings-section.compact .btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.settings-section.compact input,
+.settings-section.compact .items-grid {
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .compact-settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Branding */
+.branding-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.branding-item {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.branding-item h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #374151;
+}
+
+.logo-preview {
+  width: 120px;
+  height: 120px;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  background: white;
+}
+
+.no-logo {
+  color: #9ca3af;
+  font-size: 14px;
+  text-align: center;
+}
+
+.logo-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.company-info {
+  display: flex;
+  gap: 8px;
+}
+
+.company-info input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+/* Specialist Forms */
+.specialist-form {
+  margin-bottom: 16px;
+}
+
+.specialist-form .card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.specialist-form .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.specialist-form .card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #374151;
+}
+
+.specialist-form .field {
+  margin-bottom: 12px;
+}
+
+.specialist-form .field label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+}
+
+.specialist-form .field input,
+.specialist-form .field select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.specialist-form .field input:focus,
+.specialist-form .field select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.specialist-form .field input[type="file"] {
+  padding: 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+}
+
+.specialist-form .action-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.specialist-form .action-buttons .btn {
+  padding: 8px 16px;
+  font-size: 12px;
+}
+
+/* Common Styles */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #374151;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.schedule-container {
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn.primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn.primary:hover {
+  background: #2563eb;
+}
+
+.btn.secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn.secondary:hover {
+  background: #e5e7eb;
+}
+
+.btn.success {
+  background: #10b981;
+  color: white;
+}
+
+.btn.success:hover {
+  background: #059669;
+}
+
+.btn.danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn.danger:hover {
+  background: #dc2626;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 10% auto;
+  padding: 0;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #374151;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: #374151;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+.modal-footer {
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 24px 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+</style>
+
+<script src="/app.js?v=20260408"></script>
+<script>
+// Initialize specialist forms on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize header
+  if (typeof Bloknot !== 'undefined' && Bloknot.renderHeader) {
+    Bloknot.renderHeader("settings");
+  }
+  
+  const specialistLimit = localStorage.getItem('specialistLimit');
+  if (specialistLimit) {
+    updateSpecialistForms(parseInt(specialistLimit));
+  } else {
+    // Hide add specialist button if no tariff selected
+    const addBtn = document.getElementById('addMasterBtn');
+    if (addBtn) {
+      addBtn.style.display = 'none';
+    }
+  }
+});
+
+// Tariff selection
+function selectTariff(plan, price) {
+  const planNames = {
+    'SOLO': '1 Specialist',
+    'STUDIO': '5 Specialists',
+    'PRO': 'More than 5 Specialists'
+  };
+  
+  document.getElementById('selectedPlanName').textContent = planNames[plan];
+  document.getElementById('selectedPlanPrice').textContent = price;
+  document.getElementById('paymentModal').style.display = 'block';
+}
+
+function closePaymentModal() {
+  document.getElementById('paymentModal').style.display = 'none';
+}
+
+function processPayment() {
+  const cardNumber = document.getElementById('cardNumber').value;
+  const cardExpiry = document.getElementById('cardExpiry').value;
+  const cardCVV = document.getElementById('cardCVV').value;
+  
+  if (!cardNumber || !cardExpiry || !cardCVV) {
+    document.getElementById('paymentError').textContent = 'Please fill all card details';
+    return;
+  }
+  
+  // Mock payment processing
+  setTimeout(() => {
+    const planName = document.getElementById('selectedPlanName').textContent;
+    const specialistLimit = planName.includes('1') ? 1 : planName.includes('5') ? 5 : 15;
+    
+    localStorage.setItem('specialistLimit', specialistLimit);
+    localStorage.setItem('specialistPlan', planName);
+    
+    closePaymentModal();
+    updateSpecialistForms(specialistLimit);
+    
+    alert('Payment successful! You can now add specialists.');
+  }, 1000);
+}
+
+function updateSpecialistForms(limit) {
+  const grid = document.getElementById('mastersGrid');
+  grid.innerHTML = '';
+  
+  for (let i = 1; i <= limit; i++) {
+    const form = createSpecialistForm(i);
+    grid.appendChild(form);
+  }
+  
+  // Update add button
+  const addBtn = document.getElementById('addMasterBtn');
+  if (addBtn) {
+    addBtn.style.display = limit > 0 ? 'none' : 'block';
+  }
+}
+
+function createSpecialistForm(index) {
+  const form = document.createElement('div');
+  form.className = 'specialist-form';
+  form.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <h3>Specialist ${index}</h3>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Name:</label>
+          <input type="text" id="specialistName${index}" placeholder="Enter specialist name">
+        </div>
+        <div class="field">
+          <label>Email:</label>
+          <input type="email" id="specialistEmail${index}" placeholder="Enter email address">
+        </div>
+        <div class="field">
+          <label>Phone:</label>
+          <input type="tel" id="specialistPhone${index}" placeholder="Enter phone number">
+        </div>
+        <div class="field">
+          <label>Avatar:</label>
+          <input type="file" id="specialistAvatar${index}" accept="image/*">
+        </div>
+        <div class="field">
+          <label>Work Schedule:</label>
+          <button class="btn secondary" onclick="openScheduleSettings(${index})" style="width: 100%;">Set Schedule</button>
+          <div id="schedulePreview${index}" style="padding: 8px; background: #f5f5f5; border-radius: 4px; font-size: 14px; color: #666; margin-top: 8px;">
+            Schedule not set
+          </div>
+        </div>
+        <div class="action-buttons">
+          <button class="btn success" onclick="inviteSpecialist(${index})">Invite</button>
+          <button class="btn danger" onclick="deleteSpecialist(${index})">Delete</button>
+        </div>
+      </div>
+    </div>
+  `;
+  return form;
+}
+
+async function saveSpecialist(index) {
+  const specialistData = {
+    name: document.getElementById(`specialistName${index}`).value,
+    email: document.getElementById(`specialistEmail${index}`).value,
+    phone: document.getElementById(`specialistPhone${index}`).value,
+    avatar: document.getElementById(`specialistAvatar${index}`).files[0],
+    schedule: localStorage.getItem(`specialistSchedule${index}`) || ''
+  };
+  
+  try {
+    // Save specialist to backend
+    const response = await api('/api/specialists', {
+      method: 'POST',
+      body: JSON.stringify(specialistData)
+    });
+    
+    alert('Specialist saved successfully!');
+  } catch (error) {
+    alert('Error saving specialist: ' + error.message);
+  }
+}
+
+function openScheduleSettings(index) {
+  // Open schedule settings page with specialist index
+  window.location.href = `/specialist-schedule.html?specialist=${index}`;
+}
+
+async function inviteSpecialist(index) {
+  const email = document.getElementById(`specialistEmail${index}`).value;
+  const name = document.getElementById(`specialistName${index}`).value;
+  
+  if (!email) {
+    alert('Please specify specialist email');
+    return;
+  }
+  
+  try {
+    // Send invitation email with link to main page
+    const response = await api('/api/invite-specialist', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: email,
+        name: name,
+        businessName: 'Your Business',
+        inviteLink: 'https://bloknotservis.ru'
+      })
+    });
+    
+    alert(`Invitation sent to ${email}`);
+  } catch (error) {
+    alert(`Error sending invitation: ${error.message}`);
+  }
+}
+
+async function deleteSpecialist(index) {
+  if (confirm('Are you sure you want to delete this specialist?')) {
+    try {
+      // Delete specialist from backend
+      const response = await api(`/api/specialists/${index}`, {
+        method: 'DELETE'
+      });
+      
+      // Remove form from DOM
+      const form = document.querySelector(`.specialist-form:nth-child(${index})`);
+      if (form) {
+        form.remove();
+      }
+      
+      alert('Specialist deleted successfully!');
+    } catch (error) {
+      alert('Error deleting specialist: ' + error.message);
+    }
+  }
+}
+
+// Modal functions
+function openModal(title, body) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modal').style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+}
+
+// API helper
+async function api(url, options = {}) {
+  const defaultOptions = {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+  
+  const finalOptions = { ...defaultOptions, ...options };
+  
+  if (finalOptions.body && typeof finalOptions.body === 'string') {
+    finalOptions.body = finalOptions.body;
+  }
+  
+  const response = await fetch(url, finalOptions);
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return response.json();
+}
+
+// Loading all data
+async function loadAllData() {
+  await Promise.all([
+    loadLogo(),
+    loadCompanyName(),
+    loadBranches(),
+    loadCategories(),
+    loadServices(),
+    loadMasters(),
+    loadSchedule(),
+    loadWorks(),
+  ]);
+}
+
+// Placeholder functions for data loading
+async function loadLogo() {
+  // Load logo from backend
+}
+
+async function loadCompanyName() {
+  // Load company name from backend
+}
+
+async function loadBranches() {
+  // Load branches from backend
+}
+
+async function loadCategories() {
+  // Load categories from backend
+}
+
+async function loadServices() {
+  // Load services from backend
+}
+
+async function loadMasters() {
+  // Load masters from backend
+}
+
+async function loadSchedule() {
+  // Load schedule from backend
+}
+
+async function loadWorks() {
+  // Load works from backend
+}
+</script>
+
+</body>
+</html>
