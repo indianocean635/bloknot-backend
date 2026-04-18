@@ -597,9 +597,6 @@ function createSpecialistForm(index) {
   form.className = 'specialist-form';
   form.innerHTML = `
     <div class="card">
-      <div class="card-header">
-        <h3>Специалист ${index}</h3>
-      </div>
       <div class="card-body">
         <div class="field">
           <label>Имя:</label>
@@ -616,12 +613,11 @@ function createSpecialistForm(index) {
         <div class="field">
           <label>График работы:</label>
           <button class="btn secondary" onclick="openScheduleSettings(${index})" style="width: 100%;">Настроить график</button>
-          <div id="schedulePreview${index}" style="padding: 8px; background: #f5f5f5; border-radius: 4px; font-size: 14px; color: #666; margin-top: 8px;">
           </div>
         </div>
-        <div class="action-buttons">
-          <button class="btn success" onclick="inviteSpecialist(${index})">Пригласить</button>
-          <button class="btn danger" onclick="deleteSpecialist(${index})">Удалить</button>
+        <div class="action-buttons" style="margin-top: 8px;">
+          <button class="btn secondary" onclick="inviteSpecialist(${index})" style="margin-right: 8px;">Пригласить</button>
+          <button class="btn secondary" onclick="deleteSpecialist(${index})">Удалить</button>
         </div>
       </div>
     </div>
