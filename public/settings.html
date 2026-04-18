@@ -34,83 +34,22 @@
   <h1 class="page-title">Настройки бизнеса</h1>
   <p class="page-subtitle">Управляйте филиалами, категориями, услугами, мастерами и фото работ</p>
 
-  <!-- Брендинг -->
-  <section class="settings-section">
-    <div class="section-header">
-      <h2>🏢 Брендинг</h2>
-    </div>
-    
-    <div class="branding-container">
-      <div class="branding-item">
-        <h3>Логотип</h3>
-        <div class="logo-preview" id="logoPreview">
-          <div class="no-logo">Нет логотипа</div>
-        </div>
-        <div class="logo-actions">
-          <button class="btn" id="addLogoBtn">+ Добавить логотип</button>
-          <button class="btn secondary" id="changeLogoBtn" style="display: none;">Изменить логотип</button>
-        </div>
-      </div>
-      
-      <div class="branding-item">
-        <h3>Название компании</h3>
-        <div class="company-info">
-          <input type="text" id="companyNameInput" placeholder="Введите название компании">
-          <button class="btn" id="saveCompanyNameBtn">Сохранить</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Филиалы -->
-  <section class="settings-section">
-    <div class="section-header">
-      <h2>📍 Филиалы</h2>
-      <button class="btn" id="addBranchBtn">+ Добавить филиал</button>
-    </div>
-    
-    <div class="items-grid" id="branchesGrid">
-    </div>
-  </section>
-
-  <!-- Категории -->
-  <section class="settings-section">
-    <div class="section-header">
-      <h2>📁 Категории услуг</h2>
-      <button class="btn" id="addCategoryBtn">+ Добавить категорию</button>
-    </div>
-    
-    <div class="items-grid" id="categoriesGrid">
-    </div>
-  </section>
-
-  <!-- Услуги -->
-  <section class="settings-section">
-    <div class="section-header">
-      <h2>✂️ Услуги</h2>
-      <button class="btn" id="addServiceBtn">+ Добавить услугу</button>
-    </div>
-    
-    <div class="items-grid" id="servicesGrid">
-    </div>
-  </section>
-
   <!-- Специалисты -->
   <section class="settings-section">
     <div class="section-header">
-      <h2>👨‍💼 Специалисты</h2>
+      <h2>Специалисты</h2>
       <button class="btn" id="addMasterBtn">+ Добавить специалиста</button>
     </div>
     
     <!-- Tariff Selection -->
     <div id="tariffSelection" style="margin-bottom: 16px;">
       <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px;">
-        <strong>\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0430\u0440\u0438\u0444: 1, 5 \u0438\u043b\u0438 \u0431\u043e\u043b\u0435\u0435 \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u043e\u0432?</strong>
+        <strong>Выберите тариф: 1, 5 или более специалистов?</strong>
       </p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button class="btn secondary" onclick="selectTariff('SOLO', '690')">1 \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442</button>
-        <button class="btn secondary" onclick="selectTariff('STUDIO', '990')">5 \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u043e\u0432</button>
-        <button class="btn secondary" onclick="selectTariff('PRO', '1490')">\u0411\u043e\u043b\u0435\u0435 5 \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u043e\u0432</button>
+        <button class="btn secondary" onclick="selectTariff('SOLO', '690')">1 специалист</button>
+        <button class="btn secondary" onclick="selectTariff('STUDIO', '990')">5 специалистов</button>
+        <button class="btn secondary" onclick="selectTariff('PRO', '1490')">Более 5 специалистов</button>
       </div>
     </div>
     
@@ -126,55 +65,77 @@
             <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px;">
               <strong id="selectedPlanName">Plan Name</strong>
             </p>
-            <p style="margin: 0 0 12px 0; color: #666; font-size: 14px;">
-              Price: <span id="selectedPlanPrice">0</span> RUB/year
-            </p>
           </div>
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Card Number:</label>
-            <input type="text" id="cardNumber" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="1234 5678 9012 3456" maxlength="19">
+          <div class="logo-actions">
+            <button class="btn" id="addLogoBtn">+ Add Logo</button>
+            <button class="btn secondary" id="changeLogoBtn" style="display: none;">Change Logo</button>
           </div>
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Expiry Date:</label>
-            <input type="text" id="cardExpiry" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="MM/YY" maxlength="5">
-          </div>
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">CVV:</label>
-            <input type="text" id="cardCVV" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="123" maxlength="3">
-          </div>
-          <div id="paymentError" style="color: #e74c3c; margin-bottom: 10px; font-size: 14px;"></div>
         </div>
-        <div class="modal-footer">
-          <button class="btn secondary" onclick="closePaymentModal()" style="margin-right: 10px;">Cancel</button>
-          <button class="btn primary" onclick="processPayment()">Subscribe</button>
+        
+        <div class="branding-item">
+          <h3>Company Name</h3>
+          <div class="company-info">
+            <input type="text" id="companyNameInput" placeholder="Enter company name">
+            <button class="btn" id="saveCompanyNameBtn">Save</button>
+          </div>
         </div>
       </div>
-    </div>
-    
-    <div class="items-grid" id="mastersGrid">
-    </div>
-  </section>
+    </section>
 
-  <!-- График работы -->
-  <section class="settings-section">
-    <div class="section-header">
-      <h2>📅 График работы</h2>
-    </div>
-    
-    <div class="schedule-container" id="scheduleContainer">
-    </div>
-  </section>
+    <!-- Branches -->
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Branches</h2>
+        <button class="btn" id="addBranchBtn">+ Add Branch</button>
+      </div>
+      
+      <div class="items-grid" id="branchesGrid">
+      </div>
+    </section>
 
-  <!-- Фото работ -->
-  <section class="settings-section">
-    <div class="section-header">
-      <h2>📸 Фото работ</h2>
-      <button class="btn" id="addWorkBtn">+ Добавить фото</button>
-    </div>
-    
-    <div class="items-grid" id="worksGrid">
-    </div>
-  </section>
+    <!-- Categories -->
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Service Categories</h2>
+        <button class="btn" id="addCategoryBtn">+ Add Category</button>
+      </div>
+      
+      <div class="items-grid" id="categoriesGrid">
+      </div>
+    </section>
+
+    <!-- Services -->
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Services</h2>
+        <button class="btn" id="addServiceBtn">+ Add Service</button>
+      </div>
+      
+      <div class="items-grid" id="servicesGrid">
+      </div>
+    </section>
+
+    <!-- Work Schedule -->
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Work Schedule</h2>
+      </div>
+      
+      <div class="schedule-container" id="scheduleContainer">
+      </div>
+    </section>
+
+    <!-- Work Photos -->
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Work Photos</h2>
+        <button class="btn" id="addWorkBtn">+ Add Photo</button>
+      </div>
+      
+      <div class="items-grid" id="worksGrid">
+      </div>
+    </section>
+  </div>
 </main>
 
 <!-- Модальное окно для добавления/редактирования -->
@@ -198,6 +159,45 @@
   margin-bottom: 16px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   border: 1px solid #f3f4f6;
+}
+
+.compact-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.settings-section.compact {
+  margin-bottom: 0;
+  padding: 12px;
+  font-size: 14px;
+}
+
+.settings-section.compact h2 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.settings-section.compact h3 {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.settings-section.compact .btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.settings-section.compact input,
+.settings-section.compact .items-grid {
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .compact-settings-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .section-header {
