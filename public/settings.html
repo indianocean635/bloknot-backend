@@ -380,6 +380,35 @@
   border: 1px solid #e5e7eb;
 }
 
+/* Avatar Upload Styles */
+.avatar-upload {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.avatar-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.avatar-circle:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.avatar-plus {
+  font-size: 24px;
+  color: #9ca3af;
+  font-weight: 300;
+}
+
 .btn {
   padding: 8px 16px;
   border: none;
@@ -607,8 +636,13 @@ function createSpecialistForm(index) {
           <input type="email" id="specialistEmail${index}" placeholder="Введите email адрес">
         </div>
         <div class="field">
-          <label>Аватар:</label>
-          <input type="file" id="specialistAvatar${index}" accept="image/*">
+          <label>Avatar:</label>
+          <div class="avatar-upload" onclick="document.getElementById('specialistAvatar${index}').click()">
+            <div class="avatar-circle">
+              <div class="avatar-plus">+</div>
+            </div>
+            <input type="file" id="specialistAvatar${index}" accept="image/*" style="display: none;" onchange="handleAvatarSelect(${index}, this)">
+          </div>
         </div>
         <div class="field">
           <label>График работы:</label>
@@ -650,6 +684,17 @@ async function saveSpecialist(index) {
 function openScheduleSettings(index) {
   // Open schedule settings page with specialist index
   window.location.href = `/specialist-schedule.html?specialist=${index}`;
+}
+
+function handleAvatarSelect(index, input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const avatarCircle = input.previousElementSibling;
+      avatarCircle.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
 }
 
 async function inviteSpecialist(index) {
