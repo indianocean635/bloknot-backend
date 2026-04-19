@@ -143,10 +143,7 @@
     <section class="settings-section compact">
       <div class="section-header">
         <h2>Фотографии работ</h2>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn" id="addWorkBtn">+ Добавить фото</button>
-          <button class="btn secondary" onclick="openAsClient()">Открыть как клиент</button>
-        </div>
+        <button class="btn" id="addWorkBtn">+ Добавить фото</button>
       </div>
       
       <div class="items-grid" id="worksGrid">
@@ -154,7 +151,15 @@
     </section>
   </div>
 
-  
+  <!-- Client Preview Window -->
+  <div class="client-preview-window">
+    <div class="preview-window-content">
+      <h3>Client Preview</h3>
+      <p>View your online booking page as a client</p>
+      <button class="btn primary" onclick="openAsClient()">Open as client</button>
+    </div>
+  </div>
+
 </main>
 
 <!-- Modal -->
@@ -569,6 +574,48 @@
   padding: 20px;
 }
 
+/* Client Preview Window Styles */
+.client-preview-window {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  z-index: 100;
+  min-width: 200px;
+}
+
+.preview-window-content {
+  text-align: center;
+}
+
+.preview-window-content h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #374151;
+}
+
+.preview-window-content p {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+@media (max-width: 1024px) {
+  .client-preview-window {
+    position: static;
+    transform: none;
+    margin: 20px 0;
+    width: 100%;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
 </style>
 
 <script src="/app.js?v=20260408"></script>
@@ -885,7 +932,7 @@ async function loadWorks() {
 // Open as Client Function
 function openAsClient() {
   // Open online booking page in new window/tab
-  const bookingUrl = 'https://bloknotservis.ru/booking';
+  const bookingUrl = 'https://bloknotservis.ru/booking-new.html';
   window.open(bookingUrl, '_blank');
 }
 </script>
