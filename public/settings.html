@@ -922,6 +922,15 @@ async function inviteSpecialist(index) {
     return;
   }
   
+  // Check if user is authenticated
+  const userEmail = localStorage.getItem('bloknot_logged_in_email');
+  if (!userEmail) {
+    alert('Please login first to send invitations');
+    return;
+  }
+  
+  console.log(`[INVITE] Current user: ${userEmail}, inviting: ${email}`);
+  
   try {
     // Get current business info
     const companyName = document.getElementById('companyNameInput')?.value || 'Our Business';
@@ -953,6 +962,7 @@ async function inviteSpecialist(index) {
     
     alert(`Invitation sent to ${email}. The specialist will receive an email with registration link.`);
   } catch (error) {
+    console.error('[INVITE ERROR]', error);
     alert(`Error sending invitation: ${error.message}`);
   }
 }
