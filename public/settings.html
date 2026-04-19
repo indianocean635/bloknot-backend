@@ -794,11 +794,11 @@ function createSpecialistForm(index) {
       <div class="card-body">
         <div class="field">
           <label>Имя:</label>
-          <input type="text" id="specialistName${index}" placeholder="Введите имя специалиста">
+          <input type="text" id="specialistName${index}" placeholder="Введите имя специалиста" onchange="saveSpecialistData(${index})" oninput="saveSpecialistData(${index})">
         </div>
         <div class="field">
           <label>Email:</label>
-          <input type="email" id="specialistEmail${index}" placeholder="Введите email адрес">
+          <input type="email" id="specialistEmail${index}" placeholder="Введите email адрес" onchange="saveSpecialistData(${index})" oninput="saveSpecialistData(${index})">
         </div>
         <div class="field">
           <label>Avatar:</label>
@@ -820,7 +820,48 @@ function createSpecialistForm(index) {
       </div>
     </div>
   `;
+  
+  // Load saved data after form is created
+  setTimeout(() => loadSpecialistData(index), 100);
+  
   return form;
+}
+
+// Save specialist data to localStorage
+function saveSpecialistData(index) {
+  const name = document.getElementById(`specialistName${index}`)?.value || '';
+  const email = document.getElementById(`specialistEmail${index}`)?.value || '';
+  
+  const specialists = JSON.parse(localStorage.getItem('specialistForms') || '{}');
+  specialists[index] = {
+    name: name,
+    email: email,
+    updatedAt: new Date().toISOString()
+  };
+  
+  localStorage.setItem('specialistForms', JSON.stringify(specialists));
+  console.log(`Saved specialist ${index} data:`, specialists[index]);
+}
+
+// Load specialist data from localStorage
+function loadSpecialistData(index) {
+  const specialists = JSON.parse(localStorage.getItem('specialistForms') || '{}');
+  const specialistData = specialists[index];
+  
+  if (specialistData) {
+    const nameInput = document.getElementById(`specialistName${index}`);
+    const emailInput = document.getElementById(`specialistEmail${index}`);
+    
+    if (nameInput && specialistData.name) {
+      nameInput.value = specialistData.name;
+    }
+    
+    if (emailInput && specialistData.email) {
+      emailInput.value = specialistData.email;
+    }
+    
+    console.log(`Loaded specialist ${index} data:`, specialistData);
+  }
 }
 
 async function saveSpecialist(index) {
