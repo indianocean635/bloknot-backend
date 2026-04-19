@@ -928,7 +928,7 @@ async function inviteSpecialist(index) {
     const businessId = localStorage.getItem('businessId') || 'default';
     
     // Send invitation email with link to main page
-    const response = await api('/api/invite-specialist', {
+    const response = await api('/api/settings/invite-specialist', {
       method: 'POST',
       body: JSON.stringify({
         email: email,
