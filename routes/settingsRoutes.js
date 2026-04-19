@@ -549,7 +549,6 @@ router.post("/invite-specialist", requireMagicAuth, getBusinessFromUser, async (
         name: name,
         email: email,
         businessId: req.business.id,
-        inviteToken: Math.random().toString(36).substring(2, 15),
         invitedAt: new Date()
       }
     });
@@ -557,7 +556,8 @@ router.post("/invite-specialist", requireMagicAuth, getBusinessFromUser, async (
     // Send invitation email using Yandex SMTP
     if (transporter) {
       try {
-        const fullInviteLink = `${inviteLink}?token=${specialist.inviteToken}&business=${req.business.id}`;
+        const inviteToken = Math.random().toString(36).substring(2, 15);
+        const fullInviteLink = `${inviteLink}?token=${inviteToken}&business=${req.business.id}`;
         
         await transporter.sendMail({
           from: process.env.MAIL_FROM || process.env.SMTP_USER,
