@@ -674,8 +674,8 @@ function createSpecialistForm(index) {
           </div>
         </div>
         <div class="action-buttons" style="margin-top: 8px;">
-          <button class="btn secondary" onclick="inviteSpecialist(${index})" style="margin-right: 8px;">Пригласить</button>
-          <button class="btn secondary" onclick="deleteSpecialist(${index})">Удалить</button>
+          <button class="btn secondary" onclick="inviteSpecialist(${index})" style="margin-right: 8px; font-size: 11px; padding: 4px 8px;">Attract</button>
+          <button class="btn secondary" onclick="deleteSpecialist(${index})" style="font-size: 11px; padding: 4px 8px;">Delete</button>
         </div>
       </div>
     </div>
@@ -749,7 +749,8 @@ async function inviteSpecialist(index) {
         email: email,
         name: name,
         businessName: 'Your Business',
-        inviteLink: 'https://bloknotservis.ru'
+        inviteLink: 'https://bloknotservis.ru',
+        message: 'You have been invited as a specialist in our company. Please complete your registration.'
       })
     });
     
@@ -760,23 +761,39 @@ async function inviteSpecialist(index) {
 }
 
 async function deleteSpecialist(index) {
-  if (confirm('Вы уверены, что хотите удалить этого специалиста?')) {
+  if (confirm('Are you sure you want to delete this specialist?')) {
     try {
       // Delete specialist from backend
       const response = await api(`/api/specialists/${index}`, {
         method: 'DELETE'
       });
       
-      // Remove form from DOM
+      // Replace form with + button
       const form = document.querySelector(`.specialist-form:nth-child(${index})`);
       if (form) {
-        form.remove();
+        form.innerHTML = `
+          <div class="card">
+            <div class="card-body">
+              <div class="add-specialist-placeholder" onclick="createNewSpecialist(${index})" style="text-align: center; padding: 40px; cursor: pointer; border: 2px dashed #d1d5db; border-radius: 8px; background: #f9fafb;">
+                <div style="font-size: 24px; color: #9ca3af; margin-bottom: 8px;">+</div>
+                <div style="color: #9ca3af; font-size: 14px;">Add Specialist</div>
+              </div>
+            </div>
+          </div>
+        `;
       }
       
-      alert('Специалист удален успешно!');
+      alert('Specialist deleted successfully!');
     } catch (error) {
-      alert('Ошибка удаления специалиста: ' + error.message);
+      alert('Error deleting specialist: ' + error.message);
     }
+  }
+}
+
+function createNewSpecialist(index) {
+  const form = document.querySelector(`.specialist-form:nth-child(${index})`);
+  if (form) {
+    form.innerHTML = createSpecialistForm(index).innerHTML;
   }
 }
 
