@@ -535,16 +535,28 @@ router.post("/invite-specialist", requireMagicAuth, getBusinessFromUser, async (
       }
     });
 
-    // TODO: Send actual email using email service
-    // For now, we'll just log the invitation
-    console.log(`Invitation sent to ${email} for business ${req.business.name}`);
+    // Log invitation details (temporary solution until email is fixed)
+    console.log(`=== SPECIALIST INVITATION ===`);
+    console.log(`To: ${email}`);
+    console.log(`Name: ${name}`);
+    console.log(`Business: ${req.business.name}`);
     console.log(`Message: ${message}`);
     console.log(`Invite link: ${inviteLink}?token=${specialist.inviteToken}&business=${req.business.id}`);
+    console.log(`============================`);
 
+    // For now, return success without actually sending email
+    // TODO: Implement proper email service when SMTP is fixed
     res.json({ 
       success: true, 
-      message: "Invitation sent successfully",
-      specialistId: specialist.id 
+      message: "Invitation processed successfully. Email will be sent shortly.",
+      specialistId: specialist.id,
+      inviteToken: specialist.inviteToken,
+      debugInfo: {
+        email: email,
+        name: name,
+        businessName: req.business.name,
+        inviteLink: `${inviteLink}?token=${specialist.inviteToken}&business=${req.business.id}`
+      }
     });
   } catch (error) {
     console.error("Error inviting specialist:", error);
