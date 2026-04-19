@@ -514,4 +514,42 @@ router.get("/works", requireMagicAuth, getBusinessFromUser, async (req, res) => 
   }
 });
 
+// Invite specialist
+router.post("/invite-specialist", requireMagicAuth, getBusinessFromUser, async (req, res) => {
+  try {
+    const { email, name, businessName, businessId, inviteLink, message } = req.body;
+    
+    if (!email || !name) {
+      return res.status(400).json({ error: "Email and name are required" });
+    }
+
+    // Create specialist invitation record
+    const specialist = await prisma.master.create({
+      data: {
+        name: name,
+        email: email,
+        businessId: req.business.id,
+        status: 'invited',
+        inviteToken: Math.random().toString(36).substring(2, 15),
+        invitedAt: new Date()
+      }
+    });
+
+    // TODO: Send actual email using email service
+    // For now, we'll just log the invitation
+    console.log(`Invitation sent to ${email} for business ${req.business.name}`);
+    console.log(`Message: ${message}`);
+    console.log(`Invite link: ${inviteLink}?token=${specialist.inviteToken}&business=${req.business.id}`);
+
+    res.json({ 
+      success: true, 
+      message: "Invitation sent successfully",
+      specialistId: specialist.id 
+    });
+  } catch (error) {
+    console.error("Error inviting specialist:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

@@ -877,26 +877,42 @@ async function inviteSpecialist(index) {
   const name = document.getElementById(`specialistName${index}`).value;
   
   if (!email) {
-    alert('Пожалуйста, укажите email специалиста');
+    alert('Please enter specialist email');
     return;
   }
   
   try {
+    // Get current business info
+    const companyName = document.getElementById('companyNameInput')?.value || 'Our Business';
+    const businessId = localStorage.getItem('businessId') || 'default';
+    
     // Send invitation email with link to main page
     const response = await api('/api/invite-specialist', {
       method: 'POST',
       body: JSON.stringify({
         email: email,
         name: name,
-        businessName: 'Your Business',
+        businessName: companyName,
+        businessId: businessId,
         inviteLink: 'https://bloknotservis.ru',
-        message: 'You have been invited as a specialist in our company. Please complete your registration.'
+        message: 'You have been invited as a specialist in our company. Please complete your registration to access business settings and appear in online booking.'
       })
     });
     
-    alert(`Приглашение отправлено на ${email}`);
+    // Save specialist to local storage
+    const specialists = JSON.parse(localStorage.getItem('specialists') || '[]');
+    specialists.push({
+      id: Date.now(),
+      email: email,
+      name: name,
+      status: 'invited',
+      businessId: businessId
+    });
+    localStorage.setItem('specialists', JSON.stringify(specialists));
+    
+    alert(`Invitation sent to ${email}. The specialist will receive an email with registration link.`);
   } catch (error) {
-    alert(`Ошибка отправки приглашения: ${error.message}`);
+    alert(`Error sending invitation: ${error.message}`);
   }
 }
 
