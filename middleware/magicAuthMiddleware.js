@@ -10,14 +10,28 @@ function requireMagicAuth(req, res, next) {
     return res.status(401).json({ error: "Unauthorized - No email provided" });
   }
   
-  // Find user by email
+  // Find user by email, or create if not found
   prisma.user.findUnique({
     where: { email: userEmail.toLowerCase() },
     include: { business: true }
   })
-  .then(user => {
+  .then(async user => {
     if (!user) {
-      return res.status(401).json({ error: "Unauthorized - User not found" });
+      // Create user if not found
+      try {
+        user = await prisma.user.create({
+          data: {
+            email: userEmail.toLowerCase(),
+            role: 'owner',
+            createdAt: new Date()
+          },
+          include: { business: true }
+        });
+        console.log(`[MAGIC_AUTH] Created new user: ${userEmail}`);
+      } catch (createError) {
+        console.error(`[MAGIC_AUTH] Failed to create user ${userEmail}:`, createError);
+        return res.status(401).json({ error: "Unauthorized - Failed to create user" });
+      }
     }
     
     req.user = { 
