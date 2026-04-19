@@ -548,8 +548,7 @@ router.post("/invite-specialist", requireMagicAuth, getBusinessFromUser, async (
       data: {
         name: name,
         email: email,
-        businessId: req.business.id,
-        invitedAt: new Date()
+        businessId: req.business.id
       }
     });
 
