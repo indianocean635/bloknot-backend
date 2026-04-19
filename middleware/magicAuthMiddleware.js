@@ -77,6 +77,7 @@ async function getBusinessFromUser(req, res, next) {
           name: `${user.email}'s Business`,
           email: user.email,
           ownerId: user.id,
+          slug: user.email.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase(),
           createdAt: new Date()
         }
       });
