@@ -669,12 +669,12 @@ function createSpecialistForm(index) {
           </div>
         </div>
         <div class="field">
-          <button class="btn secondary" onclick="openScheduleSettings(${index})" style="width: 100%;">Specialist Settings</button>
+          <button class="btn secondary" onclick="openScheduleSettings(${index})" style="width: 100%;">Настройки специалиста</button>
           </div>
         </div>
         <div class="action-buttons" style="margin-top: 8px;">
-          <button class="btn secondary" onclick="inviteSpecialist(${index})" style="margin-right: 8px; font-size: 11px; padding: 4px 8px;">Invite</button>
-          <button class="btn secondary" onclick="deleteSpecialist(${index})" style="font-size: 11px; padding: 4px 8px;">Delete</button>
+          <button class="btn secondary" onclick="inviteSpecialist(${index})" style="margin-right: 8px; font-size: 11px; padding: 4px 8px;">Пригласить</button>
+<button class="btn secondary" onclick="deleteSpecialist(${index})" style="font-size: 11px; padding: 4px 8px;">Удалить</button>
         </div>
       </div>
     </div>
@@ -760,7 +760,7 @@ async function inviteSpecialist(index) {
 }
 
 async function deleteSpecialist(index) {
-  if (confirm('Are you sure you want to delete this specialist?')) {
+  if (confirm('Вы уверены, что хотите удалить этого специалиста?')) {
     try {
       // Delete specialist from backend
       const response = await api(`/api/specialists/${index}`, {
@@ -775,14 +775,14 @@ async function deleteSpecialist(index) {
             <div class="card-body">
               <div class="add-specialist-placeholder" onclick="createNewSpecialist(${index})" style="text-align: center; padding: 40px; cursor: pointer; border: 2px dashed #d1d5db; border-radius: 8px; background: #f9fafb;">
                 <div style="font-size: 24px; color: #9ca3af; margin-bottom: 8px;">+</div>
-                <div style="color: #9ca3af; font-size: 14px;">Add Specialist</div>
+                <div style="color: #9ca3af; font-size: 14px;">Добавить специалиста</div>
               </div>
             </div>
           </div>
         `;
       }
       
-      alert('Specialist deleted successfully!');
+      alert('Специалист удален успешно!');
     } catch (error) {
       alert('Error deleting specialist: ' + error.message);
     }
