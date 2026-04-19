@@ -1,7 +1,27 @@
 const express = require("express");
+const nodemailer = require("nodemailer");
 const { prisma } = require("../services/prismaService");
 const { requireMagicAuth, getBusinessFromUser } = require("../middleware/magicAuthMiddleware");
 const router = express.Router();
+
+// Email transporter (Yandex SMTP) - same as in authRoutes
+let transporter = null;
+
+// Initialize email transporter
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT) || 465,
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+  console.log('SettingsRoutes: Email transporter configured with Yandex SMTP');
+} else {
+  console.log('SettingsRoutes: Email not configured - missing SMTP settings');
+}
 
 // Get business settings
 router.get("/business", requireMagicAuth, getBusinessFromUser, async (req, res) => {
@@ -535,28 +555,59 @@ router.post("/invite-specialist", requireMagicAuth, getBusinessFromUser, async (
       }
     });
 
-    // Log invitation details (temporary solution until email is fixed)
-    console.log(`=== SPECIALIST INVITATION ===`);
-    console.log(`To: ${email}`);
-    console.log(`Name: ${name}`);
-    console.log(`Business: ${req.business.name}`);
-    console.log(`Message: ${message}`);
-    console.log(`Invite link: ${inviteLink}?token=${specialist.inviteToken}&business=${req.business.id}`);
-    console.log(`============================`);
+    // Send invitation email using Yandex SMTP
+    if (transporter) {
+      try {
+        const fullInviteLink = `${inviteLink}?token=${specialist.inviteToken}&business=${req.business.id}`;
+        
+        await transporter.sendMail({
+          from: process.env.MAIL_FROM || process.env.SMTP_USER,
+          to: email,
+          subject: `Bloknot - Invitation from ${req.business.name}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #333;">You're invited! ${req.business.name}</h2>
+              <p style="color: #666; line-height: 1.6;">
+                ${message || 'You have been invited as a specialist in our company. Please complete your registration to access business settings and appear in online booking.'}
+              </p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${fullInviteLink}" 
+                   style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                          color: white; 
+                          padding: 12px 30px; 
+                          text-decoration: none; 
+                          border-radius: 25px; 
+                          display: inline-block;
+                          font-weight: 500;">
+                  Accept Invitation
+                </a>
+              </div>
+              <p style="color: #999; font-size: 12px; text-align: center;">
+                If the button doesn't work, copy and paste this link:<br>
+                <a href="${fullInviteLink}" style="color: #999;">${fullInviteLink}</a>
+              </p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+              <p style="color: #999; font-size: 12px;">
+                This is an automated message from Bloknot. Please do not reply to this email.
+              </p>
+            </div>
+          `
+        });
+        
+        console.log(`[INVITATION SENT] To: ${email}, Business: ${req.business.name}`);
+      } catch (emailError) {
+        console.error('[EMAIL ERROR] Failed to send invitation email:', emailError);
+        // Still continue even if email fails
+      }
+    } else {
+      console.log('[INVITATION] Email not configured, skipping email send');
+    }
 
-    // For now, return success without actually sending email
-    // TODO: Implement proper email service when SMTP is fixed
     res.json({ 
       success: true, 
-      message: "Invitation processed successfully. Email will be sent shortly.",
+      message: "Invitation sent successfully!",
       specialistId: specialist.id,
-      inviteToken: specialist.inviteToken,
-      debugInfo: {
-        email: email,
-        name: name,
-        businessName: req.business.name,
-        inviteLink: `${inviteLink}?token=${specialist.inviteToken}&business=${req.business.id}`
-      }
+      inviteToken: specialist.inviteToken
     });
   } catch (error) {
     console.error("Error inviting specialist:", error);
