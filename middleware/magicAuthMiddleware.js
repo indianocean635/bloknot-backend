@@ -65,11 +65,33 @@ async function getBusinessFromUser(req, res, next) {
       include: { business: true }
     });
     
-    if (!user || !user.business) {
-      return res.status(404).json({ error: "Business not found" });
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
     }
     
-    req.business = user.business;
+    // Create business if not exists
+    if (!user.business) {
+      console.log(`[GET_BUSINESS] Creating business for user: ${user.email}`);
+      const business = await prisma.business.create({
+        data: {
+          name: `${user.email}'s Business`,
+          email: user.email,
+          ownerId: user.id,
+          createdAt: new Date()
+        }
+      });
+      
+      // Update user with businessId
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { businessId: business.id }
+      });
+      
+      req.business = business;
+    } else {
+      req.business = user.business;
+    }
+    
     next();
   } catch (error) {
     console.error("Error getting business:", error);
