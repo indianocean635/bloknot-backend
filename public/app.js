@@ -130,11 +130,19 @@
       headers: headers
     };
     
-    const res = await fetch(API_BASE + path, options);
+    const fullUrl = API_BASE + path;
+    console.log(`[API] Full URL: ${fullUrl}`);
+    console.log(`[API] Options:`, options);
+    
+    const res = await fetch(fullUrl, options);
+    console.log(`[API] Response status: ${res.status}`);
+    console.log(`[API] Response headers:`, [...res.headers.entries()]);
+    
     if (!res.ok) {
       let text = "";
       try {
         text = await res.text();
+        console.log(`[API] Error response: ${text}`);
       } catch (e) {}
       throw new Error(text || ("HTTP " + res.status));
     }
