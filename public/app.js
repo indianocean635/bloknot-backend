@@ -1,5 +1,6 @@
 (function () {
   const API_BASE = "https://bloknotservis.ru"; // Updated: 2026-04-20
+  console.log('APP.JS LOADED - API_BASE:', API_BASE);
 
   // Auto-refresh on version change
   async function checkForUpdates() {
