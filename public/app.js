@@ -1,5 +1,5 @@
 (function () {
-  const API_BASE = "https://bloknotservis.ru";
+  const API_BASE = "https://bloknotservis.ru"; // Updated: 2026-04-20
 
   // Auto-refresh on version change
   async function checkForUpdates() {
