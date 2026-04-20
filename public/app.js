@@ -1,5 +1,5 @@
 (function () {
-  const API_BASE = "";
+  const API_BASE = "https://bloknotservis.ru";
 
   // Auto-refresh on version change
   async function checkForUpdates() {
