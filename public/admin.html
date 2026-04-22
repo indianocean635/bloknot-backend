@@ -150,22 +150,28 @@
     }
 
     async function api(url, options) {
-      const r = await fetch(url, Object.assign({ credentials: 'include' }, options || {}));
+      const adminEmail = localStorage.getItem('bloknot_admin_email');
+      const isLoggedIn = localStorage.getItem('bloknot_admin_logged_in') === '1';
+      
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(adminEmail && { 'x-admin-email': adminEmail }),
+        ...(isLoggedIn && { 'x-admin-logged-in': 'true' }),
+        ...(options?.headers || {})
+      };
+      
+      const r = await fetch(url, Object.assign({ 
+        credentials: 'include',
+        headers: headers
+      }, options || {}));
+      
       const ct = String(r.headers.get('content-type') || '');
       if (!r.ok) {
-        let msg = `HTTP ${r.status}`;
-        if (ct.includes('application/json')) {
-          try {
-            const data = await r.json();
-            if (data && data.error) msg = data.error;
-          } catch (e) {}
-        } else {
-          try {
-            const t = await r.text();
-            if (t) msg = t;
-          } catch (e) {}
-        }
-        throw new Error(msg);
+        let text = "";
+        try {
+          text = await r.text();
+        } catch (e) {}
+        throw new Error(text || ("HTTP " + r.status));
       }
       if (ct.includes('application/json')) return r.json();
       return r.text();
