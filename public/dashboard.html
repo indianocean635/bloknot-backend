@@ -274,9 +274,14 @@
      }
    }
 
-   Bloknot.qs("#refreshBtn").addEventListener("click", () => {
-     loadDashboard().catch((e) => showNotice("Failed to load data: " + e.message));
-   });
+   const refreshBtn = Bloknot.qs("#refreshBtn");
+   if (refreshBtn) {
+     refreshBtn.addEventListener("click", () => {
+       loadDashboard().catch((e) => showNotice("Failed to load data: " + e.message));
+     });
+   } else {
+     console.log('Refresh button not found, skipping event listener');
+   }
 
    (function initBookingLink() {
      fetch('/api/business/slug')
@@ -316,21 +321,24 @@
            if (!ok && ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "a"))) e.preventDefault();
          });
 
-         Bloknot.qs("#copyBookingBtn").addEventListener("click", async () => {
-           const ok = localStorage.getItem("bloknot_subscription_active") === "1";
-           if (!ok) {
-             location.href = "/subscribe.html";
-             return;
-           }
-           try {
-             await navigator.clipboard.writeText(link);
-             showNotice("Ссылка скопирована.");
-           } catch (e) {
-             Bloknot.qs("#bookingLink").focus();
-             Bloknot.qs("#bookingLink").select();
-             showNotice("Не удалось скопировать автоматически. Выделил ссылку — нажмите Ctrl+C.");
-           }
-         });
+         const copyBookingBtn = Bloknot.qs("#copyBookingBtn");
+         if (copyBookingBtn) {
+           copyBookingBtn.addEventListener("click", async () => {
+             const ok = localStorage.getItem("bloknot_subscription_active") === "1";
+             if (!ok) {
+               location.href = "/subscribe.html";
+               return;
+             }
+             try {
+               await navigator.clipboard.writeText(link);
+               showNotice("Ссылка скопирована.");
+             } catch (e) {
+               Bloknot.qs("#bookingLink").focus();
+               Bloknot.qs("#bookingLink").select();
+               showNotice("Не удалось скопировать автоматически. Выделил ссылку — нажмите Ctrl+C.");
+             }
+           });
+         }
        })
        .catch(err => {
          console.error('Error getting slug:', err);
