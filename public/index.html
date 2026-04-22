@@ -1116,15 +1116,21 @@
     }
 
     // Update event listeners
-    document.getElementById("loginLink").addEventListener("click", (e) => {
-      e.preventDefault();
-      openLoginModal();
-    });
+    const loginLink = document.getElementById("loginLink");
+    if (loginLink) {
+      loginLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        openLoginModal();
+      });
+    }
 
-    document.getElementById("signupLink").addEventListener("click", (e) => {
-      e.preventDefault();
-      openRegistrationModal();
-    });
+    const signupLink = document.getElementById("signupLink");
+    if (signupLink) {
+      signupLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        openRegistrationModal();
+      });
+    }
 
     // Update bookBtn to use registration modal
     const bookBtn = document.getElementById("bookBtn");
