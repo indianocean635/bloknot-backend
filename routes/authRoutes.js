@@ -228,10 +228,11 @@ router.get('/magic/:token', async (req, res) => {
 // GET /api/auth/me
 router.get('/me', async (req, res) => {
   try {
-    // Use x-user-email header instead of Bearer token
-    const userEmail = req.headers['x-user-email'];
+    // Check for impersonation cookie first
+    let userEmail = req.cookies?.impersonate || req.headers['x-user-email'];
     
     console.log(`[AUTH /me] Request for user: ${userEmail}`);
+    console.log(`[AUTH /me] Impersonate cookie:`, req.cookies?.impersonate);
     console.log(`[AUTH /me] Headers:`, req.headers);
     
     if (!userEmail) {
