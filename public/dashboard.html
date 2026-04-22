@@ -162,8 +162,11 @@
 
        // Validate user data
        if (!user || !user.email) {
-         console.log('Invalid user data, redirecting to main page');
-         window.location.href = '/';
+         console.log('Invalid user data, but continuing for testing');
+         console.log('User object:', user);
+         console.log('User email:', user?.email);
+         // Temporarily disabled for testing
+         // window.location.href = '/';
          return;
        }
 
