@@ -253,6 +253,8 @@ router.delete('/users/:id', async (req, res) => {
 router.get('/impersonate/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`[ADMIN IMPERSONATE] Starting impersonation for user ID: ${id}`);
+    
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
@@ -260,12 +262,17 @@ router.get('/impersonate/:id', async (req, res) => {
       }
     });
     
+    console.log(`[ADMIN IMPERSONATE] User found:`, user ? { id: user.id, email: user.email, name: user.name } : null);
+    
     if (!user) {
+      console.log(`[ADMIN IMPERSONATE] User not found for ID: ${id}`);
       return res.status(404).json({ error: 'User not found' });
     }
   
     // Set impersonation session
+    console.log(`[ADMIN IMPERSONATE] Setting cookie for: ${user.email}`);
     res.cookie('impersonate', user.email, { maxAge: 3600000 }); // 1 hour
+    console.log(`[ADMIN IMPERSONATE] Redirecting to dashboard.html?logged=1`);
     res.redirect('/dashboard.html?logged=1');
   } catch (error) {
     console.error('Admin impersonate error:', error);
