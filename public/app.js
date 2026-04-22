@@ -110,7 +110,20 @@
 
   async function api(path, opts) {
     // Add authentication headers
-    const userEmail = localStorage.getItem('bloknot_logged_in_email');
+    let userEmail = localStorage.getItem('bloknot_logged_in_email');
+    
+    // Check for impersonation cookie if localStorage is empty
+    if (!userEmail) {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'impersonate') {
+          userEmail = decodeURIComponent(value);
+          console.log(`[API] Using impersonate cookie: ${userEmail}`);
+          break;
+        }
+      }
+    }
     
     console.log(`[API] Making request to ${path} with email: ${userEmail}`);
     
