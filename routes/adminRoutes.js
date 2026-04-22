@@ -272,8 +272,8 @@ router.get('/impersonate/:id', async (req, res) => {
     // Set impersonation session
     console.log(`[ADMIN IMPERSONATE] Setting cookie for: ${user.email}`);
     res.cookie('impersonate', user.email, { maxAge: 3600000 }); // 1 hour
-    console.log(`[ADMIN IMPERSONATE] Redirecting to dashboard.html?logged=1`);
-    res.redirect('/dashboard.html?logged=1');
+    console.log(`[ADMIN IMPERSONATE] Redirecting to dashboard.html?logged=1&v=20260420-1`);
+    res.redirect('/dashboard.html?logged=1&v=20260420-1');
   } catch (error) {
     console.error('Admin impersonate error:', error);
     res.status(500).json({ error: 'Internal server error' });
