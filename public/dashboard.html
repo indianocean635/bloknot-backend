@@ -146,12 +146,15 @@
     showNotice("");
 
     // Try to load user data first
-    console.log('Attempting to load user data...');
+    console.log('DASHBOARD: Starting loadDashboard function');
+    console.log('DASHBOARD: Bloknot object available:', typeof Bloknot);
+    console.log('DASHBOARD: Bloknot.api function available:', typeof Bloknot.api);
 
     // Load user profile information
     try {
+       console.log('DASHBOARD: Calling /api/auth/me API');
        const response = await Bloknot.api("/api/auth/me");
-       console.log('User data from API:', response);
+       console.log('DASHBOARD: API response received:', response);
 
        // Handle both response formats (direct user object or wrapped in user property)
        const user = response.user || response;
