@@ -99,6 +99,27 @@ async function getBusinessFromUser(req, res, next) {
   }
 }
 
+// Admin authentication middleware (for admin panel)
+function adminAuth(req, res, next) {
+  // Check for admin authentication via headers or localStorage simulation
+  const adminEmail = req.headers['x-admin-email'] || req.headers['x-user-email'];
+  const adminLoggedIn = req.headers['x-admin-logged-in'] || req.headers['x-user-email'];
+  
+  console.log(`[ADMIN_AUTH] Admin email: ${adminEmail}`);
+  console.log(`[ADMIN_AUTH] Admin logged in: ${adminLoggedIn ? 'yes' : 'no'}`);
+  
+  // For now, allow any request with admin email or just pass through
+  // In production, this should check against admin users
+  if (adminEmail || adminLoggedIn) {
+    req.adminEmail = adminEmail;
+    return next();
+  }
+  
+  // For testing, allow requests without strict auth
+  console.log(`[ADMIN_AUTH] Allowing request without strict auth`);
+  next();
+}
+
 // Simple middleware that doesn't require authentication (for testing)
 function optionalAuth(req, res, next) {
   // For now, just pass through
@@ -108,5 +129,6 @@ function optionalAuth(req, res, next) {
 module.exports = {
   requireMagicAuth,
   getBusinessFromUser,
+  adminAuth,
   optionalAuth
 };

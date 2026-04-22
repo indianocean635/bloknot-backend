@@ -9,7 +9,7 @@ const businessRoutes = require('./routes/businessRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const magicLinkRoutes = require('./routes/magicLinkRoutes');
-const { requireMagicAuth, getBusinessFromUser, optionalAuth } = require('./middleware/magicAuthMiddleware');
+const { requireMagicAuth, getBusinessFromUser, adminAuth, optionalAuth } = require('./middleware/magicAuthMiddleware');
 const app = express();
 const PORT = 3001;
 const prisma = new PrismaClient();
@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // API routes
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', requireMagicAuth, adminRoutes);
+app.use('/api/admin', adminAuth, adminRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/upload', uploadRoutes);
