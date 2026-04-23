@@ -200,6 +200,148 @@ async function getBusinessByEmail(req, res) {
   res.json(result);
 }
 
+// Get user's business
+async function getBusiness(req, res) {
+  const userEmail = req.cookies?.impersonate || req.headers['x-user-email'];
+  
+  if (!userEmail) {
+    return res.status(401).json({ error: "No email provided" });
+  }
+  
+  try {
+    // Find user first
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Check if user has a business
+    if (!user.businessId) {
+      return res.status(404).json({ error: "Business not found" });
+    }
+    
+    // Get business details
+    const business = await prisma.business.findUnique({
+      where: { id: user.businessId }
+    });
+    
+    if (!business) {
+      return res.status(404).json({ error: "Business not found" });
+    }
+    
+    res.json(business);
+  } catch (error) {
+    console.error("Error getting business:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// Create new business
+async function createBusiness(req, res) {
+  const userEmail = req.cookies?.impersonate || req.headers['x-user-email'];
+  
+  if (!userEmail) {
+    return res.status(401).json({ error: "No email provided" });
+  }
+  
+  try {
+    const { name, phone, address, description } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: "Business name is required" });
+    }
+    
+    // Find user first
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Check if user already has a business
+    if (user.businessId) {
+      return res.status(400).json({ error: "User already has a business" });
+    }
+    
+    // Create slug from email
+    const slug = userEmail.replace('@', '-').replace('.', '-');
+    
+    // Create business
+    const business = await prisma.business.create({
+      data: {
+        name: name,
+        slug: slug,
+        phone: phone || null,
+        address: address || null,
+        description: description || null
+      }
+    });
+    
+    // Update user with businessId
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { businessId: business.id }
+    });
+    
+    console.log(`Created business for ${userEmail}:`, business);
+    
+    res.status(201).json(business);
+  } catch (error) {
+    console.error("Error creating business:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// Update business
+async function updateBusiness(req, res) {
+  const userEmail = req.cookies?.impersonate || req.headers['x-user-email'];
+  
+  if (!userEmail) {
+    return res.status(401).json({ error: "No email provided" });
+  }
+  
+  try {
+    const { name, phone, address, description } = req.body;
+    
+    // Find user first
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Check if user has a business
+    if (!user.businessId) {
+      return res.status(404).json({ error: "Business not found" });
+    }
+    
+    // Update business
+    const business = await prisma.business.update({
+      where: { id: user.businessId },
+      data: {
+        ...(name && { name }),
+        ...(phone && { phone }),
+        ...(address && { address }),
+        ...(description && { description })
+      }
+    });
+    
+    console.log(`Updated business for ${userEmail}:`, business);
+    
+    res.json(business);
+  } catch (error) {
+    console.error("Error updating business:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 module.exports = {
   getBusinessBySlug,
   getBranches,
@@ -208,5 +350,8 @@ module.exports = {
   getWorks,
   getBusinessName,
   updateBusinessName,
-  getBusinessByEmail
+  getBusinessByEmail,
+  getBusiness,
+  createBusiness,
+  updateBusiness
 };
