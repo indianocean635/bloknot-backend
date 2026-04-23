@@ -228,8 +228,8 @@ router.get('/magic/:token', async (req, res) => {
 // GET /api/auth/me
 router.get('/me', async (req, res) => {
   try {
-    // Check for impersonation cookie first
-    let userEmail = req.cookies?.impersonate || req.headers['x-user-email'];
+    // Check for x-user-email header first (normal login), then impersonate cookie
+    let userEmail = req.headers['x-user-email'] || req.cookies?.impersonate;
     
     console.log(`[AUTH /me] Request for user: ${userEmail}`);
     console.log(`[AUTH /me] Impersonate cookie:`, req.cookies?.impersonate);
