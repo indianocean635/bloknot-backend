@@ -271,14 +271,20 @@ async function createBusiness(req, res) {
     // Create slug from email
     const slug = userEmail.replace('@', '-').replace('.', '-');
     
-    // Create business
+    // Create business with owner
     const business = await prisma.business.create({
       data: {
         name: name,
         slug: slug,
         phone: phone || null,
         address: address || null,
-        description: description || null
+        description: description || null,
+        ownerId: user.id,
+        owner: {
+          connect: {
+            id: user.id
+          }
+        }
       }
     });
     
