@@ -142,9 +142,35 @@ function optionalAuth(req, res, next) {
   next();
 }
 
+// Middleware to get business by slug (for public endpoints)
+async function getBusinessBySlug(req, res, next) {
+  try {
+    const slug = req.query.slug || req.params.slug;
+    
+    if (!slug) {
+      return res.status(400).json({ error: "Business slug is required" });
+    }
+    
+    const business = await prisma.business.findUnique({
+      where: { slug: slug }
+    });
+    
+    if (!business) {
+      return res.status(404).json({ error: "Business not found" });
+    }
+    
+    req.business = business;
+    next();
+  } catch (error) {
+    console.error("Error getting business by slug:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 module.exports = {
   requireMagicAuth,
   getBusinessFromUser,
+  getBusinessBySlug,
   adminAuth,
   optionalAuth
 };
