@@ -25,25 +25,41 @@ async function requestLogin(req, res) {
     console.log(`[MAGIC LINK] Found user:`, user ? { id: user.id, email: user.email, name: user.name, phone: user.phone } : null);
 
     if (!user) {
-      // Create new user
-      let userData = {
-        email,
-        phone: phone || null,
-        name: name || null,
-        role: 'OWNER'
-      };
-      
-      // Add password if provided
-      if (password) {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        userData.password = hashedPassword;
-        console.log(`[MAGIC LINK] New user with password: ${email}`);
+      // Create new user with business
+      try {
+        const slug = email.toLowerCase().replace('@', '-').replace('.', '-');
+        
+        // Create business with owner
+        const business = await prisma.business.create({
+          data: {
+            name: `${email}'s Business`,
+            slug: slug,
+            owner: {
+              create: {
+                email,
+                phone: phone || null,
+                name: name || null,
+                role: 'OWNER',
+                ...(password && {
+                  password: await bcrypt.hash(password, 10)
+                })
+              }
+            }
+          },
+          include: { owner: true }
+        });
+        
+        user = business.owner;
+        console.log(`[MAGIC LINK] Created new user with business: ${email}`);
+        console.log(`[MAGIC LINK] Business ID: ${business.id}, User ID: ${user.id}`);
+        
+        if (password) {
+          console.log(`[MAGIC LINK] New user with password: ${email}`);
+        }
+      } catch (createError) {
+        console.error(`[MAGIC LINK] Failed to create user ${email}:`, createError);
+        throw createError;
       }
-      
-      user = await prisma.user.create({
-        data: userData,
-        include: { business: true }
-      });
     } else {
       // Update existing user with new data if provided
       const updateData = {};

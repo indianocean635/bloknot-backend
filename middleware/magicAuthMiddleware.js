@@ -19,15 +19,26 @@ function requireMagicAuth(req, res, next) {
     if (!user) {
       // Create user if not found
       try {
-        user = await prisma.user.create({
+        // Create business first
+        const slug = userEmail.toLowerCase().replace('@', '-').replace('.', '-');
+        const business = await prisma.business.create({
           data: {
-            email: userEmail.toLowerCase(),
-            role: 'owner',
-            createdAt: new Date()
+            name: `${userEmail}'s Business`,
+            slug: slug,
+            owner: {
+              create: {
+                email: userEmail.toLowerCase(),
+                role: 'owner',
+                createdAt: new Date()
+              }
+            }
           },
-          include: { business: true }
+          include: { owner: true }
         });
-        console.log(`[MAGIC_AUTH] Created new user: ${userEmail}`);
+        
+        user = business.owner;
+        console.log(`[MAGIC_AUTH] Created new user with business: ${userEmail}`);
+        console.log(`[MAGIC_AUTH] Business ID: ${business.id}, User ID: ${user.id}`);
       } catch (createError) {
         console.error(`[MAGIC_AUTH] Failed to create user ${userEmail}:`, createError);
         return res.status(401).json({ error: "Unauthorized - Failed to create user" });
