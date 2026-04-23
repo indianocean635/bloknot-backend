@@ -31,6 +31,9 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Import missing routes
+const appointmentRoutes = require('./routes/appointmentRoutes');
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminAuth, adminRoutes);
@@ -39,6 +42,8 @@ app.use('/api/business', businessRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/auth', magicLinkRoutes);
+app.use('/api/masters', settingsRoutes); // Masters endpoints are in settingsRoutes
+app.use('/api/appointments', appointmentRoutes);
 
 console.log('Business routes loaded:', typeof businessRoutes);
 console.log('Business routes methods:', Object.getOwnPropertyNames(businessRoutes));
