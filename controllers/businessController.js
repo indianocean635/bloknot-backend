@@ -276,9 +276,6 @@ async function createBusiness(req, res) {
       data: {
         name: name,
         slug: slug,
-        phone: phone || null,
-        address: address || null,
-        description: description || null,
         ownerId: user.id,
         owner: {
           connect: {
