@@ -147,10 +147,36 @@ async function deleteAppointment(req, res) {
   }
 }
 
+// Получить запись по ID (публичная)
+async function getAppointmentById(req, res) {
+  try {
+    const { id } = req.params;
+    const businessId = req.business?.id || 'business_1';
+    
+    const appointment = memoryAppointments.get(Number(id));
+    
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+    
+    // Проверяем что запись принадлежит бизнесу
+    if (appointment.businessId !== businessId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    
+    console.log('✅ Appointment retrieved by ID:', id);
+    res.json(appointment);
+  } catch (error) {
+    console.error('❌ getAppointmentById error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
+
 module.exports = {
   getAppointments,
   getPublicAppointments,
   createAppointment,
   updateAppointment,
-  deleteAppointment
+  deleteAppointment,
+  getAppointmentById
 };
