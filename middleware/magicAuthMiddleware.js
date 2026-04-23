@@ -83,12 +83,16 @@ async function getBusinessFromUser(req, res, next) {
     // Create business if not exists
     if (!user.business) {
       console.log(`[GET_BUSINESS] Creating business for user: ${user.email}`);
+      const slug = user.email.toLowerCase().replace('@', '-').replace('.', '-');
       const business = await prisma.business.create({
         data: {
           name: `${user.email}'s Business`,
-          ownerId: user.id,
-          slug: user.email.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase(),
-          createdAt: new Date()
+          slug: slug,
+          owner: {
+            connect: {
+              id: user.id
+            }
+          }
         }
       });
       
@@ -98,11 +102,12 @@ async function getBusinessFromUser(req, res, next) {
         data: { businessId: business.id }
       });
       
-      req.business = business;
-    } else {
-      req.business = user.business;
+      user.business = business;
+      user.businessId = business.id;
+      console.log(`[GET_BUSINESS] Created business: ${business.id} for user: ${user.email}`);
     }
     
+    req.business = user.business;
     next();
   } catch (error) {
     console.error("Error getting business:", error);
