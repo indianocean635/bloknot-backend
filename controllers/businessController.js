@@ -276,7 +276,6 @@ async function createBusiness(req, res) {
       data: {
         name: name,
         slug: slug,
-        ownerId: user.id,
         owner: {
           connect: {
             id: user.id
