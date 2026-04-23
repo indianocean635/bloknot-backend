@@ -12,8 +12,19 @@ uploads/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
 # OS/editor
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Test files (prevent server conflicts)
+check-*.js
+test-*.js
+fix-*.js
+create-*.js
+find-*.js
+test-*.js
+*.test.js
+debug-*.js
