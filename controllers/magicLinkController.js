@@ -208,6 +208,22 @@ async function confirmLogin(req, res) {
 
     const user = loginToken.user;
 
+    // Generate JWT session token (90 days)
+    const jwt = require('jsonwebtoken');
+    const sessionToken = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '90d' }
+    );
+
+    // Set JWT cookie
+    res.cookie('auth', sessionToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      path: '/',
+    });
+
     // Check if user has password
     if (!user.password) {
       // Return JSON for frontend to handle password setup

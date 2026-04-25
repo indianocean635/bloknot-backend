@@ -28,7 +28,7 @@ async function testUser(userData, testName) {
   console.log(`\n📋 ТЕСТИРУЕМ ${testName}`);
   
   try {
-    // 1. Логинимся
+    // 1. Логинимся через password login
     console.log(`🔐 Логин для ${userData.email}`);
     const loginResponse = await axios.post(`${BASE_URL}/api/auth/login`, {
       email: userData.email,

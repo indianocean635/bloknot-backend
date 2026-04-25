@@ -925,12 +925,8 @@ async function inviteSpecialist(index) {
     return;
   }
   
-  // Check if user is authenticated
-  const userEmail = localStorage.getItem('bloknot_logged_in_email');
-  if (!userEmail) {
-    alert('Please login first to send invitations');
-    return;
-  }
+  // JWT Cookie Only - No localStorage check
+  // Authentication will be handled by server middleware
   
   console.log(`[INVITE] Current user: ${userEmail}, inviting: ${email}`);
   

@@ -120,31 +120,8 @@
 <script src="/app.js?v=20260425-data-isolation&t=1713633600"></script>
  <script>
   console.log('DASHBOARD: Page loaded, script executing');
-  // Проверка авторизации с fallback в localStorage
-(async function () {
-  try {
-    const res = await fetch('/api/auth/me', {
-      credentials: 'include'
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      console.log('AUTH OK:', data);
-      
-      // Store email in localStorage
-      if (data.user?.email) {
-        localStorage.setItem('bloknot_logged_in_email', data.user.email);
-        localStorage.setItem('bloknot_user_email', data.user.email);
-      }
-    } else {
-      console.warn('Auth check failed, but not redirecting - let initDashboard handle it');
-    }
-    
-  } catch (error) {
-    console.error('Auth check failed:', error);
-    // Not redirecting here - let initDashboard handle it
-  }
-})();
+  // JWT Cookie Only - No localStorage
+  // Authentication handled by server middleware
   console.log('DASHBOARD: Bloknot object:', typeof Bloknot);
   
   if (typeof Bloknot !== 'undefined') {

@@ -110,46 +110,7 @@
   }
 
   async function api(path, opts) {
-    // Add authentication headers
-    let userEmail = localStorage.getItem('bloknot_logged_in_email') || localStorage.getItem('bloknot_user_email');
-    
-    // Если нет email — пробуем получить с сервера через cookie
-    if (!userEmail) {
-      try {
-        const res = await fetch(API_BASE + '/api/auth/me', {
-          credentials: 'include'
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          userEmail = data.user?.email;
-
-          if (userEmail) {
-            localStorage.setItem('bloknot_logged_in_email', userEmail);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to restore session via cookie', e);
-      }
-    }
-    
-    // Check for impersonation cookie if localStorage is empty
-    if (!userEmail) {
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'impersonate') {
-          userEmail = decodeURIComponent(value);
-          break;
-        }
-      }
-    }
-    
-    if (!userEmail) {
-      console.warn('User not found in localStorage or cookie');
-    }
-    
-    // УБРАЛИ x-user-email - теперь используем только JWT cookie
+    // JWT Cookie Only - No localStorage, no headers
     const headers = {
       ...opts?.headers
     };
@@ -168,13 +129,6 @@
       try {
         text = await res.text();
       } catch (e) {}
-      
-      // НЕ РЕДИРЕКТИМ ПРИ 401 - ВОЗВРАЩАЕМ NULL
-      if (res.status === 401) {
-        console.warn('API 401, ignoring for now');
-        return null;
-      }
-      
       throw new Error(text || ("HTTP " + res.status));
     }
     const ct = res.headers.get("content-type") || "";
