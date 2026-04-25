@@ -244,25 +244,27 @@ router.get('/magic/:token', async (req, res) => {
 // GET /api/auth/me
 router.get('/me', async (req, res) => {
   try {
-    // Check for x-user-email header first (normal login), then impersonate cookie
-    let userEmail = req.headers['x-user-email'] || req.cookies?.impersonate;
-    
-    console.log(`[AUTH /me] Request for user: ${userEmail}`);
-    console.log(`[AUTH /me] Impersonate cookie:`, req.cookies?.impersonate);
-    console.log(`[AUTH /me] Headers:`, req.headers);
-    
-    if (!userEmail) {
-      return res.status(401).json({ error: 'No email provided' });
+    const jwt = require('jsonwebtoken');
+
+    const token = req.cookies?.token;
+
+    if (!token) {
+      return res.status(401).json({ error: 'No token' });
     }
 
-    // Find user in database
+    let payload;
+
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    } catch (e) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { email: userEmail },
+      where: { id: payload.userId },
       include: { business: true }
     });
-    
-    console.log(`[AUTH /me] Found user:`, user ? { id: user.id, email: user.email, name: user.name, phone: user.phone } : null);
-    
+
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
     }
@@ -352,15 +354,25 @@ router.post('/update-profile', async (req, res) => {
   try {
     const { name } = req.body;
     
-    // Get user from headers
-    const userEmail = req.headers['x-user-email'];
-    if (!userEmail) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const jwt = require('jsonwebtoken');
+
+    const token = req.cookies?.token;
+
+    if (!token) {
+      return res.status(401).json({ error: 'No token' });
+    }
+
+    let payload;
+
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    } catch (e) {
+      return res.status(401).json({ error: 'Invalid token' });
     }
     
     // Find user in database
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { id: payload.userId }
     });
     
     if (!user) {

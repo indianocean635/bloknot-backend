@@ -149,8 +149,8 @@
       console.warn('User not found in localStorage or cookie');
     }
     
+    // УБРАЛИ x-user-email - теперь используем только JWT cookie
     const headers = {
-      'x-user-email': userEmail,
       ...opts?.headers
     };
     

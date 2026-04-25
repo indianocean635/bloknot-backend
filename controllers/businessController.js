@@ -100,14 +100,23 @@ async function getWorks(req, res) {
 
 // Получить название// Get business slug for booking link
 async function getBusinessName(req, res) {
-  // Get user by email from headers instead of req.user.id
-  const userEmail = req.headers['x-user-email'] || req.headers['x-email'];
-  
-  if (!userEmail) {
-    return res.status(401).json({ error: "Unauthorized - No email provided" });
+  const jwt = require('jsonwebtoken');
+
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'No token' });
   }
-  
-  const user = await prisma.user.findUnique({ where: { email: userEmail.toLowerCase() } });
+
+  let payload;
+
+  try {
+    payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: payload.userId } });
   
   if (!user || !user.businessId) {
     return res.status(403).json({ error: "Forbidden" });
@@ -213,16 +222,26 @@ async function getBusinessByEmail(req, res) {
 
 // Get user's business
 async function getBusiness(req, res) {
-  const userEmail = req.cookies?.impersonate || req.headers['x-user-email'];
-  
-  if (!userEmail) {
-    return res.status(401).json({ error: "No email provided" });
+  const jwt = require('jsonwebtoken');
+
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'No token' });
+  }
+
+  let payload;
+
+  try {
+    payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid token' });
   }
   
   try {
     // Find user first
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { id: payload.userId }
     });
     
     if (!user) {
@@ -252,10 +271,20 @@ async function getBusiness(req, res) {
 
 // Create new business
 async function createBusiness(req, res) {
-  const userEmail = req.cookies?.impersonate || req.headers['x-user-email'];
-  
-  if (!userEmail) {
-    return res.status(401).json({ error: "No email provided" });
+  const jwt = require('jsonwebtoken');
+
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'No token' });
+  }
+
+  let payload;
+
+  try {
+    payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid token' });
   }
   
   try {
@@ -267,7 +296,7 @@ async function createBusiness(req, res) {
     
     // Find user first
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { id: payload.userId }
     });
     
     if (!user) {
@@ -280,7 +309,7 @@ async function createBusiness(req, res) {
     }
     
     // Create slug from email
-    const slug = userEmail.replace('@', '-').replace('.', '-');
+    const slug = user.email.replace('@', '-').replace('.', '-');
     
     // Create business with owner
     const business = await prisma.business.create({
@@ -308,10 +337,20 @@ async function createBusiness(req, res) {
 
 // Update business
 async function updateBusiness(req, res) {
-  const userEmail = req.cookies?.impersonate || req.headers['x-user-email'];
-  
-  if (!userEmail) {
-    return res.status(401).json({ error: "No email provided" });
+  const jwt = require('jsonwebtoken');
+
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'No token' });
+  }
+
+  let payload;
+
+  try {
+    payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid token' });
   }
   
   try {
@@ -319,7 +358,7 @@ async function updateBusiness(req, res) {
     
     // Find user first
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { id: payload.userId }
     });
     
     if (!user) {

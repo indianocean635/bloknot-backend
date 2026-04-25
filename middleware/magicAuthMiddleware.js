@@ -1,18 +1,26 @@
 const { prisma } = require("../services/prismaService");
 
-// Middleware for magic link authentication (localStorage based)
+// Middleware for magic link authentication (JWT cookie based)
 function requireMagicAuth(req, res, next) {
-  // For now, we'll accept any request and get user by email from headers
-  // In production, this should be more secure
-  const userEmail = req.headers['x-user-email'] || req.headers['x-email'];
-  
-  if (!userEmail) {
-    return res.status(401).json({ error: "Unauthorized - No email provided" });
+  const jwt = require('jsonwebtoken');
+
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'No token' });
+  }
+
+  let payload;
+
+  try {
+    payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid token' });
   }
   
-  // Find user by email, or create if not found
+  // Find user by ID from JWT payload
   prisma.user.findUnique({
-    where: { email: userEmail.toLowerCase() },
+    where: { id: payload.userId },
     include: { business: true }
   })
   .then(async user => {
@@ -22,17 +30,17 @@ function requireMagicAuth(req, res, next) {
         // Create user first
         const user = await prisma.user.create({
           data: {
-            email: userEmail.toLowerCase(),
+            email: payload.email.toLowerCase(),
             role: 'owner',
             createdAt: new Date()
           }
         });
         
         // Create business for user
-        const slug = userEmail.toLowerCase().replace('@', '-').replace('.', '-');
+        const slug = payload.email.toLowerCase().replace('@', '-').replace('.', '-');
         const business = await prisma.business.create({
           data: {
-            name: `${userEmail}'s Business`,
+            name: `${payload.email}'s Business`,
             slug: slug,
             ownerId: user.id
           },
