@@ -74,6 +74,22 @@ router.post('/login', async (req, res) => {
     
     console.log(`[LOGIN SUCCESS] Email: ${email}`);
     
+    // Generate JWT token
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+    
+    // Set authentication cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      path: '/',
+    });
+    
     res.json({
       success: true,
       message: 'Login successful',
