@@ -468,11 +468,21 @@
      }
    }
 
-   // Initialize password check
-   (async () => {
-  await checkPasswordRequired();
-  await loadDashboard();
-})();
+   // Unified dashboard initialization to prevent race conditions
+  async function initDashboard() {
+    try {
+      const me = await Bloknot.api('/api/auth/me');
+
+      await checkPasswordRequired();
+      await loadDashboard();
+
+    } catch (e) {
+      window.location.href = '/';
+    }
+  }
+
+  // Initialize dashboard
+  initDashboard();
  </script>
 
 </body>
