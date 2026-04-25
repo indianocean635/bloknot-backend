@@ -100,7 +100,14 @@ async function getWorks(req, res) {
 
 // Получить название// Get business slug for booking link
 async function getBusinessName(req, res) {
-  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  // Get user by email from headers instead of req.user.id
+  const userEmail = req.headers['x-user-email'] || req.headers['x-email'];
+  
+  if (!userEmail) {
+    return res.status(401).json({ error: "Unauthorized - No email provided" });
+  }
+  
+  const user = await prisma.user.findUnique({ where: { email: userEmail.toLowerCase() } });
   
   if (!user || !user.businessId) {
     return res.status(403).json({ error: "Forbidden" });
@@ -276,11 +283,7 @@ async function createBusiness(req, res) {
       data: {
         name: name,
         slug: slug,
-        owner: {
-          connect: {
-            id: user.id
-          }
-        }
+        ownerId: user.id
       }
     });
     

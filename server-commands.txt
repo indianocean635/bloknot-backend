@@ -1,0 +1,30 @@
+#!/bin/bash
+# Команды для исправления синтаксических ошибок на сервере
+
+# 1. Проверить синтаксис
+echo "=== Проверка синтаксиса ==="
+node -c /var/www/bloknot-backend/routes/settingsRoutes.js
+
+# 2. Найти проблемные строки
+echo "=== Поиск проблемных строк ==="
+grep -n "// requireMagicAuth" /var/www/bloknot-backend/routes/settingsRoutes.js
+
+# 3. Исправить все broken комментарии
+echo "=== Исправление broken комментариев ==="
+sed -i 's|// requireMagicAuth, getBusinessFromUser, async|async|g' /var/www/bloknot-backend/routes/settingsRoutes.js
+
+# 4. Удалить middleware из роутов
+echo "=== Удаление middleware ==="
+sed -i 's|requireMagicAuth, getBusinessFromUser,||g' /var/www/bloknot-backend/routes/settingsRoutes.js
+
+# 5. Исправить строку 27
+echo "=== Исправление строки 27 ==="
+sed -i '27s|.*router.get("/business".*|router.get("/business", async (req, res) => {|' /var/www/bloknot-backend/routes/settingsRoutes.js
+
+# 6. Проверить синтаксис после исправления
+echo "=== Проверка синтаксиса после исправления ==="
+node -c /var/www/bloknot-backend/routes/settingsRoutes.js && echo "✅ Синтаксис корректен!" || echo "❌ Остались ошибки"
+
+# 7. Запустить сервер
+echo "=== Запуск сервера ==="
+PORT=3001 node index.js

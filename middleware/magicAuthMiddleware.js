@@ -19,24 +19,31 @@ function requireMagicAuth(req, res, next) {
     if (!user) {
       // Create user if not found
       try {
-        // Create business first
+        // Create user first
+        const user = await prisma.user.create({
+          data: {
+            email: userEmail.toLowerCase(),
+            role: 'owner',
+            createdAt: new Date()
+          }
+        });
+        
+        // Create business for user
         const slug = userEmail.toLowerCase().replace('@', '-').replace('.', '-');
         const business = await prisma.business.create({
           data: {
             name: `${userEmail}'s Business`,
             slug: slug,
-            owner: {
-              create: {
-                email: userEmail.toLowerCase(),
-                role: 'owner',
-                createdAt: new Date()
-              }
-            }
+            ownerId: user.id
           },
           include: { owner: true }
         });
         
-        user = business.owner;
+        // Update user with businessId
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { businessId: business.id }
+        });
         console.log(`[MAGIC_AUTH] Created new user with business: ${userEmail}`);
         console.log(`[MAGIC_AUTH] Business ID: ${business.id}, User ID: ${user.id}`);
       } catch (createError) {
@@ -88,11 +95,7 @@ async function getBusinessFromUser(req, res, next) {
         data: {
           name: `${user.email}'s Business`,
           slug: slug,
-          owner: {
-            connect: {
-              id: user.id
-            }
-          }
+          ownerId: user.id
         }
       });
       

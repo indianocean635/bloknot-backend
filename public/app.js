@@ -99,6 +99,7 @@
     return document.querySelector(sel);
   }
 
+  
   function esc(str) {
     return String(str)
       .replaceAll("&", "&amp;")
@@ -110,7 +111,7 @@
 
   async function api(path, opts) {
     // Add authentication headers
-    let userEmail = localStorage.getItem('bloknot_logged_in_email');
+    let userEmail = localStorage.getItem('bloknot_logged_in_email') || localStorage.getItem('bloknot_user_email');
     
     // Check for impersonation cookie if localStorage is empty
     if (!userEmail) {
@@ -119,13 +120,10 @@
         const [name, value] = cookie.trim().split('=');
         if (name === 'impersonate') {
           userEmail = decodeURIComponent(value);
-          console.log(`[API] Using impersonate cookie: ${userEmail}`);
           break;
         }
       }
     }
-    
-    console.log(`[API] Making request to ${path} with email: ${userEmail}`);
     
     if (!userEmail) {
       // Not authenticated, redirect to login
@@ -144,18 +142,12 @@
     };
     
     const fullUrl = API_BASE + path;
-    console.log(`[API] Full URL: ${fullUrl}`);
-    console.log(`[API] Options:`, options);
-    
     const res = await fetch(fullUrl, options);
-    console.log(`[API] Response status: ${res.status}`);
-    console.log(`[API] Response headers:`, [...res.headers.entries()]);
     
     if (!res.ok) {
       let text = "";
       try {
         text = await res.text();
-        console.log(`[API] Error response: ${text}`);
       } catch (e) {}
       throw new Error(text || ("HTTP " + res.status));
     }

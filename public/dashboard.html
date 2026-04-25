@@ -120,6 +120,34 @@
 <script src="/app.js?v=20260420-1&t=1713633600"></script>
  <script>
   console.log('DASHBOARD: Page loaded, script executing');
+  // 🔐 Жёсткая проверка авторизации ДО загрузки всего
+(async function () {
+  try {
+    const res = await fetch('/api/auth/me', {
+      credentials: 'include'
+    });
+
+    if (!res.ok) {
+      console.log('NOT AUTH → redirect');
+      window.location.href = '/';
+      return;
+    }
+
+    const data = await res.json();
+
+    if (!data || !data.email) {
+      console.log('NO USER → redirect');
+      window.location.href = '/';
+      return;
+    }
+
+    console.log('AUTH OK:', data.email);
+
+  } catch (e) {
+    console.log('AUTH ERROR → redirect', e);
+    window.location.href = '/';
+  }
+})();
   console.log('DASHBOARD: Bloknot object:', typeof Bloknot);
   
   if (typeof Bloknot !== 'undefined') {
@@ -441,9 +469,10 @@
    }
 
    // Initialize password check
-   checkPasswordRequired();
-
-   loadDashboard().catch(() => showNotice("Could not load dashboard data. Try refreshing the page later."));
+   (async () => {
+  await checkPasswordRequired();
+  await loadDashboard();
+})();
  </script>
 
 </body>

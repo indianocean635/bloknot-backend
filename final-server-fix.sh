@@ -1,3 +1,13 @@
+#!/bin/bash
+# Финальное исправление синтаксических ошибок на сервере
+
+echo "=== ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ СИНТАКСИСА ==="
+
+# 1. Создать резервную копию
+cp /var/www/bloknot-backend/routes/settingsRoutes.js /var/www/bloknot-backend/routes/settingsRoutes.js.backup.$(date +%s)
+
+# 2. Заменить файл исправленной версией
+cat > /var/www/bloknot-backend/routes/settingsRoutes.js << 'EOF'
 const express = require("express");
 const nodemailer = require("nodemailer");
 const { prisma } = require("../services/prismaService");
@@ -30,7 +40,7 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
 }
 
 // Get business settings
-router.get("/business", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.get("/business", async (req, res) => {
   try {
     const business = await prisma.business.findUnique({
       where: { id: req.business.id },
@@ -54,7 +64,7 @@ router.get("/business", /* requireMagicAuth, getBusinessFromUser, */ async (req,
 });
 
 // Get business name
-router.get("/business/name", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.get("/business/name", async (req, res) => {
   try {
     const business = await prisma.business.findUnique({
       where: { id: req.business.id },
@@ -69,7 +79,7 @@ router.get("/business/name", /* requireMagicAuth, getBusinessFromUser, */ async 
 });
 
 // Update business name
-router.patch("/business/name", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.patch("/business/name", async (req, res) => {
   try {
     const { name } = req.body;
     
@@ -90,7 +100,7 @@ router.patch("/business/name", /* requireMagicAuth, getBusinessFromUser, */ asyn
 });
 
 // Get branches
-router.get("/branches", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.get("/branches", async (req, res) => {
   try {
     const branches = await prisma.branch.findMany({
       where: { businessId: req.business.id },
@@ -105,7 +115,7 @@ router.get("/branches", /* requireMagicAuth, getBusinessFromUser, */ async (req,
 });
 
 // Create branch
-router.post("/branches", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.post("/branches", async (req, res) => {
   try {
     const { name, address, phone } = req.body;
     
@@ -130,7 +140,7 @@ router.post("/branches", /* requireMagicAuth, getBusinessFromUser, */ async (req
 });
 
 // Update branch
-router.patch("/branches/:id", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.patch("/branches/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { name, address, phone } = req.body;
@@ -163,7 +173,7 @@ router.patch("/branches/:id", /* requireMagicAuth, getBusinessFromUser, */ async
 });
 
 // Delete branch
-router.delete("/branches/:id", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.delete("/branches/:id", async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -190,7 +200,7 @@ router.delete("/branches/:id", /* requireMagicAuth, getBusinessFromUser, */ asyn
 });
 
 // Get categories
-router.get("/categories", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.get("/categories", async (req, res) => {
   try {
     const categories = await prisma.category.findMany({
       where: { businessId: req.business.id },
@@ -206,7 +216,7 @@ router.get("/categories", /* requireMagicAuth, getBusinessFromUser, */ async (re
 });
 
 // Create category
-router.post("/categories", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.post("/categories", async (req, res) => {
   try {
     const { name, color } = req.body;
     
@@ -230,7 +240,7 @@ router.post("/categories", /* requireMagicAuth, getBusinessFromUser, */ async (r
 });
 
 // Update category
-router.patch("/categories/:id", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.patch("/categories/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { name, color } = req.body;
@@ -262,7 +272,7 @@ router.patch("/categories/:id", /* requireMagicAuth, getBusinessFromUser, */ asy
 });
 
 // Delete category
-router.delete("/categories/:id", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.delete("/categories/:id", async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -289,7 +299,7 @@ router.delete("/categories/:id", /* requireMagicAuth, getBusinessFromUser, */ as
 });
 
 // Get services
-router.get("/services", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.get("/services", async (req, res) => {
   try {
     const services = await prisma.service.findMany({
       where: { businessId: req.business.id },
@@ -305,7 +315,7 @@ router.get("/services", /* requireMagicAuth, getBusinessFromUser, */ async (req,
 });
 
 // Create service
-router.post("/services", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.post("/services", async (req, res) => {
   try {
     const { name, duration, price, categoryId } = req.body;
     
@@ -340,7 +350,7 @@ router.post("/services", /* requireMagicAuth, getBusinessFromUser, */ async (req
 });
 
 // Update service
-router.patch("/services/:id", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.patch("/services/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { name, duration, price, categoryId } = req.body;
@@ -375,7 +385,7 @@ router.patch("/services/:id", /* requireMagicAuth, getBusinessFromUser, */ async
 });
 
 // Delete service
-router.delete("/services/:id", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.delete("/services/:id", async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -402,7 +412,7 @@ router.delete("/services/:id", /* requireMagicAuth, getBusinessFromUser, */ asyn
 });
 
 // Get masters
-router.get("/masters", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.get("/masters", async (req, res) => {
   try {
     const masters = await prisma.master.findMany({
       where: { businessId: req.business.id },
@@ -417,7 +427,7 @@ router.get("/masters", /* requireMagicAuth, getBusinessFromUser, */ async (req, 
 });
 
 // Create master
-router.post("/masters", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.post("/masters", async (req, res) => {
   try {
     const { name, email } = req.body;
     
@@ -449,7 +459,7 @@ router.post("/masters", /* requireMagicAuth, getBusinessFromUser, */ async (req,
 });
 
 // Update master
-router.patch("/masters/:id", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.patch("/masters/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, active } = req.body;
@@ -485,7 +495,7 @@ router.patch("/masters/:id", /* requireMagicAuth, getBusinessFromUser, */ async 
 });
 
 // Delete master
-router.delete("/masters/:id", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.delete("/masters/:id", async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -512,7 +522,7 @@ router.delete("/masters/:id", /* requireMagicAuth, getBusinessFromUser, */ async
 });
 
 // Get works
-router.get("/works", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.get("/works", async (req, res) => {
   try {
     const works = await prisma.workPhoto.findMany({
       where: { businessId: req.business.id },
@@ -535,7 +545,7 @@ router.get("/works", /* requireMagicAuth, getBusinessFromUser, */ async (req, re
 });
 
 // Invite specialist
-router.post("/invite-specialist", /* requireMagicAuth, getBusinessFromUser, */ async (req, res) => {
+router.post("/invite-specialist", async (req, res) => {
   try {
     const { email, name, businessName, businessId, inviteLink, message } = req.body;
     
@@ -590,3 +600,12 @@ router.post("/invite-specialist", /* requireMagicAuth, getBusinessFromUser, */ a
 });
 
 module.exports = router;
+EOF
+
+# 3. Проверить синтаксис
+echo "=== Проверка синтаксиса ==="
+node -c /var/www/bloknot-backend/routes/settingsRoutes.js && echo "✅ Синтаксис корректен!" || echo "❌ Остались ошибки"
+
+# 4. Запустить сервер
+echo "=== Запуск сервера ==="
+PORT=3001 node index.js

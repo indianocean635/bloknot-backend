@@ -1,3 +1,14 @@
+#!/bin/bash
+# Команды для исправления синтаксических ошибок на сервере
+
+# 1. Проверить синтаксис текущего файла
+node -c /var/www/bloknot-backend/routes/settingsRoutes.js
+
+# 2. Создать резервную копию
+cp /var/www/bloknot-backend/routes/settingsRoutes.js /var/www/bloknot-backend/routes/settingsRoutes.js.backup
+
+# 3. Применить исправленный файл (заменить содержимое)
+cat > /var/www/bloknot-backend/routes/settingsRoutes.js << 'EOF'
 const express = require("express");
 const nodemailer = require("nodemailer");
 const { prisma } = require("../services/prismaService");
@@ -590,3 +601,14 @@ router.post("/invite-specialist", /* requireMagicAuth, getBusinessFromUser, */ a
 });
 
 module.exports = router;
+EOF
+
+# 4. Проверить синтаксис после исправления
+node -c /var/www/bloknot-backend/routes/settingsRoutes.js
+
+# 5. Запустить сервер
+PORT=3001 node index.js
+
+# 6. Протестировать эндпоинты
+curl http://127.0.0.1:3001/api/settings/masters
+curl http://127.0.0.1:3001/api/settings/business
