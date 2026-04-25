@@ -138,6 +138,7 @@
     
     const options = {
       ...opts,
+      credentials: 'include',
       headers: headers
     };
     
