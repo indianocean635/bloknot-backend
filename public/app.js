@@ -168,6 +168,13 @@
       try {
         text = await res.text();
       } catch (e) {}
+      
+      // НЕ РЕДИРЕКТИМ ПРИ 401 - ВОЗВРАЩАЕМ NULL
+      if (res.status === 401) {
+        console.warn('API 401, ignoring for now');
+        return null;
+      }
+      
       throw new Error(text || ("HTTP " + res.status));
     }
     const ct = res.headers.get("content-type") || "";

@@ -117,7 +117,7 @@
    </div>
  </main>
 
-<script src="/app.js?v=20260425-incognito-fix&t=1713633600"></script>
+<script src="/app.js?v=20260425-auth-retry-fix&t=1713633600"></script>
  <script>
   console.log('DASHBOARD: Page loaded, script executing');
   // Проверка авторизации с fallback в localStorage
@@ -465,16 +465,52 @@
      }
    }
 
-   // Unified dashboard initialization to prevent race conditions
-  async function initDashboard() {
-    try {
-      const me = await Bloknot.api('/api/auth/me');
+   // Retry logic for auth with race condition protection
+  async function waitForAuth(retries = 5) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        console.log(`Auth attempt ${i + 1}/${retries} at ${new Date().toISOString()}`);
+        const res = await fetch('/api/auth/me', {
+          credentials: 'include'
+        });
 
+        console.log(`Auth attempt ${i + 1} status: ${res.status}`);
+
+        if (res.ok) {
+          const data = await res.json();
+          console.log('Auth success:', data);
+          return data;
+        }
+
+      } catch (e) {
+        console.error(`Auth attempt ${i + 1} error:`, e);
+      }
+
+      await new Promise(r => setTimeout(r, 500));
+    }
+
+    console.warn('Auth failed after all retries');
+    return null;
+  }
+
+  // Unified dashboard initialization to prevent race conditions
+  async function initDashboard() {
+    const authData = await waitForAuth();
+
+    if (!authData || !authData.user) {
+      console.warn('Auth failed after retries');
+      return; // ❗️ НЕ РЕДИРЕКТИМ
+    }
+
+    const user = authData.user;
+
+    try {
       await checkPasswordRequired();
       await loadDashboard();
 
     } catch (e) {
-      window.location.href = '/';
+      console.warn('Dashboard loading error:', e);
+      // НЕ РЕДИРЕКТИМ
     }
   }
 
