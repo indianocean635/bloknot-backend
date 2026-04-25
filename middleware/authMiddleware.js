@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const { prisma } = require("../services/prismaService");
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_COOKIE_NAME = "auth";
+const JWT_COOKIE_NAME = "token";
 const IS_PROD = process.env.NODE_ENV === "production";
 
 function parseCookies(req) {
@@ -40,10 +40,28 @@ function getAuthUser(req) {
   return getJwtUser(req, JWT_COOKIE_NAME);
 }
 
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   const user = getAuthUser(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
-  req.user = user;
+  
+  // Get full user data with business
+  const fullUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: { business: true }
+  });
+  
+  if (!fullUser) return res.status(401).json({ error: "User not found" });
+  
+  req.user = {
+    id: fullUser.id,
+    email: fullUser.email,
+    name: fullUser.name,
+    phone: fullUser.phone,
+    businessId: fullUser.businessId,
+    business: fullUser.business
+  };
+  
+  console.log('AUTH USER:', req.user);
   next();
 }
 
