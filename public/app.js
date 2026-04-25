@@ -113,6 +113,26 @@
     // Add authentication headers
     let userEmail = localStorage.getItem('bloknot_logged_in_email') || localStorage.getItem('bloknot_user_email');
     
+    // Если нет email — пробуем получить с сервера через cookie
+    if (!userEmail) {
+      try {
+        const res = await fetch(API_BASE + '/api/auth/me', {
+          credentials: 'include'
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          userEmail = data.user?.email;
+
+          if (userEmail) {
+            localStorage.setItem('bloknot_logged_in_email', userEmail);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to restore session via cookie', e);
+      }
+    }
+    
     // Check for impersonation cookie if localStorage is empty
     if (!userEmail) {
       const cookies = document.cookie.split(';');
@@ -126,9 +146,7 @@
     }
     
     if (!userEmail) {
-      // Not authenticated, redirect to login
-      window.location.href = '/';
-      throw new Error('Not authenticated');
+      console.warn('User not found in localStorage or cookie');
     }
     
     const headers = {
