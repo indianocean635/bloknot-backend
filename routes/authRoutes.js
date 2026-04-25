@@ -1,6 +1,7 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 const { PrismaClient } = require('@prisma/client');
+const { requireAuth } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 const prisma = new PrismaClient();
@@ -242,26 +243,10 @@ router.get('/magic/:token', async (req, res) => {
 });
 
 // GET /api/auth/me
-router.get('/me', async (req, res) => {
+router.get('/me', requireAuth, async (req, res) => {
   try {
-    const jwt = require('jsonwebtoken');
-
-    const token = req.cookies?.token;
-
-    if (!token) {
-      return res.status(401).json({ error: 'No token' });
-    }
-
-    let payload;
-
-    try {
-      payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    } catch (e) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: req.user.id },
       include: { business: true }
     });
 
