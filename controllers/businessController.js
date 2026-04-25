@@ -151,11 +151,15 @@ async function updateBusinessName(req, res) {
 async function getBusinessByEmail(req, res) {
   const { email } = req.params;
   
+  const user = await prisma.user.findUnique({
+    where: { email: email }
+  });
+  
+  if (!user) return res.status(404).json({ error: "User not found" });
+  
   const business = await prisma.business.findFirst({
     where: {
-      owner: {
-        email: email
-      }
+      ownerId: user.id
     }
   });
   
