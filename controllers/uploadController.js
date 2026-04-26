@@ -23,15 +23,28 @@ const worksUpload = multer({
 
 // Загрузить/обновить аватар мастера
 async function uploadMasterAvatar(req, res) {
-  const id = Number(req.params.id);
-
-  if (!req.file) {
-    return res.status(400).json({ error: "Файл не выбран" });
-  }
-
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const id = Number(req.params.id);
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Файл не выбран" });
+    }
+
     const master = await prisma.master.findFirst({
-      where: { id, businessId: req.user.businessId },
+      where: { id, businessId: user.businessId },
     });
     if (!master) return res.status(404).json({ error: "Мастер не найден" });
 
@@ -55,19 +68,28 @@ async function uploadMasterAvatar(req, res) {
 
 // Загрузить работу
 async function uploadWork(req, res) {
-  if (!req.file) {
-    return res.status(400).json({ error: "Файл не выбран" });
-  }
-  
-  if (!req.user || !req.user.businessId) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
-
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Файл не выбран" });
+    }
+
     const { caption, isLogo } = req.body;
     
     // Generate S3 filename
-    const fileName = safeFileName(req.file.originalname, req.user.businessId);
+    const fileName = safeFileName(req.file.originalname, user.businessId);
     const mimeType = req.file.mimetype || 'image/jpeg';
     
     // Upload to S3
@@ -77,7 +99,7 @@ async function uploadWork(req, res) {
     if (isLogo === "true") {
       await prisma.workPhoto.updateMany({
         where: {
-          businessId: req.user.businessId,
+          businessId: user.businessId,
           isLogo: true,
         },
         data: { isLogo: false },
@@ -86,7 +108,7 @@ async function uploadWork(req, res) {
 
     const work = await prisma.workPhoto.create({
       data: {
-        businessId: req.user.businessId,
+        businessId: user.businessId,
         imageUrl,
         caption: caption || "",
         isLogo: isLogo === "true",
@@ -109,21 +131,39 @@ async function uploadWork(req, res) {
 
 // Получить работы
 async function getWorks(req, res) {
-  const works = await prisma.workPhoto.findMany({
-    where: { businessId: req.user.businessId },
-    orderBy: { id: "desc" }
-  });
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
 
-  const transformedWorks = works.map(work => ({
-    id: work.id,
-    url: work.imageUrl,
-    description: work.caption,
-    type: work.imageUrl.toLowerCase().includes('.mp4') || work.imageUrl.toLowerCase().includes('.mov') ? 'video' : 'image',
-    isLogo: work.isLogo,
-    createdAt: work.createdAt
-  }));
+    const user = req.user;
+    
+    if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
-  res.json(transformedWorks);
+    const works = await prisma.workPhoto.findMany({
+      where: { businessId: user.businessId },
+      orderBy: { id: "desc" }
+    });
+
+    const transformedWorks = works.map(work => ({
+      id: work.id,
+      url: work.imageUrl,
+      description: work.caption,
+      type: work.imageUrl.toLowerCase().includes('.mp4') || work.imageUrl.toLowerCase().includes('.mov') ? 'video' : 'image',
+      isLogo: work.isLogo,
+      createdAt: work.createdAt
+    }));
+
+    res.json(transformedWorks);
+  } catch (error) {
+    console.error("Get works error:", error);
+    res.status(500).json({ error: "Ошибка получения работ" });
+  }
 }
 
 module.exports = {

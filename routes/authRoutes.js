@@ -245,25 +245,39 @@ router.get('/magic/:token', async (req, res) => {
 // GET /api/auth/me
 router.get('/me', requireAuth, async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user) {
+      console.warn('[SECURITY] Missing user', { userId: req.user?.id });
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Get fresh user data from database
+    const freshUser = await prisma.user.findUnique({
+      where: { id: user.id },
       include: { business: true }
     });
 
-    if (!user) {
+    if (!freshUser) {
       return res.status(401).json({ error: 'User not found' });
     }
     
     res.json({ 
       success: true,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        phone: user.phone,
-        role: user.role,
-        businessId: user.businessId,
-        requiresPassword: !user.password
+        id: freshUser.id,
+        email: freshUser.email,
+        name: freshUser.name,
+        phone: freshUser.phone,
+        role: freshUser.role,
+        businessId: freshUser.businessId,
+        requiresPassword: !freshUser.password
       }
     });
   } catch (error) {
@@ -337,32 +351,20 @@ router.get('/verify', async (req, res) => {
 // POST /auth/update-profile
 router.post('/update-profile', async (req, res) => {
   try {
-    const { name } = req.body;
-    
-    const jwt = require('jsonwebtoken');
-
-    const token = req.cookies?.auth;
-
-    if (!token) {
-      return res.status(401).json({ error: 'No token' });
-    }
-
-    let payload;
-
-    try {
-      payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    } catch (e) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-    
-    // Find user in database
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId }
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
     });
+
+    const user = req.user;
     
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      console.warn('[SECURITY] Missing user', { userId: req.user?.id });
+      return res.status(401).json({ error: 'User not found' });
     }
+
+    const { name } = req.body;
     
     // Update user name
     const updatedUser = await prisma.user.update({
@@ -370,7 +372,7 @@ router.post('/update-profile', async (req, res) => {
       data: { name: name || null }
     });
     
-    console.log(`[AUTH] Profile updated for user: ${userEmail}, name: ${name}`);
+    console.log(`[AUTH] Profile updated for user: ${user.email}, name: ${name}`);
     
     res.json({
       success: true,

@@ -100,60 +100,68 @@ async function getWorks(req, res) {
 
 // Получить название// Get business slug for booking link
 async function getBusinessName(req, res) {
-  const jwt = require('jsonwebtoken');
-
-  const token = req.cookies?.token;
-
-  if (!token) {
-    return res.status(401).json({ error: 'No token' });
-  }
-
-  let payload;
-
   try {
-    payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-  } catch (e) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
 
-  const user = await prisma.user.findUnique({ where: { id: payload.userId } });
-  
-  if (!user || !user.businessId) {
-    return res.status(403).json({ error: "Forbidden" });
+    const user = req.user;
+    
+    if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    
+    const business = await prisma.business.findUnique({ 
+      where: { id: user.businessId }
+    });
+    
+    if (!business) {
+      return res.status(404).json({ error: "Business not found" });
+    }
+    
+    // Return slug for booking link generation
+    res.json({ slug: business.slug });
+  } catch (error) {
+    console.error("Error getting business name:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
-  
-  const business = await prisma.business.findUnique({ 
-    where: { id: user.businessId }
-  });
-  
-  if (!business) {
-    return res.status(404).json({ error: "Business not found" });
-  }
-  
-  // Return slug for booking link generation
-  res.json({ slug: business.slug });
 }
 
 // Обновить название компании
 async function updateBusinessName(req, res) {
-  const { name } = req.body;
-  
-  if (!name || name.trim() === '') {
-    return res.status(400).json({ error: "Название обязательно" });
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const { name } = req.body;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: "Название обязательно" });
+    }
+    
+    const business = await prisma.business.update({
+      where: { id: user.businessId },
+      data: { name: name.trim() }
+    });
+    
+    res.json({ name: business.name });
+  } catch (error) {
+    console.error("Error updating business name:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
-  
-  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
-  
-  if (!user || !user.businessId) {
-    return res.status(403).json({ error: "Forbidden" });
-  }
-  
-  const business = await prisma.business.update({
-    where: { id: user.businessId },
-    data: { name: name.trim() }
-  });
-  
-  res.json({ name: business.name });
 }
 
 // Find business by email for booking page
@@ -222,34 +230,23 @@ async function getBusinessByEmail(req, res) {
 
 // Get user's business
 async function getBusiness(req, res) {
-  const jwt = require('jsonwebtoken');
-
-  const token = req.cookies?.token;
-
-  if (!token) {
-    return res.status(401).json({ error: 'No token' });
-  }
-
-  let payload;
-
   try {
-    payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-  } catch (e) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-  
-  try {
-    // Find user first
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId }
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
     });
+
+    const user = req.user;
     
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      console.warn('[SECURITY] Missing user', { userId: req.user?.id });
+      return res.status(401).json({ error: 'User not found' });
     }
     
     // Check if user has a business
     if (!user.businessId) {
+      console.warn('[SECURITY] Missing businessId', { userId: user.id });
       return res.status(404).json({ error: "Business not found" });
     }
     
@@ -271,36 +268,24 @@ async function getBusiness(req, res) {
 
 // Create new business
 async function createBusiness(req, res) {
-  const jwt = require('jsonwebtoken');
-
-  const token = req.cookies?.token;
-
-  if (!token) {
-    return res.status(401).json({ error: 'No token' });
-  }
-
-  let payload;
-
   try {
-    payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-  } catch (e) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-  
-  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user) {
+      console.warn('[SECURITY] Missing user', { userId: req.user?.id });
+      return res.status(401).json({ error: 'User not found' });
+    }
+
     const { name, phone, address, description } = req.body;
     
     if (!name) {
       return res.status(400).json({ error: "Business name is required" });
-    }
-    
-    // Find user first
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId }
-    });
-    
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
     }
     
     // Check if user already has a business
@@ -326,7 +311,7 @@ async function createBusiness(req, res) {
       data: { businessId: business.id }
     });
     
-    console.log(`Created business for ${userEmail}:`, business);
+    console.log(`Created business for ${user.email}:`, business);
     
     res.status(201).json(business);
   } catch (error) {
@@ -337,36 +322,25 @@ async function createBusiness(req, res) {
 
 // Update business
 async function updateBusiness(req, res) {
-  const jwt = require('jsonwebtoken');
-
-  const token = req.cookies?.token;
-
-  if (!token) {
-    return res.status(401).json({ error: 'No token' });
-  }
-
-  let payload;
-
   try {
-    payload = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-  } catch (e) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-  
-  try {
-    const { name, phone, address, description } = req.body;
-    
-    // Find user first
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId }
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
     });
+
+    const user = req.user;
     
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      console.warn('[SECURITY] Missing user', { userId: req.user?.id });
+      return res.status(401).json({ error: 'User not found' });
     }
+
+    const { name, phone, address, description } = req.body;
     
     // Check if user has a business
     if (!user.businessId) {
+      console.warn('[SECURITY] Missing businessId', { userId: user.id });
       return res.status(404).json({ error: "Business not found" });
     }
     
@@ -381,7 +355,7 @@ async function updateBusiness(req, res) {
       }
     });
     
-    console.log(`Updated business for ${userEmail}:`, business);
+    console.log(`Updated business for ${user.email}:`, business);
     
     res.json(business);
   } catch (error) {

@@ -39,6 +39,19 @@ const upload = multer({
 // Get admin stats
 router.get('/stats', async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin endpoints don't require businessId filtering as they are for super admin
+    // but we still need authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
     const users = await prisma.user.findMany({
       where: { role: 'OWNER' },
       include: {
@@ -68,6 +81,18 @@ router.get('/stats', async (req, res) => {
 // Get all users
 router.get('/users', async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
     const users = await prisma.user.findMany({
       where: { role: 'OWNER' },
       include: {
@@ -119,6 +144,18 @@ router.get('/users', async (req, res) => {
 // Get single user
 router.get('/users/:id', async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
     const { id } = req.params;
     
     const user = await prisma.user.findUnique({
@@ -151,6 +188,18 @@ router.get('/users/:id', async (req, res) => {
 // Update user
 router.patch('/users/:id', async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
     const { id } = req.params;
     const { isPaying, totalPaid, nextBillingAt } = req.body;
     
@@ -174,6 +223,18 @@ router.patch('/users/:id', async (req, res) => {
 // Delete user
 router.delete('/users/:id', async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
     const { id } = req.params;
     console.log(`[ADMIN DELETE] Attempting to delete user: ${id}`);
     
@@ -254,6 +315,18 @@ router.delete('/users/:id', async (req, res) => {
 // Force delete user (with business)
 router.delete('/users/:id/force', async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
     const { id } = req.params;
     console.log(`[ADMIN FORCE DELETE] Attempting to force delete user: ${id}`);
     
@@ -405,6 +478,18 @@ router.delete('/users/:id/force', async (req, res) => {
 // Impersonate user
 router.get('/impersonate/:id', async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
     const { id } = req.params;
     console.log(`[ADMIN IMPERSONATE] Starting impersonation for user ID: ${id}`);
     
@@ -436,6 +521,18 @@ router.get('/impersonate/:id', async (req, res) => {
 // Reset user password
 router.post('/users/:id/reset-password', async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
     const { id } = req.params;
     const { password } = req.body;
     
@@ -463,6 +560,18 @@ router.post('/users/:id/reset-password', async (req, res) => {
 // Upload admin image
 router.post('/upload-image', upload.single('image'), (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
@@ -487,6 +596,18 @@ router.post('/upload-image', upload.single('image'), (req, res) => {
 // Reset admin image
 router.delete('/reset-image', (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
     const publicDir = path.join(__dirname, '../public');
     
     // Delete all possible admin-custom-image files

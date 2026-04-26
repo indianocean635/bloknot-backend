@@ -13,13 +13,16 @@ function parseDate(value) {
 // Получить записи (защищенные)
 async function getAppointments(req, res) {
   try {
-    // Временная проверка пользователя
-    const user = memoryUsers.get(req.user?.id) || {
-      id: req.user?.id || 'user_1',
-      businessId: 'business_1'
-    };
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
     
     if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing businessId', { userId: user?.id });
       return res.status(403).json({ error: "Forbidden" });
     }
     
@@ -89,9 +92,23 @@ async function getPublicAppointments(req, res) {
 // Создать запись
 async function createAppointment(req, res) {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing businessId', { userId: user?.id });
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
     const appointment = {
       id: appointmentId++,
       ...req.body,
+      businessId: user.businessId, // Обязательно добавляем businessId
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -109,10 +126,33 @@ async function createAppointment(req, res) {
 // Обновить запись
 async function updateAppointment(req, res) {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing businessId', { userId: user?.id });
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
     const { id } = req.params;
     const appointment = memoryAppointments.get(Number(id));
     
     if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+    
+    // Проверяем, что запись принадлежит бизнесу пользователя
+    if (appointment.businessId !== user.businessId) {
+      console.warn('[SECURITY] Attempting to update appointment from different business', { 
+        userId: user.id, 
+        businessId: user.businessId, 
+        appointmentBusinessId: appointment.businessId 
+      });
       return res.status(404).json({ error: "Appointment not found" });
     }
     
@@ -130,10 +170,33 @@ async function updateAppointment(req, res) {
 // Удалить запись
 async function deleteAppointment(req, res) {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing businessId', { userId: user?.id });
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
     const { id } = req.params;
     const appointment = memoryAppointments.get(Number(id));
     
     if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+    
+    // Проверяем, что запись принадлежит бизнесу пользователя
+    if (appointment.businessId !== user.businessId) {
+      console.warn('[SECURITY] Attempting to delete appointment from different business', { 
+        userId: user.id, 
+        businessId: user.businessId, 
+        appointmentBusinessId: appointment.businessId 
+      });
       return res.status(404).json({ error: "Appointment not found" });
     }
     

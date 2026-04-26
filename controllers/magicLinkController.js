@@ -263,10 +263,23 @@ async function confirmLogin(req, res) {
 // Set password
 async function setPassword(req, res) {
   try {
-    const { userId, password } = req.body;
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
 
-    if (!userId || !password) {
-      return res.status(400).json({ error: 'User ID and password are required' });
+    const user = req.user;
+    
+    if (!user) {
+      console.warn('[SECURITY] Missing user', { userId: req.user?.id });
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
     }
 
     if (password.length < 6) {
@@ -277,8 +290,8 @@ async function setPassword(req, res) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Update user password
-    const user = await prisma.user.update({
-      where: { id: userId },
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
       data: { password: hashedPassword }
     });
 
@@ -286,12 +299,12 @@ async function setPassword(req, res) {
     res.json({
       status: 'LOGIN_SUCCESS',
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        phone: user.phone,
-        role: user.role,
-        businessId: user.businessId
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        phone: updatedUser.phone,
+        role: updatedUser.role,
+        businessId: updatedUser.businessId
       }
     });
 

@@ -4,12 +4,21 @@ const prisma = new PrismaClient();
 // Get current subscription
 async function getSubscription(req, res) {
   try {
-    if (!req.user || !req.user.businessId) {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
       return res.json({ plan: 'FREE', maxUsers: 1 });
     }
 
     const subscription = await prisma.subscription.findUnique({
-      where: { businessId: req.user.businessId }
+      where: { businessId: user.businessId }
     });
 
     res.json(subscription || { plan: 'FREE', maxUsers: 1 });
@@ -22,6 +31,19 @@ async function getSubscription(req, res) {
 // Create or update subscription
 async function createSubscription(req, res) {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     const { plan } = req.body;
     
     const planLimits = {
@@ -36,10 +58,10 @@ async function createSubscription(req, res) {
     }
 
     const subscription = await prisma.subscription.upsert({
-      where: { businessId: req.user.businessId },
+      where: { businessId: user.businessId },
       update: { plan, maxUsers, isActive: true },
       create: {
-        businessId: req.user.businessId,
+        businessId: user.businessId,
         plan,
         maxUsers
       }
@@ -55,6 +77,19 @@ async function createSubscription(req, res) {
 // Get available plans
 async function getPlans(req, res) {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user) {
+      console.warn('[SECURITY] Missing user', { userId: req.user?.id });
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     const plans = [
       {
         id: 'SOLO',
