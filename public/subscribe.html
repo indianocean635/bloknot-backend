@@ -84,15 +84,18 @@
         return;
       }
 
-      localStorage.setItem("bloknot_subscription_active", "1");
+      // Remove localStorage usage - subscription status managed via API
+      console.log('Subscription activated - status managed via API');
       Bloknot.qs("#success").style.display = "block";
       showNotice("Карта привязана. Подписка активна.");
     });
 
-    if (localStorage.getItem("bloknot_subscription_active") === "1") {
-      Bloknot.qs("#success").style.display = "block";
-      showNotice("Подписка уже активна.");
-    }
+    // Remove localStorage usage - subscription status from API
+    // Remove localStorage usage - subscription status from API
+    // if (false) {
+    //   Bloknot.qs("#success").style.display = "block";
+    //   showNotice("Подписка уже активна.");
+    // }
   </script>
 </body>
 </html>

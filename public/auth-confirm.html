@@ -147,22 +147,12 @@
 
         if (data.status === 'SET_PASSWORD_REQUIRED') {
           // Store user info for set password page
-          localStorage.setItem('pendingUser', JSON.stringify(data.user));
+          // Remove localStorage usage - user data managed via JWT cookie
+      console.log('Magic link confirmed - JWT cookie manages session');
           showSetPassword();
         } else if (data.status === 'LOGIN_SUCCESS') {
-          // Clear any existing session data first
-          localStorage.removeItem('bloknot_logged_in_email');
-          localStorage.removeItem('bloknot_user_id');
-          localStorage.removeItem('bloknot_business_id');
-          localStorage.removeItem('bloknot_logged_in');
-          localStorage.removeItem('bloknot_user_email');
-          
-          // Store fresh user session
-          localStorage.setItem('bloknot_logged_in_email', data.user.email);
-          localStorage.setItem('bloknot_user_id', data.user.id);
-          localStorage.setItem('bloknot_business_id', data.user.businessId || '');
-          localStorage.setItem('bloknot_logged_in', '1');
-          localStorage.setItem('bloknot_user_email', data.user.email);
+          // Remove localStorage usage - session managed via JWT cookie
+          console.log('Login successful - JWT cookie manages session');
           
           console.log('Stored user session:', {
             email: data.user.email,

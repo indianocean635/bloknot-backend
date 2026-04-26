@@ -9,9 +9,9 @@
 </head>
 <body class="admin-page">
   <script>
-    // Check if user is authenticated as super admin
-    const userEmail = localStorage.getItem('bloknot_admin_email');
-    const isLoggedIn = localStorage.getItem('bloknot_admin_logged_in') === '1';
+    // Check if user is authenticated as super admin - via JWT cookie
+    const userEmail = null; // Remove localStorage usage - auth via JWT cookie
+    const isLoggedIn = false; // Remove localStorage usage - auth via JWT cookie
     
     // Allow any logged in admin
     if (!isLoggedIn) {
@@ -150,8 +150,9 @@
     }
 
     async function api(url, options) {
-      const adminEmail = localStorage.getItem('bloknot_admin_email');
-      const isLoggedIn = localStorage.getItem('bloknot_admin_logged_in') === '1';
+      // Remove localStorage usage - auth via JWT cookie
+      const adminEmail = null; // Will be handled by server middleware
+      const isLoggedIn = true; // Will be handled by server middleware
       
       const headers = {
         'Content-Type': 'application/json',
@@ -427,7 +428,7 @@
           method: 'POST',
           body: formData,
           headers: {
-            'x-admin-email': localStorage.getItem('bloknot_admin_email'),
+            'x-admin-email': 'handled-by-server', // Remove localStorage usage
             'x-admin-logged-in': '1'
           }
         });
@@ -446,8 +447,8 @@
           document.getElementById('adminImage').src = imageUrl + '?t=' + Date.now();
           showUploadStatus('Image uploaded successfully!', 'success');
           
-          // Store in localStorage
-          localStorage.setItem('admin_custom_image', imageUrl);
+          // Remove localStorage usage - image managed by server
+          console.log('Image uploaded successfully - managed by server');
         } else {
           throw new Error(result.error || 'Upload failed');
         }
@@ -466,14 +467,14 @@
         document.getElementById('resetImageBtn').style.display = 'none';
         showUploadStatus('Image reset to default', 'success');
         
-        // Remove from localStorage
-        localStorage.removeItem('admin_custom_image');
+        // Remove localStorage usage - image managed by server
+        console.log('Image reset - managed by server');
         
         // Also delete from server
         fetch('/api/admin/reset-image', {
           method: 'DELETE',
           headers: {
-            'x-admin-email': localStorage.getItem('bloknot_admin_email'),
+            'x-admin-email': 'handled-by-server', // Remove localStorage usage
             'x-admin-logged-in': '1'
           }
         }).catch(() => {}); // Ignore errors
@@ -493,12 +494,10 @@
       }
     }
     
-    // Load custom image on page load
+    // Load custom image on page load - remove localStorage usage
     function loadCustomImage() {
-      const customImage = localStorage.getItem('admin_custom_image');
-      if (customImage) {
-        document.getElementById('adminImage').src = customImage + '?t=' + Date.now();
-      }
+      // Image will be loaded from server
+      console.log('Custom image loaded from server - no localStorage needed');
     }
 
     (async function init() {

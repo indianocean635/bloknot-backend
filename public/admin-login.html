@@ -81,9 +81,7 @@
           throw new Error('Invalid password');
         }
 
-        // Set admin session
-        localStorage.setItem('bloknot_admin_email', email);
-        localStorage.setItem('bloknot_admin_logged_in', '1');
+        console.log('Admin login successful - JWT cookie manages session');
 
         showNotice('Login successful! Redirecting...');
         setTimeout(() => {

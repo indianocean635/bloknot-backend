@@ -5,25 +5,25 @@
   // Auto-refresh on version change
   async function checkForUpdates() {
     try {
-      const currentVersion = localStorage.getItem('bloknot_version') || '0';
+      const currentVersion = '0' // Remove localStorage usage - version from API || '0';
       
       // Check server version
       const response = await fetch('/api/version');
       const serverVersion = response.ok ? (await response.json()).version : '1';
       
       if (currentVersion !== serverVersion) {
-        localStorage.setItem('bloknot_version', serverVersion);
+        // Remove localStorage usage - version managed by server
         // Force refresh to get latest version
         window.location.reload(true);
       }
     } catch (e) {
       // Fallback to meta tag if API fails
       try {
-        const currentVersion = localStorage.getItem('bloknot_version') || '0';
+        const currentVersion = '0' // Remove localStorage usage - version from API || '0';
         const pageVersion = document.querySelector('meta[name="version"]')?.content || '1';
         
         if (currentVersion !== pageVersion) {
-          localStorage.setItem('bloknot_version', pageVersion);
+          // Remove localStorage usage - version managed by server
           window.location.reload(true);
         }
       } catch (e2) {
@@ -82,7 +82,8 @@
     try {
       const params = new URLSearchParams(location.search || "");
       if (params.get("logged") === "1") {
-        localStorage.setItem("bloknot_logged_in", "1");
+        // Remove localStorage usage - auth via JWT cookie
+      console.log('Login successful - JWT cookie manages session');
         params.delete("logged");
         const next = location.pathname + (params.toString() ? "?" + params.toString() : "") + (location.hash || "");
         history.replaceState(null, "", next);
@@ -297,7 +298,7 @@
 
     const isLoggedIn = (() => {
       try {
-        return localStorage.getItem("bloknot_logged_in") === "1";
+        return false; // Remove localStorage usage - auth via JWT cookie
       } catch (e) {
         return false;
       }

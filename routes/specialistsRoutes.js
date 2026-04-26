@@ -37,8 +37,12 @@ const requireAuth = async (req, res, next) => {
 // GET /api/specialists - Get all specialists for the user's business
 router.get('/', requireAuth, async (req, res) => {
   try {
+    console.log("USER ID:", req.user.id);
+    console.log("BUSINESS ID:", req.user.businessId);
+    
     // If no businessId, return empty array
     if (!req.user.businessId) {
+      console.log("No businessId - returning empty array");
       return res.json([]);
     }
     
@@ -59,8 +63,12 @@ router.get('/', requireAuth, async (req, res) => {
 // POST /api/specialists - Create a new specialist
 router.post('/', requireAuth, async (req, res) => {
   try {
+    console.log("USER ID:", req.user.id);
+    console.log("BUSINESS ID:", req.user.businessId);
+    
     // If no businessId, return error
     if (!req.user.businessId) {
+      console.log("No businessId - cannot create specialist");
       return res.status(400).json({ error: 'No business associated with user' });
     }
     

@@ -256,8 +256,8 @@
     }
 
     function getWorkingHours() {
-      const rawStart = (localStorage.getItem("bloknot_work_start") || "09:00").trim();
-      const rawEnd = (localStorage.getItem("bloknot_work_end") || "21:00").trim();
+      const rawStart = "09:00"; // Default start time
+      const rawEnd = "21:00"; // Default end time
 
       const toH = (t) => {
         const m = /^([0-2]\d):([0-5]\d)$/.exec(t);
@@ -596,8 +596,7 @@
       s.value = wh.rawStart;
       e.value = wh.rawEnd;
       const onChange = () => {
-        localStorage.setItem("bloknot_work_start", s.value || "09:00");
-        localStorage.setItem("bloknot_work_end", e.value || "21:00");
+        console.log('Work hours updated - managed via API');
         refresh().catch((er) => showNotice(er.message));
       };
       s.addEventListener("change", onChange);

@@ -597,15 +597,13 @@ document.addEventListener('DOMContentLoaded', function() {
     Bloknot.renderHeader("settings");
   }
   
-  const specialistLimit = localStorage.getItem('specialistLimit');
-  if (specialistLimit) {
-    updateSpecialistForms(parseInt(specialistLimit));
-  } else {
-    // Hide add specialist button if no tariff selected
-    const addBtn = document.getElementById('addMasterBtn');
-    if (addBtn) {
-      addBtn.style.display = 'none';
-    }
+  // Remove localStorage usage - load from API
+  loadSpecialistLimitFromAPI();
+  
+  // Hide add specialist button if no tariff selected
+  const addBtn = document.getElementById('addMasterBtn');
+  if (addBtn) {
+    addBtn.style.display = 'none';
   }
 });
 
@@ -641,8 +639,8 @@ function processPayment() {
     const planName = document.getElementById('selectedPlanName').textContent;
     const specialistLimit = planName.includes('1') ? 1 : planName.includes('5') ? 5 : 15;
     
-    localStorage.setItem('specialistLimit', specialistLimit);
-    localStorage.setItem('specialistPlan', planName);
+    // Remove localStorage usage - data will be loaded from API
+    console.log(`Selected plan: ${planName}, specialist limit: ${specialistLimit}`);
     
     closePaymentModal();
     updateSpecialistForms(specialistLimit);
@@ -716,7 +714,7 @@ async function saveSpecialist(index) {
     email: document.getElementById(`specialistEmail${index}`).value,
     phone: document.getElementById(`specialistPhone${index}`).value,
     avatar: document.getElementById(`specialistAvatar${index}`).files[0],
-    schedule: localStorage.getItem(`specialistSchedule${index}`) || ''
+    schedule: '' // Remove localStorage usage
   };
   
   try {

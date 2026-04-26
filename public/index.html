@@ -810,7 +810,7 @@
     // Проверяем статус авторизации
     function checkAuthStatus() {
       try {
-        const isLoggedIn = localStorage.getItem("bloknot_logged_in") === "1";
+        const isLoggedIn = false; // Remove localStorage usage - auth via JWT cookie
         if (isLoggedIn) {
           // Показываем "Мой кабинет" для авторизованных
           mainNav.innerHTML = `
@@ -834,7 +834,7 @@
           // Добавляем обработчик выхода
           document.getElementById("logoutLink").addEventListener("click", (e) => {
             e.preventDefault();
-            localStorage.removeItem("bloknot_logged_in");
+            // Remove localStorage usage - logout via JWT cookie removal
             document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             checkAuthStatus();
           });

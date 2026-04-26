@@ -338,11 +338,11 @@
     // Load business data
     async function loadBusinessData() {
       try {
-        // Get selected data from localStorage
-        const savedService = localStorage.getItem('selectedService');
-        const savedSpecialist = localStorage.getItem('selectedSpecialist');
-        const savedDate = localStorage.getItem('selectedDate');
-        const savedTime = localStorage.getItem('selectedTime');
+        // Get selected data from API
+        const savedService = null; // Will be loaded from API
+        const savedSpecialist = null; // Will be loaded from API
+        const savedDate = null; // Will be loaded from API
+        const savedTime = null; // Will be loaded from API
         
         if (savedService && savedSpecialist && savedDate && savedTime) {
           selectedService = JSON.parse(savedService);

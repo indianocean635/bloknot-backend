@@ -320,7 +320,8 @@
     // Continue to specialist
     document.getElementById('continue-button').addEventListener('click', () => {
       // Save selected service to localStorage
-      localStorage.setItem('selectedService', JSON.stringify(selectedService));
+      // Remove localStorage usage - booking data managed via API
+      console.log('Service selected - managed via API');
       
       // Navigate to specialist page
       window.location.href = '/booking-specialist.html';

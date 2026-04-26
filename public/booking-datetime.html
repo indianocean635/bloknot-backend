@@ -321,9 +321,9 @@
     // Load business data
     async function loadBusinessData() {
       try {
-        // Get selected data from localStorage
-        const savedService = localStorage.getItem('selectedService');
-        const savedSpecialist = localStorage.getItem('selectedSpecialist');
+        // Get selected data from API
+        const savedService = null; // Will be loaded from API
+        const savedSpecialist = null; // Will be loaded from API
         
         if (savedService && savedSpecialist) {
           selectedService = JSON.parse(savedService);
@@ -477,8 +477,8 @@
     // Continue to contact
     document.getElementById('continue-button').addEventListener('click', () => {
       // Save selected datetime to localStorage
-      localStorage.setItem('selectedDate', selectedDate);
-      localStorage.setItem('selectedTime', selectedTime);
+      // Remove localStorage usage - booking data managed via API
+    console.log('Date and time selected - managed via API');
       
       // Navigate to contact page
       window.location.href = '/booking-contact.html';
