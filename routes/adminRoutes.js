@@ -632,6 +632,65 @@ router.delete('/reset-image', requireAuth, (req, res) => {
   }
 });
 
+// Create or update super admin (temporary endpoint for fixing access)
+router.post('/create-super-admin', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    console.log('[ADMIN] Creating/updating super admin:', email);
+
+    // Check if user exists
+    let user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (user) {
+      console.log('[ADMIN] User exists, updating role and password');
+      // Update existing user
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user = await prisma.user.update({
+        where: { email },
+        data: {
+          password: hashedPassword,
+          role: 'SUPER_ADMIN'
+        }
+      });
+      console.log('[ADMIN] User updated successfully');
+    } else {
+      console.log('[ADMIN] Creating new super admin');
+      // Create new super admin
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user = await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          role: 'SUPER_ADMIN',
+          isPaying: false,
+          totalPaid: 0
+        }
+      });
+      console.log('[ADMIN] Super admin created successfully');
+    }
+
+    res.json({
+      success: true,
+      message: 'Super admin created/updated successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Create super admin error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Admin login
 router.post('/login', async (req, res) => {
   try {
