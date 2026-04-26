@@ -719,17 +719,92 @@ document.addEventListener('DOMContentLoaded', function() {
     Bloknot.renderHeader("settings");
   }
   
-  const specialistLimit = localStorage.getItem('specialistLimit');
-  if (specialistLimit) {
-    updateSpecialistForms(parseInt(specialistLimit));
-  } else {
-    // Hide add specialist button if no tariff selected
-    const addBtn = document.getElementById('addMasterBtn');
-    if (addBtn) {
-      addBtn.style.display = 'none';
-    }
+  // Load specialist limit from API instead of localStorage
+  loadSpecialistLimitFromAPI();
+  
+  // Hide add specialist button if no tariff selected
+  const addBtn = document.getElementById('addMasterBtn');
+  if (addBtn) {
+    addBtn.style.display = 'none';
   }
 });
+
+// Load specialist limit from API
+async function loadSpecialistLimitFromAPI() {
+  try {
+    // Get user info including business
+    const userResponse = await api('/api/auth/me');
+    const user = userResponse.user;
+    
+    if (!user.businessId) {
+      console.log('No business found for user');
+      showNoBusinessUI();
+      return;
+    }
+    
+    // Load business settings
+    const businessResponse = await api('/api/settings/business');
+    const business = businessResponse;
+    
+    // Update specialist forms based on subscription
+    const subscription = business.subscription || { plan: 'FREE' };
+    const specialistLimit = getSpecialistLimitFromPlan(subscription.plan);
+    
+    updateSpecialistForms(specialistLimit);
+    
+    // Load specialists from API
+    await loadSpecialistsFromAPI();
+    
+  } catch (error) {
+    console.error('Error loading specialist limit:', error);
+    showNoBusinessUI();
+  }
+}
+
+// Get specialist limit from plan name
+function getSpecialistLimitFromPlan(plan) {
+  if (plan.includes('1') || plan === 'SOLO') return 1;
+  if (plan.includes('5') || plan === 'STUDIO') return 5;
+  return 15; // PRO or default
+}
+
+// Show UI for users without business
+function showNoBusinessUI() {
+  const grid = document.getElementById('mastersGrid');
+  if (grid) {
+    grid.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #666;">
+        <h3>У вас пока нет бизнеса</h3>
+        <p>Создайте бизнес чтобы управлять специалистами и настройками</p>
+        <button onclick="window.location.href='/index.html'" class="btn primary">
+          Создать бизнес
+        </button>
+      </div>
+    `;
+  }
+}
+
+// Load specialists from API
+async function loadSpecialistsFromAPI() {
+  try {
+    const specialists = await api('/api/specialists');
+    console.log('Loaded specialists from API:', specialists);
+    
+    // Update UI with loaded specialists
+    updateSpecialistsUI(specialists);
+    
+  } catch (error) {
+    console.error('Error loading specialists:', error);
+    // Show empty state instead of fallback
+    updateSpecialistsUI([]);
+  }
+}
+
+// Update specialists UI
+function updateSpecialistsUI(specialists) {
+  // TODO: Implement UI update with specialists data
+  console.log('Updating specialists UI with:', specialists);
+}
 
 // Tariff selection
 function selectTariff(plan, price) {
@@ -763,8 +838,8 @@ function processPayment() {
     const planName = document.getElementById('selectedPlanName').textContent;
     const specialistLimit = planName.includes('1') ? 1 : planName.includes('5') ? 5 : 15;
     
-    localStorage.setItem('specialistLimit', specialistLimit);
-    localStorage.setItem('specialistPlan', planName);
+    // Remove localStorage usage - data will be loaded from API
+    console.log(`Selected plan: ${planName}, specialist limit: ${specialistLimit}`);
     
     closePaymentModal();
     updateSpecialistForms(specialistLimit);
@@ -835,36 +910,14 @@ function saveSpecialistData(index) {
   const name = document.getElementById(`specialistName${index}`)?.value || '';
   const email = document.getElementById(`specialistEmail${index}`)?.value || '';
   
-  const specialists = JSON.parse(localStorage.getItem('specialistForms') || '{}');
-  specialists[index] = {
-    name: name,
-    email: email,
-    updatedAt: new Date().toISOString()
-  };
-  
-  localStorage.setItem('specialistForms', JSON.stringify(specialists));
-  console.log(`Saved specialist ${index} data:`, specialists[index]);
+  console.log(`Saving specialist ${index} data:`, { name, email });
+  // Data will be sent to API instead of localStorage
 }
 
-// Load specialist data from localStorage
+// Load specialist data from API
 function loadSpecialistData(index) {
-  const specialists = JSON.parse(localStorage.getItem('specialistForms') || '{}');
-  const specialistData = specialists[index];
-  
-  if (specialistData) {
-    const nameInput = document.getElementById(`specialistName${index}`);
-    const emailInput = document.getElementById(`specialistEmail${index}`);
-    
-    if (nameInput && specialistData.name) {
-      nameInput.value = specialistData.name;
-    }
-    
-    if (emailInput && specialistData.email) {
-      emailInput.value = specialistData.email;
-    }
-    
-    console.log(`Loaded specialist ${index} data:`, specialistData);
-  }
+  console.log(`Loading specialist ${index} data from API`);
+  // TODO: Implement API call to load specialist data
 }
 
 async function saveSpecialist(index) {
@@ -873,7 +926,7 @@ async function saveSpecialist(index) {
     email: document.getElementById(`specialistEmail${index}`).value,
     phone: document.getElementById(`specialistPhone${index}`).value,
     avatar: document.getElementById(`specialistAvatar${index}`).files[0],
-    schedule: localStorage.getItem(`specialistSchedule${index}`) || ''
+    schedule: '' // Remove localStorage usage
   };
   
   try {
@@ -931,9 +984,9 @@ async function inviteSpecialist(index) {
   console.log(`[INVITE] Current user: ${userEmail}, inviting: ${email}`);
   
   try {
-    // Get current business info
+    // Get current business info from API
     const companyName = document.getElementById('companyNameInput')?.value || 'Our Business';
-    const businessId = localStorage.getItem('businessId') || 'default';
+    // businessId will be loaded from API via /api/auth/me
     
     // Send invitation email with link to main page
     const response = await api('/api/settings/invite-specialist', {
@@ -948,16 +1001,8 @@ async function inviteSpecialist(index) {
       })
     });
     
-    // Save specialist to local storage
-    const specialists = JSON.parse(localStorage.getItem('specialists') || '[]');
-    specialists.push({
-      id: Date.now(),
-      email: email,
-      name: name,
-      status: 'invited',
-      businessId: businessId
-    });
-    localStorage.setItem('specialists', JSON.stringify(specialists));
+    // Remove localStorage usage - specialists will be loaded from API
+    console.log(`Inviting specialist: ${email} for business`);
     
     alert(`Invitation sent to ${email}. The specialist will receive an email with registration link.`);
   } catch (error) {

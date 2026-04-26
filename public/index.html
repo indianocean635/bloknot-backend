@@ -1219,16 +1219,19 @@
 
         const result = await response.json().catch(() => ({}));
 
-        if (result.error) {
-          throw new Error(result.error);
-        }
-
-        if (result.success) {
-          showNotice("Вход выполнен успешно!");
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Clear localStorage to prevent data leakage between users
+          localStorage.clear();
+          
+          // Close modal and show success
           closeModal();
-          // Redirect to dashboard
+          showNotice("Вход выполнен!");
+          
+          // Reload page to update UI
           setTimeout(() => {
-            window.location.href = "/dashboard.html";
+            window.location.reload();
           }, 1000);
         } else {
           showNotice("Ошибка входа. Проверьте ваши данные.");

@@ -10,6 +10,7 @@ const businessRoutes = require('./routes/businessRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const magicLinkRoutes = require('./routes/magicLinkRoutes');
+const specialistsRoutes = require('./routes/specialistsRoutes');
 const { requireMagicAuth, getBusinessFromUser, adminAuth, optionalAuth } = require('./middleware/magicAuthMiddleware');
 const app = express();
 const PORT = 3001;
@@ -42,6 +43,7 @@ app.use('/api/business', businessRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/auth', magicLinkRoutes);
+app.use('/api/specialists', specialistsRoutes);
 app.use('/api/masters', settingsRoutes); // Masters endpoints are in settingsRoutes
 app.use('/api/appointments', appointmentRoutes);
 
