@@ -47,7 +47,7 @@ async function getBusinessBySlug(req, res) {
 // Получить филиалы
 async function getBranches(req, res) {
   const branches = await prisma.branch.findMany({
-    where: { businessId: req.business.id },
+    where: { businessId: req.user.businessId },
     orderBy: { id: "asc" }
   });
   
@@ -63,7 +63,7 @@ async function getBranches(req, res) {
 // Получить услуги
 async function getServices(req, res) {
   const services = await prisma.service.findMany({
-    where: { businessId: req.business.id },
+    where: { businessId: req.user.businessId },
     orderBy: { id: "asc" },
     include: { category: true },
   });
@@ -74,7 +74,7 @@ async function getServices(req, res) {
 // Получить мастеров
 async function getMasters(req, res) {
   const masters = await prisma.master.findMany({
-    where: { businessId: req.business.id },
+    where: { businessId: req.user.businessId },
     orderBy: { id: "asc" }
   });
   
@@ -84,7 +84,7 @@ async function getMasters(req, res) {
 // Получить работы (фото)
 async function getWorks(req, res) {
   const works = await prisma.workPhoto.findMany({
-    where: { businessId: req.business.id },
+    where: { businessId: req.user.businessId },
     orderBy: { id: "desc" }
   });
   

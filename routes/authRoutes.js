@@ -341,7 +341,7 @@ router.post('/update-profile', async (req, res) => {
     
     const jwt = require('jsonwebtoken');
 
-    const token = req.cookies?.token;
+    const token = req.cookies?.auth;
 
     if (!token) {
       return res.status(401).json({ error: 'No token' });
