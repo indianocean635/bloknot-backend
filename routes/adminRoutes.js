@@ -202,9 +202,11 @@ router.delete('/users/:id', async (req, res) => {
     
     // Check if user owns a business
     if (user.ownedBusiness) {
-      console.log(`[ADMIN DELETE] Cannot delete - user owns business: ${user.ownedBusiness.id}`);
+      console.log(`[ADMIN DELETE] User owns business: ${user.ownedBusiness.id}`);
       return res.status(400).json({ 
-        error: 'Cannot delete user who owns a business. Delete the business first.' 
+        error: 'USER_OWNS_BUSINESS',
+        message: 'User owns a business',
+        businessId: user.ownedBusiness.id
       });
     }
     
@@ -232,6 +234,157 @@ router.delete('/users/:id', async (req, res) => {
   } catch (error) {
     console.error('[ADMIN DELETE] Error:', error);
     console.error('[ADMIN DELETE] Error details:', {
+      code: error.code,
+      message: error.message,
+      meta: error.meta
+    });
+    
+    if (error.code === 'P2002') {
+      res.status(400).json({ error: 'Cannot delete user - related data exists' });
+    } else if (error.code === 'P2025') {
+      res.status(404).json({ error: 'User not found' });
+    } else if (error.code === 'P2003') {
+      res.status(400).json({ error: 'Cannot delete user - foreign key constraint' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
+// Force delete user (with business)
+router.delete('/users/:id/force', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`[ADMIN FORCE DELETE] Attempting to force delete user: ${id}`);
+    
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { 
+        ownedBusiness: true,
+        business: true,
+        staffProfile: true,
+        loginTokens: true
+      }
+    });
+    
+    if (!user) {
+      console.log(`[ADMIN FORCE DELETE] User not found: ${id}`);
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    console.log(`[ADMIN FORCE DELETE] Found user:`, {
+      email: user.email,
+      hasBusiness: !!user.ownedBusiness,
+      hasStaffProfile: !!user.staffProfile,
+      loginTokensCount: user.loginTokens.length
+    });
+    
+    // Use transaction for safe deletion
+    const result = await prisma.$transaction(async (tx) => {
+      console.log(`[ADMIN FORCE DELETE] Starting transaction for user: ${id}`);
+      
+      // Delete login tokens
+      console.log(`[ADMIN FORCE DELETE] Deleting login tokens for user: ${id}`);
+      await tx.loginToken.deleteMany({
+        where: { userId: id }
+      });
+      
+      // Delete staff profile if exists
+      if (user.staffProfile) {
+        console.log(`[ADMIN FORCE DELETE] Deleting staff profile for user: ${id}`);
+        await tx.staff.delete({
+          where: { userId: id }
+        });
+      }
+      
+      // Delete business if user owns one
+      if (user.ownedBusiness) {
+        console.log(`[ADMIN FORCE DELETE] Deleting business: ${user.ownedBusiness.id}`);
+        
+        // Delete business-related data (cascade should handle most, but be explicit)
+        const businessId = user.ownedBusiness.id;
+        
+        // Delete branches
+        await tx.branch.deleteMany({
+          where: { businessId }
+        });
+        
+        // Delete services
+        await tx.service.deleteMany({
+          where: { businessId }
+        });
+        
+        // Delete categories
+        await tx.category.deleteMany({
+          where: { businessId }
+        });
+        
+        // Delete masters
+        await tx.master.deleteMany({
+          where: { businessId }
+        });
+        
+        // Delete work photos
+        await tx.workPhoto.deleteMany({
+          where: { businessId }
+        });
+        
+        // Delete settings
+        await tx.settings.deleteMany({
+          where: { businessId }
+        });
+        
+        // Delete staff invites
+        await tx.staffInvite.deleteMany({
+          where: { businessId }
+        });
+        
+        // Delete appointments
+        await tx.appointment.deleteMany({
+          where: { businessId }
+        });
+        
+        // Delete schedules
+        await tx.schedule.deleteMany({
+          where: { businessId }
+        });
+        
+        // Delete subscriptions
+        await tx.subscription.deleteMany({
+          where: { businessId }
+        });
+        
+        // Update other users' businessId to null if they reference this business
+        await tx.user.updateMany({
+          where: { businessId },
+          data: { businessId: null }
+        });
+        
+        // Delete the business
+        await tx.business.delete({
+          where: { id: businessId }
+        });
+        
+        console.log(`[ADMIN FORCE DELETE] Successfully deleted business: ${businessId}`);
+      }
+      
+      // Delete the user
+      console.log(`[ADMIN FORCE DELETE] Deleting user: ${id}`);
+      const deletedUser = await tx.user.delete({
+        where: { id }
+      });
+      
+      console.log(`[ADMIN FORCE DELETE] Successfully deleted user: ${id}`);
+      return deletedUser;
+    });
+    
+    console.log(`[ADMIN FORCE DELETE] Transaction completed successfully`);
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('[ADMIN FORCE DELETE] Error:', error);
+    console.error('[ADMIN FORCE DELETE] Error details:', {
       code: error.code,
       message: error.message,
       meta: error.meta

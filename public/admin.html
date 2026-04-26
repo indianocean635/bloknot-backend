@@ -284,7 +284,12 @@
     }
 
     async function deleteUser(id) {
-      await api(`/api/admin/users/${id}`, { method: 'DELETE' });
+      const response = await api(`/api/admin/users/${id}`, { method: 'DELETE' });
+      return response;
+    }
+
+    async function forceDeleteUser(id) {
+      await api(`/api/admin/users/${id}/force`, { method: 'DELETE' });
     }
 
     // Copy password to clipboard
@@ -364,20 +369,35 @@
 
       if (delBtn) {
         const id = delBtn.getAttribute('data-id');
-        const ok = window.confirm('Удалить пользователя? Это действие необратимо.');
-        if (!ok) return;
         showNotice('');
         delBtn.disabled = true;
         try {
+          // First try normal delete
           await deleteUser(id);
           await Promise.all([loadStats(), loadUsers()]);
         } catch (err) {
-          showNotice('Не удалось удалить: ' + (err && err.message ? err.message : ''));
+          // Check if user owns a business
+          if (err && err.error === 'USER_OWNS_BUSINESS') {
+            const confirmForce = window.confirm('У пользователя есть бизнес. Удалить пользователя вместе со всеми данными бизнеса?');
+            if (!confirmForce) {
+              delBtn.disabled = false;
+              return;
+            }
+            
+            try {
+              // Force delete with business
+              await forceDeleteUser(id);
+              await Promise.all([loadStats(), loadUsers()]);
+            } catch (forceErr) {
+              showNotice('Не удалось удалить пользователя с бизнесом: ' + (forceErr && forceErr.message ? forceErr.message : ''));
+            }
+          } else {
+            showNotice('Не удалось удалить: ' + (err && err.message ? err.message : ''));
+          }
         } finally {
           delBtn.disabled = false;
         }
-        return;
-      }
+      } 
     });
 
     // Image upload functions
