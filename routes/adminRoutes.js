@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { requireAuth } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 const prisma = new PrismaClient();
@@ -37,7 +38,7 @@ const upload = multer({
 });
 
 // Get admin stats
-router.get('/stats', async (req, res) => {
+router.get('/stats', requireAuth, async (req, res) => {
   try {
     console.log('[REQUEST]', {
       userId: req.user?.id,
@@ -79,7 +80,7 @@ router.get('/stats', async (req, res) => {
 });
 
 // Get all users
-router.get('/users', async (req, res) => {
+router.get('/users', requireAuth, async (req, res) => {
   try {
     console.log('[REQUEST]', {
       userId: req.user?.id,
@@ -142,7 +143,7 @@ router.get('/users', async (req, res) => {
 });
 
 // Get single user
-router.get('/users/:id', async (req, res) => {
+router.get('/users/:id', requireAuth, async (req, res) => {
   try {
     console.log('[REQUEST]', {
       userId: req.user?.id,
@@ -186,7 +187,7 @@ router.get('/users/:id', async (req, res) => {
 });
 
 // Update user
-router.patch('/users/:id', async (req, res) => {
+router.patch('/users/:id', requireAuth, async (req, res) => {
   try {
     console.log('[REQUEST]', {
       userId: req.user?.id,
@@ -221,7 +222,7 @@ router.patch('/users/:id', async (req, res) => {
 });
 
 // Delete user
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', requireAuth, async (req, res) => {
   try {
     console.log('[REQUEST]', {
       userId: req.user?.id,
@@ -313,7 +314,7 @@ router.delete('/users/:id', async (req, res) => {
 });
 
 // Force delete user (with business)
-router.delete('/users/:id/force', async (req, res) => {
+router.delete('/users/:id/force', requireAuth, async (req, res) => {
   try {
     console.log('[REQUEST]', {
       userId: req.user?.id,
@@ -476,7 +477,7 @@ router.delete('/users/:id/force', async (req, res) => {
 });
 
 // Impersonate user
-router.get('/impersonate/:id', async (req, res) => {
+router.get('/impersonate/:id', requireAuth, async (req, res) => {
   try {
     console.log('[REQUEST]', {
       userId: req.user?.id,
@@ -519,7 +520,7 @@ router.get('/impersonate/:id', async (req, res) => {
 });
 
 // Reset user password
-router.post('/users/:id/reset-password', async (req, res) => {
+router.post('/users/:id/reset-password', requireAuth, async (req, res) => {
   try {
     console.log('[REQUEST]', {
       userId: req.user?.id,
@@ -558,7 +559,7 @@ router.post('/users/:id/reset-password', async (req, res) => {
 });
 
 // Upload admin image
-router.post('/upload-image', upload.single('image'), (req, res) => {
+router.post('/upload-image', requireAuth, upload.single('image'), (req, res) => {
   try {
     console.log('[REQUEST]', {
       userId: req.user?.id,
@@ -594,7 +595,7 @@ router.post('/upload-image', upload.single('image'), (req, res) => {
 });
 
 // Reset admin image
-router.delete('/reset-image', (req, res) => {
+router.delete('/reset-image', requireAuth, (req, res) => {
   try {
     console.log('[REQUEST]', {
       userId: req.user?.id,
@@ -631,8 +632,62 @@ router.delete('/reset-image', (req, res) => {
   }
 });
 
+// Admin login
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find super admin user
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user || user.role !== 'SUPER_ADMIN') {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check password
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '90d' }
+    );
+
+    // Set JWT cookie
+    res.cookie('auth', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      path: '/',
+    });
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Return from impersonation
-router.get('/return', (req, res) => {
+router.get('/return', requireAuth, (req, res) => {
   res.clearCookie('impersonate');
   res.redirect('/admin.html');
 });
