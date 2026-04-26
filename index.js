@@ -37,7 +37,8 @@ const appointmentRoutes = require('./routes/appointmentRoutes');
 
 // API routes
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminAuth, adminRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminAuth, adminRoutes); // Add protected routes after public ones
 app.use('/api/settings', settingsRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/upload', uploadRoutes);
