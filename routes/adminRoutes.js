@@ -691,6 +691,33 @@ router.post('/create-super-admin', async (req, res) => {
   }
 });
 
+// Get current admin info
+router.get('/me', requireAuth, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        createdAt: true
+      }
+    });
+
+    if (!user || user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Access denied. Super admin only.' });
+    }
+
+    res.json({
+      success: true,
+      user
+    });
+  } catch (error) {
+    console.error('Get admin info error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Admin login
 router.post('/login', async (req, res) => {
   try {

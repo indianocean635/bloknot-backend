@@ -9,15 +9,36 @@
 </head>
 <body class="admin-page">
   <script>
-    // Check if user is authenticated as super admin - via JWT cookie
-    const userEmail = null; // Remove localStorage usage - auth via JWT cookie
-    const isLoggedIn = false; // Remove localStorage usage - auth via JWT cookie
-    
-    // Allow any logged in admin
-    if (!isLoggedIn) {
-      // Redirect to login page
-      window.location.href = '/admin-login.html';
+    // Check if user is authenticated as super admin - via API call
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/admin/me', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Not authenticated');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || data.user.role !== 'SUPER_ADMIN') {
+          throw new Error('Not super admin');
+        }
+        
+        // User is authenticated as super admin - continue loading page
+        console.log('Super admin authenticated:', data.user.email);
+        
+      } catch (error) {
+        console.log('Authentication failed:', error.message);
+        // Redirect to login page
+        window.location.href = '/admin-login.html';
+      }
     }
+    
+    // Check authentication immediately
+    checkAuth();
   </script>
   <style>
     body.admin-page {
