@@ -49,8 +49,11 @@ async function requireAuth(req, res, next) {
   if (impersonateEmail) {
     // Get impersonated user data
     console.log('[IMPERSONATION] Impersonating user:', impersonateEmail);
+    // Decode URL-encoded email
+    const decodedEmail = decodeURIComponent(impersonateEmail);
+    console.log('[IMPERSONATION] Decoded email:', decodedEmail);
     fullUser = await prisma.user.findUnique({
-      where: { email: impersonateEmail },
+      where: { email: decodedEmail },
       include: { business: true }
     });
     if (!fullUser) return res.status(401).json({ error: "User not found" });
