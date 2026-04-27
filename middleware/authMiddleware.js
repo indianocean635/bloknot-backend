@@ -57,6 +57,7 @@ async function requireAuth(req, res, next) {
     email: fullUser.email,
     name: fullUser.name,
     phone: fullUser.phone,
+    role: fullUser.role,
     businessId: fullUser.businessId,
     business: fullUser.business
   };
