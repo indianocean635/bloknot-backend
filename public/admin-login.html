@@ -76,12 +76,21 @@
       loginBtn.disabled = true;
 
       try {
-        // Simple password check (you can change this)
-        if (password !== 'bloknot_admin_2024') {
-          throw new Error('Invalid password');
+        const response = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Login failed');
         }
 
-        console.log('Admin login successful - JWT cookie manages session');
+        console.log('Admin login successful - JWT cookie set');
 
         showNotice('Login successful! Redirecting...');
         setTimeout(() => {
