@@ -44,11 +44,25 @@ async function requireAuth(req, res, next) {
   const user = getAuthUser(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
   
-  // Get full user data with business
-  const fullUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    include: { business: true }
-  });
+  // Check for impersonation cookie
+  const cookies = parseCookies(req);
+  const impersonateEmail = cookies.impersonate;
+  
+  let fullUser;
+  if (impersonateEmail) {
+    // Get impersonated user data
+    console.log('[IMPERSONATION] Impersonating user:', impersonateEmail);
+    fullUser = await prisma.user.findUnique({
+      where: { email: impersonateEmail },
+      include: { business: true }
+    });
+  } else {
+    // Get original user data
+    fullUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { business: true }
+    });
+  }
   
   if (!fullUser) return res.status(401).json({ error: "User not found" });
   
@@ -59,7 +73,8 @@ async function requireAuth(req, res, next) {
     phone: fullUser.phone,
     role: fullUser.role,
     businessId: fullUser.businessId,
-    business: fullUser.business
+    business: fullUser.business,
+    isImpersonated: !!impersonateEmail
   };
   
   console.log('AUTH USER:', req.user);
