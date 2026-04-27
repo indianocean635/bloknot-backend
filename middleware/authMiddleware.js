@@ -41,10 +41,7 @@ function getAuthUser(req) {
 }
 
 async function requireAuth(req, res, next) {
-  const user = getAuthUser(req);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
-  
-  // Check for impersonation cookie
+  // Check for impersonation cookie first
   const cookies = parseCookies(req);
   const impersonateEmail = cookies.impersonate;
   
@@ -56,26 +53,41 @@ async function requireAuth(req, res, next) {
       where: { email: impersonateEmail },
       include: { business: true }
     });
+    if (!fullUser) return res.status(401).json({ error: "User not found" });
+    
+    req.user = {
+      id: fullUser.id,
+      email: fullUser.email,
+      name: fullUser.name,
+      phone: fullUser.phone,
+      role: fullUser.role,
+      businessId: fullUser.businessId,
+      business: fullUser.business,
+      isImpersonated: true
+    };
   } else {
-    // Get original user data
+    // Normal JWT authentication
+    const user = getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    
     fullUser = await prisma.user.findUnique({
       where: { id: user.id },
       include: { business: true }
     });
+    
+    if (!fullUser) return res.status(401).json({ error: "User not found" });
+    
+    req.user = {
+      id: fullUser.id,
+      email: fullUser.email,
+      name: fullUser.name,
+      phone: fullUser.phone,
+      role: fullUser.role,
+      businessId: fullUser.businessId,
+      business: fullUser.business,
+      isImpersonated: false
+    };
   }
-  
-  if (!fullUser) return res.status(401).json({ error: "User not found" });
-  
-  req.user = {
-    id: fullUser.id,
-    email: fullUser.email,
-    name: fullUser.name,
-    phone: fullUser.phone,
-    role: fullUser.role,
-    businessId: fullUser.businessId,
-    business: fullUser.business,
-    isImpersonated: !!impersonateEmail
-  };
   
   console.log('AUTH USER:', req.user);
   next();
