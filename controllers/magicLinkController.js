@@ -34,12 +34,15 @@ async function requestLogin(req, res) {
           data: {
             name: `${email}'s Business`,
             slug: slug,
+            createdAt: new Date(),
+            updatedAt: new Date(),
             owner: {
               create: {
                 email,
                 phone: phone || null,
                 name: name || null,
                 role: 'OWNER',
+                createdAt: new Date(),
                 ...(password && {
                   password: await bcrypt.hash(password, 10)
                 })
