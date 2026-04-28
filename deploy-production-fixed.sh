@@ -11,7 +11,7 @@ npx prisma generate
 
 echo ""
 echo "🗄️ Применение миграций..."
-npx prisma migrate deploy
+npx prisma db push --accept-data-loss
 
 echo ""
 echo "🔄 Перезапуск сервера..."
