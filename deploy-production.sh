@@ -6,7 +6,11 @@ echo "📦 Установка зависимостей..."
 npm install
 
 echo ""
-echo "🔧 Запуск сервера..."
+echo "�️ Применение миграций..."
+npx prisma db push --accept-data-loss
+
+echo ""
+echo "�🔧 Запуск сервера..."
 pm2 delete bloknot || true
 pm2 start index.js --name bloknot
 
