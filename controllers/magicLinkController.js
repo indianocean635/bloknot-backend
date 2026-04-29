@@ -27,7 +27,8 @@ async function requestLogin(req, res) {
     if (!user) {
       // Create new user with business
       try {
-        const slug = email.toLowerCase().replace('@', '-').replace('.', '-');
+        const timestamp = Date.now();
+        const slug = `${email.toLowerCase().replace('@', '-').replace('.', '-')}-${timestamp}`;
         
         // Create business with owner
         const business = await prisma.business.create({
@@ -53,8 +54,21 @@ async function requestLogin(req, res) {
         });
         
         user = business.owner;
+        
+        // Установить businessId для пользователя
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { businessId: business.id }
+        });
+        
+        // Получить обновленного пользователя с бизнес данными
+        user = await prisma.user.findUnique({
+          where: { id: user.id },
+          include: { business: true }
+        });
+        
         console.log(`[MAGIC LINK] Created new user with business: ${email}`);
-        console.log(`[MAGIC LINK] Business ID: ${business.id}, User ID: ${user.id}`);
+        console.log(`[MAGIC LINK] Business ID: ${business.id}, User ID: ${user.id}, User BusinessId: ${user.businessId}`);
         
         if (password) {
           console.log(`[MAGIC LINK] New user with password: ${email}`);
@@ -326,9 +340,10 @@ async function loginWithPassword(req, res) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user
+    // Find user with business data
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      include: { business: true }
     });
 
     if (!user || !user.password) {
