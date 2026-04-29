@@ -1,13 +1,5 @@
 const express = require('express');
-const controller = require('../controllers/magicLinkController');
-
-console.log('[DEBUG] magicLinkController loaded:', controller);
-console.log('[DEBUG] requestLogin type:', typeof controller.requestLogin);
-console.log('[DEBUG] confirmLogin type:', typeof controller.confirmLogin);
-console.log('[DEBUG] setPassword type:', typeof controller.setPassword);
-console.log('[DEBUG] loginWithPassword type:', typeof controller.loginWithPassword);
-
-const { requestLogin, confirmLogin, setPassword, loginWithPassword } = controller;
+const { requestLogin, confirmLogin, setPassword, loginWithPassword } = require('../controllers/magicLinkController');
 
 const router = express.Router();
 
