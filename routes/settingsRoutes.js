@@ -258,7 +258,7 @@ router.post("/categories", requireAuth, async (req, res) => {
       route: req.originalUrl
     });
 
-    const { name, color } = req.body;
+    const { name } = req.body;
     
     if (!name || name.trim() === "") {
       return res.status(400).json({ error: "Category name is required" });
@@ -267,7 +267,6 @@ router.post("/categories", requireAuth, async (req, res) => {
     const category = await prisma.category.create({
       data: {
         name: name.trim(),
-        color: color || "#000000",
         businessId: req.user.businessId
       }
     });
@@ -289,7 +288,7 @@ router.patch("/categories/:id", requireAuth, async (req, res) => {
     });
 
     const { id } = req.params;
-    const { name, color } = req.body;
+    const { name } = req.body;
     
     const category = await prisma.category.findFirst({
       where: { 
@@ -305,8 +304,7 @@ router.patch("/categories/:id", requireAuth, async (req, res) => {
     const updatedCategory = await prisma.category.update({
       where: { id: parseInt(id) },
       data: {
-        name: name?.trim() || category.name,
-        color: color || category.color
+        name: name?.trim() || category.name
       }
     });
     
