@@ -102,7 +102,6 @@ async function testIsolation() {
     const category1 = await prisma.category.create({
       data: {
         name: 'Category for Business 1',
-        color: '#FF0000',
         businessId: businessId1
       }
     });
