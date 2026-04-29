@@ -28,6 +28,12 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
 // Get business settings
 router.get("/business", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const business = await prisma.business.findUnique({
       where: { id: req.user.businessId },
       include: {
@@ -52,6 +58,12 @@ router.get("/business", requireAuth, async (req, res) => {
 // Get business name
 router.get("/business/name", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const business = await prisma.business.findUnique({
       where: { id: req.user.businessId },
       select: { name: true }
@@ -67,6 +79,12 @@ router.get("/business/name", requireAuth, async (req, res) => {
 // Update business name
 router.patch("/business/name", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { name } = req.body;
     
     if (!name || name.trim() === "") {
@@ -88,6 +106,12 @@ router.patch("/business/name", requireAuth, async (req, res) => {
 // Get branches
 router.get("/branches", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const branches = await prisma.branch.findMany({
       where: { businessId: req.user.businessId },
       orderBy: { createdAt: 'asc' }
@@ -103,6 +127,12 @@ router.get("/branches", requireAuth, async (req, res) => {
 // Create branch
 router.post("/branches", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { name, address, phone } = req.body;
     
     if (!name || name.trim() === "") {
@@ -128,6 +158,12 @@ router.post("/branches", requireAuth, async (req, res) => {
 // Update branch
 router.patch("/branches/:id", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { id } = req.params;
     const { name, address, phone } = req.body;
     
@@ -161,6 +197,12 @@ router.patch("/branches/:id", requireAuth, async (req, res) => {
 // Delete branch
 router.delete("/branches/:id", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { id } = req.params;
     
     const branch = await prisma.branch.findFirst({
@@ -188,6 +230,12 @@ router.delete("/branches/:id", requireAuth, async (req, res) => {
 // Get categories
 router.get("/categories", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const categories = await prisma.category.findMany({
       where: { businessId: req.user.businessId },
       include: { services: true },
@@ -204,6 +252,12 @@ router.get("/categories", requireAuth, async (req, res) => {
 // Create category
 router.post("/categories", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { name, color } = req.body;
     
     if (!name || name.trim() === "") {
@@ -228,6 +282,12 @@ router.post("/categories", requireAuth, async (req, res) => {
 // Update category
 router.patch("/categories/:id", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { id } = req.params;
     const { name, color } = req.body;
     
@@ -260,6 +320,12 @@ router.patch("/categories/:id", requireAuth, async (req, res) => {
 // Delete category
 router.delete("/categories/:id", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { id } = req.params;
     
     const category = await prisma.category.findFirst({
@@ -287,6 +353,12 @@ router.delete("/categories/:id", requireAuth, async (req, res) => {
 // Get services
 router.get("/services", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const services = await prisma.service.findMany({
       where: { businessId: req.user.businessId },
       include: { category: true },
@@ -303,6 +375,12 @@ router.get("/services", requireAuth, async (req, res) => {
 // Create service
 router.post("/services", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { name, duration, price, categoryId } = req.body;
     
     if (!name || name.trim() === "") {
@@ -338,6 +416,12 @@ router.post("/services", requireAuth, async (req, res) => {
 // Update service
 router.patch("/services/:id", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { id } = req.params;
     const { name, duration, price, categoryId } = req.body;
     
@@ -373,6 +457,12 @@ router.patch("/services/:id", requireAuth, async (req, res) => {
 // Delete service
 router.delete("/services/:id", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { id } = req.params;
     
     const service = await prisma.service.findFirst({
@@ -400,6 +490,12 @@ router.delete("/services/:id", requireAuth, async (req, res) => {
 // Get masters
 router.get("/masters", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const masters = await prisma.master.findMany({
       where: { businessId: req.user.businessId },
       orderBy: { name: 'asc' }
@@ -415,6 +511,12 @@ router.get("/masters", requireAuth, async (req, res) => {
 // Create master
 router.post("/masters", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { name, email } = req.body;
     
     if (!name || name.trim() === "") {
@@ -447,6 +549,12 @@ router.post("/masters", requireAuth, async (req, res) => {
 // Update master
 router.patch("/masters/:id", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { id } = req.params;
     const { name, email, active } = req.body;
     
@@ -483,6 +591,12 @@ router.patch("/masters/:id", requireAuth, async (req, res) => {
 // Delete master
 router.delete("/masters/:id", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { id } = req.params;
     
     const master = await prisma.master.findFirst({
@@ -510,6 +624,12 @@ router.delete("/masters/:id", requireAuth, async (req, res) => {
 // Get works
 router.get("/works", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const works = await prisma.workPhoto.findMany({
       where: { businessId: req.user.businessId },
       orderBy: { id: "desc" }
@@ -533,6 +653,12 @@ router.get("/works", requireAuth, async (req, res) => {
 // Invite specialist
 router.post("/invite-specialist", requireAuth, async (req, res) => {
   try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
     const { email, name, businessName, businessId, inviteLink, message } = req.body;
     
     if (!email || !name) {
