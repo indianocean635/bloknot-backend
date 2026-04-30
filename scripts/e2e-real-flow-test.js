@@ -30,12 +30,14 @@ async function request(method, path, data = null, token = null) {
   try {
     return {
       status: response.status,
-      data: JSON.parse(text)
+      data: JSON.parse(text),
+      headers: response.headers
     };
   } catch {
     return {
       status: response.status,
-      data: text
+      data: text,
+      headers: response.headers
     };
   }
 }
@@ -47,6 +49,15 @@ async function cleanup() {
   const { PrismaClient } = require('@prisma/client');
   const prisma = new PrismaClient();
   
+  await prisma.loginToken.deleteMany({
+    where: {
+      user: {
+        email: {
+          in: [TEST_EMAIL_1, TEST_EMAIL_2]
+        }
+      }
+    }
+  });
   await prisma.category.deleteMany({
     where: {
       business: {
@@ -104,7 +115,15 @@ async function step2_loginUser1() {
   });
   
   if (result.status === 200 && result.data.success) {
-    user1Token = result.data.token || result.data.user?.token;
+    // Extract token from Set-Cookie header
+    const setCookie = result.headers.get('set-cookie');
+    if (setCookie) {
+      const match = setCookie.match(/auth=([^;]+)/);
+      if (match) {
+        user1Token = match[1];
+      }
+    }
+    
     user1BusinessId = result.data.user?.businessId;
     console.log('✅ User1 logged in successfully');
     console.log(`   User ID: ${result.data.user?.id}`);
@@ -197,11 +216,20 @@ async function step6_loginUser2() {
   });
   
   if (result.status === 200 && result.data.success) {
-    user2Token = result.data.token || result.data.user?.token;
+    // Extract token from Set-Cookie header
+    const setCookie = result.headers.get('set-cookie');
+    if (setCookie) {
+      const match = setCookie.match(/auth=([^;]+)/);
+      if (match) {
+        user2Token = match[1];
+      }
+    }
+    
     console.log('✅ User2 logged in successfully');
     console.log(`   User ID: ${result.data.user?.id}`);
     console.log(`   Email: ${result.data.user?.email}`);
     console.log(`   Business ID: ${result.data.user?.businessId}`);
+    console.log(`   Token: ${user2Token ? 'Present' : 'Missing'}`);
     return true;
   } else {
     console.log('❌ User2 login failed');
