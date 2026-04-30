@@ -1058,7 +1058,11 @@
           
           closeModal();
           showNotice("Регистрация успешна!");
-          window.location.href = "/dashboard.html";
+          
+          // Wait for cookie to be set before redirecting
+          setTimeout(() => {
+            window.location.href = "/dashboard.html";
+          }, 1500);
         } else {
           // Login mode - use /api/auth/login
           const response = await fetch("/api/auth/login", {
