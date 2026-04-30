@@ -763,6 +763,7 @@ async function loadSpecialistLimitFromAPI() {
 
 // Get specialist limit from plan name
 function getSpecialistLimitFromPlan(plan) {
+  if (!plan || plan === 'FREE' || plan === 'free') return 0; // No subscription = 0 specialists
   if (plan.includes('1') || plan === 'SOLO') return 1;
   if (plan.includes('5') || plan === 'STUDIO') return 5;
   return 15; // PRO or default
