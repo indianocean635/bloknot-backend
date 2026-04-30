@@ -22,16 +22,41 @@ function parseCookies(req) {
 
 function getJwtUser(req, cookieName) {
   if (!JWT_SECRET) return null;
+  
+  // Try Authorization header first
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    console.log('[AUTH] Token from Authorization header:', token.substring(0, 20) + '...');
+    try {
+      const payload = jwt.verify(token, JWT_SECRET);
+      if (!payload || typeof payload !== "object") return null;
+      const userId = payload.userId;
+      if (typeof userId !== "string" || !userId) return null;
+      console.log('[AUTH] User from Authorization header:', userId);
+      return { id: userId };
+    } catch (e) {
+      console.log('[AUTH] Failed to verify Authorization header token:', e.message);
+    }
+  }
+  
+  // Fall back to cookie
   const cookies = parseCookies(req);
   const token = cookies[cookieName];
-  if (!token) return null;
+  if (!token) {
+    console.log('[AUTH] No token in Authorization header or cookie');
+    return null;
+  }
+  console.log('[AUTH] Token from cookie:', token.substring(0, 20) + '...');
   try {
     const payload = jwt.verify(token, JWT_SECRET);
     if (!payload || typeof payload !== "object") return null;
     const userId = payload.userId;
     if (typeof userId !== "string" || !userId) return null;
+    console.log('[AUTH] User from cookie:', userId);
     return { id: userId };
   } catch (e) {
+    console.log('[AUTH] Failed to verify cookie token:', e.message);
     return null;
   }
 }

@@ -171,11 +171,40 @@ async function requestLogin(req, res) {
     // Show magic link in logs for development
     console.log(`[MAGIC LINK] Generated for ${user.email}: ${magicLink}`);
     
-    res.json({
-      message: 'Magic link sent',
-      magicLink, // Show in development for testing
-      debug: true
-    });
+    // If password was provided, auto-login user immediately
+    if (password) {
+      console.log(`[MAGIC LINK] Auto-login user with password: ${email}`);
+      
+      // Generate JWT session token (90 days)
+      const jwt = require('jsonwebtoken');
+      const sessionToken = jwt.sign(
+        { userId: user.id },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '90d' }
+      );
+      
+      // Return token for immediate login
+      res.json({
+        message: 'Magic link sent',
+        magicLink, // Show in development for testing
+        debug: true,
+        token: sessionToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          phone: user.phone,
+          role: user.role,
+          businessId: user.businessId
+        }
+      });
+    } else {
+      res.json({
+        message: 'Magic link sent',
+        magicLink, // Show in development for testing
+        debug: true
+      });
+    }
 
   } catch (error) {
     console.error('Request login error:', error);

@@ -1073,6 +1073,23 @@
         console.log("CLEARING localStorage before registration");
         localStorage.clear();
 
+        // Store token if returned (auto-login with password)
+        if (result.token) {
+          console.log("STORING TOKEN from registration:", result.token);
+          localStorage.setItem('auth_token', result.token);
+        }
+        
+        // Store user data if returned
+        if (result.user) {
+          console.log("STORING USER from registration:", result.user);
+          localStorage.setItem('auth_user', JSON.stringify(result.user));
+          
+          // Log if businessId is null (CRITICAL ERROR)
+          if (!result.user.businessId) {
+            console.error("CRITICAL: user has no business after registration:", result.user);
+          }
+        }
+
         if (result.magicLink) {
           showNotice(`Magic link: ${result.magicLink}`);
           showNotice("Ссылка для входа отправлена на ваш email. Проверьте почту и папку спам.");
@@ -1080,10 +1097,17 @@
           showNotice("Ссылка для входа отправлена на ваш email. Проверьте почту и папку спам.");
         }
         
-        // For registration via magic link, we don't have token yet
-        // Token will be set when user clicks the magic link
+        // For registration with password, user is auto-logged in
         if (currentModalMode === 'registration') {
-          showNotice("Регистрация успешна! Проверьте email для входа.");
+          if (result.token) {
+            showNotice("Регистрация успешна! Вы вошли в систему.");
+            closeModal();
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          } else {
+            showNotice("Регистрация успешна! Проверьте email для входа.");
+          }
         }
 
       } catch (e) {
