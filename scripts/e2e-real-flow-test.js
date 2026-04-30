@@ -49,41 +49,53 @@ async function cleanup() {
   const { PrismaClient } = require('@prisma/client');
   const prisma = new PrismaClient();
   
-  await prisma.loginToken.deleteMany({
-    where: {
-      user: {
-        email: {
-          in: [TEST_EMAIL_1, TEST_EMAIL_2]
+  try {
+    // Delete in correct order to avoid foreign key constraints
+    await prisma.loginToken.deleteMany({
+      where: {
+        user: {
+          email: {
+            in: [TEST_EMAIL_1, TEST_EMAIL_2]
+          }
         }
       }
-    }
-  });
-  await prisma.category.deleteMany({
-    where: {
-      business: {
+    });
+    
+    await prisma.category.deleteMany({
+      where: {
+        business: {
+          slug: {
+            in: ['e2e-user1-example-com', 'e2e-user2-example-com']
+          }
+        }
+      }
+    });
+    
+    // Delete businesses first (this will cascade delete users with businessId)
+    await prisma.business.deleteMany({
+      where: {
         slug: {
           in: ['e2e-user1-example-com', 'e2e-user2-example-com']
         }
       }
-    }
-  });
-  await prisma.business.deleteMany({
-    where: {
-      slug: {
-        in: ['e2e-user1-example-com', 'e2e-user2-example-com']
+    });
+    
+    // Delete remaining users (owners that weren't cascade deleted)
+    await prisma.user.deleteMany({
+      where: {
+        email: {
+          in: [TEST_EMAIL_1, TEST_EMAIL_2]
+        }
       }
-    }
-  });
-  await prisma.user.deleteMany({
-    where: {
-      email: {
-        in: [TEST_EMAIL_1, TEST_EMAIL_2]
-      }
-    }
-  });
-  
-  await prisma.$disconnect();
-  console.log('✅ Cleanup complete\n');
+    });
+    
+    await prisma.$disconnect();
+    console.log('✅ Cleanup complete\n');
+  } catch (error) {
+    console.error('Cleanup error:', error.message);
+    await prisma.$disconnect();
+    throw error;
+  }
 }
 
 async function step1_registerUser1() {
