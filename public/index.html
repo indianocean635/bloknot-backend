@@ -1004,6 +1004,14 @@
           showNotice("Passwords do not match.");
           return;
         }
+      } else {
+        // Login mode - get password from login field
+        password = String(document.getElementById("authPassword").value || "").trim();
+        
+        if (!password) {
+          showNotice("Password is required.");
+          return;
+        }
       }
 
       if (!email) {
