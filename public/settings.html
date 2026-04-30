@@ -768,20 +768,10 @@ function getSpecialistLimitFromPlan(plan) {
   return 15; // PRO or default
 }
 
-// Show UI for users without business
+// Show UI for users without business - DISABLED
 function showNoBusinessUI() {
-  const grid = document.getElementById('mastersGrid');
-  if (grid) {
-    grid.innerHTML = `
-      <div style="text-align: center; padding: 40px; color: #666;">
-        <h3>У вас пока нет бизнеса</h3>
-        <p>Создайте бизнес чтобы управлять специалистами и настройками</p>
-        <button onclick="window.location.href='/index.html'" class="btn primary">
-          Создать бизнес
-        </button>
-      </div>
-    `;
-  }
+  // Do nothing - all users now have business after registration
+  console.log('showNoBusinessUI called but disabled');
 }
 
 // Load specialists from API
