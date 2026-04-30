@@ -91,9 +91,17 @@ router.post('/login', async (req, res) => {
       path: '/',
     });
     
+    console.log('[LOGIN SUCCESS] User:', {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      businessId: user.businessId
+    });
+    
     res.json({
       success: true,
       message: 'Login successful',
+      token,
       user: {
         id: user.id,
         email: user.email,

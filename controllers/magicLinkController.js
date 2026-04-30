@@ -244,6 +244,7 @@ async function confirmLogin(req, res) {
     // Check if user has password
     if (!user.password) {
       // Return JSON for frontend to handle password setup
+      console.log('[CONFIRM LOGIN] User has no password, returning SET_PASSWORD_REQUIRED');
       return res.json({
         status: 'SET_PASSWORD_REQUIRED',
         user: {
@@ -254,11 +255,12 @@ async function confirmLogin(req, res) {
           role: user.role,
           businessId: user.businessId
         },
-        token
+        token: sessionToken
       });
     }
 
     // User has password, return success for frontend to handle
+    console.log('[CONFIRM LOGIN] User has password, returning LOGIN_SUCCESS');
     return res.json({
       status: 'LOGIN_SUCCESS',
       user: {
@@ -268,7 +270,8 @@ async function confirmLogin(req, res) {
         phone: user.phone,
         role: user.role,
         businessId: user.businessId
-      }
+      },
+      token: sessionToken
     });
 
   } catch (error) {

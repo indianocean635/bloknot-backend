@@ -1080,7 +1080,8 @@
           showNotice("Ссылка для входа отправлена на ваш email. Проверьте почту и папку спам.");
         }
         
-        // JWT Cookie Only - No localStorage for registration
+        // For registration via magic link, we don't have token yet
+        // Token will be set when user clicks the magic link
         if (currentModalMode === 'registration') {
           showNotice("Регистрация успешна! Проверьте email для входа.");
         }
@@ -1231,6 +1232,23 @@
           // Clear localStorage to prevent data leakage between users
           console.log("CLEARING localStorage before login");
           localStorage.clear();
+          
+          // Store token in localStorage
+          if (data.token) {
+            console.log("STORING TOKEN in localStorage");
+            localStorage.setItem('auth_token', data.token);
+          }
+          
+          // Store user data in localStorage
+          if (data.user) {
+            console.log("STORING USER in localStorage:", data.user);
+            localStorage.setItem('auth_user', JSON.stringify(data.user));
+            
+            // Log if businessId is null (CRITICAL ERROR)
+            if (!data.user.businessId) {
+              console.error("CRITICAL: user has no business after login:", data.user);
+            }
+          }
           
           // Close modal and show success
           closeModal();

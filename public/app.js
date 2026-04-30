@@ -114,10 +114,18 @@
   }
 
   async function api(path, opts) {
-    // JWT Cookie Only - No localStorage, no headers
+    // Check for token in localStorage (for password login)
+    const token = localStorage.getItem('auth_token');
+    
     const headers = {
+      'Content-Type': 'application/json',
       ...opts?.headers
     };
+    
+    // Add Authorization header if token exists
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     
     const options = {
       ...opts,
@@ -126,6 +134,8 @@
     };
     
     const fullUrl = API_BASE + path;
+    console.log('[API CALL]', { path, hasToken: !!token, hasCookie: true });
+    
     const res = await fetch(fullUrl, options);
     
     if (!res.ok) {
@@ -133,6 +143,7 @@
       try {
         text = await res.text();
       } catch (e) {}
+      console.error('[API ERROR]', { path, status: res.status, text });
       throw new Error(text || ("HTTP " + res.status));
     }
     const ct = res.headers.get("content-type") || "";
