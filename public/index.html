@@ -1011,7 +1011,8 @@
         return;
       }
 
-      if (phone && !validatePhone(phone)) {
+      // Only validate phone for registration
+      if (currentModalMode === 'registration' && phone && !validatePhone(phone)) {
         showNotice("Enter valid phone number (e.g., +7XXXXXXXXXX).");
         return;
       }
