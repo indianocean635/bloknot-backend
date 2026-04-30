@@ -438,7 +438,7 @@
    }
 
    // Retry logic for auth with race condition protection
-  async function waitForAuth(retries = 5) {
+  async function waitForAuth(retries = 10) {
     for (let i = 0; i < retries; i++) {
       try {
         console.log(`Auth attempt ${i + 1}/${retries} at ${new Date().toISOString()}`);
@@ -458,7 +458,7 @@
         console.error(`Auth attempt ${i + 1} error:`, e);
       }
 
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 300));
     }
 
     console.warn('Auth failed after all retries');
@@ -471,8 +471,17 @@
 
     if (!authData || !authData.user) {
       console.warn('Auth failed after retries');
-      showNotice('Ошибка авторизации. Пожалуйста, войдите снова.');
-      return;
+      // Try one more time with a longer delay
+      await new Promise(r => setTimeout(r, 1000));
+      const retryAuth = await waitForAuth(3);
+      
+      if (!retryAuth || !retryAuth.user) {
+        showNotice('Ошибка авторизации. Пожалуйста, войдите снова.');
+        return;
+      }
+      
+      // If retry succeeded, use that data
+      authData = retryAuth;
     }
 
     const user = authData.user;
