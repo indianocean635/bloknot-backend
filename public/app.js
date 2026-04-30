@@ -2,8 +2,11 @@
   const API_BASE = "https://bloknotservis.ru"; // Updated: 2026-04-20
   console.log('APP.JS LOADED - API_BASE:', API_BASE);
 
-  // Auto-refresh on version change
+  // Auto-refresh on version change - DISABLED to prevent infinite reload
   async function checkForUpdates() {
+    // Disabled to prevent infinite reload loop
+    return;
+    
     try {
       const currentVersion = '0' // Remove localStorage usage - version from API || '0';
       
@@ -32,11 +35,11 @@
     }
   }
 
-  // Check for updates on page load
-  checkForUpdates();
+  // Check for updates on page load - DISABLED
+  // checkForUpdates();
 
-  // Check periodically (every 30 seconds)
-  setInterval(checkForUpdates, 30000);
+  // Check periodically (every 30 seconds) - DISABLED
+  // setInterval(checkForUpdates, 30000);
 
   function ensureFavicon() {
     const head = document.head;

@@ -245,9 +245,10 @@ router.get('/magic/:token', async (req, res) => {
 // GET /api/auth/me
 router.get('/me', requireAuth, async (req, res) => {
   try {
-    console.log('[REQUEST]', {
+    console.log('[AUTH ME REQUEST]', {
       userId: req.user?.id,
       businessId: req.user?.businessId,
+      role: req.user?.role,
       route: req.originalUrl
     });
 
@@ -268,6 +269,14 @@ router.get('/me', requireAuth, async (req, res) => {
       return res.status(401).json({ error: 'User not found' });
     }
     
+    console.log('[AUTH ME RESPONSE]', {
+      id: freshUser.id,
+      email: freshUser.email,
+      role: freshUser.role,
+      businessId: freshUser.businessId,
+      hasBusiness: !!freshUser.business
+    });
+    
     res.json({ 
       success: true,
       user: {
@@ -276,7 +285,7 @@ router.get('/me', requireAuth, async (req, res) => {
         name: freshUser.name,
         phone: freshUser.phone,
         role: freshUser.role,
-        businessId: freshUser.businessId,
+        businessId: freshUser.businessId || null, // Explicitly handle null
         requiresPassword: !freshUser.password
       }
     });

@@ -1067,6 +1067,12 @@
           throw new Error(result.error);
         }
 
+        console.log("REGISTRATION SUCCESS:", result);
+        
+        // Clear localStorage to prevent data leakage between users
+        console.log("CLEARING localStorage before registration");
+        localStorage.clear();
+
         if (result.magicLink) {
           showNotice(`Magic link: ${result.magicLink}`);
           showNotice("Ссылка для входа отправлена на ваш email. Проверьте почту и папку спам.");
@@ -1217,12 +1223,13 @@
           throw new Error(t.error || ("HTTP " + response.status));
         }
 
-        const result = await response.json().catch(() => ({}));
+        const data = await response.json().catch(() => ({}));
 
         if (response.ok) {
-          const data = await response.json();
+          console.log("LOGIN SUCCESS:", data);
           
           // Clear localStorage to prevent data leakage between users
+          console.log("CLEARING localStorage before login");
           localStorage.clear();
           
           // Close modal and show success
