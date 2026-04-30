@@ -35,6 +35,97 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   console.log('Email not configured - missing SMTP settings');
 }
 
+// POST /api/auth/register
+router.post('/register', async (req, res) => {
+  const { name, phone, email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+  
+  console.log(`[REGISTER ATTEMPT] Email: ${email}, Name: ${name}`);
+  
+  try {
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+    
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+    
+    // Hash password
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Create user with business
+    const timestamp = Date.now();
+    const slug = `${email.toLowerCase().replace('@', '-').replace('.', '-')}-${timestamp}`;
+    
+    // Create business with owner
+    const business = await prisma.business.create({
+      data: {
+        name: `${email}'s Business`,
+        slug: slug,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        owner: {
+          create: {
+            email,
+            phone: phone || null,
+            name: name || null,
+            role: 'OWNER',
+            createdAt: new Date(),
+            password: hashedPassword
+          }
+        }
+      },
+      include: { owner: true }
+    });
+    
+    const user = business.owner;
+    
+    // Update user with businessId
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { businessId: business.id }
+    });
+    
+    // Get fresh user data
+    const freshUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { business: true }
+    });
+    
+    console.log(`[REGISTER SUCCESS] User: ${email}, BusinessId: ${business.id}`);
+    
+    // Generate JWT token
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '30d' }
+    );
+    
+    res.json({
+      token,
+      user: {
+        id: freshUser.id,
+        email: freshUser.email,
+        name: freshUser.name,
+        phone: freshUser.phone,
+        businessId: freshUser.businessId,
+        role: freshUser.role
+      }
+    });
+    
+  } catch (error) {
+    console.error('[REGISTER ERROR]', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/auth/login (password authentication)
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;

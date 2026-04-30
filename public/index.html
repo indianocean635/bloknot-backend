@@ -974,15 +974,12 @@
       let password = null;
       if (currentModalMode === 'registration') {
         const nameInput = document.getElementById("authNameReg");
-        console.log('DEBUG: Name input element:', nameInput);
-        console.log('DEBUG: Name input value:', nameInput ? nameInput.value : 'INPUT NOT FOUND');
-        name = String(nameInput ? nameInput.value : "").trim();
+        name = String(nameInput.value || "").trim();
         password = String(document.getElementById("authPasswordReg").value || "").trim();
         const confirmPassword = String(document.getElementById("authPasswordConfirm").value || "").trim();
         
         if (!name || name.length < 2) {
           showNotice("Name is required (minimum 2 characters).");
-          // Focus back on name field
           if (nameInput) {
             nameInput.focus();
             nameInput.style.border = '2px solid red';
@@ -1009,13 +1006,6 @@
         }
       }
 
-      // Debug: log the email being used
-      console.log('DEBUG: Email from input:', email);
-      console.log('DEBUG: Phone from input:', phone);
-      console.log('DEBUG: Name from input:', name);
-      console.log('DEBUG: Modal mode:', currentModalMode);
-      console.log('DEBUG: Has password:', !!password);
-
       if (!email) {
         showNotice("Enter email.");
         return;
@@ -1030,91 +1020,71 @@
         sendBtn.disabled = true;
         sendBtn.textContent = "Sending...";
 
-        const requestBody = { email, phone };
-        console.log('DEBUG: Name variable before adding to requestBody:', name);
-        console.log('DEBUG: Name type:', typeof name);
-        console.log('DEBUG: Name length:', name ? name.length : 'null');
-        
-        if (name) {
-          requestBody.name = name;
-          console.log('DEBUG: Added name to requestBody:', name);
-        } else {
-          console.log('DEBUG: Name is null/empty, not adding to requestBody');
-        }
-        
-        if (password) {
-          requestBody.password = password;
-        }
-
-        console.log('DEBUG: Final request body:', requestBody);
-
-        const response = await fetch("/api/magic/request-login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        });
-
-        if (!response.ok) {
-          const t = await response.json().catch(() => ({}));
-          throw new Error(t.error || ("HTTP " + response.status));
-        }
-
-        const result = await response.json().catch(() => ({}));
-
-        if (result.error) {
-          throw new Error(result.error);
-        }
-
-        console.log("REGISTRATION SUCCESS:", result);
-        
-        // Clear localStorage to prevent data leakage between users
-        console.log("CLEARING localStorage before registration");
-        localStorage.clear();
-
-        // Store token if returned (auto-login with password)
-        if (result.token) {
-          console.log("STORING TOKEN from registration:", result.token);
-          localStorage.setItem('auth_token', result.token);
-        }
-        
-        // Store user data if returned
-        if (result.user) {
-          console.log("STORING USER from registration:", result.user);
-          localStorage.setItem('auth_user', JSON.stringify(result.user));
-          
-          // Log if businessId is null (CRITICAL ERROR)
-          if (!result.user.businessId) {
-            console.error("CRITICAL: user has no business after registration:", result.user);
-          }
-        }
-
-        if (result.magicLink) {
-          showNotice(`Magic link: ${result.magicLink}`);
-          showNotice("Ссылка для входа отправлена на ваш email. Проверьте почту и папку спам.");
-        } else {
-          showNotice("Ссылка для входа отправлена на ваш email. Проверьте почту и папку спам.");
-        }
-        
-        // For registration with password, user is auto-logged in
+        // Registration mode - use /api/auth/register
         if (currentModalMode === 'registration') {
-          if (result.token) {
-            showNotice("Регистрация успешна! Вы вошли в систему.");
-            closeModal();
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
-          } else {
-            showNotice("Регистрация успешна! Проверьте email для входа.");
+          const response = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name, phone, email, password }),
+          });
+
+          if (!response.ok) {
+            const t = await response.json().catch(() => ({}));
+            throw new Error(t.error || ("HTTP " + response.status));
           }
+
+          const data = await response.json().catch(() => ({}));
+
+          console.log("REGISTER SUCCESS:", data);
+          
+          localStorage.clear();
+          localStorage.setItem('auth_token', data.token);
+          localStorage.setItem('auth_user', JSON.stringify(data.user));
+          
+          if (!data.user.businessId) {
+            console.error("CRITICAL: user has no business after registration:", data.user);
+          }
+          
+          closeModal();
+          showNotice("Регистрация успешна!");
+          window.location.href = "/dashboard.html";
+        } else {
+          // Login mode - use /api/auth/login
+          const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+            credentials: 'include'
+          });
+
+          if (!response.ok) {
+            const t = await response.json().catch(() => ({}));
+            throw new Error(t.error || ("HTTP " + response.status));
+          }
+
+          const data = await response.json().catch(() => ({}));
+
+          console.log("LOGIN SUCCESS:", data);
+          
+          localStorage.clear();
+          localStorage.setItem('auth_token', data.token);
+          localStorage.setItem('auth_user', JSON.stringify(data.user));
+          
+          closeModal();
+          showNotice("Вход выполнен!");
+          window.location.href = "/dashboard.html";
         }
 
       } catch (e) {
-        showNotice("Ошибка отправки: " + (e && e.message ? e.message : "ошибка"));
+        console.error(e);
+        showNotice("Ошибка: " + (e && e.message ? e.message : "ошибка"));
       } finally {
         sendBtn.disabled = false;
-        sendBtn.textContent = "Отправить ссылку";
+        sendBtn.textContent = currentModalMode === 'registration' ? "Зарегистрироваться" : "Войти";
       }
     }
 
@@ -1135,11 +1105,12 @@
     function openRegistrationModal() {
       currentModalMode = 'registration';
       document.getElementById('authTitle').textContent = 'Регистрация';
-      document.getElementById('authSub').textContent = 'Введите email и телефон - мы отправим вам ссылку для входа.';
+      document.getElementById('authSub').textContent = 'Создайте аккаунт для управления вашим бизнесом.';
       document.getElementById('loginFields').style.display = 'none';
       document.getElementById('registrationFields').style.display = 'block';
       document.getElementById('authLoginBtn').style.display = 'none';
       document.getElementById('authSendBtn').style.display = 'inline-block';
+      document.getElementById('authSendBtn').textContent = 'Зарегистрироваться';
       
       // Clear all cached values to prevent fallbacks
       document.getElementById("authNameReg").value = '';
@@ -1213,95 +1184,13 @@
     // Update button event listeners
     sendBtn.addEventListener("click", requestLogin);
 
-    // Add login with password function
-    async function loginWithPassword() {
-      // Use login email input for login mode
-      const emailInput = document.getElementById("authEmail");
-      const email = String(emailInput.value || "").trim();
-      const password = String(document.getElementById("authPassword").value || "").trim();
-
-      if (!email) {
-        showNotice("Enter email.");
-        return;
-      }
-
-      if (!password) {
-        showNotice("Введите пароль.");
-        return;
-      }
-
-      try {
-        const loginBtn = document.getElementById("authLoginBtn");
-        loginBtn.disabled = true;
-        loginBtn.textContent = "Вход...";
-
-        const response = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        });
-
-        if (!response.ok) {
-          const t = await response.json().catch(() => ({}));
-          throw new Error(t.error || ("HTTP " + response.status));
-        }
-
-        const data = await response.json().catch(() => ({}));
-
-        if (response.ok) {
-          console.log("LOGIN SUCCESS:", data);
-          
-          // Clear localStorage to prevent data leakage between users
-          console.log("CLEARING localStorage before login");
-          localStorage.clear();
-          
-          // Store token in localStorage
-          if (data.token) {
-            console.log("STORING TOKEN in localStorage");
-            localStorage.setItem('auth_token', data.token);
-          }
-          
-          // Store user data in localStorage
-          if (data.user) {
-            console.log("STORING USER in localStorage:", data.user);
-            localStorage.setItem('auth_user', JSON.stringify(data.user));
-            
-            // Log if businessId is null (CRITICAL ERROR)
-            if (!data.user.businessId) {
-              console.error("CRITICAL: user has no business after login:", data.user);
-            }
-          }
-          
-          // Close modal and show success
-          closeModal();
-          showNotice("Вход выполнен!");
-          
-          // Reload page to update UI
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        } else {
-          showNotice("Ошибка входа. Проверьте ваши данные.");
-        }
-
-      } catch (e) {
-        showNotice("Ошибка входа: " + (e && e.message ? e.message : "ошибка"));
-      } finally {
-        const loginBtn = document.getElementById("authLoginBtn");
-        loginBtn.disabled = false;
-        loginBtn.textContent = "Войти";
-      }
-    }
-
-    document.getElementById("authLoginBtn").addEventListener("click", loginWithPassword);
+    document.getElementById("authLoginBtn").addEventListener("click", requestLogin);
 
     // Handle Enter key based on current mode
     document.getElementById("authEmail").addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         if (currentModalMode === 'login') {
-          loginWithPassword();
+          requestLogin();
         }
       }
     });
@@ -1319,7 +1208,7 @@
     if (passwordInput) {
       passwordInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
-          loginWithPassword();
+          requestLogin();
         }
       });
     }
