@@ -1,8 +1,9 @@
 # Bloknot Project Backup & Rollback Instructions
 
-## **Backup Date**: 2026-04-17
-## **Backup Version**: PERFECT_WORKING_STATE_v1.0
-## **Git Commit**: 7ef21ef
+## **Backup Date**: 2026-05-01
+## **Backup Version**: SPECIALIST_INVITATION_SYSTEM_v1.0
+## **Git Commit**: abd3c96
+## **Branch**: main
 
 ---
 
@@ -10,24 +11,34 @@
 
 ### **Backend Components:**
 - **Complete backend code** (`/var/www/bloknot-backend/`)
-- **Database schema** (Prisma migrations)
+- **Database schema** (Prisma schema with Master, Staff, StaffInvite, Business, User, Subscription tables)
 - **All API endpoints** working perfectly
-- **Email sending** (Yandex SMTP configured)
-- **User authentication** (Magic links working)
+- **Email sending** (Yandex SMTP configured for specialist invitations)
+- **User authentication** (Email/Password login + JWT cookies)
+- **Specialist invitation system** (Email invitations with registration links)
 - **Admin panel** (User management working)
+- **Subscription system** (Specialist limits based on subscription tier)
+- **Settings system** (Business settings, specialists management)
 - **All dependencies** (package.json, node_modules)
 
 ### **Frontend Components:**
-- **Main page** (`/var/www/html/index.html`)
-- **Dashboard (LK)** (`/var/www/html/dashboard.html`)
-- **Admin panel** (`/var/www/html/admin.html`)
+- **Main page** (`public/index.html`) with registration/login modal
+- **Dashboard (LK)** (`public/dashboard.html`) with business overview
+- **Settings page** (`public/settings.html`) with business and specialist management
+- **Specialist schedule settings** (`public/specialist-schedule.html`)
+- **Booking link page** (`public/booking-link.html`)
+- **Admin panel** (`public/admin.html`) with user management
 - **All CSS/JS files** working perfectly
 - **All static assets**
 
 ### **Database:**
-- **User data** (names, emails, phones)
-- **Login tokens** (15-minute expiry)
-- **Business data**
+- **User data** (names, emails, phones, passwords, roles: OWNER, STAFF, SUPER_ADMIN)
+- **Business data** (name, slug, settings, subscription)
+- **Specialist data** (Master records with names, emails, active status)
+- **Staff data** (Staff records linking users to businesses)
+- **Staff invitations** (StaffInvite records with email, businessId, status: pending/accepted)
+- **Subscription data** (Subscription records with tiers: FREE, STARTER, PROFESSIONAL, ENTERPRISE)
+- **Login tokens** (JWT with 30-day expiry)
 - **All tables and relationships**
 
 ---
@@ -35,22 +46,31 @@
 ## **CURRENT WORKING STATE:**
 
 ### **What Works Perfectly:**
-- **User registration** with name, email, phone, password
-- **Magic link login** (emails sent, links work)
-- **Dashboard opens and stays open**
-- **User data displays correctly** (name, email, phone)
-- **Admin panel shows all users**
-- **Password saving** (hashed and secure)
+- **User registration** with name, email, phone, password (JWT cookies)
+- **User login** with email/password (JWT cookies, 30-day expiry)
+- **Dashboard opens and stays open** with business data
+- **User data displays correctly** (name, email, phone, role)
+- **Admin panel shows all users** with business info
+- **Specialist invitation system** (Email invitations via Yandex SMTP)
+- **Invitation link handling** (Auto-fills email and name in registration)
+- **Specialist management** (Create, update, delete specialists)
+- **Subscription system** (FREE: 0 specialists, STARTER: 5, PROFESSIONAL: 15, ENTERPRISE: unlimited)
+- **Business settings** (Name, address, phone, map location)
+- **Specialist schedule settings** (Working hours, break times)
+- **Booking link generation** (Personal booking pages)
 - **Email sending** via Yandex SMTP
 - **All redirects work perfectly**
 - **Database operations** work flawlessly
 
 ### **Key Features:**
-- **Fast response times** (no 30-second delays)
+- **Fast response times** (no delays)
 - **No email errors** (SMTP configured)
-- **Perfect data display** (no dashes)
-- **Stable authentication** (localStorage works)
+- **Perfect data display** (correct specialist limits, subscription persistence)
+- **Stable authentication** (JWT cookies, no localStorage)
 - **Clean error handling**
+- **Race condition fixes** (Registration redirect with localStorage token)
+- **Duplicate invitation prevention** (StaffInvite table checks)
+- **Staff role assignment** (Invited users become STAFF in business)
 
 ---
 
@@ -66,11 +86,11 @@ cd /var/www/bloknot-backend
 git status
 git log --oneline -5
 
-# 3. Rollback to perfect working state
-git checkout 7ef21ef
+# 3. Rollback to backup state (May 1, 2026)
+git checkout abd3c96
 
 # 4. Restore all files
-git reset --hard 7ef21ef
+git reset --hard abd3c96
 
 # 5. Install dependencies (if needed)
 npm install
@@ -133,43 +153,51 @@ pm2 logs --lines 10
 
 ```bash
 # 1. Test user registration
-curl -X POST "http://localhost:3001/api/auth/request-login" \
+curl -X POST "http://localhost:3001/api/auth/register" \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@rollback.com","name":"Rollback Test","phone":"+12345678999","password":"rollbacktest"}'
+  -d '{"email":"test@rollback.com","name":"Rollback Test","phone":"+71234567899","password":"rollbacktest"}'
 
-# 2. Check magic link generation
-pm2 logs --lines 5
+# 2. Test user login
+curl -X POST "http://localhost:3001/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@rollback.com","password":"rollbacktest"}'
 
-# 3. Test admin panel
+# 3. Test admin panel (requires admin auth)
 curl "http://localhost:3001/api/admin/users"
 
-# 4. Test dashboard
-curl "http://localhost:3001/api/auth/me" \
-  -H "x-user-email: test@rollback.com"
+# 4. Test specialist invitation (requires auth)
+curl -X POST "http://localhost:3001/api/settings/invite-specialist" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: auth_token=YOUR_JWT_TOKEN" \
+  -d '{"email":"specialist@test.com","name":"Test Specialist"}'
 ```
 
 ### **Expected Results:**
-- **Email sent successfully** (no errors)
-- **Magic link generated** (HTTPS URL)
+- **User registered successfully** (JWT token returned)
+- **User logged in successfully** (JWT token returned)
 - **Admin panel shows users**
-- **Dashboard loads user data**
+- **Specialist invitation sent** (email via SMTP)
 
 ---
 
 ## **IMPORTANT FILES TO CHECK:**
 
 ### **Backend:**
-- `/var/www/bloknot-backend/controllers/magicLinkController.js` (Email sending)
+- `/var/www/bloknot-backend/routes/authRoutes.js` (Registration/Login with JWT)
+- `/var/www/bloknot-backend/routes/settingsRoutes.js` (Settings & Specialist invitations)
+- `/var/www/bloknot-backend/routes/specialistsRoutes.js` (Specialist CRUD)
+- `/var/www/bloknot-backend/routes/subscriptionRoutes.js` (Subscription management)
 - `/var/www/bloknot-backend/public/dashboard.html` (Dashboard display)
-- `/var/www/bloknot-backend/public/index.html` (Registration form)
+- `/var/www/bloknot-backend/public/index.html` (Main page with auth modal)
+- `/var/www/bloknot-backend/public/settings.html` (Business & specialist settings)
 - `/var/www/bloknot-backend/public/admin.html` (Admin panel)
 - `/var/www/bloknot-backend/prisma/schema.prisma` (Database schema)
 
 ### **Frontend:**
-- `/var/www/html/index.html` (Main page)
+- `/var/www/html/index.html` (Main page with auth modal)
 - `/var/www/html/dashboard.html` (User dashboard)
+- `/var/www/html/settings.html` (Business settings)
 - `/var/www/html/admin.html` (Admin panel)
-- `/var/www/html/app.js` (JavaScript logic)
 
 ---
 
@@ -206,12 +234,26 @@ chown -R www-data:www-data /var/www/html/
 systemctl restart nginx
 ```
 
+### **If Authentication Issues:**
+```bash
+# Check JWT secret
+echo $JWT_SECRET
+
+# Check cookie settings
+pm2 logs | grep -i cookie
+
+# Clear cookies in browser and try again
+```
+
 ### **If Database Issues:**
 ```bash
 # Check database connection
 npx prisma db push
 
-# Reset database if needed
+# Check database schema
+npx prisma studio
+
+# Reset database if needed (WARNING: deletes all data)
 npx prisma migrate reset
 ```
 
@@ -221,30 +263,37 @@ npx prisma migrate reset
 
 ### **Git Repository:**
 - **URL**: https://github.com/indianocean635/bloknot-backend.git
-- **Perfect Commit**: 7ef21ef
+- **Backup Commit**: abd3c96
 - **Branch**: main
+- **Backup Tag**: backup-2026-05-01
 
 ### **Server Information:**
 - **Backend Port**: 3001
 - **Frontend URL**: https://bloknotservis.ru
 - **Admin URL**: https://bloknotservis.ru/admin.html
 - **Dashboard URL**: https://bloknotservis.ru/dashboard.html
+- **Settings URL**: https://bloknotservis.ru/settings.html
 
 ---
 
 ## **FINAL VERIFICATION:**
 
 After rollback, test these scenarios:
-1. **New user registration** (email should be sent)
-2. **Magic link login** (dashboard should open and stay open)
-3. **User data display** (name, email, phone should be visible)
-4. **Admin panel** (should show all users)
-5. **Password saving** (should be hashed in database)
+1. **New user registration** (JWT token should be returned, user created with business)
+2. **User login** (JWT token should be returned, 30-day expiry)
+3. **Dashboard opens** (business data should load correctly)
+4. **User data display** (name, email, phone, role should be visible)
+5. **Admin panel** (should show all users with business info)
+6. **Specialist invitation** (email should be sent via Yandex SMTP)
+7. **Invitation link** (should auto-fill email and name in registration)
+8. **Invited user registration** (should become STAFF in business)
+9. **Subscription system** (specialist limits should work correctly)
+10. **Settings save** (business settings and specialists should persist)
 
 **If all these work perfectly, the rollback was successful!**
 
 ---
 
-**Created by: ROBOT Backup System**
-**Date: 2026-04-17**
-**Status: PERFECT WORKING STATE ACHIEVED**
+**Created by: Cascade AI Assistant**
+**Date: 2026-05-01**
+**Status: SPECIALIST_INVITATION_SYSTEM_WORKING_STATE_ACHIEVED**
