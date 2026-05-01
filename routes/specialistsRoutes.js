@@ -73,7 +73,7 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'No business associated with user' });
     }
     
-    const { name, email, phone, schedule } = req.body;
+    const { name, email, schedule } = req.body;
     
     if (!name || !email) {
       return res.status(400).json({ error: 'Name and email are required' });
@@ -95,7 +95,6 @@ router.post('/', requireAuth, async (req, res) => {
       data: {
         name,
         email,
-        phone: phone || '',
         businessId: req.user.businessId
       }
     });
@@ -111,7 +110,7 @@ router.post('/', requireAuth, async (req, res) => {
 router.put('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, active } = req.body;
+    const { name, email, active } = req.body;
     
     // First find the specialist to ensure it belongs to the user's business
     const specialist = await prisma.master.findFirst({
@@ -130,7 +129,6 @@ router.put('/:id', requireAuth, async (req, res) => {
       data: {
         name: name || specialist.name,
         email: email || specialist.email,
-        phone: phone !== undefined ? phone : specialist.phone,
         active: active !== undefined ? active : specialist.active
       }
     });
