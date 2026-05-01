@@ -8,7 +8,8 @@ const requireAuth = async (req, res, next) => {
   const jwt = require('jsonwebtoken');
   
   try {
-    const token = req.cookies?.auth;
+    // Check both cookie and Authorization header
+    const token = req.cookies?.auth || req.headers?.authorization?.replace('Bearer ', '');
     
     if (!token) {
       return res.status(401).json({ error: 'No authentication token' });
