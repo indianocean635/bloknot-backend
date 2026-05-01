@@ -659,20 +659,50 @@ router.post("/invite-specialist", requireAuth, async (req, res) => {
     });
 
     const { email, name, businessName, businessId, inviteLink, message } = req.body;
-    
+
     if (!email || !name) {
       return res.status(400).json({ error: "Email and name are required" });
     }
 
-    // Create specialist invitation record
+    // Check if invitation already exists for this email and business
+    const existingInvite = await prisma.staffInvite.findFirst({
+      where: {
+        email: email.trim().toLowerCase(),
+        businessId: req.user.businessId,
+        status: 'pending'
+      }
+    });
+
+    if (existingInvite) {
+      return res.status(400).json({ error: "Invitation already sent to this email" });
+    }
+
+    // Create staff invitation record
+    const invite = await prisma.staffInvite.create({
+      data: {
+        email: email.trim().toLowerCase(),
+        businessId: req.user.businessId,
+        status: 'pending'
+      }
+    });
+
+    // Create master record for display (inactive until invitation is accepted)
     const specialist = await prisma.master.create({
       data: {
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        active: false, // Inactive until invitation is accepted
+        active: false,
         businessId: req.user.businessId
       }
     });
+
+    // Generate invitation link with business slug
+    const business = await prisma.business.findUnique({
+      where: { id: req.user.businessId },
+      select: { slug: true }
+    });
+
+    const invitationUrl = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}?invite=${business.slug}&email=${encodeURIComponent(email)}`;
 
     // Send invitation email if transporter is available
     if (transporter) {
@@ -685,8 +715,9 @@ router.post("/invite-specialist", requireAuth, async (req, res) => {
             <h2 style="color: #333;">Приглашение присоединиться к команде</h2>
             <p>Здравствуйте, ${name}!</p>
             <p>${message || 'Вас пригласили присоединиться к нашей команде в ' + (businessName || 'Bloknot') + '.'}</p>
-            <p>Для принятия приглашения, пожалуйста, перейдите по ссылке ниже:</p>
-            <p><a href="${inviteLink || '#'}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Принять приглашение</a></p>
+            <p>Для принятия приглашения, пожалуйста, перейдите по ссылке ниже и зарегистрируйтесь:</p>
+            <p><a href="${invitationUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Принять приглашение</a></p>
+            <p style="margin-top: 20px; color: #666; font-size: 12px;">Если кнопка не работает, скопируйте эту ссылку в браузер:<br>${invitationUrl}</p>
             <p>Если вы не хотите принимать это приглашение, просто проигнорируйте это письмо.</p>
             <p>С уважением,<br>Команда ${businessName || 'Bloknot'}</p>
           </div>
@@ -696,15 +727,16 @@ router.post("/invite-specialist", requireAuth, async (req, res) => {
       await transporter.sendMail(mailOptions);
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
+      invite: invite,
       specialist: specialist,
-      message: transporter ? "Invitation sent successfully" : "Specialist created, but email not sent (SMTP not configured)"
+      message: transporter ? "Invitation sent successfully" : "Invitation created, but email not sent (SMTP not configured)"
     });
   } catch (error) {
     console.error("Error inviting specialist:", error);
     if (error.code === 'P2002') {
-      return res.status(400).json({ error: "Email already exists" });
+      return res.status(400).json({ error: "Email already invited" });
     }
     res.status(500).json({ error: "Internal server error" });
   }

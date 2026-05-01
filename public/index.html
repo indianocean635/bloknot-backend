@@ -881,6 +881,32 @@
     // Проверяем статус при загрузке
     checkAuthStatus();
 
+    // Check for invitation parameters in URL
+    function checkInvitationParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const inviteParam = urlParams.get('invite');
+      const emailParam = urlParams.get('email');
+
+      if (inviteParam && emailParam) {
+        // User is coming from an invitation link
+        console.log('[INVITATION] User invited to business:', inviteParam, 'Email:', emailParam);
+
+        // Open registration modal and pre-fill email
+        openRegistrationModal();
+        const emailInput = document.getElementById("authEmailReg");
+        if (emailInput) {
+          emailInput.value = emailParam;
+        }
+
+        // Update modal text to indicate invitation
+        document.getElementById('authTitle').textContent = 'Присоединиться к команде';
+        document.getElementById('authSub').textContent = 'Вы были приглашены присоединиться к бизнесу. Завершите регистрацию для доступа.';
+      }
+    }
+
+    // Check invitation params on page load
+    checkInvitationParams();
+
     function showNotice(text) {
       if (!text) {
         notice.style.display = "none";

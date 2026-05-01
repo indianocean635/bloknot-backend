@@ -38,68 +38,122 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   const { name, phone, email, password } = req.body;
-  
+
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
-  
+
   console.log(`[REGISTER ATTEMPT] Email: ${email}, Name: ${name}`);
-  
+
   try {
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
-    
+
     if (existingUser) {
       return res.status(400).json({ error: 'Email already registered' });
     }
-    
+
     // Hash password
     const bcrypt = require('bcrypt');
     const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Create user with business
-    const timestamp = Date.now();
-    const slug = `${email.toLowerCase().replace('@', '-').replace('.', '-')}-${timestamp}`;
-    
-    // Create business with owner
-    const business = await prisma.business.create({
-      data: {
-        name: `${email}'s Business`,
-        slug: slug,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        owner: {
-          create: {
-            email,
-            phone: phone || null,
-            name: name || null,
-            role: 'OWNER',
-            createdAt: new Date(),
-            password: hashedPassword
-          }
-        }
+
+    // Check if there's a pending staff invitation for this email
+    const pendingInvite = await prisma.staffInvite.findFirst({
+      where: {
+        email: email.toLowerCase(),
+        status: 'pending'
       },
-      include: { owner: true }
+      include: {
+        business: true
+      }
     });
-    
-    const user = business.owner;
-    
-    // Update user with businessId
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { businessId: business.id }
-    });
-    
+
+    let user, business;
+
+    if (pendingInvite) {
+      // User is accepting an invitation - join existing business as STAFF
+      console.log(`[INVITATION ACCEPT] Email: ${email}, Business: ${pendingInvite.business.name}`);
+
+      user = await prisma.user.create({
+        data: {
+          email,
+          phone: phone || null,
+          name: name || null,
+          role: 'STAFF',
+          password: hashedPassword,
+          businessId: pendingInvite.businessId
+        }
+      });
+
+      // Create Staff record linking user to business
+      await prisma.staff.create({
+        data: {
+          name: name || email.split('@')[0],
+          userId: user.id,
+          businessId: pendingInvite.businessId
+        }
+      });
+
+      // Update invitation status
+      await prisma.staffInvite.update({
+        where: { id: pendingInvite.id },
+        data: { status: 'accepted' }
+      });
+
+      // Activate the corresponding Master record
+      await prisma.master.updateMany({
+        where: {
+          email: email.toLowerCase(),
+          businessId: pendingInvite.businessId
+        },
+        data: { active: true }
+      });
+
+      business = pendingInvite.business;
+    } else {
+      // Regular registration - create new business with OWNER role
+      const timestamp = Date.now();
+      const slug = `${email.toLowerCase().replace('@', '-').replace('.', '-')}-${timestamp}`;
+
+      business = await prisma.business.create({
+        data: {
+          name: `${email}'s Business`,
+          slug: slug,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          owner: {
+            create: {
+              email,
+              phone: phone || null,
+              name: name || null,
+              role: 'OWNER',
+              createdAt: new Date(),
+              password: hashedPassword
+            }
+          }
+        },
+        include: { owner: true }
+      });
+
+      user = business.owner;
+
+      // Update user with businessId
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { businessId: business.id }
+      });
+    }
+
     // Get fresh user data
     const freshUser = await prisma.user.findUnique({
       where: { id: user.id },
       include: { business: true }
     });
-    
-    console.log(`[REGISTER SUCCESS] User: ${email}, BusinessId: ${business.id}`);
-    
+
+    console.log(`[REGISTER SUCCESS] User: ${email}, BusinessId: ${business.id}, Role: ${freshUser.role}`);
+
     // Generate JWT token
     const jwt = require('jsonwebtoken');
     const token = jwt.sign(
@@ -107,7 +161,7 @@ router.post('/register', async (req, res) => {
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '30d' }
     );
-    
+
     res.json({
       token,
       user: {
@@ -119,7 +173,7 @@ router.post('/register', async (req, res) => {
         role: freshUser.role
       }
     });
-    
+
   } catch (error) {
     console.error('[REGISTER ERROR]', error);
     res.status(500).json({ error: 'Internal server error' });
