@@ -735,31 +735,28 @@ async function loadSpecialistLimitFromAPI() {
     // Get user info including business
     const userResponse = await api('/api/auth/me');
     const user = userResponse.user;
-    
+
     if (!user.businessId) {
       console.log('No business found for user');
       showNoBusinessUI();
       return;
     }
-    
+
     // Load business settings
     const businessResponse = await api('/api/settings/business');
     const business = businessResponse;
-    
+
     console.log('Business data:', business);
     console.log('Subscription:', business.subscription);
-    
+
     // Update specialist forms based on subscription
     const subscription = business.subscription || { plan: 'FREE' };
     const specialistLimit = getSpecialistLimitFromPlan(subscription.plan);
-    
+
     console.log('Specialist limit:', specialistLimit);
-    
+
     updateSpecialistForms(specialistLimit);
-    
-    // Load specialists from API
-    await loadSpecialistsFromAPI();
-    
+
   } catch (error) {
     console.error('Error loading specialist limit:', error);
     showNoBusinessUI();
@@ -869,12 +866,15 @@ async function processPayment() {
 function updateSpecialistForms(limit) {
   const grid = document.getElementById('mastersGrid');
   grid.innerHTML = '';
-  
+
   for (let i = 1; i <= limit; i++) {
     const form = createSpecialistForm(i);
     grid.appendChild(form);
   }
-  
+
+  // Load all specialist data at once after forms are created
+  loadAllSpecialistData();
+
   // Update add button
   const addBtn = document.getElementById('addMasterBtn');
   if (addBtn) {
@@ -917,9 +917,6 @@ function createSpecialistForm(index) {
     </div>
   `;
   
-  // Load saved data after form is created
-  setTimeout(() => loadSpecialistData(index), 100);
-  
   return form;
 }
 
@@ -930,30 +927,30 @@ const saveDebounceTimers = {};
 function saveSpecialistData(index) {
   const name = document.getElementById(`specialistName${index}`)?.value || '';
   const email = document.getElementById(`specialistEmail${index}`)?.value || '';
-  
+
   // Clear previous debounce timer
   if (saveDebounceTimers[index]) {
     clearTimeout(saveDebounceTimers[index]);
   }
-  
-  // Debounce save to avoid too many API calls
+
+  // Debounce save to avoid too many API calls (reduced to 300ms for faster response)
   saveDebounceTimers[index] = setTimeout(async () => {
     try {
       // First check if we have existing specialists
       const specialists = await api('/api/specialists');
-      
+
       // Find if this slot already has a specialist
       let existingSpecialist = null;
       if (specialists && specialists.length > 0) {
         // For now, we'll match by index (this could be improved)
         existingSpecialist = specialists[index - 1] || null;
       }
-      
+
       const specialistData = {
         name,
         email
       };
-      
+
       if (existingSpecialist) {
         // Update existing specialist
         await api(`/api/specialists/${existingSpecialist.id}`, {
@@ -971,29 +968,56 @@ function saveSpecialistData(index) {
       }
     } catch (error) {
       console.error(`Error saving specialist ${index}:`, error);
+      alert(`Ошибка сохранения специалиста: ${error.message}`);
     }
-  }, 1000); // 1 second debounce
+  }, 300); // 300ms debounce for faster response
 }
 
-// Load specialist data from API
+// Load all specialist data at once (much faster than sequential loading)
+async function loadAllSpecialistData() {
+  try {
+    const specialists = await api('/api/specialists');
+
+    if (specialists && specialists.length > 0) {
+      specialists.forEach((specialist, index) => {
+        const formIndex = index + 1;
+        const nameInput = document.getElementById(`specialistName${formIndex}`);
+        const emailInput = document.getElementById(`specialistEmail${formIndex}`);
+
+        if (nameInput && specialist.name) {
+          nameInput.value = specialist.name;
+        }
+        if (emailInput && specialist.email) {
+          emailInput.value = specialist.email;
+        }
+      });
+      console.log(`Loaded ${specialists.length} specialists`);
+    }
+  } catch (error) {
+    console.error('Error loading all specialists:', error);
+    alert(`Ошибка загрузки специалистов: ${error.message}`);
+  }
+}
+
+// Load specialist data from API (kept for backward compatibility)
 async function loadSpecialistData(index) {
   try {
     const specialists = await api('/api/specialists');
-    
+
     if (specialists && specialists.length >= index) {
       const specialist = specialists[index - 1];
-      
+
       // Populate form fields
       const nameInput = document.getElementById(`specialistName${index}`);
       const emailInput = document.getElementById(`specialistEmail${index}`);
-      
+
       if (nameInput && specialist.name) {
         nameInput.value = specialist.name;
       }
       if (emailInput && specialist.email) {
         emailInput.value = specialist.email;
       }
-      
+
       console.log(`Loaded specialist ${index} data:`, specialist);
     }
   } catch (error) {
