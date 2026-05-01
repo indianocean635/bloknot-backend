@@ -746,9 +746,14 @@ async function loadSpecialistLimitFromAPI() {
     const businessResponse = await api('/api/settings/business');
     const business = businessResponse;
     
+    console.log('Business data:', business);
+    console.log('Subscription:', business.subscription);
+    
     // Update specialist forms based on subscription
     const subscription = business.subscription || { plan: 'FREE' };
     const specialistLimit = getSpecialistLimitFromPlan(subscription.plan);
+    
+    console.log('Specialist limit:', specialistLimit);
     
     updateSpecialistForms(specialistLimit);
     
@@ -847,8 +852,12 @@ async function processPayment() {
     
     closePaymentModal();
     
-    // Reload specialist limit from API
-    await loadSpecialistLimitFromAPI();
+    // Calculate specialist limit directly from planId
+    const specialistLimit = getSpecialistLimitFromPlan(planId);
+    console.log(`Specialist limit from plan ${planId}:`, specialistLimit);
+    
+    // Update specialist forms immediately
+    updateSpecialistForms(specialistLimit);
     
     alert('Оплата успешна! Теперь вы можете добавлять специалистов.');
   } catch (error) {
