@@ -722,7 +722,7 @@ router.post("/invite-specialist", requireAuth, async (req, res) => {
       select: { slug: true }
     });
 
-    const invitationUrl = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}?invite=${business.slug}&email=${encodeURIComponent(email)}`;
+    const invitationUrl = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}?invite=${business.slug}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`;
 
     // Send invitation email if transporter is available
     if (transporter) {
