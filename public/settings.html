@@ -1084,22 +1084,33 @@ function handleLogoSelect(input) {
 async function inviteSpecialist(index) {
   const email = document.getElementById(`specialistEmail${index}`).value;
   const name = document.getElementById(`specialistName${index}`).value;
-  
+
   if (!email) {
-    alert('Please enter specialist email');
+    alert('Пожалуйста, введите email специалиста');
     return;
   }
-  
+
+  if (!name) {
+    alert('Пожалуйста, введите имя специалиста');
+    return;
+  }
+
   // JWT Cookie Only - No localStorage check
   // Authentication will be handled by server middleware
-  
-  console.log(`[INVITE] Current user: ${userEmail}, inviting: ${email}`);
-  
+
+  console.log(`[INVITE] Inviting: ${email}, Name: ${name}`);
+
   try {
-    // Get current business info from API
-    const companyName = document.getElementById('companyNameInput')?.value || 'Our Business';
-    // businessId will be loaded from API via /api/auth/me
-    
+    // Get current user and business info from API
+    const userResponse = await api('/api/auth/me');
+    const businessId = userResponse.user.businessId;
+    const companyName = document.getElementById('companyNameInput')?.value || userResponse.user.business?.name || 'Bloknot';
+
+    if (!businessId) {
+      alert('Ошибка: бизнес не найден');
+      return;
+    }
+
     // Send invitation email with link to main page
     const response = await api('/api/settings/invite-specialist', {
       method: 'POST',
@@ -1109,17 +1120,16 @@ async function inviteSpecialist(index) {
         businessName: companyName,
         businessId: businessId,
         inviteLink: 'https://bloknotservis.ru',
-        message: 'You have been invited as a specialist in our company. Please complete your registration to access business settings and appear in online booking.'
+        message: 'Вас пригласили присоединиться к нашей команде в качестве специалиста. Пожалуйста, завершите регистрацию для доступа к настройкам бизнеса и появления в онлайн-записи.'
       })
     });
-    
-    // Remove localStorage usage - specialists will be loaded from API
-    console.log(`Inviting specialist: ${email} for business`);
-    
-    alert(`Invitation sent to ${email}. The specialist will receive an email with registration link.`);
+
+    console.log(`Inviting specialist: ${email} for business ${businessId}`);
+
+    alert(`Приглашение отправлено на ${email}. Специалист получит письмо со ссылкой для регистрации.`);
   } catch (error) {
     console.error('[INVITE ERROR]', error);
-    alert(`Error sending invitation: ${error.message}`);
+    alert(`Ошибка отправки приглашения: ${error.message}`);
   }
 }
 
