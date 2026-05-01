@@ -686,15 +686,35 @@ router.post("/invite-specialist", requireAuth, async (req, res) => {
       }
     });
 
-    // Create master record for display (inactive until invitation is accepted)
-    const specialist = await prisma.master.create({
-      data: {
-        name: name.trim(),
+    // Check if master record already exists for this email in this business
+    let specialist;
+    const existingMaster = await prisma.master.findFirst({
+      where: {
         email: email.trim().toLowerCase(),
-        active: false,
         businessId: req.user.businessId
       }
     });
+
+    if (existingMaster) {
+      // Update existing master record
+      specialist = await prisma.master.update({
+        where: { id: existingMaster.id },
+        data: {
+          name: name.trim(),
+          active: false // Ensure it's inactive until invitation is accepted
+        }
+      });
+    } else {
+      // Create new master record for display (inactive until invitation is accepted)
+      specialist = await prisma.master.create({
+        data: {
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          active: false,
+          businessId: req.user.businessId
+        }
+      });
+    }
 
     // Generate invitation link with business slug
     const business = await prisma.business.findUnique({
