@@ -799,6 +799,9 @@
   </div>
 
   <script>
+    // Modal state management
+    let currentModalMode = 'login'; // 'login' or 'registration'
+
     // Получаем элементы DOM
     const modal = document.getElementById("authModal");
     const emailInput = document.getElementById("authEmail");
@@ -1125,9 +1128,6 @@
         sendBtn.textContent = currentModalMode === 'registration' ? "Зарегистрироваться" : "Войти";
       }
     }
-
-// Modal state management
-    let currentModalMode = 'login'; // 'login' or 'registration'
 
     function openLoginModal() {
       currentModalMode = 'login';
