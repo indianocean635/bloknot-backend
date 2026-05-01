@@ -925,8 +925,14 @@ const saveDebounceTimers = {};
 
 // Save specialist data to API
 function saveSpecialistData(index) {
-  const name = document.getElementById(`specialistName${index}`)?.value || '';
-  const email = document.getElementById(`specialistEmail${index}`)?.value || '';
+  const nameInput = document.getElementById(`specialistName${index}`);
+  const emailInput = document.getElementById(`specialistEmail${index}`);
+
+  const name = nameInput?.value || '';
+  const email = emailInput?.value || '';
+
+  // Get the specialist ID from the dataset if it exists
+  const specialistId = nameInput?.dataset.specialistId || emailInput?.dataset.specialistId || null;
 
   // Clear previous debounce timer
   if (saveDebounceTimers[index]) {
@@ -936,39 +942,36 @@ function saveSpecialistData(index) {
   // Debounce save to avoid too many API calls (reduced to 300ms for faster response)
   saveDebounceTimers[index] = setTimeout(async () => {
     try {
-      // First check if we have existing specialists
-      const specialists = await api('/api/specialists');
-
-      // Find if this slot already has a specialist
-      let existingSpecialist = null;
-      if (specialists && specialists.length > 0) {
-        // For now, we'll match by index (this could be improved)
-        existingSpecialist = specialists[index - 1] || null;
-      }
-
       const specialistData = {
         name,
         email
       };
 
-      if (existingSpecialist) {
-        // Update existing specialist
-        await api(`/api/specialists/${existingSpecialist.id}`, {
+      if (specialistId) {
+        // Update existing specialist by ID
+        await api(`/api/specialists/${specialistId}`, {
           method: 'PUT',
           body: JSON.stringify(specialistData)
         });
-        console.log(`Updated specialist ${index}:`, specialistData);
+        console.log(`Updated specialist ${index} (ID: ${specialistId}):`, specialistData);
       } else if (name && email) {
         // Create new specialist only if we have required fields
-        await api('/api/specialists', {
+        const newSpecialist = await api('/api/specialists', {
           method: 'POST',
           body: JSON.stringify(specialistData)
         });
         console.log(`Created specialist ${index}:`, specialistData);
+
+        // Store the new specialist ID on the inputs for future updates
+        if (nameInput) nameInput.dataset.specialistId = newSpecialist.id;
+        if (emailInput) emailInput.dataset.specialistId = newSpecialist.id;
       }
     } catch (error) {
       console.error(`Error saving specialist ${index}:`, error);
-      alert(`Ошибка сохранения специалиста: ${error.message}`);
+      // Don't show alert for empty fields - that's normal
+      if (name || email) {
+        alert(`Ошибка сохранения специалиста: ${error.message}`);
+      }
     }
   }, 300); // 300ms debounce for faster response
 }
@@ -986,9 +989,13 @@ async function loadAllSpecialistData() {
 
         if (nameInput && specialist.name) {
           nameInput.value = specialist.name;
+          // Store specialist ID on the input for proper matching
+          nameInput.dataset.specialistId = specialist.id;
         }
         if (emailInput && specialist.email) {
           emailInput.value = specialist.email;
+          // Store specialist ID on the input for proper matching
+          emailInput.dataset.specialistId = specialist.id;
         }
       });
       console.log(`Loaded ${specialists.length} specialists`);
