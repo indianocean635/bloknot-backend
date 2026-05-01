@@ -44,7 +44,8 @@ router.get("/business", requireAuth, async (req, res) => {
         masters: true,
         workPhotos: {
           where: { isLogo: true }
-        }
+        },
+        subscription: true
       }
     });
     
