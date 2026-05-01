@@ -1059,10 +1059,8 @@
           closeModal();
           showNotice("Регистрация успешна!");
           
-          // Wait for cookie to be set before redirecting
-          setTimeout(() => {
-            window.location.href = "/dashboard.html";
-          }, 1500);
+          // Redirect immediately - dashboard will use localStorage token
+          window.location.href = "/dashboard.html";
         } else {
           // Login mode - use /api/auth/login
           const response = await fetch("/api/auth/login", {

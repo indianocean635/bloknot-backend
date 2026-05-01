@@ -442,16 +442,17 @@
     for (let i = 0; i < retries; i++) {
       try {
         console.log(`Auth attempt ${i + 1}/${retries} at ${new Date().toISOString()}`);
-        const res = await fetch('/api/auth/me', {
-          credentials: 'include'
+        
+        // Use api function to include localStorage token
+        const res = await window.Bloknot.api('/api/auth/me', {
+          method: 'GET'
         });
 
-        console.log(`Auth attempt ${i + 1} status: ${res.status}`);
+        console.log(`Auth attempt ${i + 1} status: ${res.ok}`);
 
-        if (res.ok) {
-          const data = await res.json();
-          console.log('Auth success:', data);
-          return data;
+        if (res) {
+          console.log('Auth success:', res);
+          return res;
         }
 
       } catch (e) {
