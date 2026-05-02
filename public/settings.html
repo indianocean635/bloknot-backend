@@ -1070,14 +1070,35 @@ function handleAvatarSelect(index, input) {
   }
 }
 
-function handleLogoSelect(input) {
+async function handleLogoSelect(input) {
   if (input.files && input.files[0]) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const logoCircle = input.previousElementSibling;
-      logoCircle.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-    };
-    reader.readAsDataURL(input.files[0]);
+    const file = input.files[0];
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('isLogo', 'true');
+
+    try {
+      console.log('[LOGO] Uploading logo...');
+      const response = await apiFetch('/api/upload/works', {
+        method: 'POST',
+        body: formData
+      });
+
+      console.log('[LOGO] Upload successful:', response);
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const logoCircle = input.previousElementSibling;
+        logoCircle.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+      };
+      reader.readAsDataURL(file);
+
+      alert('Логотип успешно загружен!');
+    } catch (error) {
+      console.error('[LOGO] Upload error:', error);
+      alert('Ошибка загрузки логотипа: ' + error.message);
+    }
   }
 }
 
