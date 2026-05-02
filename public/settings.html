@@ -1065,14 +1065,39 @@ function openScheduleSettings(index) {
   window.location.href = `/specialist-schedule.html?specialist=${index}`;
 }
 
-function handleAvatarSelect(index, input) {
+async function handleAvatarSelect(index, input) {
   if (input.files && input.files[0]) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const avatarCircle = input.previousElementSibling;
-      avatarCircle.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-    };
-    reader.readAsDataURL(input.files[0]);
+    const file = input.files[0];
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+      console.log('[AVATAR] Uploading avatar for specialist index:', index);
+      const response = await fetch(`/api/upload/masters/${index}/avatar`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('[AVATAR] Upload successful:', result);
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const avatarCircle = input.previousElementSibling;
+        avatarCircle.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+      };
+      reader.readAsDataURL(file);
+
+      alert('Аватар успешно загружен!');
+    } catch (error) {
+      console.error('[AVATAR] Upload error:', error);
+      alert('Ошибка загрузки аватара: ' + error.message);
+    }
   }
 }
 
