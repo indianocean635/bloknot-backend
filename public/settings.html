@@ -718,14 +718,20 @@ document.addEventListener('DOMContentLoaded', function() {
   if (typeof Bloknot !== 'undefined' && Bloknot.renderHeader) {
     Bloknot.renderHeader("settings");
   }
-  
+
   // Load specialist limit from API instead of localStorage
   loadSpecialistLimitFromAPI();
-  
+
   // Hide add specialist button if no tariff selected
   const addBtn = document.getElementById('addMasterBtn');
   if (addBtn) {
     addBtn.style.display = 'none';
+  }
+
+  // Add work button event listener
+  const addWorkBtn = document.getElementById('addWorkBtn');
+  if (addWorkBtn) {
+    addWorkBtn.addEventListener('click', handleAddWork);
   }
 });
 
@@ -1105,6 +1111,45 @@ async function handleLogoSelect(input) {
       alert('Ошибка загрузки логотипа: ' + error.message);
     }
   }
+}
+
+async function handleAddWork() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const caption = prompt('Подпись к фото (опционально):');
+
+    const formData = new FormData();
+    formData.append('image', file);
+    if (caption) formData.append('caption', caption);
+
+    try {
+      console.log('[WORKS] Uploading work...');
+      const response = await fetch('/api/upload/works', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('[WORKS] Upload successful:', result);
+
+      alert('Фото успешно загружено!');
+      // Reload works
+      loadWorks();
+    } catch (error) {
+      console.error('[WORKS] Upload error:', error);
+      alert('Ошибка загрузки фото: ' + error.message);
+    }
+  };
+  input.click();
 }
 
 async function inviteSpecialist(index) {
