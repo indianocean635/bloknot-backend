@@ -1079,12 +1079,17 @@ async function handleLogoSelect(input) {
 
     try {
       console.log('[LOGO] Uploading logo...');
-      const response = await apiFetch('/api/upload/works', {
+      const response = await fetch('/api/upload/works', {
         method: 'POST',
         body: formData
       });
 
-      console.log('[LOGO] Upload successful:', response);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('[LOGO] Upload successful:', result);
 
       // Show preview
       const reader = new FileReader();
