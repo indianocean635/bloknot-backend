@@ -69,43 +69,56 @@ async function uploadMasterAvatar(req, res) {
 // Загрузить работу
 async function uploadWork(req, res) {
   try {
-    console.log('[REQUEST]', {
+    console.log('[UPLOAD WORK REQUEST]', {
       userId: req.user?.id,
       businessId: req.user?.businessId,
-      route: req.originalUrl
+      route: req.originalUrl,
+      hasFile: !!req.file,
+      isLogo: req.body.isLogo,
+      caption: req.body.caption
     });
 
     const user = req.user;
-    
+
     if (!user || !user.businessId) {
       console.warn('[SECURITY] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
       return res.status(403).json({ error: 'Forbidden' });
     }
 
     if (!req.file) {
+      console.error('[UPLOAD] No file provided');
       return res.status(400).json({ error: "Файл не выбран" });
     }
 
     const { caption, isLogo } = req.body;
-    
+
+    console.log('[UPLOAD] Starting S3 upload...');
+
     // Generate S3 filename
     const fileName = safeFileName(req.file.originalname, user.businessId);
     const mimeType = req.file.mimetype || 'image/jpeg';
-    
+
+    console.log('[UPLOAD] File details:', { fileName, mimeType, fileSize: req.file.buffer.length });
+
     // Upload to S3
     const imageUrl = await uploadFile(req.file.buffer, fileName, mimeType);
 
+    console.log('[UPLOAD] S3 upload successful:', imageUrl);
+
     // Если это логотип, сначала убираем старый логотип
     if (isLogo === "true") {
-      await prisma.workPhoto.updateMany({
+      console.log('[UPLOAD] Removing old logo...');
+      const updateResult = await prisma.workPhoto.updateMany({
         where: {
           businessId: user.businessId,
           isLogo: true,
         },
         data: { isLogo: false },
       });
+      console.log('[UPLOAD] Old logos removed:', updateResult);
     }
 
+    console.log('[UPLOAD] Creating WorkPhoto record...');
     const work = await prisma.workPhoto.create({
       data: {
         businessId: user.businessId,
@@ -114,6 +127,8 @@ async function uploadWork(req, res) {
         isLogo: isLogo === "true",
       },
     });
+
+    console.log('[UPLOAD] WorkPhoto created:', work);
 
     res.json({
       id: work.id,
@@ -124,7 +139,7 @@ async function uploadWork(req, res) {
       createdAt: work.createdAt
     });
   } catch (error) {
-    console.error("Work upload error:", error);
+    console.error("[UPLOAD] Work upload error:", error);
     res.status(500).json({ error: "Ошибка загрузки работы" });
   }
 }
