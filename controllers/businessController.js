@@ -3,14 +3,40 @@ const { prisma } = require("../services/prismaService");
 // Получить бизнес по slug
 async function getBusinessBySlug(req, res) {
   const { slug } = req.params;
-  
+
   const business = await prisma.business.findUnique({
     where: { slug }
   });
-  
+
   if (!business) return res.status(404).json({ error: "Business not found" });
-  
-  // Получаем логотип
+
+  // Get services with categories
+  const services = await prisma.service.findMany({
+    where: { businessId: business.id },
+    include: {
+      category: true
+    }
+  });
+
+  // Get categories
+  const categories = await prisma.category.findMany({
+    where: { businessId: business.id }
+  });
+
+  // Get masters with schedules
+  const masters = await prisma.master.findMany({
+    where: { businessId: business.id, active: true },
+    include: {
+      schedules: true
+    }
+  });
+
+  // Get branches
+  const branches = await prisma.branch.findMany({
+    where: { businessId: business.id }
+  });
+
+  // Get logo
   const logoPhoto = await prisma.workPhoto.findFirst({
     where: {
       businessId: business.id,
@@ -20,27 +46,30 @@ async function getBusinessBySlug(req, res) {
       imageUrl: true
     }
   });
-  
-  const businessData = await prisma.business.findUnique({
-    where: { id: business.id },
-    select: {
-      name: true,
-      branches: {
-        take: 1,
-        select: {
-          address: true
-        }
-      }
+
+  // Get work photos (non-logo)
+  const workPhotos = await prisma.workPhoto.findMany({
+    where: {
+      businessId: business.id,
+      isLogo: false
     }
   });
-  
+
   const result = {
-    name: businessData.name,
-    address: businessData.branches[0]?.address || null,
-    logo: logoPhoto?.imageUrl || null
+    business: {
+      id: business.id,
+      name: business.name,
+      slug: business.slug,
+      logo: logoPhoto?.imageUrl || null
+    },
+    services: services,
+    categories: categories,
+    masters: masters,
+    branches: branches,
+    workPhotos: workPhotos
   };
-  
-  console.log('Business data:', result);
+
+  console.log('Business data for booking:', result);
   res.json(result);
 }
 
@@ -167,41 +196,47 @@ async function updateBusinessName(req, res) {
 // Find business by email for booking page
 async function getBusinessByEmail(req, res) {
   const { email } = req.params;
-  
+
   const user = await prisma.user.findUnique({
     where: { email: email }
   });
-  
+
   if (!user) return res.status(404).json({ error: "User not found" });
-  
+
   const business = await prisma.business.findFirst({
     where: {
       ownerId: user.id
     }
   });
-  
+
   if (!business) return res.status(404).json({ error: "Business not found" });
-  
-  // Get services
+
+  // Get services with categories
   const services = await prisma.service.findMany({
     where: { businessId: business.id },
-    select: {
-      id: true,
-      name: true,
-      duration: true,
-      price: true
+    include: {
+      category: true
     }
   });
-  
-  // Get masters
+
+  // Get categories
+  const categories = await prisma.category.findMany({
+    where: { businessId: business.id }
+  });
+
+  // Get masters with schedules
   const masters = await prisma.master.findMany({
-    where: { businessId: business.id },
-    select: {
-      id: true,
-      name: true
+    where: { businessId: business.id, active: true },
+    include: {
+      schedules: true
     }
   });
-  
+
+  // Get branches
+  const branches = await prisma.branch.findMany({
+    where: { businessId: business.id }
+  });
+
   // Get logo
   const logoPhoto = await prisma.workPhoto.findFirst({
     where: {
@@ -212,7 +247,15 @@ async function getBusinessByEmail(req, res) {
       imageUrl: true
     }
   });
-  
+
+  // Get work photos (non-logo)
+  const workPhotos = await prisma.workPhoto.findMany({
+    where: {
+      businessId: business.id,
+      isLogo: false
+    }
+  });
+
   const result = {
     business: {
       id: business.id,
@@ -221,9 +264,12 @@ async function getBusinessByEmail(req, res) {
       logo: logoPhoto?.imageUrl || null
     },
     services: services,
-    masters: masters
+    categories: categories,
+    masters: masters,
+    branches: branches,
+    workPhotos: workPhotos
   };
-  
+
   console.log('Business data for booking:', result);
   res.json(result);
 }

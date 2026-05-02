@@ -532,39 +532,59 @@
       
       <div class="booking-content">
         <div id="loading" class="loading">Загрузка данных бизнеса...</div>
-        
+
         <div id="error" class="error" style="display: none;">
           Не удалось загрузить информацию о бизнесе
         </div>
-        
-        <div id="booking-navigation" style="display: none;">
-          <h2 class="section-title" style="text-align: center; margin-bottom: 32px;">Выберите услугу</h2>
-          
-          <div class="booking-nav-grid">
-            <a href="/booking-service.html" class="booking-nav-item">
-              <div class="nav-icon">+</div>
-              <div class="nav-title">Выберите услугу</div>
-              <div class="nav-description">Выберите нужную вам услугу</div>
-            </a>
-            
-            <a href="/booking-specialist.html" class="booking-nav-item">
-              <div class="nav-icon">+</div>
-              <div class="nav-title">Выберите специалиста</div>
-              <div class="nav-description">Выберите специалиста для оказания услуги</div>
-            </a>
-            
-            <a href="/booking-datetime.html" class="booking-nav-item">
-              <div class="nav-icon">+</div>
-              <div class="nav-title">Выберите дату и время</div>
-              <div class="nav-description">Выберите удобную дату и время</div>
-            </a>
-            
-            <a href="/booking-contact.html" class="booking-nav-item">
-              <div class="nav-icon">+</div>
-              <div class="nav-title">Контактная информация</div>
-              <div class="nav-description">Оставьте свои контактные данные</div>
-            </a>
+
+        <div id="services-section" style="display: none;">
+          <h2 class="section-title">Выберите услугу</h2>
+          <div class="services-grid" id="services-grid"></div>
+        </div>
+
+        <div id="specialists-section" style="display: none;">
+          <h2 class="section-title">Выберите специалиста</h2>
+          <div class="specialists-grid" id="specialists-grid"></div>
+        </div>
+
+        <div id="calendar-section" class="calendar-section" style="display: none;">
+          <h2 class="section-title">Выберите дату</h2>
+          <div class="calendar-header">
+            <button id="prev-month">&lt;</button>
+            <span id="calendar-month"></span>
+            <button id="next-month">&gt;</button>
           </div>
+          <div class="calendar-grid" id="calendar-grid"></div>
+        </div>
+
+        <div id="time-section" style="display: none;">
+          <h2 class="section-title">Выберите время</h2>
+          <div class="time-slots-grid" id="time-slots-grid"></div>
+        </div>
+
+        <div id="contact-form-section" class="contact-form" style="display: none;">
+          <h2 class="section-title" style="margin-bottom: 20px;">Контактные данные</h2>
+          <form id="contact-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Имя *</label>
+                <input type="text" id="client-name" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Телефон *</label>
+                <input type="tel" id="client-phone" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="client-email" class="form-input">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Комментарий</label>
+                <input type="text" id="client-comment" class="form-input">
+              </div>
+            </div>
+            <button type="submit" class="book-button" id="book-button">Записаться</button>
+          </form>
         </div>
       </div>
     </div>
@@ -572,67 +592,123 @@
 
   <script>
     // Business data
-    const BUSINESS_EMAIL = 'peskov142@mail.ru';
     let businessData = null;
     let selectedService = null;
     let selectedSpecialist = null;
-    let selectedBranch = 'main';
+    let selectedBranch = null;
     let selectedDate = null;
     let selectedTime = null;
+
+    // Get business slug from URL
+    function getBusinessSlug() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('slug') || urlParams.get('business');
+    }
 
     // Load business data
     async function loadBusinessData() {
       try {
-        const response = await fetch(`/api/business/booking/${encodeURIComponent(BUSINESS_EMAIL)}`);
+        const businessSlug = getBusinessSlug();
+
+        if (!businessSlug) {
+          throw new Error('Business slug not found in URL');
+        }
+
+        const response = await fetch(`/api/business/by-slug/${encodeURIComponent(businessSlug)}`);
         if (!response.ok) {
           throw new Error('Не удалось загрузить данные бизнеса');
         }
-        
+
         businessData = await response.json();
         console.log('Business data loaded:', businessData);
-        
+
         // Update business info
         document.getElementById('business-name').textContent = businessData.business.name;
-        document.getElementById('business-address').textContent = 'Адрес будет здесь';
-        
-        // Initialize branch selector
+        document.getElementById('business-address').textContent = businessData.branches.length > 0 ? businessData.branches[0].address : 'Адрес не указан';
+
+        // Initialize branch selector with real branches
         initializeBranchSelector();
-        
+
         // Update logo if available
         if (businessData.business.logo) {
           document.getElementById('business-logo').innerHTML = `<img src="${businessData.business.logo}" alt="Logo">`;
         }
-        
-        // Show booking navigation
+
+        // Load and display services
+        loadServices();
+
+        // Load and display specialists
+        loadSpecialists();
+
+        // Show booking content instead of navigation
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('booking-navigation').style.display = 'block';
-        
+        document.getElementById('services-section').style.display = 'block';
+
       } catch (error) {
         console.error('Error loading business data:', error);
         document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = 'Не удалось загрузить информацию о бизнесе. Убедитесь, что ссылка содержит параметр slug.';
       }
     }
 
     // Load services
     function loadServices() {
       const servicesGrid = document.getElementById('services-grid');
-      
+
       if (!businessData.services || businessData.services.length === 0) {
-        servicesGrid.innerHTML = '<div class="error">No services available</div>';
+        servicesGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Услуги пока не добавлены</div>';
         return;
       }
-      
-      servicesGrid.innerHTML = businessData.services.map(service => `
-        <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}">
-          <div class="service-info">
-            <div class="service-name">${service.name}</div>
-            <div class="service-duration">${service.duration} мин</div>
+
+      // Group services by category if categories exist
+      if (businessData.categories && businessData.categories.length > 0) {
+        let html = '';
+        businessData.categories.forEach(category => {
+          const categoryServices = businessData.services.filter(s => s.categoryId === category.id);
+          if (categoryServices.length > 0) {
+            html += `<h3 style="margin: 24px 0 16px; font-size: 18px; font-weight: 600; color: #1f2937;">${category.name}</h3>`;
+            html += categoryServices.map(service => `
+              <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
+                <div class="service-info">
+                  <div class="service-name">${service.name}</div>
+                  <div class="service-duration">${service.duration} мин</div>
+                </div>
+                <div class="service-price">${service.price} ₽</div>
+              </div>
+            `).join('');
+          }
+        });
+
+        // Add services without category
+        const uncategorizedServices = businessData.services.filter(s => !s.categoryId);
+        if (uncategorizedServices.length > 0) {
+          html += `<h3 style="margin: 24px 0 16px; font-size: 18px; font-weight: 600; color: #1f2937;">Без категории</h3>`;
+          html += uncategorizedServices.map(service => `
+            <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
+              <div class="service-info">
+                <div class="service-name">${service.name}</div>
+                <div class="service-duration">${service.duration} мин</div>
+              </div>
+              <div class="service-price">${service.price} ₽</div>
+            </div>
+          `).join('');
+        }
+
+        servicesGrid.innerHTML = html;
+      } else {
+        // No categories, just list all services
+        servicesGrid.innerHTML = businessData.services.map(service => `
+          <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
+            <div class="service-info">
+              <div class="service-name">${service.name}</div>
+              <div class="service-duration">${service.duration} мин</div>
+            </div>
+            <div class="service-price">${service.price} ₽</div>
           </div>
-          <div class="service-price">${service.price} RUB</div>
-        </div>
-      `).join('');
-      
+        `).join('');
+      }
+
       // Add click handlers
       document.querySelectorAll('.service-item').forEach(item => {
         item.addEventListener('click', () => selectService(item));
@@ -642,22 +718,22 @@
     // Load specialists
     function loadSpecialists() {
       const specialistsGrid = document.getElementById('specialists-grid');
-      
+
       if (!businessData.masters || businessData.masters.length === 0) {
-        specialistsGrid.innerHTML = '<div class="error">No specialists available</div>';
+        specialistsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Специалисты пока не добавлены</div>';
         return;
       }
-      
+
       specialistsGrid.innerHTML = businessData.masters.map(master => `
         <div class="specialist-item" data-specialist-id="${master.id}">
           <div class="specialist-photo">
-            ${master.photoUrl ? `<img src="${master.photoUrl}" alt="${master.name}">` : '<span>?</span>'}
+            ${master.avatarUrl ? `<img src="${master.avatarUrl}" alt="${master.name}">` : '<span>?</span>'}
           </div>
           <div class="specialist-name">${master.name}</div>
-          <div class="specialist-specialization">${master.specializations || 'Specialist'}</div>
+          <div class="specialist-specialization">${master.specializations || 'Специалист'}</div>
         </div>
       `).join('');
-      
+
       // Add click handlers
       document.querySelectorAll('.specialist-item').forEach(item => {
         item.addEventListener('click', () => selectSpecialist(item));
@@ -669,25 +745,41 @@
       const branchSelector = document.getElementById('branch-selector');
       const branchDropdown = document.getElementById('branch-dropdown');
       const selectedBranchSpan = document.getElementById('selected-branch');
-      
+
+      // Load real branches from API
+      if (businessData.branches && businessData.branches.length > 0) {
+        branchDropdown.innerHTML = businessData.branches.map(branch => `
+          <div class="branch-option" data-branch-id="${branch.id}" data-branch-name="${branch.name}">
+            ${branch.name}
+          </div>
+        `).join('');
+
+        selectedBranchSpan.textContent = businessData.branches[0].name;
+        selectedBranch = businessData.branches[0].id;
+      } else {
+        // Hide branch selector if no branches
+        branchSelector.style.display = 'none';
+        return;
+      }
+
       branchSelector.addEventListener('click', () => {
         branchDropdown.style.display = branchDropdown.style.display === 'none' ? 'block' : 'none';
         branchSelector.classList.toggle('open');
       });
-      
+
       document.querySelectorAll('.branch-option').forEach(option => {
         option.addEventListener('click', (e) => {
           e.stopPropagation();
-          selectedBranch = option.dataset.branch;
-          selectedBranchSpan.textContent = option.textContent;
+          selectedBranch = option.dataset.branchId;
+          selectedBranchSpan.textContent = option.dataset.branchName;
           branchDropdown.style.display = 'none';
           branchSelector.classList.remove('open');
-          
+
           // Update data for selected branch
           updateDataForBranch(selectedBranch);
         });
       });
-      
+
       // Close dropdown when clicking outside
       document.addEventListener('click', (e) => {
         if (!branchSelector.contains(e.target)) {
@@ -714,16 +806,21 @@
       document.querySelectorAll('.service-item').forEach(item => {
         item.classList.remove('selected');
       });
-      
+
       // Add selection
       element.classList.add('selected');
       selectedService = {
         id: element.dataset.serviceId,
-        duration: parseInt(element.dataset.duration)
+        duration: parseInt(element.dataset.duration),
+        price: parseInt(element.dataset.price)
       };
-      
-      // Service selected - suggest next step
-      showNextStepSuggestion('specialist');
+
+      // Hide services, show specialists
+      document.getElementById('services-section').style.display = 'none';
+      document.getElementById('specialists-section').style.display = 'block';
+
+      // Scroll to specialists
+      document.getElementById('specialists-section').scrollIntoView({ behavior: 'smooth' });
     }
 
     // Select specialist
@@ -732,15 +829,22 @@
       document.querySelectorAll('.specialist-item').forEach(item => {
         item.classList.remove('selected');
       });
-      
+
       // Add selection
       element.classList.add('selected');
       selectedSpecialist = {
         id: element.dataset.specialistId
       };
-      
-      // Specialist selected - suggest next step
-      showNextStepSuggestion('datetime');
+
+      // Hide specialists, show calendar
+      document.getElementById('specialists-section').style.display = 'none';
+      document.getElementById('calendar-section').style.display = 'block';
+
+      // Load calendar
+      loadCalendar();
+
+      // Scroll to calendar
+      document.getElementById('calendar-section').scrollIntoView({ behavior: 'smooth' });
     }
 
     // Load calendar
@@ -799,13 +903,20 @@
       document.querySelectorAll('.calendar-day').forEach(day => {
         day.classList.remove('selected');
       });
-      
+
       // Add selection
       element.classList.add('selected');
       selectedDate = element.dataset.date;
-      
-      // Date selected - suggest next step
-      showNextStepSuggestion('contact');
+
+      // Hide calendar, show time slots
+      document.getElementById('calendar-section').style.display = 'none';
+      document.getElementById('time-section').style.display = 'block';
+
+      // Load time slots
+      loadTimeSlots();
+
+      // Scroll to time slots
+      document.getElementById('time-section').scrollIntoView({ behavior: 'smooth' });
     }
 
     // Load time slots
@@ -835,22 +946,27 @@
       document.querySelectorAll('.time-slot').forEach(slot => {
         slot.classList.remove('selected');
       });
-      
+
       // Add selection
       element.classList.add('selected');
       selectedTime = element.dataset.time;
-      
-      // Show contact form
-      document.querySelector('.contact-form').style.display = 'block';
+
+      // Hide time slots, show contact form
+      document.getElementById('time-section').style.display = 'none';
+      document.getElementById('contact-form-section').style.display = 'block';
+
+      // Scroll to contact form
+      document.getElementById('contact-form-section').scrollIntoView({ behavior: 'smooth' });
     }
 
     // Handle contact form submission
     document.getElementById('contact-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const formData = {
+        businessId: businessData.business.id,
         serviceId: selectedService.id,
-        specialistId: selectedSpecialist.id,
+        masterId: selectedSpecialist.id,
         branchId: selectedBranch,
         date: selectedDate,
         time: selectedTime,
@@ -859,18 +975,38 @@
         customerEmail: document.getElementById('client-email').value,
         customerComment: document.getElementById('client-comment').value
       };
-      
+
       console.log('Booking data:', formData);
-      
-      // Here you would send the booking data to your API
-      // For now, just show success message
-      document.getElementById('booking-form').innerHTML = `
-        <div class="success">
-          <h2>Booking confirmed!</h2>
-          <p>We'll contact you soon to confirm your appointment.</p>
-          <p>Thank you for choosing ${businessData.business.name}!</p>
-        </div>
-      `;
+
+      try {
+        // Send booking data to API
+        const response = await fetch('/api/appointments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+          throw new Error('Не удалось создать запись');
+        }
+
+        // Show success message
+        document.getElementById('contact-form-section').innerHTML = `
+          <div class="success">
+            <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">Запись создана!</h2>
+            <p style="margin-bottom: 8px;">Мы свяжемся с вами для подтверждения записи.</p>
+            <p style="margin-bottom: 8px;">Услуга: ${businessData.services.find(s => s.id === selectedService.id)?.name}</p>
+            <p style="margin-bottom: 8px;">Специалист: ${businessData.masters.find(m => m.id === selectedSpecialist.id)?.name}</p>
+            <p style="margin-bottom: 8px;">Дата: ${new Date(selectedDate).toLocaleDateString('ru-RU')} в ${selectedTime}</p>
+            <p style="margin-top: 16px;">Спасибо, что выбрали ${businessData.business.name}!</p>
+          </div>
+        `;
+      } catch (error) {
+        console.error('Error creating booking:', error);
+        alert('Ошибка при создании записи. Пожалуйста, попробуйте еще раз.');
+      }
     });
 
     // Load data when page loads
