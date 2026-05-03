@@ -722,6 +722,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Load specialist limit from API instead of localStorage
   loadSpecialistLimitFromAPI();
 
+  // Load all data (logo, works, etc.)
+  loadAllData();
+
   // Hide add specialist button if no tariff selected
   const addBtn = document.getElementById('addMasterBtn');
   if (addBtn) {
@@ -1365,7 +1368,18 @@ async function loadAllData() {
 
 // Placeholder functions for data loading
 async function loadLogo() {
-  // Load logo from backend
+  try {
+    const works = await api('/api/upload/works');
+    const logo = works.find(w => w.isLogo);
+    if (logo && logo.url) {
+      const logoCircle = document.querySelector('.logo-circle');
+      if (logoCircle) {
+        logoCircle.innerHTML = `<img src="${logo.url}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading logo:', error);
+  }
 }
 
 async function loadCompanyName() {
@@ -1386,7 +1400,27 @@ async function loadServices() {
 
 async function loadMasters() {
   // Load masters from backend - this is already handled by loadAllSpecialistData()
-  // Kept for compatibility with loadAllData()
+  // But we need to load avatars here
+  try {
+    const specialists = await api('/api/specialists');
+    if (specialists && specialists.length > 0) {
+      specialists.forEach(specialist => {
+        if (specialist.avatarUrl) {
+          // Find the form with this specialist's ID
+          const nameInput = document.querySelector(`input[data-specialist-id="${specialist.id}"]`);
+          if (nameInput) {
+            const index = nameInput.id.replace('specialistName', '');
+            const avatarCircle = document.querySelector(`#specialistAvatar${index}`).previousElementSibling;
+            if (avatarCircle) {
+              avatarCircle.innerHTML = `<img src="${specialist.avatarUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+            }
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error loading masters avatars:', error);
+  }
 }
 
 async function loadSchedule() {
@@ -1394,7 +1428,38 @@ async function loadSchedule() {
 }
 
 async function loadWorks() {
-  // Load works from backend
+  try {
+    const works = await api('/api/upload/works');
+    const worksGrid = document.getElementById('worksGrid');
+    if (worksGrid && works.length > 0) {
+      worksGrid.innerHTML = '';
+      works.forEach(work => {
+        const workItem = document.createElement('div');
+        workItem.className = 'work-item';
+        workItem.innerHTML = `
+          <img src="${work.url}" alt="${work.description || ''}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;">
+          ${work.description ? `<p style="margin-top: 8px; font-size: 14px;">${work.description}</p>` : ''}
+          <button onclick="deleteWork(${work.id})" style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">Удалить</button>
+        `;
+        worksGrid.appendChild(workItem);
+      });
+    }
+  } catch (error) {
+    console.error('Error loading works:', error);
+  }
+}
+
+async function deleteWork(id) {
+  try {
+    await api(`/api/upload/works/${id}`, {
+      method: 'DELETE'
+    });
+    alert('Фото удалено');
+    loadWorks();
+  } catch (error) {
+    console.error('Error deleting work:', error);
+    alert('Ошибка удаления фото');
+  }
 }
 
 // Open as Client Function
