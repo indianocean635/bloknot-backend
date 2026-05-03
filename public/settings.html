@@ -738,19 +738,24 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load specialist limit from API
 async function loadSpecialistLimitFromAPI() {
   try {
-    // Get user info including business
-    const userResponse = await api('/api/auth/me');
+    console.log('[LOAD] Starting parallel API calls...');
+
+    // Make API calls in parallel for faster loading
+    const [userResponse, businessResponse] = await Promise.all([
+      api('/api/auth/me'),
+      api('/api/settings/business')
+    ]);
+
     const user = userResponse.user;
+    const business = businessResponse;
+
+    console.log('[LOAD] API calls completed');
 
     if (!user.businessId) {
       console.log('No business found for user');
       showNoBusinessUI();
       return;
     }
-
-    // Load business settings
-    const businessResponse = await api('/api/settings/business');
-    const business = businessResponse;
 
     console.log('Business data:', business);
     console.log('Subscription:', business.subscription);
