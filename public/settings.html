@@ -1075,7 +1075,8 @@ async function handleAvatarSelect(index, input) {
       console.log('[AVATAR] Uploading avatar for specialist index:', index);
       const response = await fetch(`/api/upload/masters/${index}/avatar`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -1112,7 +1113,8 @@ async function handleLogoSelect(input) {
       console.log('[LOGO] Uploading logo...');
       const response = await fetch('/api/upload/works', {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -1146,17 +1148,15 @@ async function handleAddWork() {
     const file = e.target.files[0];
     if (!file) return;
 
-    const caption = prompt('Подпись к фото (опционально):');
-
     const formData = new FormData();
     formData.append('image', file);
-    if (caption) formData.append('caption', caption);
 
     try {
       console.log('[WORKS] Uploading work...');
       const response = await fetch('/api/upload/works', {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
       });
 
       if (!response.ok) {

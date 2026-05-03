@@ -13,12 +13,12 @@ function safeFileName(originalName, userId) {
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024 },
 });
 
 const worksUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024 },
 });
 
 // Загрузить/обновить аватар мастера
