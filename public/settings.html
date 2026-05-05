@@ -1335,20 +1335,21 @@ async function api(url, options = {}) {
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include',
   };
-  
+
   const finalOptions = { ...defaultOptions, ...options };
-  
+
   if (finalOptions.body && typeof finalOptions.body === 'string') {
     finalOptions.body = finalOptions.body;
   }
-  
+
   const response = await fetch(url, finalOptions);
-  
+
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
-  
+
   return response.json();
 }
 
@@ -1375,13 +1376,21 @@ async function loadAllData() {
 // Placeholder functions for data loading
 async function loadLogo() {
   try {
+    console.log('[LOAD LOGO] Fetching works...');
     const works = await api('/api/upload/works');
+    console.log('[LOAD LOGO] Works:', works);
     const logo = works.find(w => w.isLogo);
     if (logo && logo.url) {
+      console.log('[LOAD LOGO] Found logo:', logo.url);
       const logoCircle = document.querySelector('.logo-circle');
       if (logoCircle) {
-        logoCircle.innerHTML = `<img src="${logo.url}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+        console.log('[LOAD LOGO] Updating logo circle');
+        logoCircle.innerHTML = `<img src="${logo.url}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="console.error('Failed to load logo image')">`;
+      } else {
+        console.warn('[LOAD LOGO] Logo circle element not found');
       }
+    } else {
+      console.log('[LOAD LOGO] No logo found in works');
     }
   } catch (error) {
     console.error('Error loading logo:', error);
