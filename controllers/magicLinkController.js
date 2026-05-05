@@ -266,7 +266,7 @@ async function confirmLogin(req, res) {
     res.cookie('auth', sessionToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'None',
+      sameSite: 'Lax',
       path: '/',
     });
 

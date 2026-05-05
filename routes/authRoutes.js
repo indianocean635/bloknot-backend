@@ -232,7 +232,7 @@ router.post('/login', async (req, res) => {
     res.cookie('auth', token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'None',
+      sameSite: 'Lax',
       path: '/',
     });
     
