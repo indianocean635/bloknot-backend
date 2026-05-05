@@ -154,7 +154,7 @@ async function getWorks(req, res) {
     });
 
     const user = req.user;
-    
+
     if (!user || !user.businessId) {
       console.warn('[SECURITY] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
       return res.status(403).json({ error: 'Forbidden' });
@@ -181,10 +181,55 @@ async function getWorks(req, res) {
   }
 }
 
+// Удалить работу
+async function deleteWork(req, res) {
+  try {
+    console.log('[DELETE WORK REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl,
+      workId: req.params.id
+    });
+
+    const user = req.user;
+
+    if (!user || !user.businessId) {
+      console.warn('[SECURITY] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const workId = parseInt(req.params.id);
+
+    // Check if work belongs to user's business
+    const work = await prisma.workPhoto.findFirst({
+      where: {
+        id: workId,
+        businessId: user.businessId
+      }
+    });
+
+    if (!work) {
+      return res.status(404).json({ error: "Работа не найдена" });
+    }
+
+    // Delete from database
+    await prisma.workPhoto.delete({
+      where: { id: workId }
+    });
+
+    console.log('[DELETE WORK] Work deleted successfully:', workId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Delete work error:", error);
+    res.status(500).json({ error: "Ошибка удаления работы" });
+  }
+}
+
 module.exports = {
   uploadMasterAvatar,
   uploadWork,
   getWorks,
+  deleteWork,
   avatarUpload,
   worksUpload
 };
