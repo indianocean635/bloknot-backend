@@ -1354,16 +1354,22 @@ async function api(url, options = {}) {
 
 // Loading all data
 async function loadAllData() {
-  await Promise.all([
-    loadLogo(),
-    loadCompanyName(),
-    loadBranches(),
-    loadCategories(),
-    loadServices(),
-    loadMasters(),
-    loadSchedule(),
-    loadWorks(),
-  ]);
+  console.log('[LOAD ALL] Starting to load all data...');
+  try {
+    await Promise.all([
+      loadLogo(),
+      loadCompanyName(),
+      loadBranches(),
+      loadCategories(),
+      loadServices(),
+      loadMasters(),
+      loadSchedule(),
+      loadWorks(),
+    ]);
+    console.log('[LOAD ALL] All data loaded successfully');
+  } catch (error) {
+    console.error('[LOAD ALL] Error loading data:', error);
+  }
 }
 
 // Placeholder functions for data loading
