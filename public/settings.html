@@ -1506,7 +1506,17 @@ async function loadWorks() {
   }
 }
 
+let deletingWorkIds = new Set();
+
 async function deleteWork(id) {
+  if (deletingWorkIds.has(id)) {
+    console.warn('[DELETE WORK] Already deleting work', id, 'ignoring duplicate click');
+    return;
+  }
+
+  deletingWorkIds.add(id);
+  console.log('[DELETE WORK] Starting deletion for work', id);
+
   try {
     await api(`/api/upload/works/${id}`, {
       method: 'DELETE'
@@ -1516,6 +1526,9 @@ async function deleteWork(id) {
   } catch (error) {
     console.error('Error deleting work:', error);
     alert('Ошибка удаления фото');
+  } finally {
+    deletingWorkIds.delete(id);
+    console.log('[DELETE WORK] Deletion completed for work', id);
   }
 }
 
