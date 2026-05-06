@@ -734,7 +734,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Add work button event listener
   const addWorkBtn = document.getElementById('addWorkBtn');
   if (addWorkBtn) {
-    addWorkBtn.addEventListener('click', handleAddWork);
+    // Remove any existing listeners to prevent duplicates
+    const newBtn = addWorkBtn.cloneNode(true);
+    addWorkBtn.parentNode.replaceChild(newBtn, addWorkBtn);
+    newBtn.addEventListener('click', handleAddWork);
   }
 });
 
