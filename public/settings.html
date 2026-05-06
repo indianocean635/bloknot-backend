@@ -1211,13 +1211,23 @@ async function handleLogoSelect(input) {
   }
 }
 
+let isUploadingWork = false;
+
 async function handleAddWork() {
+  if (isUploadingWork) {
+    console.warn('[WORKS] Upload already in progress, ignoring duplicate click');
+    return;
+  }
+
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
   input.onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    isUploadingWork = true;
+    console.log('[WORKS] Starting upload...');
 
     const formData = new FormData();
     formData.append('image', file);
@@ -1243,6 +1253,9 @@ async function handleAddWork() {
     } catch (error) {
       console.error('[WORKS] Upload error:', error);
       alert('Ошибка загрузки фото: ' + error.message);
+    } finally {
+      isUploadingWork = false;
+      console.log('[WORKS] Upload completed');
     }
   };
   input.click();
