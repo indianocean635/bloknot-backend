@@ -2,7 +2,7 @@ const multer = require("multer");
 const crypto = require("crypto");
 const path = require("path");
 const { prisma } = require("../services/prismaService");
-const { uploadFile } = require("../lib/s3");
+const { uploadFile, getSignedUrlForFile } = require('../lib/s3');
 
 function safeFileName(originalName, userId) {
   const ext = path.extname(String(originalName || "")).toLowerCase();
@@ -165,13 +165,21 @@ async function getWorks(req, res) {
       orderBy: { id: "desc" }
     });
 
-    const transformedWorks = works.map(work => ({
-      id: work.id,
-      url: work.imageUrl,
-      description: work.caption,
-      type: work.imageUrl.toLowerCase().includes('.mp4') || work.imageUrl.toLowerCase().includes('.mov') ? 'video' : 'image',
-      isLogo: work.isLogo,
-      createdAt: work.createdAt
+    // Generate signed URLs for each work
+    const transformedWorks = await Promise.all(works.map(async (work) => {
+      // Extract filename from imageUrl
+      const filename = work.imageUrl.split('/').pop();
+      // Generate signed URL (valid for 1 hour)
+      const signedUrl = await getSignedUrlForFile(filename, 3600);
+
+      return {
+        id: work.id,
+        url: signedUrl,
+        description: work.caption,
+        type: work.imageUrl.toLowerCase().includes('.mp4') || work.imageUrl.toLowerCase().includes('.mov') ? 'video' : 'image',
+        isLogo: work.isLogo,
+        createdAt: work.createdAt
+      };
     }));
 
     res.json(transformedWorks);

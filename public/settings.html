@@ -1385,10 +1385,7 @@ async function loadLogo() {
       const logoCircle = document.querySelector('.logo-circle');
       if (logoCircle) {
         console.log('[LOAD LOGO] Updating logo circle');
-        // Use proxy to avoid CORS issues
-        const filename = logo.url.split('/').pop();
-        const proxyUrl = `/api/upload/proxy/${filename}`;
-        logoCircle.innerHTML = `<img src="${proxyUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="console.error('Failed to load logo image')">`;
+        logoCircle.innerHTML = `<img src="${logo.url}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="console.error('Failed to load logo image')">`;
       } else {
         console.warn('[LOAD LOGO] Logo circle element not found');
       }
@@ -1430,10 +1427,7 @@ async function loadMasters() {
             const index = nameInput.id.replace('specialistName', '');
             const avatarCircle = document.querySelector(`#specialistAvatar${index}`).previousElementSibling;
             if (avatarCircle) {
-              // Use proxy to avoid CORS issues
-              const filename = specialist.avatarUrl.split('/').pop();
-              const proxyUrl = `/api/upload/proxy/${filename}`;
-              avatarCircle.innerHTML = `<img src="${proxyUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+              avatarCircle.innerHTML = `<img src="${specialist.avatarUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
             }
           }
         }
@@ -1457,11 +1451,8 @@ async function loadWorks() {
       works.forEach(work => {
         const workItem = document.createElement('div');
         workItem.className = 'work-item';
-        // Use proxy to avoid CORS issues
-        const filename = work.url.split('/').pop();
-        const proxyUrl = `/api/upload/proxy/${filename}`;
         workItem.innerHTML = `
-          <img src="${proxyUrl}" alt="${work.description || ''}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;">
+          <img src="${work.url}" alt="${work.description || ''}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;">
           ${work.description ? `<p style="margin-top: 8px; font-size: 14px;">${work.description}</p>` : ''}
           <button onclick="deleteWork(${work.id})" style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">Удалить</button>
         `;

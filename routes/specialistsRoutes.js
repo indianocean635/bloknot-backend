@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { getSignedUrlForFile } = require('../lib/s3');
 
 // Middleware to check authentication
 const requireAuth = async (req, res, next) => {
@@ -40,21 +41,34 @@ router.get('/', requireAuth, async (req, res) => {
   try {
     console.log("USER ID:", req.user.id);
     console.log("BUSINESS ID:", req.user.businessId);
-    
+
     // If no businessId, return empty array
     if (!req.user.businessId) {
       console.log("No businessId - returning empty array");
       return res.json([]);
     }
-    
+
     const specialists = await prisma.master.findMany({
       where: {
         businessId: req.user.businessId
       },
       orderBy: { name: 'asc' }
     });
-    
-    res.json(specialists);
+
+    // Generate signed URLs for avatars
+    const specialistsWithSignedUrls = await Promise.all(specialists.map(async (specialist) => {
+      if (specialist.avatarUrl) {
+        const filename = specialist.avatarUrl.split('/').pop();
+        const signedUrl = await getSignedUrlForFile(filename, 3600);
+        return {
+          ...specialist,
+          avatarUrl: signedUrl
+        };
+      }
+      return specialist;
+    }));
+
+    res.json(specialistsWithSignedUrls);
   } catch (error) {
     console.error('Error fetching specialists:', error);
     res.status(500).json({ error: 'Internal server error' });
