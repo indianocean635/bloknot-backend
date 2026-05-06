@@ -1225,6 +1225,12 @@ async function handleAddWork() {
   isUploadingWork = true;
   console.log('[WORKS] Starting file selection...');
 
+  const addWorkBtn = document.getElementById('addWorkBtn');
+  if (addWorkBtn) {
+    addWorkBtn.disabled = true;
+    addWorkBtn.textContent = 'Загрузка...';
+  }
+
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
@@ -1232,6 +1238,10 @@ async function handleAddWork() {
     const file = e.target.files[0];
     if (!file) {
       isUploadingWork = false;
+      if (addWorkBtn) {
+        addWorkBtn.disabled = false;
+        addWorkBtn.textContent = '+ Добавить фото';
+      }
       console.log('[WORKS] No file selected');
       return;
     }
@@ -1264,6 +1274,10 @@ async function handleAddWork() {
       alert('Ошибка загрузки фото: ' + error.message);
     } finally {
       isUploadingWork = false;
+      if (addWorkBtn) {
+        addWorkBtn.disabled = false;
+        addWorkBtn.textContent = '+ Добавить фото';
+      }
       console.log('[WORKS] Upload completed');
     }
   };
