@@ -1219,15 +1219,21 @@ async function handleAddWork() {
     return;
   }
 
+  isUploadingWork = true;
+  console.log('[WORKS] Starting file selection...');
+
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
   input.onchange = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file) {
+      isUploadingWork = false;
+      console.log('[WORKS] No file selected');
+      return;
+    }
 
-    isUploadingWork = true;
-    console.log('[WORKS] Starting upload...');
+    console.log('[WORKS] File selected, starting upload...');
 
     const formData = new FormData();
     formData.append('image', file);
