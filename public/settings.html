@@ -993,7 +993,9 @@ function saveSpecialistData(index) {
 // Load all specialist data at once (much faster than sequential loading)
 async function loadAllSpecialistData() {
   try {
+    console.log('[LOAD SPECIALISTS] Fetching specialists...');
     const specialists = await api('/api/specialists');
+    console.log('[LOAD SPECIALISTS] Specialists:', specialists);
 
     if (specialists && specialists.length > 0) {
       specialists.forEach((specialist, index) => {
@@ -1010,6 +1012,23 @@ async function loadAllSpecialistData() {
           emailInput.value = specialist.email;
           // Store specialist ID on the input for proper matching
           emailInput.dataset.specialistId = specialist.id;
+        }
+
+        // Load avatar if exists
+        if (specialist.avatarUrl) {
+          console.log('[LOAD SPECIALISTS] Loading avatar for specialist:', specialist.id, 'URL:', specialist.avatarUrl);
+          const avatarInput = document.getElementById(`specialistAvatar${formIndex}`);
+          if (avatarInput) {
+            const avatarCircle = avatarInput.previousElementSibling;
+            if (avatarCircle) {
+              avatarCircle.innerHTML = `<img src="${specialist.avatarUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+              console.log('[LOAD SPECIALISTS] Avatar loaded for specialist:', specialist.id);
+            } else {
+              console.warn('[LOAD SPECIALISTS] Avatar circle not found for specialist:', specialist.id);
+            }
+          } else {
+            console.warn('[LOAD SPECIALISTS] Avatar input not found for specialist:', specialist.id);
+          }
         }
       });
       console.log(`Loaded ${specialists.length} specialists`);
@@ -1417,21 +1436,31 @@ async function loadMasters() {
   // Load masters from backend - this is already handled by loadAllSpecialistData()
   // But we need to load avatars here
   try {
+    console.log('[LOAD MASTERS] Fetching specialists...');
     const specialists = await api('/api/specialists');
+    console.log('[LOAD MASTERS] Specialists:', specialists);
     if (specialists && specialists.length > 0) {
+      console.log('[LOAD MASTERS] Processing', specialists.length, 'specialists');
       specialists.forEach(specialist => {
+        console.log('[LOAD MASTERS] Processing specialist:', specialist.id, specialist.avatarUrl ? 'has avatar' : 'no avatar');
         if (specialist.avatarUrl) {
           // Find the form with this specialist's ID
           const nameInput = document.querySelector(`input[data-specialist-id="${specialist.id}"]`);
+          console.log('[LOAD MASTERS] Name input found:', !!nameInput);
           if (nameInput) {
             const index = nameInput.id.replace('specialistName', '');
+            console.log('[LOAD MASTERS] Index:', index);
             const avatarCircle = document.querySelector(`#specialistAvatar${index}`).previousElementSibling;
+            console.log('[LOAD MASTERS] Avatar circle found:', !!avatarCircle);
             if (avatarCircle) {
               avatarCircle.innerHTML = `<img src="${specialist.avatarUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+              console.log('[LOAD MASTERS] Avatar updated for specialist:', specialist.id);
             }
           }
         }
       });
+    } else {
+      console.log('[LOAD MASTERS] No specialists found');
     }
   } catch (error) {
     console.error('Error loading masters avatars:', error);
