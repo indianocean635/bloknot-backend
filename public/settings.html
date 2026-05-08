@@ -1951,9 +1951,9 @@ async function loadBranches() {
               ${branch.address ? `<div style="font-size: 13px; color: #888;">${branch.address}</div>` : ''}
               ${branch.directions ? `<div style="font-size: 12px; color: #999; margin-top: 4px;">${branch.directions}</div>` : ''}
             </div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn secondary" onclick="editBranch(${branch.id})" style="padding: 4px 8px; font-size: 12px;">Редактировать</button>
-              <button class="btn secondary" onclick="deleteBranch(${branch.id})" style="padding: 4px 8px; font-size: 12px; background: #fee2e2; color: #dc2626; border-color: #fecaca;">Удалить</button>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <button class="btn secondary" onclick="editBranch(${branch.id})" style="padding: 4px 8px; font-size: 11px;">Редактировать</button>
+              <button class="btn secondary" onclick="deleteBranch(${branch.id})" style="padding: 4px 8px; font-size: 11px;">Удалить</button>
             </div>
           </div>
         </div>
