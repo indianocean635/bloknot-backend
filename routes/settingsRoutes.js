@@ -146,7 +146,7 @@ router.post("/branches", requireAuth, async (req, res) => {
         city: city?.trim() || "",
         address: address?.trim() || "",
         directions: directions?.trim() || "",
-        schedule: schedule || {},
+        schedule: schedule?.trim() || "",
         businessId: req.user.businessId
       }
     });
@@ -188,7 +188,7 @@ router.patch("/branches/:id", requireAuth, async (req, res) => {
         city: city?.trim() || branch.city,
         address: address?.trim() || branch.address,
         directions: directions?.trim() || branch.directions,
-        schedule: schedule !== undefined ? schedule : branch.schedule
+        schedule: schedule !== undefined ? schedule?.trim() : branch.schedule
       }
     });
 
