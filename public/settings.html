@@ -930,7 +930,9 @@ function updateSpecialistForms(limit) {
       email: emailInput?.value || '',
       specialistId: nameInput?.dataset.specialistId || '',
       avatarId: avatarInput?.dataset.avatarId || '',
-      avatarUrl: avatarCircle?.style.backgroundImage || ''
+      avatarUrl: avatarCircle?.style.backgroundImage || '',
+      // Save specialist settings if loaded
+      settings: window.allSpecialistSettings?.[formIndex] || null
     };
   });
 
@@ -965,6 +967,12 @@ function updateSpecialistForms(limit) {
         avatarCircle.style.backgroundSize = 'cover';
         avatarCircle.style.backgroundPosition = 'center';
         avatarCircle.querySelector('.avatar-plus')?.remove();
+      }
+
+      // Restore specialist settings if available
+      if (data.settings) {
+        window.allSpecialistSettings = window.allSpecialistSettings || {};
+        window.allSpecialistSettings[i] = data.settings;
       }
     }
   }
