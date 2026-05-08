@@ -914,11 +914,59 @@ async function processPayment() {
 
 function updateSpecialistForms(limit) {
   const grid = document.getElementById('mastersGrid');
+
+  // Save existing specialist data before clearing
+  const existingData = [];
+  const existingForms = grid.querySelectorAll('.specialist-form');
+  existingForms.forEach((form, index) => {
+    const formIndex = index + 1;
+    const nameInput = document.getElementById(`specialistName${formIndex}`);
+    const emailInput = document.getElementById(`specialistEmail${formIndex}`);
+    const avatarInput = document.getElementById(`specialistAvatar${formIndex}`);
+    const avatarCircle = form.querySelector('.avatar-circle');
+
+    existingData[index] = {
+      name: nameInput?.value || '',
+      email: emailInput?.value || '',
+      specialistId: nameInput?.dataset.specialistId || '',
+      avatarId: avatarInput?.dataset.avatarId || '',
+      avatarUrl: avatarCircle?.style.backgroundImage || ''
+    };
+  });
+
   grid.innerHTML = '';
 
   for (let i = 1; i <= limit; i++) {
     const form = createSpecialistForm(i);
     grid.appendChild(form);
+
+    // Restore existing data if available
+    if (existingData[i - 1]) {
+      const data = existingData[i - 1];
+      const nameInput = document.getElementById(`specialistName${i}`);
+      const emailInput = document.getElementById(`specialistEmail${i}`);
+      const avatarInput = document.getElementById(`specialistAvatar${i}`);
+      const avatarCircle = form.querySelector('.avatar-circle');
+
+      if (nameInput) {
+        nameInput.value = data.name;
+        if (data.specialistId) {
+          nameInput.dataset.specialistId = data.specialistId;
+        }
+      }
+      if (emailInput) {
+        emailInput.value = data.email;
+      }
+      if (avatarInput && data.avatarId) {
+        avatarInput.dataset.avatarId = data.avatarId;
+      }
+      if (avatarCircle && data.avatarUrl) {
+        avatarCircle.style.backgroundImage = data.avatarUrl;
+        avatarCircle.style.backgroundSize = 'cover';
+        avatarCircle.style.backgroundPosition = 'center';
+        avatarCircle.querySelector('.avatar-plus')?.remove();
+      }
+    }
   }
 
   // Load all specialist data at once after forms are created
