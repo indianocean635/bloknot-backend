@@ -1151,25 +1151,41 @@ async function loadSpecialistSettings(index) {
 
       <div style="margin-bottom: 20px;">
         <h4 style="margin-bottom: 12px;">График работы</h4>
-        <div id="scheduleSettings">
-          ${['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'].map(day => `
-            <div style="margin-bottom: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">
-              <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                <input type="checkbox" id="day_${day}" class="day-checkbox" style="margin-right: 8px;">
-                <label for="day_${day}" style="font-weight: 500;">${day}</label>
-              </div>
-              <div style="display: flex; gap: 8px; margin-left: 24px;">
-                <div style="flex: 1;">
-                  <label style="font-size: 12px; color: #666;">С:</label>
-                  <input type="time" id="start_${day}" class="time-start" style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 4px;" disabled>
+        <div style="display: flex; gap: 16px;">
+          <div style="flex: 1;">
+            <div id="scheduleSettings" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;">
+              ${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day, idx) => `
+                <div class="day-cell" data-day="${['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'][idx]}" 
+                     style="padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s;"
+                     onclick="selectDay(this)">
+                  <div style="font-weight: 600; font-size: 14px;">${day}</div>
+                  <div class="day-time" style="font-size: 11px; color: #6b7280; margin-top: 4px;">-</div>
                 </div>
-                <div style="flex: 1;">
-                  <label style="font-size: 12px; color: #666;">До:</label>
-                  <input type="time" id="end_${day}" class="time-end" style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 4px;" disabled>
-                </div>
-              </div>
+              `).join('')}
             </div>
-          `).join('')}
+            <div style="margin-top: 12px; font-size: 12px; color: #6b7280;">
+              Нажмите на день, чтобы выбрать рабочее время. Зажмите Ctrl/Cmd для выбора нескольких дней.
+            </div>
+          </div>
+          <div id="timeSettingsPanel" style="width: 200px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; display: none;">
+            <h5 style="margin: 0 0 12px 0; font-size: 14px;">Время работы</h5>
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">С:</label>
+              <input type="time" id="startTime" value="09:00" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">До:</label>
+              <input type="time" id="endTime" value="18:00" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 12px;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="applyToSelected" style="margin-right: 8px;">
+                <span style="font-size: 12px;">Применить к выбранным дням</span>
+              </label>
+            </div>
+            <button class="btn primary" onclick="applyScheduleTime()" style="width: 100%; padding: 8px; font-size: 14px;">Применить</button>
+            <button class="btn secondary" onclick="clearScheduleTime()" style="width: 100%; padding: 8px; font-size: 14px; margin-top: 8px;">Очистить</button>
+          </div>
         </div>
       </div>
 
@@ -1202,16 +1218,47 @@ async function loadSpecialistSettings(index) {
       </div>
     `;
 
-    // Add event listeners for day checkboxes
-    document.querySelectorAll('.day-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        const day = this.id.replace('day_', '');
-        const startInput = document.getElementById(`start_${day}`);
-        const endInput = document.getElementById(`end_${day}`);
-        
-        if (startInput && endInput) {
-          startInput.disabled = !this.checked;
-          endInput.disabled = !this.checked;
+    // Add event listeners for day cells
+    document.querySelectorAll('.day-cell').forEach(cell => {
+      cell.addEventListener('click', function(e) {
+        // Handle multi-select with Ctrl/Cmd
+        if (!e.ctrlKey && !e.metaKey) {
+          // Deselect all other cells
+          document.querySelectorAll('.day-cell.selected').forEach(c => {
+            if (c !== this) {
+              c.classList.remove('selected');
+              c.style.borderColor = '#e5e7eb';
+              c.style.backgroundColor = 'white';
+            }
+          });
+        }
+
+        // Toggle selection
+        this.classList.toggle('selected');
+        if (this.classList.contains('selected')) {
+          this.style.borderColor = '#3b82f6';
+          this.style.backgroundColor = '#eff6ff';
+        } else {
+          this.style.borderColor = '#e5e7eb';
+          this.style.backgroundColor = 'white';
+        }
+
+        // Show time panel if any day is selected
+        const selectedDays = document.querySelectorAll('.day-cell.selected');
+        const timePanel = document.getElementById('timeSettingsPanel');
+        if (selectedDays.length > 0) {
+          timePanel.style.display = 'block';
+          
+          // Load time from first selected day
+          const dayName = selectedDays[0].dataset.day;
+          const timeDisplay = selectedDays[0].querySelector('.day-time');
+          if (timeDisplay && timeDisplay.textContent !== '-') {
+            const [start, end] = timeDisplay.textContent.split(' - ');
+            document.getElementById('startTime').value = start || '09:00';
+            document.getElementById('endTime').value = end || '18:00';
+          }
+        } else {
+          timePanel.style.display = 'none';
         }
       });
     });
@@ -1225,28 +1272,23 @@ async function loadSpecialistSettings(index) {
           if (specialistSettings.branchId) {
             document.getElementById('specialistBranch').value = specialistSettings.branchId;
           }
-          
+
           // Load schedule
           if (specialistSettings.schedule) {
             Object.keys(specialistSettings.schedule).forEach(day => {
-              const checkbox = document.getElementById(`day_${day}`);
-              const startInput = document.getElementById(`start_${day}`);
-              const endInput = document.getElementById(`end_${day}`);
-              
-              if (checkbox && specialistSettings.schedule[day].enabled) {
-                checkbox.checked = true;
-                if (startInput) {
-                  startInput.disabled = false;
-                  startInput.value = specialistSettings.schedule[day].startTime || '';
-                }
-                if (endInput) {
-                  endInput.disabled = false;
-                  endInput.value = specialistSettings.schedule[day].endTime || '';
+              const dayCell = document.querySelector(`.day-cell[data-day="${day}"]`);
+              const timeDisplay = dayCell?.querySelector('.day-time');
+
+              if (dayCell && specialistSettings.schedule[day].enabled) {
+                dayCell.style.borderColor = '#3b82f6';
+                dayCell.style.backgroundColor = '#eff6ff';
+                if (timeDisplay) {
+                  timeDisplay.textContent = `${specialistSettings.schedule[day].startTime} - ${specialistSettings.schedule[day].endTime}`;
                 }
               }
             });
           }
-          
+
           // Load categories
           if (specialistSettings.categoryIds) {
             specialistSettings.categoryIds.forEach(catId => {
@@ -1254,7 +1296,7 @@ async function loadSpecialistSettings(index) {
               if (checkbox) checkbox.checked = true;
             });
           }
-          
+
           // Load services
           if (specialistSettings.serviceIds) {
             specialistSettings.serviceIds.forEach(svcId => {
@@ -1276,6 +1318,64 @@ async function loadSpecialistSettings(index) {
   }
 }
 
+// Helper function to select a day
+function selectDay(cell) {
+  // This is handled by the event listener above
+}
+
+// Apply schedule time to selected days
+function applyScheduleTime() {
+  const startTime = document.getElementById('startTime').value;
+  const endTime = document.getElementById('endTime').value;
+  const applyToSelected = document.getElementById('applyToSelected').checked;
+
+  const selectedDays = document.querySelectorAll('.day-cell.selected');
+
+  if (selectedDays.length === 0) {
+    alert('Выберите хотя бы один день');
+    return;
+  }
+
+  selectedDays.forEach(dayCell => {
+    const timeDisplay = dayCell.querySelector('.day-time');
+    if (timeDisplay) {
+      timeDisplay.textContent = `${startTime} - ${endTime}`;
+      dayCell.style.borderColor = '#3b82f6';
+      dayCell.style.backgroundColor = '#eff6ff';
+    }
+  });
+
+  // If applyToSelected is not checked, deselect all
+  if (!applyToSelected) {
+    selectedDays.forEach(dayCell => {
+      dayCell.classList.remove('selected');
+    });
+    document.getElementById('timeSettingsPanel').style.display = 'none';
+  }
+}
+
+// Clear schedule time for selected days
+function clearScheduleTime() {
+  const selectedDays = document.querySelectorAll('.day-cell.selected');
+
+  if (selectedDays.length === 0) {
+    alert('Выберите хотя бы один день');
+    return;
+  }
+
+  selectedDays.forEach(dayCell => {
+    const timeDisplay = dayCell.querySelector('.day-time');
+    if (timeDisplay) {
+      timeDisplay.textContent = '-';
+      dayCell.style.borderColor = '#e5e7eb';
+      dayCell.style.backgroundColor = 'white';
+    }
+    dayCell.classList.remove('selected');
+  });
+
+  document.getElementById('timeSettingsPanel').style.display = 'none';
+}
+
 async function saveSpecialistSettings(index) {
   try {
     const nameInput = document.getElementById(`specialistName${index}`);
@@ -1286,18 +1386,20 @@ async function saveSpecialistSettings(index) {
       return;
     }
 
-    // Collect schedule data
+    // Collect schedule data from day cells
     const schedule = {};
-    ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'].forEach(day => {
-      const checkbox = document.getElementById(`day_${day}`);
-      const startInput = document.getElementById(`start_${day}`);
-      const endInput = document.getElementById(`end_${day}`);
-      
-      if (checkbox && checkbox.checked) {
+    const dayCells = document.querySelectorAll('.day-cell');
+    dayCells.forEach(cell => {
+      const day = cell.dataset.day;
+      const timeDisplay = cell.querySelector('.day-time');
+      const timeText = timeDisplay?.textContent || '-';
+
+      if (timeText !== '-' && timeText !== '') {
+        const [startTime, endTime] = timeText.split(' - ');
         schedule[day] = {
           enabled: true,
-          startTime: startInput?.value || '09:00',
-          endTime: endInput?.value || '18:00'
+          startTime: startTime || '09:00',
+          endTime: endTime || '18:00'
         };
       } else {
         schedule[day] = {
