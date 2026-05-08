@@ -169,6 +169,7 @@ model Branch {
   city       String?
   address    String?
   directions String?
+  schedule   Json?
   businessId String
   createdAt  DateTime @default(now())
 

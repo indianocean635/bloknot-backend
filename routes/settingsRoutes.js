@@ -134,7 +134,7 @@ router.post("/branches", requireAuth, async (req, res) => {
       route: req.originalUrl
     });
 
-    const { name, city, address, directions } = req.body;
+    const { name, city, address, directions, schedule } = req.body;
 
     if (!name || name.trim() === "") {
       return res.status(400).json({ error: "Branch name is required" });
@@ -146,6 +146,7 @@ router.post("/branches", requireAuth, async (req, res) => {
         city: city?.trim() || "",
         address: address?.trim() || "",
         directions: directions?.trim() || "",
+        schedule: schedule || {},
         businessId: req.user.businessId
       }
     });
@@ -167,7 +168,7 @@ router.patch("/branches/:id", requireAuth, async (req, res) => {
     });
 
     const { id } = req.params;
-    const { name, city, address, directions } = req.body;
+    const { name, city, address, directions, schedule } = req.body;
 
     const branch = await prisma.branch.findFirst({
       where: {
@@ -186,7 +187,8 @@ router.patch("/branches/:id", requireAuth, async (req, res) => {
         name: name?.trim() || branch.name,
         city: city?.trim() || branch.city,
         address: address?.trim() || branch.address,
-        directions: directions?.trim() || branch.directions
+        directions: directions?.trim() || branch.directions,
+        schedule: schedule !== undefined ? schedule : branch.schedule
       }
     });
 

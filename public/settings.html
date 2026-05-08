@@ -104,12 +104,6 @@
           </div>
         </div>
       </div>
-      
-      <div class="branding-item">
-        <h3>График работы</h3>
-        <div class="schedule-container" id="scheduleContainer">
-        </div>
-      </div>
     </div>
   </section>
 
@@ -1979,7 +1973,7 @@ async function openBranchModal(branchId = null) {
   modal.className = 'modal';
   modal.style.display = 'flex';
   modal.innerHTML = `
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
       <div class="modal-header">
         <h3>${branchId ? 'Редактировать филиал' : 'Добавить филиал'}</h3>
         <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
@@ -2001,6 +1995,42 @@ async function openBranchModal(branchId = null) {
           <label style="display: block; margin-bottom: 4px; font-weight: 500;">Как пройти (опционально)</label>
           <textarea id="branchDirections" placeholder="Как добраться..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; min-height: 80px;">${branch?.directions || ''}</textarea>
         </div>
+        <div style="margin-bottom: 12px;">
+          <h4 style="margin-bottom: 12px;">График работы</h4>
+          <div style="display: flex; gap: 16px;">
+            <div style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <button class="btn secondary" onclick="changeBranchMonth(-1)" style="padding: 4px 8px; font-size: 14px;">←</button>
+                <span id="currentBranchMonth" style="font-weight: 600;"></span>
+                <button class="btn secondary" onclick="changeBranchMonth(1)" style="padding: 4px 8px; font-size: 14px;">→</button>
+              </div>
+              <div id="branchScheduleSettings" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+              </div>
+              <div style="margin-top: 12px; font-size: 12px; color: #6b7280;">
+                Нажмите на дату, чтобы выбрать рабочее время. Зажмите Ctrl/Cmd для выбора нескольких дней.
+              </div>
+            </div>
+            <div id="branchTimeSettingsPanel" style="width: 200px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; display: none;">
+              <h5 style="margin: 0 0 12px 0; font-size: 14px;">Время работы</h5>
+              <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">С:</label>
+                <input type="time" id="branchStartTime" value="09:00" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+              </div>
+              <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">До:</label>
+                <input type="time" id="branchEndTime" value="18:00" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+              </div>
+              <div style="margin-bottom: 12px;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                  <input type="checkbox" id="branchApplyToSelected" style="margin-right: 8px;">
+                  <span style="font-size: 12px;">Применить к выбранным датам</span>
+                </label>
+              </div>
+              <button class="btn primary" onclick="applyBranchScheduleTime()" style="width: 100%; padding: 8px; font-size: 14px;">Применить</button>
+              <button class="btn secondary" onclick="clearBranchScheduleTime()" style="width: 100%; padding: 8px; font-size: 14px; margin-top: 8px;">Очистить</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn secondary" onclick="this.closest('.modal').remove()">Отмена</button>
@@ -2009,6 +2039,55 @@ async function openBranchModal(branchId = null) {
     </div>
   `;
   document.body.appendChild(modal);
+
+  // Initialize branch calendar
+  window.currentBranchScheduleDate = new Date();
+  window.branchScheduleData = branch?.schedule || {};
+  renderBranchCalendar(window.currentBranchScheduleDate, window.branchScheduleData);
+
+  // Add event listeners for day cells
+  document.querySelectorAll('.day-cell').forEach(cell => {
+    cell.addEventListener('click', function(e) {
+      // Handle multi-select with Ctrl/Cmd
+      if (!e.ctrlKey && !e.metaKey) {
+        // Deselect all other cells
+        document.querySelectorAll('.day-cell.selected').forEach(c => {
+          if (c !== this) {
+            c.classList.remove('selected');
+            c.style.borderColor = '#e5e7eb';
+            c.style.backgroundColor = 'white';
+          }
+        });
+      }
+
+      // Toggle selection
+      this.classList.toggle('selected');
+      if (this.classList.contains('selected')) {
+        this.style.borderColor = '#3b82f6';
+        this.style.backgroundColor = '#eff6ff';
+      } else {
+        this.style.borderColor = '#e5e7eb';
+        this.style.backgroundColor = 'white';
+      }
+
+      // Show time panel if any day is selected
+      const selectedDays = document.querySelectorAll('.day-cell.selected');
+      const timePanel = document.getElementById('branchTimeSettingsPanel');
+      if (selectedDays.length > 0) {
+        timePanel.style.display = 'block';
+
+        // Load time from first selected day
+        const timeDisplay = selectedDays[0].querySelector('.day-time');
+        if (timeDisplay && timeDisplay.textContent !== '-') {
+          const [start, end] = timeDisplay.textContent.split(' - ');
+          document.getElementById('branchStartTime').value = start || '09:00';
+          document.getElementById('branchEndTime').value = end || '18:00';
+        }
+      } else {
+        timePanel.style.display = 'none';
+      }
+    });
+  });
 }
 
 async function saveBranch(branchId = null) {
@@ -2030,7 +2109,8 @@ async function saveBranch(branchId = null) {
           name: name.trim(),
           city: city?.trim() || '',
           address: address?.trim() || '',
-          directions: directions?.trim() || ''
+          directions: directions?.trim() || '',
+          schedule: window.branchScheduleData || {}
         })
       });
     } else {
@@ -2040,7 +2120,8 @@ async function saveBranch(branchId = null) {
           name: name.trim(),
           city: city?.trim() || '',
           address: address?.trim() || '',
-          directions: directions?.trim() || ''
+          directions: directions?.trim() || '',
+          schedule: window.branchScheduleData || {}
         })
       });
     }
@@ -2073,6 +2154,132 @@ async function deleteBranch(branchId) {
     console.error('Error deleting branch:', error);
     alert('Ошибка удаления филиала: ' + error.message);
   }
+}
+
+// Render branch calendar
+function renderBranchCalendar(date, scheduleData) {
+  const container = document.getElementById('branchScheduleSettings');
+  const monthLabel = document.getElementById('currentBranchMonth');
+  if (!container || !monthLabel) return;
+
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+  monthLabel.textContent = `${monthNames[month]} ${year}`;
+
+  // Get first day of month and total days
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const totalDays = lastDay.getDate();
+  const startDayOfWeek = firstDay.getDay();
+
+  // Generate calendar grid
+  let html = '';
+
+  // Add empty cells for days before the 1st
+  for (let i = 0; i < (startDayOfWeek === 0 ? 6 : startDayOfWeek - 1); i++) {
+    html += '<div style="padding: 8px;"></div>';
+  }
+
+  // Add day cells
+  for (let day = 1; day <= totalDays; day++) {
+    const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const daySchedule = scheduleData[dateKey];
+    const timeText = daySchedule && daySchedule.enabled
+      ? `${daySchedule.startTime} - ${daySchedule.endTime}`
+      : '-';
+
+    html += `
+      <div class="day-cell" data-date="${dateKey}"
+           style="padding: 8px; border: 2px solid #e5e7eb; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; ${daySchedule && daySchedule.enabled ? 'border-color: #3b82f6; background-color: #eff6ff;' : ''}"
+           onclick="selectDay(this)">
+        <div style="font-weight: 600; font-size: 14px;">${day}</div>
+        <div class="day-time" style="font-size: 10px; color: #6b7280; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${timeText}</div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+// Change branch month
+function changeBranchMonth(delta) {
+  if (!window.currentBranchScheduleDate) return;
+  window.currentBranchScheduleDate.setMonth(window.currentBranchScheduleDate.getMonth() + delta);
+  renderBranchCalendar(window.currentBranchScheduleDate, window.branchScheduleData || {});
+}
+
+// Apply branch schedule time
+function applyBranchScheduleTime() {
+  const startTime = document.getElementById('branchStartTime').value;
+  const endTime = document.getElementById('branchEndTime').value;
+  const applyToSelected = document.getElementById('branchApplyToSelected').checked;
+
+  const selectedDays = document.querySelectorAll('.day-cell.selected');
+
+  if (selectedDays.length === 0) {
+    alert('Выберите хотя бы один день');
+    return;
+  }
+
+  selectedDays.forEach(dayCell => {
+    const dateKey = dayCell.dataset.date;
+    const timeDisplay = dayCell.querySelector('.day-time');
+    if (timeDisplay) {
+      timeDisplay.textContent = `${startTime} - ${endTime}`;
+      dayCell.style.borderColor = '#3b82f6';
+      dayCell.style.backgroundColor = '#eff6ff';
+      dayCell.dataset.timeEnabled = 'true';
+
+      // Update global schedule data
+      if (!window.branchScheduleData) {
+        window.branchScheduleData = {};
+      }
+      window.branchScheduleData[dateKey] = {
+        enabled: true,
+        startTime: startTime,
+        endTime: endTime
+      };
+    }
+  });
+
+  // If applyToSelected is not checked, deselect all
+  if (!applyToSelected) {
+    selectedDays.forEach(dayCell => {
+      dayCell.classList.remove('selected');
+    });
+    document.getElementById('branchTimeSettingsPanel').style.display = 'none';
+  }
+}
+
+// Clear branch schedule time
+function clearBranchScheduleTime() {
+  const selectedDays = document.querySelectorAll('.day-cell.selected');
+
+  if (selectedDays.length === 0) {
+    alert('Выберите хотя бы один день');
+    return;
+  }
+
+  selectedDays.forEach(dayCell => {
+    const dateKey = dayCell.dataset.date;
+    const timeDisplay = dayCell.querySelector('.day-time');
+    if (timeDisplay) {
+      timeDisplay.textContent = '-';
+      dayCell.style.borderColor = '#e5e7eb';
+      dayCell.style.backgroundColor = 'white';
+      delete dayCell.dataset.timeEnabled;
+
+      // Update global schedule data
+      if (window.branchScheduleData && window.branchScheduleData[dateKey]) {
+        delete window.branchScheduleData[dateKey];
+      }
+    }
+    dayCell.classList.remove('selected');
+  });
+
+  document.getElementById('branchTimeSettingsPanel').style.display = 'none';
 }
 
 async function loadCategories() {
