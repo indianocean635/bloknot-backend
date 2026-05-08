@@ -1134,6 +1134,16 @@ async function loadSpecialistSettings(index) {
     const nameInput = document.getElementById(`specialistName${index}`);
     const specialistId = nameInput?.dataset.specialistId;
 
+    // Load existing specialist settings if available
+    let specialistSettings = null;
+    if (specialistId) {
+      try {
+        specialistSettings = await api(`/api/specialists/${specialistId}/settings`);
+      } catch (error) {
+        console.log('No existing settings found, using defaults');
+      }
+    }
+
     // Load business data for categories, services, and branches
     const businessData = await api('/api/settings/business');
     const categories = businessData.categories || [];
@@ -1215,6 +1225,30 @@ async function loadSpecialistSettings(index) {
       </div>
     `;
 
+    // Load existing settings into form
+    if (specialistSettings) {
+      // Load branch
+      if (specialistSettings.branchId) {
+        document.getElementById('specialistBranch').value = specialistSettings.branchId;
+      }
+
+      // Load categories
+      if (specialistSettings.categoryIds) {
+        specialistSettings.categoryIds.forEach(catId => {
+          const checkbox = document.querySelector(`.category-checkbox[value="${catId}"]`);
+          if (checkbox) checkbox.checked = true;
+        });
+      }
+
+      // Load services
+      if (specialistSettings.serviceIds) {
+        specialistSettings.serviceIds.forEach(svcId => {
+          const checkbox = document.querySelector(`.service-checkbox[value="${svcId}"]`);
+          if (checkbox) checkbox.checked = true;
+        });
+      }
+    }
+
     // Initialize calendar
     let currentScheduleDate = new Date();
     renderCalendar(currentScheduleDate, specialistSettings?.schedule || {});
@@ -1262,38 +1296,6 @@ async function loadSpecialistSettings(index) {
         }
       });
     });
-
-    // Load existing specialist settings if available
-    let specialistSettings = null;
-    if (specialistId) {
-      try {
-        specialistSettings = await api(`/api/specialists/${specialistId}/settings`);
-        if (specialistSettings) {
-          // Load branch
-          if (specialistSettings.branchId) {
-            document.getElementById('specialistBranch').value = specialistSettings.branchId;
-          }
-
-          // Load categories
-          if (specialistSettings.categoryIds) {
-            specialistSettings.categoryIds.forEach(catId => {
-              const checkbox = document.querySelector(`.category-checkbox[value="${catId}"]`);
-              if (checkbox) checkbox.checked = true;
-            });
-          }
-
-          // Load services
-          if (specialistSettings.serviceIds) {
-            specialistSettings.serviceIds.forEach(svcId => {
-              const checkbox = document.querySelector(`.service-checkbox[value="${svcId}"]`);
-              if (checkbox) checkbox.checked = true;
-            });
-          }
-        }
-      } catch (error) {
-        console.log('No existing settings found, using defaults');
-      }
-    }
   } catch (error) {
     console.error('Error loading specialist settings:', error);
     const content = document.getElementById('specialistSettingsContent');
