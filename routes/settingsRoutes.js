@@ -134,21 +134,22 @@ router.post("/branches", requireAuth, async (req, res) => {
       route: req.originalUrl
     });
 
-    const { name, address, phone } = req.body;
-    
+    const { name, city, address, directions } = req.body;
+
     if (!name || name.trim() === "") {
       return res.status(400).json({ error: "Branch name is required" });
     }
-    
+
     const branch = await prisma.branch.create({
       data: {
         name: name.trim(),
+        city: city?.trim() || "",
         address: address?.trim() || "",
-        phone: phone?.trim() || "",
+        directions: directions?.trim() || "",
         businessId: req.user.businessId
       }
     });
-    
+
     res.json(branch);
   } catch (error) {
     console.error("Error creating branch:", error);
@@ -166,28 +167,29 @@ router.patch("/branches/:id", requireAuth, async (req, res) => {
     });
 
     const { id } = req.params;
-    const { name, address, phone } = req.body;
-    
+    const { name, city, address, directions } = req.body;
+
     const branch = await prisma.branch.findFirst({
-      where: { 
+      where: {
         id: parseInt(id),
-        businessId: req.user.businessId 
+        businessId: req.user.businessId
       }
     });
-    
+
     if (!branch) {
       return res.status(404).json({ error: "Branch not found" });
     }
-    
+
     const updatedBranch = await prisma.branch.update({
       where: { id: parseInt(id) },
       data: {
         name: name?.trim() || branch.name,
+        city: city?.trim() || branch.city,
         address: address?.trim() || branch.address,
-        phone: phone?.trim() || branch.phone
+        directions: directions?.trim() || branch.directions
       }
     });
-    
+
     res.json(updatedBranch);
   } catch (error) {
     console.error("Error updating branch:", error);

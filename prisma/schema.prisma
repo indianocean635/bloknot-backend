@@ -166,7 +166,9 @@ model Schedule {
 model Branch {
   id         Int      @id @default(autoincrement())
   name       String
+  city       String?
   address    String?
+  directions String?
   businessId String
   createdAt  DateTime @default(now())
 

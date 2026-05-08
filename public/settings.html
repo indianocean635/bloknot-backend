@@ -747,6 +747,14 @@ document.addEventListener('DOMContentLoaded', function() {
     saveCompanyNameBtn.parentNode.replaceChild(newSaveBtn, saveCompanyNameBtn);
     newSaveBtn.addEventListener('click', saveCompanyName);
   }
+
+  // Add event listener for add branch button
+  const addBranchBtn = document.getElementById('addBranchBtn');
+  if (addBranchBtn) {
+    const newAddBtn = addBranchBtn.cloneNode(true);
+    addBranchBtn.parentNode.replaceChild(newAddBtn, addBranchBtn);
+    newAddBtn.addEventListener('click', () => openBranchModal());
+  }
 });
 
 // Load specialist limit from API
@@ -1930,7 +1938,141 @@ async function saveCompanyName() {
 }
 
 async function loadBranches() {
-  // Load branches from backend
+  try {
+    const branches = await api('/api/settings/branches');
+    const branchesGrid = document.getElementById('branchesGrid');
+    if (branchesGrid && branches) {
+      branchesGrid.innerHTML = branches.map(branch => `
+        <div class="branch-item" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; margin-bottom: 4px;">${branch.name}</div>
+              ${branch.city ? `<div style="font-size: 14px; color: #666;">${branch.city}</div>` : ''}
+              ${branch.address ? `<div style="font-size: 13px; color: #888;">${branch.address}</div>` : ''}
+              ${branch.directions ? `<div style="font-size: 12px; color: #999; margin-top: 4px;">${branch.directions}</div>` : ''}
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn secondary" onclick="editBranch(${branch.id})" style="padding: 4px 8px; font-size: 12px;">Редактировать</button>
+              <button class="btn secondary" onclick="deleteBranch(${branch.id})" style="padding: 4px 8px; font-size: 12px; background: #fee2e2; color: #dc2626; border-color: #fecaca;">Удалить</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (error) {
+    console.error('Error loading branches:', error);
+  }
+}
+
+async function openBranchModal(branchId = null) {
+  let branch = null;
+  if (branchId) {
+    try {
+      const branches = await api('/api/settings/branches');
+      branch = branches.find(b => b.id === branchId);
+    } catch (error) {
+      console.error('Error loading branch:', error);
+    }
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>${branchId ? 'Редактировать филиал' : 'Добавить филиал'}</h3>
+        <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Название *</label>
+          <input type="text" id="branchName" value="${branch?.name || ''}" placeholder="Название филиала" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Город</label>
+          <input type="text" id="branchCity" value="${branch?.city || ''}" placeholder="Город" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Адрес</label>
+          <input type="text" id="branchAddress" value="${branch?.address || ''}" placeholder="Адрес" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Как пройти (опционально)</label>
+          <textarea id="branchDirections" placeholder="Как добраться..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; min-height: 80px;">${branch?.directions || ''}</textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" onclick="this.closest('.modal').remove()">Отмена</button>
+        <button class="btn primary" onclick="saveBranch(${branchId})">Сохранить</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+async function saveBranch(branchId = null) {
+  try {
+    const name = document.getElementById('branchName')?.value;
+    const city = document.getElementById('branchCity')?.value;
+    const address = document.getElementById('branchAddress')?.value;
+    const directions = document.getElementById('branchDirections')?.value;
+
+    if (!name || name.trim() === '') {
+      alert('Введите название филиала');
+      return;
+    }
+
+    if (branchId) {
+      await api(`/api/settings/branches/${branchId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: name.trim(),
+          city: city?.trim() || '',
+          address: address?.trim() || '',
+          directions: directions?.trim() || ''
+        })
+      });
+    } else {
+      await api('/api/settings/branches', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: name.trim(),
+          city: city?.trim() || '',
+          address: address?.trim() || '',
+          directions: directions?.trim() || ''
+        })
+      });
+    }
+
+    document.querySelector('.modal')?.remove();
+    await loadBranches();
+    alert(branchId ? 'Филиал обновлен!' : 'Филиал добавлен!');
+  } catch (error) {
+    console.error('Error saving branch:', error);
+    alert('Ошибка сохранения филиала: ' + error.message);
+  }
+}
+
+async function editBranch(branchId) {
+  await openBranchModal(branchId);
+}
+
+async function deleteBranch(branchId) {
+  if (!confirm('Вы уверены, что хотите удалить этот филиал?')) {
+    return;
+  }
+
+  try {
+    await api(`/api/settings/branches/${branchId}`, {
+      method: 'DELETE'
+    });
+    await loadBranches();
+    alert('Филиал удален!');
+  } catch (error) {
+    console.error('Error deleting branch:', error);
+    alert('Ошибка удаления филиала: ' + error.message);
+  }
 }
 
 async function loadCategories() {
