@@ -212,7 +212,7 @@ router.post('/:id/schedule', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { schedule } = req.body;
-    
+
     // First find the specialist to ensure it belongs to the user's business
     const specialist = await prisma.master.findFirst({
       where: {
@@ -220,15 +220,100 @@ router.post('/:id/schedule', requireAuth, async (req, res) => {
         businessId: req.user.businessId
       }
     });
-    
+
     if (!specialist) {
       return res.status(404).json({ error: 'Specialist not found' });
     }
-    
+
     // For now, just return success - schedule storage can be extended later
     res.json({ success: true, schedule });
   } catch (error) {
     console.error('Error updating specialist schedule:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/specialists/:id/settings - Get specialist settings
+router.get('/:id/settings', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // First find the specialist to ensure it belongs to the user's business
+    const specialist = await prisma.master.findFirst({
+      where: {
+        id: parseInt(id),
+        businessId: req.user.businessId
+      }
+    });
+
+    if (!specialist) {
+      return res.status(404).json({ error: 'Specialist not found' });
+    }
+
+    res.json({
+      branchId: specialist.branchId,
+      schedule: specialist.schedule,
+      categoryIds: specialist.categoryIds || [],
+      serviceIds: specialist.serviceIds || []
+    });
+  } catch (error) {
+    console.error('Error fetching specialist settings:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/specialists/:id/settings - Update specialist settings
+router.post('/:id/settings', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { branchId, schedule, categoryIds, serviceIds } = req.body;
+
+    // First find the specialist to ensure it belongs to the user's business
+    const specialist = await prisma.master.findFirst({
+      where: {
+        id: parseInt(id),
+        businessId: req.user.businessId
+      }
+    });
+
+    if (!specialist) {
+      return res.status(404).json({ error: 'Specialist not found' });
+    }
+
+    // Validate branchId if provided
+    if (branchId) {
+      const branch = await prisma.branch.findFirst({
+        where: {
+          id: parseInt(branchId),
+          businessId: req.user.businessId
+        }
+      });
+
+      if (!branch) {
+        return res.status(400).json({ error: 'Invalid branch' });
+      }
+    }
+
+    // Update specialist settings
+    const updatedSpecialist = await prisma.master.update({
+      where: { id: parseInt(id) },
+      data: {
+        branchId: branchId ? parseInt(branchId) : null,
+        schedule: schedule || {},
+        categoryIds: categoryIds || [],
+        serviceIds: serviceIds || []
+      }
+    });
+
+    res.json({
+      success: true,
+      branchId: updatedSpecialist.branchId,
+      schedule: updatedSpecialist.schedule,
+      categoryIds: updatedSpecialist.categoryIds,
+      serviceIds: updatedSpecialist.serviceIds
+    });
+  } catch (error) {
+    console.error('Error updating specialist settings:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

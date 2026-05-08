@@ -1091,8 +1091,247 @@ async function saveSpecialist(index) {
 }
 
 function openScheduleSettings(index) {
-  // Open schedule settings page with specialist index
-  window.location.href = `/specialist-schedule.html?specialist=${index}`;
+  // Open specialist settings modal
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3>Настройки специалиста</h3>
+        <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="specialistSettingsContent">
+          <p>Загрузка настроек...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" onclick="this.closest('.modal').remove()">Закрыть</button>
+        <button class="btn primary" onclick="saveSpecialistSettings(${index}); this.closest('.modal').remove();">Сохранить</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  loadSpecialistSettings(index);
+}
+
+async function loadSpecialistSettings(index) {
+  try {
+    const content = document.getElementById('specialistSettingsContent');
+    if (!content) return;
+
+    // Get specialist data
+    const nameInput = document.getElementById(`specialistName${index}`);
+    const specialistId = nameInput?.dataset.specialistId;
+
+    // Load business data for categories, services, and branches
+    const businessData = await api('/api/settings/business');
+    const categories = businessData.categories || [];
+    const services = businessData.services || [];
+    const branches = businessData.branches || [];
+
+    content.innerHTML = `
+      <div style="margin-bottom: 20px;">
+        <h4 style="margin-bottom: 12px;">Филиал</h4>
+        <select id="specialistBranch" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          <option value="">Выберите филиал</option>
+          ${branches.map(b => `<option value="${b.id}">${b.name}</option>`).join('')}
+        </select>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="margin-bottom: 12px;">График работы</h4>
+        <div id="scheduleSettings">
+          ${['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'].map(day => `
+            <div style="margin-bottom: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">
+              <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                <input type="checkbox" id="day_${day}" class="day-checkbox" style="margin-right: 8px;">
+                <label for="day_${day}" style="font-weight: 500;">${day}</label>
+              </div>
+              <div style="display: flex; gap: 8px; margin-left: 24px;">
+                <div style="flex: 1;">
+                  <label style="font-size: 12px; color: #666;">С:</label>
+                  <input type="time" id="start_${day}" class="time-start" style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 4px;" disabled>
+                </div>
+                <div style="flex: 1;">
+                  <label style="font-size: 12px; color: #666;">До:</label>
+                  <input type="time" id="end_${day}" class="time-end" style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 4px;" disabled>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="margin-bottom: 12px;">Категории услуг</h4>
+        <div id="categoriesSettings">
+          ${categories.map(cat => `
+            <div style="margin-bottom: 8px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" class="category-checkbox" value="${cat.id}" style="margin-right: 8px;">
+                <span>${cat.name}</span>
+              </label>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="margin-bottom: 12px;">Услуги</h4>
+        <div id="servicesSettings">
+          ${services.map(svc => `
+            <div style="margin-bottom: 8px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" class="service-checkbox" value="${svc.id}" style="margin-right: 8px;">
+                <span>${svc.name} (${svc.duration} мин, ${svc.price} руб)</span>
+              </label>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    // Add event listeners for day checkboxes
+    document.querySelectorAll('.day-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const day = this.id.replace('day_', '');
+        const startInput = document.getElementById(`start_${day}`);
+        const endInput = document.getElementById(`end_${day}`);
+        
+        if (startInput && endInput) {
+          startInput.disabled = !this.checked;
+          endInput.disabled = !this.checked;
+        }
+      });
+    });
+
+    // Load existing specialist settings if available
+    if (specialistId) {
+      try {
+        const specialistSettings = await api(`/api/specialists/${specialistId}/settings`);
+        if (specialistSettings) {
+          // Load branch
+          if (specialistSettings.branchId) {
+            document.getElementById('specialistBranch').value = specialistSettings.branchId;
+          }
+          
+          // Load schedule
+          if (specialistSettings.schedule) {
+            Object.keys(specialistSettings.schedule).forEach(day => {
+              const checkbox = document.getElementById(`day_${day}`);
+              const startInput = document.getElementById(`start_${day}`);
+              const endInput = document.getElementById(`end_${day}`);
+              
+              if (checkbox && specialistSettings.schedule[day].enabled) {
+                checkbox.checked = true;
+                if (startInput) {
+                  startInput.disabled = false;
+                  startInput.value = specialistSettings.schedule[day].startTime || '';
+                }
+                if (endInput) {
+                  endInput.disabled = false;
+                  endInput.value = specialistSettings.schedule[day].endTime || '';
+                }
+              }
+            });
+          }
+          
+          // Load categories
+          if (specialistSettings.categoryIds) {
+            specialistSettings.categoryIds.forEach(catId => {
+              const checkbox = document.querySelector(`.category-checkbox[value="${catId}"]`);
+              if (checkbox) checkbox.checked = true;
+            });
+          }
+          
+          // Load services
+          if (specialistSettings.serviceIds) {
+            specialistSettings.serviceIds.forEach(svcId => {
+              const checkbox = document.querySelector(`.service-checkbox[value="${svcId}"]`);
+              if (checkbox) checkbox.checked = true;
+            });
+          }
+        }
+      } catch (error) {
+        console.log('No existing settings found, using defaults');
+      }
+    }
+  } catch (error) {
+    console.error('Error loading specialist settings:', error);
+    const content = document.getElementById('specialistSettingsContent');
+    if (content) {
+      content.innerHTML = '<p style="color: #e74c3c;">Ошибка загрузки настроек</p>';
+    }
+  }
+}
+
+async function saveSpecialistSettings(index) {
+  try {
+    const nameInput = document.getElementById(`specialistName${index}`);
+    const specialistId = nameInput?.dataset.specialistId;
+
+    if (!specialistId) {
+      alert('Сначала сохраните данные специалиста');
+      return;
+    }
+
+    // Collect schedule data
+    const schedule = {};
+    ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'].forEach(day => {
+      const checkbox = document.getElementById(`day_${day}`);
+      const startInput = document.getElementById(`start_${day}`);
+      const endInput = document.getElementById(`end_${day}`);
+      
+      if (checkbox && checkbox.checked) {
+        schedule[day] = {
+          enabled: true,
+          startTime: startInput?.value || '09:00',
+          endTime: endInput?.value || '18:00'
+        };
+      } else {
+        schedule[day] = {
+          enabled: false,
+          startTime: '09:00',
+          endTime: '18:00'
+        };
+      }
+    });
+
+    // Collect category IDs
+    const categoryIds = [];
+    document.querySelectorAll('.category-checkbox:checked').forEach(checkbox => {
+      categoryIds.push(checkbox.value);
+    });
+
+    // Collect service IDs
+    const serviceIds = [];
+    document.querySelectorAll('.service-checkbox:checked').forEach(checkbox => {
+      serviceIds.push(checkbox.value);
+    });
+
+    // Collect branch ID
+    const branchId = document.getElementById('specialistBranch').value || null;
+
+    const settingsData = {
+      specialistId,
+      branchId,
+      schedule,
+      categoryIds,
+      serviceIds
+    };
+
+    await api(`/api/specialists/${specialistId}/settings`, {
+      method: 'POST',
+      body: JSON.stringify(settingsData)
+    });
+
+    alert('Настройки специалиста сохранены!');
+  } catch (error) {
+    console.error('Error saving specialist settings:', error);
+    alert('Ошибка сохранения настроек: ' + error.message);
+  }
 }
 
 async function handleAvatarSelect(index, input) {

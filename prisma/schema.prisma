@@ -127,9 +127,14 @@ model Master {
   businessId String
   specializations String?
   avatarUrl  String?
+  branchId   Int?
+  schedule   Json?
+  categoryIds Int[]
+  serviceIds  Int[]
   createdAt  DateTime @default(now())
 
   business  Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch   Branch?     @relation(fields: [branchId], references: [id])
   schedules Schedule[]
   appointments Appointment[]
 }
@@ -165,9 +170,9 @@ model Branch {
   businessId String
   createdAt  DateTime @default(now())
 
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
+  business     Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
   appointments Appointment[]
+  masters      Master[]
 }
 
 model Appointment {
