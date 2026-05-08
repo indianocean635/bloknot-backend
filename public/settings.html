@@ -1179,7 +1179,7 @@ async function loadSpecialistSettings(index) {
     // Load business data for categories, services, and branches
     const businessData = await api('/api/settings/business');
     const categories = businessData.categories || [];
-    const services = businessData.services || [];
+    const services = categories?.flatMap(cat => cat.services) || [];
     const branches = businessData.branches || [];
 
     content.innerHTML = `
