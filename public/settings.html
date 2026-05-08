@@ -1091,6 +1091,12 @@ async function saveSpecialist(index) {
 }
 
 function openScheduleSettings(index) {
+  // Get specialist info
+  const nameInput = document.getElementById(`specialistName${index}`);
+  const emailInput = document.getElementById(`specialistEmail${index}`);
+  const specialistName = nameInput?.value || 'Специалист';
+  const specialistEmail = emailInput?.value || '';
+
   // Open specialist settings modal
   const modal = document.createElement('div');
   modal.className = 'modal';
@@ -1098,7 +1104,10 @@ function openScheduleSettings(index) {
   modal.innerHTML = `
     <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
       <div class="modal-header">
-        <h3>Настройки специалиста</h3>
+        <div>
+          <h3>Настройки специалиста</h3>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: #6b7280;">${specialistName} ${specialistEmail ? `(${specialistEmail})` : ''}</p>
+        </div>
         <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
       </div>
       <div class="modal-body">
