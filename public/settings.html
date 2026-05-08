@@ -1153,18 +1153,15 @@ async function loadSpecialistSettings(index) {
         <h4 style="margin-bottom: 12px;">График работы</h4>
         <div style="display: flex; gap: 16px;">
           <div style="flex: 1;">
-            <div id="scheduleSettings" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;">
-              ${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day, idx) => `
-                <div class="day-cell" data-day="${['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'][idx]}" 
-                     style="padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s;"
-                     onclick="selectDay(this)">
-                  <div style="font-weight: 600; font-size: 14px;">${day}</div>
-                  <div class="day-time" style="font-size: 11px; color: #6b7280; margin-top: 4px;">-</div>
-                </div>
-              `).join('')}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <button class="btn secondary" onclick="changeMonth(-1)" style="padding: 4px 8px; font-size: 14px;">←</button>
+              <span id="currentMonth" style="font-weight: 600;"></span>
+              <button class="btn secondary" onclick="changeMonth(1)" style="padding: 4px 8px; font-size: 14px;">→</button>
+            </div>
+            <div id="scheduleSettings" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
             </div>
             <div style="margin-top: 12px; font-size: 12px; color: #6b7280;">
-              Нажмите на день, чтобы выбрать рабочее время. Зажмите Ctrl/Cmd для выбора нескольких дней.
+              Нажмите на дату, чтобы выбрать рабочее время. Зажмите Ctrl/Cmd для выбора нескольких дней.
             </div>
           </div>
           <div id="timeSettingsPanel" style="width: 200px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; display: none;">
@@ -1180,7 +1177,7 @@ async function loadSpecialistSettings(index) {
             <div style="margin-bottom: 12px;">
               <label style="display: flex; align-items: center; cursor: pointer;">
                 <input type="checkbox" id="applyToSelected" style="margin-right: 8px;">
-                <span style="font-size: 12px;">Применить к выбранным дням</span>
+                <span style="font-size: 12px;">Применить к выбранным датам</span>
               </label>
             </div>
             <button class="btn primary" onclick="applyScheduleTime()" style="width: 100%; padding: 8px; font-size: 14px;">Применить</button>
@@ -1218,6 +1215,10 @@ async function loadSpecialistSettings(index) {
       </div>
     `;
 
+    // Initialize calendar
+    let currentScheduleDate = new Date();
+    renderCalendar(currentScheduleDate, specialistSettings?.schedule || {});
+
     // Add event listeners for day cells
     document.querySelectorAll('.day-cell').forEach(cell => {
       cell.addEventListener('click', function(e) {
@@ -1248,9 +1249,8 @@ async function loadSpecialistSettings(index) {
         const timePanel = document.getElementById('timeSettingsPanel');
         if (selectedDays.length > 0) {
           timePanel.style.display = 'block';
-          
+
           // Load time from first selected day
-          const dayName = selectedDays[0].dataset.day;
           const timeDisplay = selectedDays[0].querySelector('.day-time');
           if (timeDisplay && timeDisplay.textContent !== '-') {
             const [start, end] = timeDisplay.textContent.split(' - ');
@@ -1264,29 +1264,14 @@ async function loadSpecialistSettings(index) {
     });
 
     // Load existing specialist settings if available
+    let specialistSettings = null;
     if (specialistId) {
       try {
-        const specialistSettings = await api(`/api/specialists/${specialistId}/settings`);
+        specialistSettings = await api(`/api/specialists/${specialistId}/settings`);
         if (specialistSettings) {
           // Load branch
           if (specialistSettings.branchId) {
             document.getElementById('specialistBranch').value = specialistSettings.branchId;
-          }
-
-          // Load schedule
-          if (specialistSettings.schedule) {
-            Object.keys(specialistSettings.schedule).forEach(day => {
-              const dayCell = document.querySelector(`.day-cell[data-day="${day}"]`);
-              const timeDisplay = dayCell?.querySelector('.day-time');
-
-              if (dayCell && specialistSettings.schedule[day].enabled) {
-                dayCell.style.borderColor = '#3b82f6';
-                dayCell.style.backgroundColor = '#eff6ff';
-                if (timeDisplay) {
-                  timeDisplay.textContent = `${specialistSettings.schedule[day].startTime} - ${specialistSettings.schedule[day].endTime}`;
-                }
-              }
-            });
           }
 
           // Load categories
@@ -1323,6 +1308,118 @@ function selectDay(cell) {
   // This is handled by the event listener above
 }
 
+// Render calendar for a specific month
+function renderCalendar(date, scheduleData) {
+  const container = document.getElementById('scheduleSettings');
+  const monthLabel = document.getElementById('currentMonth');
+  if (!container || !monthLabel) return;
+
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+  monthLabel.textContent = `${monthNames[month]} ${year}`;
+
+  // Get first day of month and total days
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const totalDays = lastDay.getDate();
+  const startDayOfWeek = firstDay.getDay();
+
+  // Generate calendar grid
+  let html = '';
+  
+  // Add empty cells for days before the 1st
+  for (let i = 0; i < (startDayOfWeek === 0 ? 6 : startDayOfWeek - 1); i++) {
+    html += '<div style="padding: 8px;"></div>';
+  }
+
+  // Add day cells
+  for (let day = 1; day <= totalDays; day++) {
+    const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const daySchedule = scheduleData[dateKey];
+    const timeText = daySchedule && daySchedule.enabled
+      ? `${daySchedule.startTime} - ${daySchedule.endTime}`
+      : '-';
+
+    html += `
+      <div class="day-cell" data-date="${dateKey}"
+           style="padding: 8px; border: 2px solid #e5e7eb; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; ${daySchedule && daySchedule.enabled ? 'border-color: #3b82f6; background-color: #eff6ff;' : ''}"
+           onclick="selectDay(this)">
+        <div style="font-weight: 600; font-size: 14px;">${day}</div>
+        <div class="day-time" style="font-size: 10px; color: #6b7280; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${timeText}</div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+
+  // Re-attach event listeners
+  container.querySelectorAll('.day-cell').forEach(cell => {
+    cell.addEventListener('click', function(e) {
+      // Handle multi-select with Ctrl/Cmd
+      if (!e.ctrlKey && !e.metaKey) {
+        // Deselect all other cells
+        container.querySelectorAll('.day-cell.selected').forEach(c => {
+          if (c !== this) {
+            c.classList.remove('selected');
+            c.style.borderColor = c.dataset.timeEnabled ? '#3b82f6' : '#e5e7eb';
+            c.style.backgroundColor = c.dataset.timeEnabled ? '#eff6ff' : 'white';
+          }
+        });
+      }
+
+      // Toggle selection
+      this.classList.toggle('selected');
+      if (this.classList.contains('selected')) {
+        this.style.borderColor = '#3b82f6';
+        this.style.backgroundColor = '#eff6ff';
+      } else {
+        this.style.borderColor = this.dataset.timeEnabled ? '#3b82f6' : '#e5e7eb';
+        this.style.backgroundColor = this.dataset.timeEnabled ? '#eff6ff' : 'white';
+      }
+
+      // Show time panel if any day is selected
+      const selectedDays = container.querySelectorAll('.day-cell.selected');
+      const timePanel = document.getElementById('timeSettingsPanel');
+      if (selectedDays.length > 0) {
+        timePanel.style.display = 'block';
+
+        // Load time from first selected day
+        const timeDisplay = selectedDays[0].querySelector('.day-time');
+        if (timeDisplay && timeDisplay.textContent !== '-') {
+          const [start, end] = timeDisplay.textContent.split(' - ');
+          document.getElementById('startTime').value = start || '09:00';
+          document.getElementById('endTime').value = end || '18:00';
+        }
+      } else {
+        timePanel.style.display = 'none';
+      }
+    });
+  });
+}
+
+// Change month
+function changeMonth(delta) {
+  currentScheduleDate.setMonth(currentScheduleDate.getMonth() + delta);
+  // Get current schedule data from UI
+  const scheduleData = {};
+  document.querySelectorAll('.day-cell').forEach(cell => {
+    const dateKey = cell.dataset.date;
+    const timeDisplay = cell.querySelector('.day-time');
+    const timeText = timeDisplay?.textContent || '-';
+    if (timeText !== '-' && timeText !== '') {
+      const [startTime, endTime] = timeText.split(' - ');
+      scheduleData[dateKey] = {
+        enabled: true,
+        startTime: startTime || '09:00',
+        endTime: endTime || '18:00'
+      };
+    }
+  });
+  renderCalendar(currentScheduleDate, scheduleData);
+}
+
 // Apply schedule time to selected days
 function applyScheduleTime() {
   const startTime = document.getElementById('startTime').value;
@@ -1342,6 +1439,7 @@ function applyScheduleTime() {
       timeDisplay.textContent = `${startTime} - ${endTime}`;
       dayCell.style.borderColor = '#3b82f6';
       dayCell.style.backgroundColor = '#eff6ff';
+      dayCell.dataset.timeEnabled = 'true';
     }
   });
 
@@ -1369,6 +1467,7 @@ function clearScheduleTime() {
       timeDisplay.textContent = '-';
       dayCell.style.borderColor = '#e5e7eb';
       dayCell.style.backgroundColor = 'white';
+      delete dayCell.dataset.timeEnabled;
     }
     dayCell.classList.remove('selected');
   });
@@ -1386,26 +1485,20 @@ async function saveSpecialistSettings(index) {
       return;
     }
 
-    // Collect schedule data from day cells
+    // Collect schedule data from calendar cells
     const schedule = {};
     const dayCells = document.querySelectorAll('.day-cell');
     dayCells.forEach(cell => {
-      const day = cell.dataset.day;
+      const dateKey = cell.dataset.date;
       const timeDisplay = cell.querySelector('.day-time');
       const timeText = timeDisplay?.textContent || '-';
 
       if (timeText !== '-' && timeText !== '') {
         const [startTime, endTime] = timeText.split(' - ');
-        schedule[day] = {
+        schedule[dateKey] = {
           enabled: true,
           startTime: startTime || '09:00',
           endTime: endTime || '18:00'
-        };
-      } else {
-        schedule[day] = {
-          enabled: false,
-          startTime: '09:00',
-          endTime: '18:00'
         };
       }
     });
