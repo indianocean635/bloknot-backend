@@ -1285,50 +1285,6 @@ async function loadSpecialistSettings(index) {
     window.currentScheduleDate = new Date();
     window.specialistScheduleData = specialistSettings?.schedule || {};
     renderCalendar(window.currentScheduleDate, window.specialistScheduleData);
-
-    // Add event listeners for day cells
-    document.querySelectorAll('.day-cell').forEach(cell => {
-      cell.addEventListener('click', function(e) {
-        // Handle multi-select with Ctrl/Cmd
-        if (!e.ctrlKey && !e.metaKey) {
-          // Deselect all other cells
-          document.querySelectorAll('.day-cell.selected').forEach(c => {
-            if (c !== this) {
-              c.classList.remove('selected');
-              c.style.borderColor = '#e5e7eb';
-              c.style.backgroundColor = 'white';
-            }
-          });
-        }
-
-        // Toggle selection
-        this.classList.toggle('selected');
-        if (this.classList.contains('selected')) {
-          this.style.borderColor = '#3b82f6';
-          this.style.backgroundColor = '#eff6ff';
-        } else {
-          this.style.borderColor = '#e5e7eb';
-          this.style.backgroundColor = 'white';
-        }
-
-        // Show time panel if any day is selected
-        const selectedDays = document.querySelectorAll('.day-cell.selected');
-        const timePanel = document.getElementById('timeSettingsPanel');
-        if (selectedDays.length > 0) {
-          timePanel.style.display = 'block';
-
-          // Load time from first selected day
-          const timeDisplay = selectedDays[0].querySelector('.day-time');
-          if (timeDisplay && timeDisplay.textContent !== '-') {
-            const [start, end] = timeDisplay.textContent.split(' - ');
-            document.getElementById('startTime').value = start || '09:00';
-            document.getElementById('endTime').value = end || '18:00';
-          }
-        } else {
-          timePanel.style.display = 'none';
-        }
-      });
-    });
   } catch (error) {
     console.error('Error loading specialist settings:', error);
     const content = document.getElementById('specialistSettingsContent');
