@@ -1102,7 +1102,7 @@ function openScheduleSettings(index) {
   modal.className = 'modal';
   modal.style.display = 'flex';
   modal.innerHTML = `
-    <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+    <div class="modal-content" style="max-width: 900px; max-height: 95vh; overflow-y: auto;">
       <div class="modal-header">
         <div>
           <h3>Настройки специалиста</h3>
@@ -1250,8 +1250,9 @@ async function loadSpecialistSettings(index) {
     }
 
     // Initialize calendar
-    let currentScheduleDate = new Date();
-    renderCalendar(currentScheduleDate, specialistSettings?.schedule || {});
+    window.currentScheduleDate = new Date();
+    window.specialistScheduleData = specialistSettings?.schedule || {};
+    renderCalendar(window.currentScheduleDate, window.specialistScheduleData);
 
     // Add event listeners for day cells
     document.querySelectorAll('.day-cell').forEach(cell => {
@@ -1403,23 +1404,10 @@ function renderCalendar(date, scheduleData) {
 
 // Change month
 function changeMonth(delta) {
-  currentScheduleDate.setMonth(currentScheduleDate.getMonth() + delta);
-  // Get current schedule data from UI
-  const scheduleData = {};
-  document.querySelectorAll('.day-cell').forEach(cell => {
-    const dateKey = cell.dataset.date;
-    const timeDisplay = cell.querySelector('.day-time');
-    const timeText = timeDisplay?.textContent || '-';
-    if (timeText !== '-' && timeText !== '') {
-      const [startTime, endTime] = timeText.split(' - ');
-      scheduleData[dateKey] = {
-        enabled: true,
-        startTime: startTime || '09:00',
-        endTime: endTime || '18:00'
-      };
-    }
-  });
-  renderCalendar(currentScheduleDate, scheduleData);
+  if (!window.currentScheduleDate) return;
+  window.currentScheduleDate.setMonth(window.currentScheduleDate.getMonth() + delta);
+  // Use the global schedule data
+  renderCalendar(window.currentScheduleDate, window.specialistScheduleData || {});
 }
 
 // Apply schedule time to selected days
@@ -1436,12 +1424,23 @@ function applyScheduleTime() {
   }
 
   selectedDays.forEach(dayCell => {
+    const dateKey = dayCell.dataset.date;
     const timeDisplay = dayCell.querySelector('.day-time');
     if (timeDisplay) {
       timeDisplay.textContent = `${startTime} - ${endTime}`;
       dayCell.style.borderColor = '#3b82f6';
       dayCell.style.backgroundColor = '#eff6ff';
       dayCell.dataset.timeEnabled = 'true';
+
+      // Update global schedule data
+      if (!window.specialistScheduleData) {
+        window.specialistScheduleData = {};
+      }
+      window.specialistScheduleData[dateKey] = {
+        enabled: true,
+        startTime: startTime,
+        endTime: endTime
+      };
     }
   });
 
@@ -1464,12 +1463,18 @@ function clearScheduleTime() {
   }
 
   selectedDays.forEach(dayCell => {
+    const dateKey = dayCell.dataset.date;
     const timeDisplay = dayCell.querySelector('.day-time');
     if (timeDisplay) {
       timeDisplay.textContent = '-';
       dayCell.style.borderColor = '#e5e7eb';
       dayCell.style.backgroundColor = 'white';
       delete dayCell.dataset.timeEnabled;
+
+      // Update global schedule data
+      if (window.specialistScheduleData && window.specialistScheduleData[dateKey]) {
+        delete window.specialistScheduleData[dateKey];
+      }
     }
     dayCell.classList.remove('selected');
   });
@@ -1487,23 +1492,8 @@ async function saveSpecialistSettings(index) {
       return;
     }
 
-    // Collect schedule data from calendar cells
-    const schedule = {};
-    const dayCells = document.querySelectorAll('.day-cell');
-    dayCells.forEach(cell => {
-      const dateKey = cell.dataset.date;
-      const timeDisplay = cell.querySelector('.day-time');
-      const timeText = timeDisplay?.textContent || '-';
-
-      if (timeText !== '-' && timeText !== '') {
-        const [startTime, endTime] = timeText.split(' - ');
-        schedule[dateKey] = {
-          enabled: true,
-          startTime: startTime || '09:00',
-          endTime: endTime || '18:00'
-        };
-      }
-    });
+    // Collect schedule data from global storage
+    const schedule = window.specialistScheduleData || {};
 
     // Collect category IDs
     const categoryIds = [];
