@@ -739,6 +739,14 @@ document.addEventListener('DOMContentLoaded', function() {
     addWorkBtn.parentNode.replaceChild(newBtn, addWorkBtn);
     newBtn.addEventListener('click', handleAddWork);
   }
+
+  // Add event listener for company name save button
+  const saveCompanyNameBtn = document.getElementById('saveCompanyNameBtn');
+  if (saveCompanyNameBtn) {
+    const newSaveBtn = saveCompanyNameBtn.cloneNode(true);
+    saveCompanyNameBtn.parentNode.replaceChild(newSaveBtn, saveCompanyNameBtn);
+    newSaveBtn.addEventListener('click', saveCompanyName);
+  }
 });
 
 // Load specialist limit from API
@@ -1888,7 +1896,37 @@ async function loadLogo() {
 }
 
 async function loadCompanyName() {
-  // Load company name from backend
+  try {
+    const businessData = await api('/api/settings/business');
+    const companyNameInput = document.getElementById('companyNameInput');
+    if (companyNameInput && businessData?.name) {
+      companyNameInput.value = businessData.name;
+    }
+  } catch (error) {
+    console.error('Error loading company name:', error);
+  }
+}
+
+async function saveCompanyName() {
+  try {
+    const companyNameInput = document.getElementById('companyNameInput');
+    const companyName = companyNameInput?.value;
+
+    if (!companyName || companyName.trim() === '') {
+      alert('Введите название компании');
+      return;
+    }
+
+    await api('/api/business/name', {
+      method: 'PATCH',
+      body: JSON.stringify({ name: companyName.trim() })
+    });
+
+    alert('Название компании сохранено!');
+  } catch (error) {
+    console.error('Error saving company name:', error);
+    alert('Ошибка сохранения названия компании: ' + error.message);
+  }
 }
 
 async function loadBranches() {
