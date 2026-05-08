@@ -936,9 +936,16 @@ function updateSpecialistForms(limit) {
     };
   });
 
+  // Store the maximum limit for later use
+  window.maxSpecialistLimit = limit;
+
+  // For plans > 5, start with 5 specialists
+  const initialCount = limit > 5 ? 5 : limit;
+  window.currentSpecialistCount = initialCount;
+
   grid.innerHTML = '';
 
-  for (let i = 1; i <= limit; i++) {
+  for (let i = 1; i <= initialCount; i++) {
     const form = createSpecialistForm(i);
     grid.appendChild(form);
 
@@ -980,10 +987,36 @@ function updateSpecialistForms(limit) {
   // Load all specialist data at once after forms are created
   loadAllSpecialistData();
 
-  // Update add button
+  // Update add button - show if plan > 5 and current count < max
   const addBtn = document.getElementById('addMasterBtn');
   if (addBtn) {
-    addBtn.style.display = limit > 0 ? 'none' : 'block';
+    addBtn.style.display = (limit > 5 && window.currentSpecialistCount < limit) ? 'block' : 'none';
+    // Update onclick handler to add one specialist at a time
+    addBtn.onclick = addOneSpecialist;
+  }
+}
+
+function addOneSpecialist() {
+  if (!window.currentSpecialistCount || !window.maxSpecialistLimit) return;
+  if (window.currentSpecialistCount >= window.maxSpecialistLimit) {
+    alert('Достигнут лимит специалистов');
+    return;
+  }
+
+  const grid = document.getElementById('mastersGrid');
+  const newIndex = window.currentSpecialistCount + 1;
+  const form = createSpecialistForm(newIndex);
+  grid.appendChild(form);
+
+  window.currentSpecialistCount = newIndex;
+
+  // Load data for the new specialist
+  loadAllSpecialistData();
+
+  // Hide add button if reached max
+  const addBtn = document.getElementById('addMasterBtn');
+  if (addBtn && window.currentSpecialistCount >= window.maxSpecialistLimit) {
+    addBtn.style.display = 'none';
   }
 }
 
