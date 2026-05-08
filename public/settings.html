@@ -749,6 +749,28 @@ document.addEventListener('DOMContentLoaded', function() {
     addBranchBtn.parentNode.replaceChild(newAddBtn, addBranchBtn);
     newAddBtn.addEventListener('click', () => openBranchModal());
   }
+
+  // Add event listener for add category button
+  const addCategoryBtn = document.getElementById('addCategoryBtn');
+  if (addCategoryBtn) {
+    const newCatBtn = addCategoryBtn.cloneNode(true);
+    addCategoryBtn.parentNode.replaceChild(newCatBtn, addCategoryBtn);
+    newCatBtn.addEventListener('click', () => openCategoryModal());
+  }
+
+  // Add event listener for add service button
+  const addServiceBtn = document.getElementById('addServiceBtn');
+  if (addServiceBtn) {
+    const newSvcBtn = addServiceBtn.cloneNode(true);
+    addServiceBtn.parentNode.replaceChild(newSvcBtn, addServiceBtn);
+    newSvcBtn.addEventListener('click', () => openServiceModal());
+  }
+
+  // Load initial data
+  loadCompanyName();
+  loadBranches();
+  loadCategories();
+  loadServices();
 });
 
 // Load specialist limit from API
@@ -2077,11 +2099,256 @@ async function deleteBranch(branchId) {
 }
 
 async function loadCategories() {
-  // Load categories from backend
+  try {
+    const categories = await api('/api/settings/categories');
+    const categoriesGrid = document.getElementById('categoriesGrid');
+    if (categoriesGrid && categories) {
+      categoriesGrid.innerHTML = categories.map(category => `
+        <div class="category-item" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-weight: 600;">${category.name}</div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn secondary" onclick="editCategory(${category.id})" style="padding: 4px 8px; font-size: 11px;">Редактировать</button>
+              <button class="btn secondary" onclick="deleteCategory(${category.id})" style="padding: 4px 8px; font-size: 11px;">Удалить</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (error) {
+    console.error('Error loading categories:', error);
+  }
+}
+
+async function openCategoryModal(categoryId = null) {
+  let category = null;
+  if (categoryId) {
+    try {
+      const categories = await api('/api/settings/categories');
+      category = categories.find(c => c.id === categoryId);
+    } catch (error) {
+      console.error('Error loading category:', error);
+    }
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3>${categoryId ? 'Редактировать категорию' : 'Добавить категорию'}</h3>
+        <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Название *</label>
+          <input type="text" id="categoryName" value="${category?.name || ''}" placeholder="Название категории" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" onclick="this.closest('.modal').remove()">Отмена</button>
+        <button class="btn primary" onclick="saveCategory(${categoryId})">Сохранить</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+async function saveCategory(categoryId = null) {
+  try {
+    const name = document.getElementById('categoryName')?.value;
+
+    if (!name || name.trim() === '') {
+      alert('Введите название категории');
+      return;
+    }
+
+    if (categoryId) {
+      await api(`/api/settings/categories/${categoryId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name: name.trim() })
+      });
+    } else {
+      await api('/api/settings/categories', {
+        method: 'POST',
+        body: JSON.stringify({ name: name.trim() })
+      });
+    }
+
+    document.querySelector('.modal')?.remove();
+    await loadCategories();
+    alert(categoryId ? 'Категория обновлена!' : 'Категория добавлена!');
+  } catch (error) {
+    console.error('Error saving category:', error);
+    alert('Ошибка сохранения категории: ' + error.message);
+  }
+}
+
+async function editCategory(categoryId) {
+  await openCategoryModal(categoryId);
+}
+
+async function deleteCategory(categoryId) {
+  if (!confirm('Вы уверены, что хотите удалить эту категорию?')) {
+    return;
+  }
+
+  try {
+    await api(`/api/settings/categories/${categoryId}`, {
+      method: 'DELETE'
+    });
+    await loadCategories();
+    alert('Категория удалена!');
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    alert('Ошибка удаления категории: ' + error.message);
+  }
 }
 
 async function loadServices() {
-  // Load services from backend
+  try {
+    const services = await api('/api/settings/services');
+    const categories = await api('/api/settings/categories');
+    const servicesGrid = document.getElementById('servicesGrid');
+    if (servicesGrid && services) {
+      servicesGrid.innerHTML = services.map(service => `
+        <div class="service-item" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; margin-bottom: 4px;">${service.name}</div>
+              <div style="font-size: 13px; color: #666;">${service.duration ? service.duration + ' мин' : ''} ${service.price ? '• ' + service.price + ' ₽' : ''}</div>
+              ${service.category ? `<div style="font-size: 12px; color: #999;">${service.category.name}</div>` : ''}
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn secondary" onclick="editService(${service.id})" style="padding: 4px 8px; font-size: 11px;">Редактировать</button>
+              <button class="btn secondary" onclick="deleteService(${service.id})" style="padding: 4px 8px; font-size: 11px;">Удалить</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (error) {
+    console.error('Error loading services:', error);
+  }
+}
+
+async function openServiceModal(serviceId = null) {
+  let service = null;
+  let categories = [];
+  if (serviceId) {
+    try {
+      const services = await api('/api/settings/services');
+      service = services.find(s => s.id === serviceId);
+    } catch (error) {
+      console.error('Error loading service:', error);
+    }
+  }
+
+  try {
+    categories = await api('/api/settings/categories');
+  } catch (error) {
+    console.error('Error loading categories:', error);
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3>${serviceId ? 'Редактировать услугу' : 'Добавить услугу'}</h3>
+        <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Название услуги *</label>
+          <input type="text" id="serviceName" value="${service?.name || ''}" placeholder="Название услуги" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Длительность (мин)</label>
+          <input type="number" id="serviceDuration" value="${service?.duration || ''}" placeholder="30" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Стоимость (₽)</label>
+          <input type="number" id="servicePrice" value="${service?.price || ''}" placeholder="1000" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Категория</label>
+          <select id="serviceCategory" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="">Без категории</option>
+            ${categories.map(c => `<option value="${c.id}" ${service?.categoryId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" onclick="this.closest('.modal').remove()">Отмена</button>
+        <button class="btn primary" onclick="saveService(${serviceId})">Сохранить</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+async function saveService(serviceId = null) {
+  try {
+    const name = document.getElementById('serviceName')?.value;
+    const duration = document.getElementById('serviceDuration')?.value;
+    const price = document.getElementById('servicePrice')?.value;
+    const categoryId = document.getElementById('serviceCategory')?.value;
+
+    if (!name || name.trim() === '') {
+      alert('Введите название услуги');
+      return;
+    }
+
+    const data = {
+      name: name.trim(),
+      duration: duration ? parseInt(duration) : null,
+      price: price ? parseInt(price) : null,
+      categoryId: categoryId ? parseInt(categoryId) : null
+    };
+
+    if (serviceId) {
+      await api(`/api/settings/services/${serviceId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+      });
+    } else {
+      await api('/api/settings/services', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    }
+
+    document.querySelector('.modal')?.remove();
+    await loadServices();
+    alert(serviceId ? 'Услуга обновлена!' : 'Услуга добавлена!');
+  } catch (error) {
+    console.error('Error saving service:', error);
+    alert('Ошибка сохранения услуги: ' + error.message);
+  }
+}
+
+async function editService(serviceId) {
+  await openServiceModal(serviceId);
+}
+
+async function deleteService(serviceId) {
+  if (!confirm('Вы уверены, что хотите удалить эту услугу?')) {
+    return;
+  }
+
+  try {
+    await api(`/api/settings/services/${serviceId}`, {
+      method: 'DELETE'
+    });
+    await loadServices();
+    alert('Услуга удалена!');
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    alert('Ошибка удаления услуги: ' + error.message);
+  }
 }
 
 async function loadMasters() {
