@@ -441,6 +441,41 @@
       color: #3b82f6;
     }
 
+    .selection-options-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .selection-option {
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .selection-option:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .selection-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .selection-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
     .loading {
       text-align: center;
       padding: 60px 32px;
@@ -557,20 +592,39 @@
           <div class="services-grid" id="branches-grid"></div>
         </div>
 
-        <div id="specialists-section" style="display: none;">
+        <div id="selection-menu-section" style="display: none;">
           <button class="back-button" onclick="goBack('branches')">← Назад</button>
+          <h2 class="section-title">Что хотите выбрать?</h2>
+          <div class="selection-options-grid" id="selection-options-grid">
+            <div class="selection-option" onclick="selectOption('specialist')">
+              <div class="selection-icon">👤</div>
+              <div class="selection-title">Специалист</div>
+            </div>
+            <div class="selection-option" onclick="selectOption('service')">
+              <div class="selection-icon">💇</div>
+              <div class="selection-title">Услуга</div>
+            </div>
+            <div class="selection-option" onclick="selectOption('datetime')">
+              <div class="selection-icon">📅</div>
+              <div class="selection-title">Дата и время</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="specialists-section" style="display: none;">
+          <button class="back-button" onclick="goBack('selection-menu')">← Назад</button>
           <h2 class="section-title">Выберите специалиста</h2>
           <div class="specialists-grid" id="specialists-grid"></div>
         </div>
 
         <div id="services-section" style="display: none;">
-          <button class="back-button" onclick="goBack('specialists')">← Назад</button>
+          <button class="back-button" onclick="goBack('selection-menu')">← Назад</button>
           <h2 class="section-title">Выберите услугу</h2>
           <div class="services-grid" id="services-grid"></div>
         </div>
 
         <div id="calendar-section" class="calendar-section" style="display: none;">
-          <button class="back-button" onclick="goBack('services')">← Назад</button>
+          <button class="back-button" onclick="goBack('selection-menu')">← Назад</button>
           <h2 class="section-title">Выберите дату и время</h2>
           <div class="calendar-header">
             <button id="prev-month">&lt;</button>
@@ -585,7 +639,7 @@
         </div>
 
         <div id="contact-form-section" class="contact-form" style="display: none;">
-          <button class="back-button" onclick="goBack('calendar')">← Назад</button>
+          <button class="back-button" id="contact-back-button" onclick="goBackFromContact()">← Назад</button>
           <h2 class="section-title" style="margin-bottom: 20px;">Контактные данные</h2>
           <form id="contact-form">
             <div class="form-grid">
@@ -621,6 +675,7 @@
     let selectedBranch = null;
     let selectedDate = null;
     let selectedTime = null;
+    let selectedOption = null; // 'specialist', 'service', or 'datetime'
 
     // Get business slug from URL
     function getBusinessSlug() {
@@ -716,21 +771,44 @@
         id: element.dataset.branchId
       };
 
-      // Hide branches, show specialists
+      // Hide branches, show selection menu
       document.getElementById('branches-section').style.display = 'none';
-      document.getElementById('specialists-section').style.display = 'block';
+      document.getElementById('selection-menu-section').style.display = 'block';
 
-      // Load specialists
-      loadSpecialists();
+      // Scroll to selection menu
+      document.getElementById('selection-menu-section').scrollIntoView({ behavior: 'smooth' });
+    }
 
-      // Scroll to specialists
-      document.getElementById('specialists-section').scrollIntoView({ behavior: 'smooth' });
+    // Select option from menu
+    function selectOption(option) {
+      selectedOption = option;
+
+      // Hide selection menu
+      document.getElementById('selection-menu-section').style.display = 'none';
+
+      if (option === 'specialist') {
+        // Show specialists
+        document.getElementById('specialists-section').style.display = 'block';
+        loadSpecialists();
+      } else if (option === 'service') {
+        // Show services
+        document.getElementById('services-section').style.display = 'block';
+        loadServices();
+      } else if (option === 'datetime') {
+        // Show calendar
+        document.getElementById('calendar-section').style.display = 'block';
+        loadCalendar();
+      }
+
+      // Scroll to section
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // Go back to previous section
     function goBack(section) {
       // Hide all sections
       document.getElementById('branches-section').style.display = 'none';
+      document.getElementById('selection-menu-section').style.display = 'none';
       document.getElementById('specialists-section').style.display = 'none';
       document.getElementById('services-section').style.display = 'none';
       document.getElementById('calendar-section').style.display = 'none';
@@ -742,6 +820,23 @@
 
       // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Go back from contact form
+    function goBackFromContact() {
+      // Determine where to go back based on selected option
+      if (selectedOption === 'datetime') {
+        // Date/Time → Specialist → Services → Contact
+        // Go back to services if service was selected, otherwise to specialists
+        if (selectedService) {
+          goBack('services');
+        } else {
+          goBack('specialists');
+        }
+      } else {
+        // Specialist/Service → Date/Time → Contact
+        goBack('calendar');
+      }
     }
 
     // Load services
@@ -847,15 +942,25 @@
         price: parseInt(element.dataset.price)
       };
 
-      // Hide services, show calendar
+      // Hide services
       document.getElementById('services-section').style.display = 'none';
-      document.getElementById('calendar-section').style.display = 'block';
 
-      // Load calendar
-      loadCalendar();
+      // Determine next step based on selected option
+      if (selectedOption === 'specialist') {
+        // Specialist → Services → Date/Time
+        document.getElementById('calendar-section').style.display = 'block';
+        loadCalendar();
+      } else if (selectedOption === 'service') {
+        // Service → Specialist → Date/Time
+        document.getElementById('calendar-section').style.display = 'block';
+        loadCalendar();
+      } else {
+        // Date/Time → Specialist → Services
+        document.getElementById('contact-form-section').style.display = 'block';
+      }
 
-      // Scroll to calendar
-      document.getElementById('calendar-section').scrollIntoView({ behavior: 'smooth' });
+      // Scroll to section
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // Select specialist
@@ -871,15 +976,26 @@
         id: element.dataset.specialistId
       };
 
-      // Hide specialists, show services
+      // Hide specialists
       document.getElementById('specialists-section').style.display = 'none';
-      document.getElementById('services-section').style.display = 'block';
 
-      // Load services
-      loadServices();
+      // Determine next step based on selected option
+      if (selectedOption === 'specialist') {
+        // Specialist → Services → Date/Time
+        document.getElementById('services-section').style.display = 'block';
+        loadServices();
+      } else if (selectedOption === 'datetime') {
+        // Date/Time → Specialist → Services
+        document.getElementById('services-section').style.display = 'block';
+        loadServices();
+      } else {
+        // Service → Specialist → Date/Time
+        document.getElementById('calendar-section').style.display = 'block';
+        loadCalendar();
+      }
 
-      // Scroll to services
-      document.getElementById('services-section').scrollIntoView({ behavior: 'smooth' });
+      // Scroll to section
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // Load calendar
@@ -985,12 +1101,32 @@
       element.classList.add('selected');
       selectedTime = element.dataset.time;
 
-      // Hide calendar section, show contact form
-      document.getElementById('calendar-section').style.display = 'none';
-      document.getElementById('contact-form-section').style.display = 'block';
+      // Hide time section
+      document.getElementById('time-section').style.display = 'none';
 
-      // Scroll to contact form
-      document.getElementById('contact-form-section').scrollIntoView({ behavior: 'smooth' });
+      // Determine next step based on selected option
+      if (selectedOption === 'datetime') {
+        // Date/Time → Specialist → Services → Contact
+        // Check if specialist is already selected
+        if (selectedSpecialist) {
+          // Show services
+          document.getElementById('calendar-section').style.display = 'none';
+          document.getElementById('services-section').style.display = 'block';
+          loadServices();
+        } else {
+          // Show specialists
+          document.getElementById('calendar-section').style.display = 'none';
+          document.getElementById('specialists-section').style.display = 'block';
+          loadSpecialists();
+        }
+      } else {
+        // Specialist/Service → Date/Time → Contact
+        document.getElementById('calendar-section').style.display = 'none';
+        document.getElementById('contact-form-section').style.display = 'block';
+      }
+
+      // Scroll to section
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // Handle contact form submission
