@@ -614,12 +614,16 @@
     async function loadBusinessData() {
       try {
         const businessSlug = getBusinessSlug();
+        let response;
 
-        if (!businessSlug) {
-          throw new Error('Business slug not found in URL');
+        if (businessSlug) {
+          // Load by slug for public booking
+          response = await fetch(`/api/public/business/${encodeURIComponent(businessSlug)}`);
+        } else {
+          // Load from settings for authenticated user
+          response = await fetch('/api/settings/business');
         }
 
-        const response = await fetch(`/api/public/business/${encodeURIComponent(businessSlug)}`);
         if (!response.ok) {
           throw new Error('Не удалось загрузить данные бизнеса');
         }
@@ -628,15 +632,17 @@
         console.log('Business data loaded:', businessData);
 
         // Update business info
-        document.getElementById('business-name').textContent = businessData.business.name;
-        document.getElementById('business-address').textContent = businessData.branches.length > 0 ? businessData.branches[0].address : 'Адрес не указан';
+        document.getElementById('business-name').textContent = businessData.business?.name || businessData.name || 'Бизнес';
+        const branches = businessData.branches || [];
+        document.getElementById('business-address').textContent = branches.length > 0 ? branches[0].address : 'Адрес не указан';
 
         // Hide old branch selector
         document.getElementById('branch-selector').style.display = 'none';
 
         // Update logo if available
-        if (businessData.business.logo) {
-          document.getElementById('business-logo').innerHTML = `<img src="${businessData.business.logo}" alt="Logo">`;
+        const logo = businessData.business?.logo || businessData.logo;
+        if (logo) {
+          document.getElementById('business-logo').innerHTML = `<img src="${logo}" alt="Logo">`;
         }
 
         // Load and display branches first
@@ -650,7 +656,7 @@
         console.error('Error loading business data:', error);
         document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'block';
-        document.getElementById('error').textContent = 'Не удалось загрузить информацию о бизнесе. Убедитесь, что ссылка содержит параметр slug.';
+        document.getElementById('error').textContent = 'Не удалось загрузить информацию о бизнесе. ' + error.message;
       }
     }
 
