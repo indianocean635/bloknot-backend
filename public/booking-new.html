@@ -534,17 +534,22 @@
         <div id="loading" class="loading">Загрузка данных бизнеса...</div>
 
         <div id="error" class="error" style="display: none;">
-          Не удалось загрузить информацию о бизнесе
+          Не удалось загрузить информацию о бизнесе. Убедитесь, что ссылка содержит параметр slug.
         </div>
 
-        <div id="services-section" style="display: none;">
-          <h2 class="section-title">Выберите услугу</h2>
-          <div class="services-grid" id="services-grid"></div>
+        <div id="branches-section" style="display: none;">
+          <h2 class="section-title">Выберите филиал</h2>
+          <div class="services-grid" id="branches-grid"></div>
         </div>
 
         <div id="specialists-section" style="display: none;">
           <h2 class="section-title">Выберите специалиста</h2>
           <div class="specialists-grid" id="specialists-grid"></div>
+        </div>
+
+        <div id="services-section" style="display: none;">
+          <h2 class="section-title">Выберите услугу</h2>
+          <div class="services-grid" id="services-grid"></div>
         </div>
 
         <div id="calendar-section" class="calendar-section" style="display: none;">
@@ -614,7 +619,7 @@
           throw new Error('Business slug not found in URL');
         }
 
-        const response = await fetch(`/api/business/by-slug/${encodeURIComponent(businessSlug)}`);
+        const response = await fetch(`/api/public/business/${encodeURIComponent(businessSlug)}`);
         if (!response.ok) {
           throw new Error('Не удалось загрузить данные бизнеса');
         }
@@ -626,23 +631,20 @@
         document.getElementById('business-name').textContent = businessData.business.name;
         document.getElementById('business-address').textContent = businessData.branches.length > 0 ? businessData.branches[0].address : 'Адрес не указан';
 
-        // Initialize branch selector with real branches
-        initializeBranchSelector();
+        // Hide old branch selector
+        document.getElementById('branch-selector').style.display = 'none';
 
         // Update logo if available
         if (businessData.business.logo) {
           document.getElementById('business-logo').innerHTML = `<img src="${businessData.business.logo}" alt="Logo">`;
         }
 
-        // Load and display services
-        loadServices();
-
-        // Load and display specialists
-        loadSpecialists();
+        // Load and display branches first
+        loadBranches();
 
         // Show booking content instead of navigation
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('services-section').style.display = 'block';
+        document.getElementById('branches-section').style.display = 'block';
 
       } catch (error) {
         console.error('Error loading business data:', error);
@@ -650,6 +652,55 @@
         document.getElementById('error').style.display = 'block';
         document.getElementById('error').textContent = 'Не удалось загрузить информацию о бизнесе. Убедитесь, что ссылка содержит параметр slug.';
       }
+    }
+
+    // Load branches
+    function loadBranches() {
+      const branchesGrid = document.getElementById('branches-grid');
+
+      if (!businessData.branches || businessData.branches.length === 0) {
+        branchesGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Филиалы пока не добавлены</div>';
+        return;
+      }
+
+      branchesGrid.innerHTML = businessData.branches.map(branch => `
+        <div class="service-item" data-branch-id="${branch.id}">
+          <div class="service-info">
+            <div class="service-name">${branch.name}</div>
+            <div class="service-duration">${branch.city ? branch.city + ', ' : ''}${branch.address}</div>
+            ${branch.schedule ? `<div class="service-duration" style="font-size: 12px; margin-top: 4px;">${branch.schedule}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      // Add click handlers
+      document.querySelectorAll('.service-item[data-branch-id]').forEach(item => {
+        item.addEventListener('click', () => selectBranch(item));
+      });
+    }
+
+    // Select branch
+    function selectBranch(element) {
+      // Remove previous selection
+      document.querySelectorAll('.service-item[data-branch-id]').forEach(item => {
+        item.classList.remove('selected');
+      });
+
+      // Add selection
+      element.classList.add('selected');
+      selectedBranch = {
+        id: element.dataset.branchId
+      };
+
+      // Hide branches, show specialists
+      document.getElementById('branches-section').style.display = 'none';
+      document.getElementById('specialists-section').style.display = 'block';
+
+      // Load specialists
+      loadSpecialists();
+
+      // Scroll to specialists
+      document.getElementById('specialists-section').scrollIntoView({ behavior: 'smooth' });
     }
 
     // Load services
@@ -740,66 +791,6 @@
       });
     }
 
-    // Initialize branch selector
-    function initializeBranchSelector() {
-      const branchSelector = document.getElementById('branch-selector');
-      const branchDropdown = document.getElementById('branch-dropdown');
-      const selectedBranchSpan = document.getElementById('selected-branch');
-
-      // Load real branches from API
-      if (businessData.branches && businessData.branches.length > 0) {
-        branchDropdown.innerHTML = businessData.branches.map(branch => `
-          <div class="branch-option" data-branch-id="${branch.id}" data-branch-name="${branch.name}">
-            ${branch.name}
-          </div>
-        `).join('');
-
-        selectedBranchSpan.textContent = businessData.branches[0].name;
-        selectedBranch = businessData.branches[0].id;
-      } else {
-        // Hide branch selector if no branches
-        branchSelector.style.display = 'none';
-        return;
-      }
-
-      branchSelector.addEventListener('click', () => {
-        branchDropdown.style.display = branchDropdown.style.display === 'none' ? 'block' : 'none';
-        branchSelector.classList.toggle('open');
-      });
-
-      document.querySelectorAll('.branch-option').forEach(option => {
-        option.addEventListener('click', (e) => {
-          e.stopPropagation();
-          selectedBranch = option.dataset.branchId;
-          selectedBranchSpan.textContent = option.dataset.branchName;
-          branchDropdown.style.display = 'none';
-          branchSelector.classList.remove('open');
-
-          // Update data for selected branch
-          updateDataForBranch(selectedBranch);
-        });
-      });
-
-      // Close dropdown when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!branchSelector.contains(e.target)) {
-          branchDropdown.style.display = 'none';
-          branchSelector.classList.remove('open');
-        }
-      });
-    }
-
-    // Update data for selected branch
-    function updateDataForBranch(branch) {
-      console.log('Loading data for branch:', branch);
-      // Here you would load branch-specific data
-      // For now, just reload all sections
-      loadServices();
-      loadSpecialists();
-      loadCalendar();
-      loadTimeSlots();
-    }
-
     // Select service
     function selectService(element) {
       // Remove previous selection
@@ -815,12 +806,15 @@
         price: parseInt(element.dataset.price)
       };
 
-      // Hide services, show specialists
+      // Hide services, show calendar
       document.getElementById('services-section').style.display = 'none';
-      document.getElementById('specialists-section').style.display = 'block';
+      document.getElementById('calendar-section').style.display = 'block';
 
-      // Scroll to specialists
-      document.getElementById('specialists-section').scrollIntoView({ behavior: 'smooth' });
+      // Load calendar
+      loadCalendar();
+
+      // Scroll to calendar
+      document.getElementById('calendar-section').scrollIntoView({ behavior: 'smooth' });
     }
 
     // Select specialist
@@ -836,15 +830,15 @@
         id: element.dataset.specialistId
       };
 
-      // Hide specialists, show calendar
+      // Hide specialists, show services
       document.getElementById('specialists-section').style.display = 'none';
-      document.getElementById('calendar-section').style.display = 'block';
+      document.getElementById('services-section').style.display = 'block';
 
-      // Load calendar
-      loadCalendar();
+      // Load services
+      loadServices();
 
-      // Scroll to calendar
-      document.getElementById('calendar-section').scrollIntoView({ behavior: 'smooth' });
+      // Scroll to services
+      document.getElementById('services-section').scrollIntoView({ behavior: 'smooth' });
     }
 
     // Load calendar
