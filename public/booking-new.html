@@ -426,6 +426,21 @@
       cursor: not-allowed;
     }
 
+    .back-button {
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 8px 0;
+      margin-bottom: 16px;
+      transition: color 0.2s;
+    }
+
+    .back-button:hover {
+      color: #3b82f6;
+    }
+
     .loading {
       text-align: center;
       padding: 60px 32px;
@@ -543,31 +558,34 @@
         </div>
 
         <div id="specialists-section" style="display: none;">
+          <button class="back-button" onclick="goBack('branches')">← Назад</button>
           <h2 class="section-title">Выберите специалиста</h2>
           <div class="specialists-grid" id="specialists-grid"></div>
         </div>
 
         <div id="services-section" style="display: none;">
+          <button class="back-button" onclick="goBack('specialists')">← Назад</button>
           <h2 class="section-title">Выберите услугу</h2>
           <div class="services-grid" id="services-grid"></div>
         </div>
 
         <div id="calendar-section" class="calendar-section" style="display: none;">
-          <h2 class="section-title">Выберите дату</h2>
+          <button class="back-button" onclick="goBack('services')">← Назад</button>
+          <h2 class="section-title">Выберите дату и время</h2>
           <div class="calendar-header">
             <button id="prev-month">&lt;</button>
             <span id="calendar-month"></span>
             <button id="next-month">&gt;</button>
           </div>
           <div class="calendar-grid" id="calendar-grid"></div>
-        </div>
-
-        <div id="time-section" style="display: none;">
-          <h2 class="section-title">Выберите время</h2>
-          <div class="time-slots-grid" id="time-slots-grid"></div>
+          <div id="time-section" style="display: none; margin-top: 20px;">
+            <h3 class="section-title" style="font-size: 18px;">Выберите время</h3>
+            <div class="time-slots-grid" id="time-slots-grid"></div>
+          </div>
         </div>
 
         <div id="contact-form-section" class="contact-form" style="display: none;">
+          <button class="back-button" onclick="goBack('calendar')">← Назад</button>
           <h2 class="section-title" style="margin-bottom: 20px;">Контактные данные</h2>
           <form id="contact-form">
             <div class="form-grid">
@@ -707,6 +725,23 @@
 
       // Scroll to specialists
       document.getElementById('specialists-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Go back to previous section
+    function goBack(section) {
+      // Hide all sections
+      document.getElementById('branches-section').style.display = 'none';
+      document.getElementById('specialists-section').style.display = 'none';
+      document.getElementById('services-section').style.display = 'none';
+      document.getElementById('calendar-section').style.display = 'none';
+      document.getElementById('time-section').style.display = 'none';
+      document.getElementById('contact-form-section').style.display = 'none';
+
+      // Show the requested section
+      document.getElementById(section + '-section').style.display = 'block';
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // Load services
@@ -908,8 +943,7 @@
       element.classList.add('selected');
       selectedDate = element.dataset.date;
 
-      // Hide calendar, show time slots
-      document.getElementById('calendar-section').style.display = 'none';
+      // Show time slots within calendar section
       document.getElementById('time-section').style.display = 'block';
 
       // Load time slots
@@ -951,8 +985,8 @@
       element.classList.add('selected');
       selectedTime = element.dataset.time;
 
-      // Hide time slots, show contact form
-      document.getElementById('time-section').style.display = 'none';
+      // Hide calendar section, show contact form
+      document.getElementById('calendar-section').style.display = 'none';
       document.getElementById('contact-form-section').style.display = 'block';
 
       // Scroll to contact form
