@@ -4,6 +4,8 @@ const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const { PrismaClient } = require('@prisma/client');
 const https = require('https');
+const http = require('http');
+const { getSignedUrlForFile } = require('./lib/s3');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
@@ -59,7 +61,7 @@ app.get('/health', (req, res) => {
 });
 
 // Proxy endpoint for images to avoid CORS issues
-app.get('/api/proxy/image', (req, res) => {
+app.get('/api/proxy/image', async (req, res) => {
   try {
     const { url } = req.query;
     if (!url) {
@@ -68,8 +70,17 @@ app.get('/api/proxy/image', (req, res) => {
 
     console.log('Proxying image:', url);
 
-    // Fetch the image
-    https.get(url, (response) => {
+    // Extract filename from S3 URL
+    const urlParts = url.split('/');
+    const fileName = urlParts[urlParts.length - 1];
+    console.log('Extracted filename:', fileName);
+
+    // Generate signed URL
+    const signedUrl = await getSignedUrlForFile(fileName, 3600);
+    console.log('Generated signed URL:', signedUrl);
+
+    // Fetch the image using signed URL
+    https.get(signedUrl, (response) => {
       // Set CORS headers
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET');
