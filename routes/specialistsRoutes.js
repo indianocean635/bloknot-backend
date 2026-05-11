@@ -300,8 +300,8 @@ router.post('/:id/settings', requireAuth, async (req, res) => {
       data: {
         branchId: branchId ? parseInt(branchId) : null,
         schedule: schedule || {},
-        categoryIds: categoryIds || [],
-        serviceIds: serviceIds || []
+        categoryIds: categoryIds ? categoryIds.map(id => parseInt(id)) : [],
+        serviceIds: serviceIds ? serviceIds.map(id => parseInt(id)) : []
       }
     });
 
