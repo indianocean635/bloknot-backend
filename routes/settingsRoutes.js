@@ -49,8 +49,11 @@ router.get("/business", requireAuth, async (req, res) => {
       }
     });
 
+    console.log('Business workPhotos:', business.workPhotos);
+
     // Get logo photo
     const logoPhoto = business.workPhotos && business.workPhotos.length > 0 ? business.workPhotos[0].imageUrl : null;
+    console.log('Logo photo:', logoPhoto);
 
     // Return business data with logo in correct format
     const result = {
@@ -58,6 +61,7 @@ router.get("/business", requireAuth, async (req, res) => {
       logo: logoPhoto
     };
 
+    console.log('Business data with logo:', result.logo);
     res.json(result);
   } catch (error) {
     console.error("Error getting business:", error);
