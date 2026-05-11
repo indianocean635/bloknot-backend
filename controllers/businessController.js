@@ -18,6 +18,9 @@ async function getBusinessBySlug(req, res) {
     }
   });
 
+  console.log('Services loaded for business', business.id, ':', services);
+  console.log('Services count:', services.length);
+
   // Get categories
   const categories = await prisma.category.findMany({
     where: { businessId: business.id }
@@ -227,6 +230,9 @@ async function getBusinessByEmail(req, res) {
       category: true
     }
   });
+
+  console.log('Services loaded for business', business.id, ':', services);
+  console.log('Services count:', services.length);
 
   // Get categories
   const categories = await prisma.category.findMany({
