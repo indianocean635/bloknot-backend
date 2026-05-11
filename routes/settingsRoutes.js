@@ -42,7 +42,20 @@ router.get("/business", requireAuth, async (req, res) => {
         categories: {
           include: { services: true }
         },
-        masters: true,
+        masters: {
+          select: {
+            id: true,
+            name: true,
+            specializations: true,
+            avatarUrl: true,
+            branchId: true,
+            schedule: true,
+            categoryIds: true,
+            serviceIds: true,
+            active: true
+          }
+        },
+        services: true,
         workPhotos: {
           where: { isLogo: true }
         },
