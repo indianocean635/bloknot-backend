@@ -878,9 +878,11 @@
 
       // Group services by category if categories exist
       if (filteredCategories && filteredCategories.length > 0) {
+        console.log('Rendering services with categories');
         let html = '';
         filteredCategories.forEach(category => {
           const categoryServices = filteredServices.filter(s => s.categoryId === category.id);
+          console.log('Category:', category.name, 'services:', categoryServices);
           if (categoryServices.length > 0) {
             html += `<h3 style="margin: 24px 0 16px; font-size: 18px; font-weight: 600; color: #1f2937;">${category.name}</h3>`;
             html += categoryServices.map(service => `
@@ -897,6 +899,7 @@
 
         // Add services without category
         const uncategorizedServices = filteredServices.filter(s => !s.categoryId);
+        console.log('Uncategorized services:', uncategorizedServices);
         if (uncategorizedServices.length > 0) {
           html += `<h3 style="margin: 24px 0 16px; font-size: 18px; font-weight: 600; color: #1f2937;">Без категории</h3>`;
           html += uncategorizedServices.map(service => `
@@ -910,8 +913,10 @@
           `).join('');
         }
 
+        console.log('Final HTML length:', html.length);
         servicesGrid.innerHTML = html;
       } else {
+        console.log('No categories, rendering all services');
         // No categories, just list all services
         servicesGrid.innerHTML = filteredServices.map(service => `
           <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
