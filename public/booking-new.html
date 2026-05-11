@@ -444,34 +444,27 @@
     .selection-options-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
+      gap: 12px;
       margin-top: 24px;
     }
 
     .selection-option {
       background: white;
       border: 2px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 32px 24px;
+      border-radius: 12px;
+      padding: 16px 12px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.2s;
     }
 
     .selection-option:hover {
       border-color: #3b82f6;
       background: #f8fafc;
-      transform: translateY(-4px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    }
-
-    .selection-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
     }
 
     .selection-title {
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 600;
       color: #1f2937;
     }
@@ -594,19 +587,15 @@
 
         <div id="selection-menu-section" style="display: none;">
           <button class="back-button" onclick="goBack('branches')">← Назад</button>
-          <h2 class="section-title">Что хотите выбрать?</h2>
           <div class="selection-options-grid" id="selection-options-grid">
             <div class="selection-option" onclick="selectOption('specialist')">
-              <div class="selection-icon">👤</div>
-              <div class="selection-title">Специалист</div>
+              <div class="selection-title">Выбрать специалиста</div>
             </div>
             <div class="selection-option" onclick="selectOption('service')">
-              <div class="selection-icon">💇</div>
-              <div class="selection-title">Услуга</div>
+              <div class="selection-title">Выбрать услуги</div>
             </div>
             <div class="selection-option" onclick="selectOption('datetime')">
-              <div class="selection-icon">📅</div>
-              <div class="selection-title">Дата и время</div>
+              <div class="selection-title">Выбрать дату и время</div>
             </div>
           </div>
         </div>
