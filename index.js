@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const { PrismaClient } = require('@prisma/client');
+const https = require('https');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
@@ -55,6 +56,38 @@ console.log('Business routes methods:', Object.getOwnPropertyNames(businessRoute
 app.get('/health', (req, res) => {
   console.log('Health check received');
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Proxy endpoint for images to avoid CORS issues
+app.get('/api/proxy/image', (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) {
+      return res.status(400).json({ error: "URL is required" });
+    }
+
+    console.log('Proxying image:', url);
+
+    // Fetch the image
+    https.get(url, (response) => {
+      // Set CORS headers
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+      // Set content type
+      res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
+
+      // Pipe the image data to the response
+      response.pipe(res);
+    }).on('error', (error) => {
+      console.error('Error proxying image:', error);
+      res.status(500).json({ error: "Failed to load image" });
+    });
+  } catch (error) {
+    console.error("Error in proxy endpoint:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // API version endpoint
