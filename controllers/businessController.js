@@ -23,10 +23,19 @@ async function getBusinessBySlug(req, res) {
     where: { businessId: business.id }
   });
 
-  // Get masters with schedules
+  // Get masters with schedules, categoryIds, and serviceIds
   const masters = await prisma.master.findMany({
     where: { businessId: business.id, active: true },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      specializations: true,
+      avatarUrl: true,
+      branchId: true,
+      schedule: true,
+      categoryIds: true,
+      serviceIds: true,
+      active: true,
       schedules: true
     }
   });
@@ -224,10 +233,19 @@ async function getBusinessByEmail(req, res) {
     where: { businessId: business.id }
   });
 
-  // Get masters with schedules
+  // Get masters with schedules, categoryIds, and serviceIds
   const masters = await prisma.master.findMany({
     where: { businessId: business.id, active: true },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      specializations: true,
+      avatarUrl: true,
+      branchId: true,
+      schedule: true,
+      categoryIds: true,
+      serviceIds: true,
+      active: true,
       schedules: true
     }
   });

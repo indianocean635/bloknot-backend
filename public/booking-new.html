@@ -838,11 +838,32 @@
         return;
       }
 
+      // Filter services by specialist if selected
+      let filteredServices = businessData.services;
+      let filteredCategories = businessData.categories || [];
+
+      if (selectedSpecialist && businessData.masters) {
+        const specialist = businessData.masters.find(m => m.id === selectedSpecialist.id);
+        if (specialist) {
+          // Filter by categoryIds and serviceIds
+          if (specialist.categoryIds && specialist.categoryIds.length > 0) {
+            filteredCategories = (businessData.categories || []).filter(c =>
+              specialist.categoryIds.includes(c.id)
+            );
+          }
+          if (specialist.serviceIds && specialist.serviceIds.length > 0) {
+            filteredServices = businessData.services.filter(s =>
+              specialist.serviceIds.includes(s.id)
+            );
+          }
+        }
+      }
+
       // Group services by category if categories exist
-      if (businessData.categories && businessData.categories.length > 0) {
+      if (filteredCategories && filteredCategories.length > 0) {
         let html = '';
-        businessData.categories.forEach(category => {
-          const categoryServices = businessData.services.filter(s => s.categoryId === category.id);
+        filteredCategories.forEach(category => {
+          const categoryServices = filteredServices.filter(s => s.categoryId === category.id);
           if (categoryServices.length > 0) {
             html += `<h3 style="margin: 24px 0 16px; font-size: 18px; font-weight: 600; color: #1f2937;">${category.name}</h3>`;
             html += categoryServices.map(service => `
@@ -858,7 +879,7 @@
         });
 
         // Add services without category
-        const uncategorizedServices = businessData.services.filter(s => !s.categoryId);
+        const uncategorizedServices = filteredServices.filter(s => !s.categoryId);
         if (uncategorizedServices.length > 0) {
           html += `<h3 style="margin: 24px 0 16px; font-size: 18px; font-weight: 600; color: #1f2937;">Без категории</h3>`;
           html += uncategorizedServices.map(service => `
@@ -875,7 +896,7 @@
         servicesGrid.innerHTML = html;
       } else {
         // No categories, just list all services
-        servicesGrid.innerHTML = businessData.services.map(service => `
+        servicesGrid.innerHTML = filteredServices.map(service => `
           <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
             <div class="service-info">
               <div class="service-name">${service.name}</div>
