@@ -48,8 +48,17 @@ router.get("/business", requireAuth, async (req, res) => {
         subscription: true
       }
     });
-    
-    res.json(business);
+
+    // Get logo photo
+    const logoPhoto = business.workPhotos && business.workPhotos.length > 0 ? business.workPhotos[0].imageUrl : null;
+
+    // Return business data with logo in correct format
+    const result = {
+      ...business,
+      logo: logoPhoto
+    };
+
+    res.json(result);
   } catch (error) {
     console.error("Error getting business:", error);
     res.status(500).json({ error: "Internal server error" });
