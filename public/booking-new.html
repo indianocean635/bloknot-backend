@@ -1108,7 +1108,12 @@
     function loadTimeSlots() {
       const timeSlotsGrid = document.getElementById('time-slots-grid');
 
+      console.log('loadTimeSlots called');
+      console.log('selectedSpecialist:', selectedSpecialist);
+      console.log('selectedSpecialist.schedule:', selectedSpecialist?.schedule);
+
       if (!selectedSpecialist || !selectedSpecialist.schedule) {
+        console.log('No schedule found, using default time slots');
         // Default time slots if no schedule
         const timeSlots = [
           '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -1126,17 +1131,26 @@
         const dateKey = selectedDate;
         const daySchedule = schedule[dateKey];
 
+        console.log('Schedule:', schedule);
+        console.log('Date key:', dateKey);
+        console.log('Day schedule:', daySchedule);
+
         if (daySchedule && daySchedule.enabled) {
           const startTime = daySchedule.startTime;
           const endTime = daySchedule.endTime;
 
+          console.log('Start time:', startTime, 'End time:', endTime);
+
           // Generate time slots with 10-minute step
           const timeSlots = generateTimeSlots(startTime, endTime, 10);
+
+          console.log('Generated time slots:', timeSlots);
 
           timeSlotsGrid.innerHTML = timeSlots.map(time => `
             <div class="time-slot available" data-time="${time}">${time}</div>
           `).join('');
         } else {
+          console.log('Day not enabled in schedule');
           timeSlotsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Специалист не работает в этот день</div>';
         }
       }
