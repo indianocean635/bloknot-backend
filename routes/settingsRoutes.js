@@ -3,6 +3,7 @@ const router = express.Router();
 const { prisma } = require("../services/prismaService");
 const { requireAuth } = require("../middleware/authMiddleware");
 const https = require('https');
+const nodemailer = require('nodemailer');
 
 // УБРАЛИ МОК MIDDLEWARE - ИСПОЛЬЗУЕМ НАСТОЯЩУЮ JWT АВТОРИЗАЦИЮ
 
