@@ -1107,22 +1107,91 @@
     // Load time slots
     function loadTimeSlots() {
       const timeSlotsGrid = document.getElementById('time-slots-grid');
-      
-      const timeSlots = [
-        '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-        '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-        '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
-        '18:00', '18:30', '19:00', '19:30'
-      ];
-      
-      timeSlotsGrid.innerHTML = timeSlots.map(time => `
-        <div class="time-slot available" data-time="${time}">${time}</div>
-      `).join('');
-      
+
+      if (!selectedSpecialist || !selectedSpecialist.schedule) {
+        // Default time slots if no schedule
+        const timeSlots = [
+          '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+          '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+          '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+          '18:00', '18:30', '19:00', '19:30'
+        ];
+
+        timeSlotsGrid.innerHTML = timeSlots.map(time => `
+          <div class="time-slot available" data-time="${time}">${time}</div>
+        `).join('');
+      } else {
+        // Use specialist's schedule
+        const schedule = selectedSpecialist.schedule;
+        const dateKey = selectedDate;
+        const daySchedule = schedule[dateKey];
+
+        if (daySchedule && daySchedule.enabled) {
+          const startTime = daySchedule.startTime;
+          const endTime = daySchedule.endTime;
+
+          // Generate time slots with 10-minute step
+          const timeSlots = generateTimeSlots(startTime, endTime, 10);
+
+          timeSlotsGrid.innerHTML = timeSlots.map(time => `
+            <div class="time-slot available" data-time="${time}">${time}</div>
+          `).join('');
+        } else {
+          timeSlotsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Специалист не работает в этот день</div>';
+        }
+      }
+
+      // Load existing appointments and mark occupied slots
+      loadAppointmentsAndMarkOccupied();
+
       // Add click handlers
-      document.querySelectorAll('.time-slot').forEach(slot => {
+      document.querySelectorAll('.time-slot.available').forEach(slot => {
         slot.addEventListener('click', () => selectTime(slot));
       });
+    }
+
+    // Load appointments and mark occupied time slots
+    async function loadAppointmentsAndMarkOccupied() {
+      try {
+        const response = await fetch(`/api/public/appointments?masterId=${selectedSpecialist.id}&from=${selectedDate}&to=${selectedDate}`);
+        if (response.ok) {
+          const appointments = await response.json();
+          
+          appointments.forEach(appointment => {
+            const appointmentDate = new Date(appointment.startsAt);
+            const timeStr = `${String(appointmentDate.getHours()).padStart(2, '0')}:${String(appointmentDate.getMinutes()).padStart(2, '0')}`;
+            
+            const slot = document.querySelector(`.time-slot[data-time="${timeStr}"]`);
+            if (slot) {
+              slot.classList.remove('available');
+              slot.classList.add('occupied');
+              slot.style.pointerEvents = 'none';
+              slot.style.opacity = '0.5';
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error loading appointments:', error);
+      }
+    }
+
+    // Generate time slots with given step (in minutes)
+    function generateTimeSlots(startTime, endTime, stepMinutes) {
+      const slots = [];
+      const [startHour, startMin] = startTime.split(':').map(Number);
+      const [endHour, endMin] = endTime.split(':').map(Number);
+
+      let currentMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+
+      while (currentMinutes + stepMinutes <= endMinutes) {
+        const hour = Math.floor(currentMinutes / 60);
+        const minute = currentMinutes % 60;
+        slots.push(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+        currentMinutes += stepMinutes;
+      }
+
+      return slots;
     }
 
     // Select time
@@ -1168,13 +1237,21 @@
     document.getElementById('contact-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      const service = businessData.services.find(s => s.id === selectedService.id);
+      const [hours, minutes] = selectedTime.split(':').map(Number);
+      const startsAt = new Date(selectedDate);
+      startsAt.setHours(hours, minutes, 0, 0);
+      
+      const endsAt = new Date(startsAt);
+      endsAt.setMinutes(endsAt.getMinutes() + (service?.duration || 60));
+
       const formData = {
         businessId: businessData.business.id,
         serviceId: selectedService.id,
         masterId: selectedSpecialist.id,
         branchId: selectedBranch,
-        date: selectedDate,
-        time: selectedTime,
+        startsAt: startsAt.toISOString(),
+        endsAt: endsAt.toISOString(),
         customerName: document.getElementById('client-name').value,
         customerPhone: document.getElementById('client-phone').value,
         customerEmail: document.getElementById('client-email').value,
@@ -1185,7 +1262,7 @@
 
       try {
         // Send booking data to API
-        const response = await fetch('/api/appointments', {
+        const response = await fetch('/api/public/appointments', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
