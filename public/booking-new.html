@@ -863,9 +863,11 @@
               specialist.categoryIds.includes(c.id)
             );
             console.log('Filtered categories:', filteredCategories);
+            console.log('All categories with IDs:', (businessData.categories || []).map(c => ({ id: c.id, name: c.name })));
           }
           if (specialist.serviceIds && specialist.serviceIds.length > 0) {
             console.log('Filtering services by:', specialist.serviceIds);
+            console.log('All services with IDs:', businessData.services.map(s => ({ id: s.id, name: s.name, categoryId: s.categoryId })));
             filteredServices = businessData.services.filter(s =>
               specialist.serviceIds.includes(s.id)
             );
