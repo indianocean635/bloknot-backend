@@ -833,6 +833,10 @@
     function loadServices() {
       const servicesGrid = document.getElementById('services-grid');
 
+      console.log('loadServices called');
+      console.log('selectedSpecialist:', selectedSpecialist);
+      console.log('businessData.masters:', businessData.masters);
+
       if (!businessData.services || businessData.services.length === 0) {
         servicesGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Услуги пока не добавлены</div>';
         return;
@@ -844,17 +848,22 @@
 
       if (selectedSpecialist && businessData.masters) {
         const specialist = businessData.masters.find(m => m.id === selectedSpecialist.id);
+        console.log('Found specialist:', specialist);
         if (specialist) {
           // Filter by categoryIds and serviceIds
           if (specialist.categoryIds && specialist.categoryIds.length > 0) {
+            console.log('Filtering categories by:', specialist.categoryIds);
             filteredCategories = (businessData.categories || []).filter(c =>
               specialist.categoryIds.includes(c.id)
             );
+            console.log('Filtered categories:', filteredCategories);
           }
           if (specialist.serviceIds && specialist.serviceIds.length > 0) {
+            console.log('Filtering services by:', specialist.serviceIds);
             filteredServices = businessData.services.filter(s =>
               specialist.serviceIds.includes(s.id)
             );
+            console.log('Filtered services:', filteredServices);
           }
         }
       }
