@@ -838,6 +838,8 @@
       console.log('selectedSpecialist.id:', selectedSpecialist?.id);
       console.log('businessData.masters:', businessData.masters);
       console.log('All masters with IDs:', businessData.masters?.map(m => ({ id: m.id, name: m.name })));
+      console.log('businessData.services:', businessData.services);
+      console.log('businessData.categories:', businessData.categories);
 
       if (!businessData.services || businessData.services.length === 0) {
         servicesGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Услуги пока не добавлены</div>';
@@ -849,7 +851,7 @@
       let filteredCategories = businessData.categories || [];
 
       if (selectedSpecialist && businessData.masters) {
-        const specialist = businessData.masters.find(m => m.id === selectedSpecialist.id);
+        const specialist = businessData.masters.find(m => m.id === parseInt(selectedSpecialist.id));
         console.log('Found specialist:', specialist);
         if (specialist) {
           console.log('Specialist categoryIds:', specialist.categoryIds);
