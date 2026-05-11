@@ -835,7 +835,9 @@
 
       console.log('loadServices called');
       console.log('selectedSpecialist:', selectedSpecialist);
+      console.log('selectedSpecialist.id:', selectedSpecialist?.id);
       console.log('businessData.masters:', businessData.masters);
+      console.log('All masters with IDs:', businessData.masters?.map(m => ({ id: m.id, name: m.name })));
 
       if (!businessData.services || businessData.services.length === 0) {
         servicesGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Услуги пока не добавлены</div>';
@@ -850,6 +852,8 @@
         const specialist = businessData.masters.find(m => m.id === selectedSpecialist.id);
         console.log('Found specialist:', specialist);
         if (specialist) {
+          console.log('Specialist categoryIds:', specialist.categoryIds);
+          console.log('Specialist serviceIds:', specialist.serviceIds);
           // Filter by categoryIds and serviceIds
           if (specialist.categoryIds && specialist.categoryIds.length > 0) {
             console.log('Filtering categories by:', specialist.categoryIds);
@@ -865,6 +869,8 @@
             );
             console.log('Filtered services:', filteredServices);
           }
+        } else {
+          console.log('Specialist not found in masters array!');
         }
       }
 
