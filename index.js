@@ -49,7 +49,7 @@ app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/magic', magicLinkRoutes); // Changed from /api/auth to avoid conflict
 app.use('/api/specialists', specialistsRoutes);
 app.use('/api/masters', settingsRoutes); // Masters endpoints are in settingsRoutes
-app.use('/api/appointments', appointmentRoutes);
+app.use('/api', appointmentRoutes);
 
 console.log('Business routes loaded:', typeof businessRoutes);
 console.log('Business routes methods:', Object.getOwnPropertyNames(businessRoutes));
