@@ -949,7 +949,7 @@
       specialistsGrid.innerHTML = businessData.masters.map(master => `
         <div class="specialist-item" data-specialist-id="${master.id}">
           <div class="specialist-photo">
-            ${master.avatarUrl ? `<img src="${master.avatarUrl}" alt="${master.name}">` : '<span>?</span>'}
+            ${master.avatarUrl ? `<img src="/api/proxy/image?url=${encodeURIComponent(master.avatarUrl)}" alt="${master.name}">` : '<span>?</span>'}
           </div>
           <div class="specialist-name">${master.name}</div>
           <div class="specialist-specialization">${master.specializations || 'Специалист'}</div>
