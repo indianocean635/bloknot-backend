@@ -1072,11 +1072,19 @@
         const date = new Date(year, month, day);
         const isToday = date.toDateString() === now.toDateString();
         const isPast = date < now && !isToday;
-        
+        const dateKey = date.toISOString().split('T')[0];
+
+        // Check if this day is in the specialist's schedule
+        let isAvailable = !isPast;
+        if (selectedSpecialist && selectedSpecialist.schedule) {
+          const daySchedule = selectedSpecialist.schedule[dateKey];
+          isAvailable = !isPast && daySchedule && daySchedule.enabled;
+        }
+
         calendarGrid.innerHTML += `
-          <div class="calendar-day ${isToday ? 'today' : ''} ${isPast ? 'disabled' : 'available'}" 
-               data-date="${date.toISOString().split('T')[0]}"
-               ${isPast ? 'disabled' : ''}>
+          <div class="calendar-day ${isToday ? 'today' : ''} ${isAvailable ? 'available' : 'disabled'}"
+               data-date="${dateKey}"
+               ${isAvailable ? '' : 'disabled'}>
             ${day}
           </div>
         `;
