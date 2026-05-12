@@ -1569,8 +1569,20 @@ async function saveSpecialistSettings(index) {
       return;
     }
 
-    // Collect schedule data from global storage
-    const schedule = window.specialistScheduleData || {};
+    // Collect schedule data from calendar cells that have timeEnabled
+    const schedule = {};
+    document.querySelectorAll('.day-cell[data-time-enabled="true"]').forEach(dayCell => {
+      const dateKey = dayCell.dataset.date;
+      const timeDisplay = dayCell.querySelector('.day-time');
+      if (timeDisplay && timeDisplay.textContent !== '-') {
+        const [start, end] = timeDisplay.textContent.split(' - ');
+        schedule[dateKey] = {
+          enabled: true,
+          startTime: start || '09:00',
+          endTime: end || '18:00'
+        };
+      }
+    });
 
     console.log('Saving specialist settings for ID:', specialistId);
     console.log('Schedule data being saved:', schedule);
