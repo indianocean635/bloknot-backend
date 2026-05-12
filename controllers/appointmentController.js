@@ -3,6 +3,9 @@ const memoryAppointments = new Map();
 const memoryUsers = new Map();
 let appointmentId = 1;
 
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
 // Функция для парсинга даты
 function parseDate(value) {
   const d = new Date(value);
