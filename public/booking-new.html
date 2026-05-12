@@ -1069,11 +1069,12 @@
       
       // Days of month
       for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month, day);
-        const isToday = date.toDateString() === now.toDateString();
-        const isPast = date < now && !isToday;
-        // Use local date formatting to avoid timezone issues
         const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        // Use UTC for date comparison to avoid timezone issues
+        const date = new Date(Date.UTC(year, month, day));
+        const nowUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+        const isToday = date.getTime() === nowUTC.getTime();
+        const isPast = date < nowUTC;
 
         // Check if this day is in the specialist's schedule
         let isAvailable = !isPast;
