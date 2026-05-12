@@ -1572,6 +1572,10 @@ async function saveSpecialistSettings(index) {
     // Collect schedule data from global storage
     const schedule = window.specialistScheduleData || {};
 
+    console.log('Saving specialist settings for ID:', specialistId);
+    console.log('Schedule data being saved:', schedule);
+    console.log('Schedule keys:', Object.keys(schedule));
+
     // Collect category IDs
     const categoryIds = [];
     document.querySelectorAll('.category-checkbox:checked').forEach(checkbox => {
@@ -1595,10 +1599,14 @@ async function saveSpecialistSettings(index) {
       serviceIds
     };
 
-    await api(`/api/specialists/${specialistId}/settings`, {
+    console.log('Sending settings data:', settingsData);
+
+    const response = await api(`/api/specialists/${specialistId}/settings`, {
       method: 'POST',
       body: JSON.stringify(settingsData)
     });
+
+    console.log('Settings save response:', response);
 
     alert('Настройки специалиста сохранены!');
   } catch (error) {
