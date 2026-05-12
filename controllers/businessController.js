@@ -43,6 +43,15 @@ async function getBusinessBySlug(req, res) {
     }
   });
 
+  console.log('Masters loaded for public API:', masters.length);
+  masters.forEach(master => {
+    console.log(`Master ${master.id} (${master.name}):`, {
+      hasSchedule: !!master.schedule,
+      scheduleKeys: master.schedule ? Object.keys(master.schedule) : [],
+      scheduleSample: master.schedule ? JSON.stringify(master.schedule).substring(0, 100) : 'null'
+    });
+  });
+
   // Get branches
   const branches = await prisma.branch.findMany({
     where: { businessId: business.id }
