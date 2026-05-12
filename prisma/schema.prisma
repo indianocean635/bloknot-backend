@@ -182,12 +182,16 @@ model Appointment {
   id            Int      @id @default(autoincrement())
   customerName  String
   customerPhone String?
+  customerTelegram String?
+  telegramChatId String?
+  customerComment String?
   startsAt      DateTime
   endsAt        DateTime
   businessId    String
   serviceId     Int
   masterId      Int
   branchId      Int?
+  status        String   @default("PENDING")
   createdAt     DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)

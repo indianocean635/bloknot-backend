@@ -5,6 +5,7 @@ let appointmentId = 1;
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { sendTelegramMessage } = require('../lib/telegram');
 
 // Функция для парсинга даты
 function parseDate(value) {
@@ -109,7 +110,7 @@ async function createPublicAppointment(req, res) {
       endsAt,
       customerName,
       customerPhone,
-      customerEmail,
+      customerTelegram,
       customerComment
     } = req.body;
 
@@ -128,13 +129,24 @@ async function createPublicAppointment(req, res) {
         endsAt: new Date(endsAt),
         customerName,
         customerPhone,
-        customerEmail,
+        customerTelegram,
         customerComment,
         status: 'PENDING'
       }
     });
 
     console.log('✅ Public appointment created in DB:', appointment.id);
+
+    // Send Telegram notification if chatId exists
+    if (appointment.telegramChatId) {
+      const dateStr = new Date(appointment.startsAt).toLocaleDateString('ru-RU');
+      const timeStr = new Date(appointment.startsAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+      const message = `Вы записаны!\n\nДата: ${dateStr}\nВремя: ${timeStr}\nМастер: ${appointment.masterId}`;
+
+      await sendTelegramMessage(appointment.telegramChatId, message);
+    }
+
     res.json(appointment);
   } catch (error) {
     console.error('❌ createPublicAppointment error:', error);
