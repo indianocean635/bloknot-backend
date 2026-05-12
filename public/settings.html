@@ -1299,11 +1299,15 @@ async function loadSpecialistSettings(index) {
             <h5 style="margin: 0 0 12px 0; font-size: 14px;">Время работы</h5>
             <div style="margin-bottom: 12px;">
               <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">С:</label>
-              <input type="time" id="startTime" value="09:00" step="600" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+              <select id="startTime" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                ${generateTimeOptions('00:00', '23:50', 10).map(opt => `<option value="${opt.value}" ${opt.value === '09:00' ? 'selected' : ''}>${opt.label}</option>`).join('')}
+              </select>
             </div>
             <div style="margin-bottom: 12px;">
               <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">До:</label>
-              <input type="time" id="endTime" value="18:00" step="600" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+              <select id="endTime" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                ${generateTimeOptions('00:00', '23:50', 10).map(opt => `<option value="${opt.value}" ${opt.value === '18:00' ? 'selected' : ''}>${opt.label}</option>`).join('')}
+              </select>
             </div>
             <div style="margin-bottom: 12px;">
               <label style="display: flex; align-items: center; cursor: pointer;">
@@ -1388,6 +1392,27 @@ function selectDay(cell) {
   // This is handled by the event listener above
 }
 
+// Generate time options with given step (in minutes)
+function generateTimeOptions(startTime, endTime, stepMinutes) {
+  const options = [];
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
+
+  let currentMinutes = startHour * 60 + startMin;
+  const endMinutes = endHour * 60 + endMin;
+
+  while (currentMinutes <= endMinutes) {
+    const hour = Math.floor(currentMinutes / 60);
+    const minute = currentMinutes % 60;
+    const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    const label = value;
+    options.push({ value, label });
+    currentMinutes += stepMinutes;
+  }
+
+  return options;
+}
+
 // Render calendar for a specific month
 function renderCalendar(date, scheduleData) {
   const container = document.getElementById('scheduleSettings');
@@ -1469,8 +1494,10 @@ function renderCalendar(date, scheduleData) {
         const timeDisplay = selectedDays[0].querySelector('.day-time');
         if (timeDisplay && timeDisplay.textContent !== '-') {
           const [start, end] = timeDisplay.textContent.split(' - ');
-          document.getElementById('startTime').value = start || '09:00';
-          document.getElementById('endTime').value = end || '18:00';
+          const startTimeSelect = document.getElementById('startTime');
+          const endTimeSelect = document.getElementById('endTime');
+          if (startTimeSelect) startTimeSelect.value = start || '09:00';
+          if (endTimeSelect) endTimeSelect.value = end || '18:00';
         }
       } else {
         timePanel.style.display = 'none';
@@ -1489,8 +1516,10 @@ function changeMonth(delta) {
 
 // Apply schedule time to selected days
 function applyScheduleTime() {
-  const startTime = document.getElementById('startTime').value;
-  const endTime = document.getElementById('endTime').value;
+  const startTimeSelect = document.getElementById('startTime');
+  const endTimeSelect = document.getElementById('endTime');
+  const startTime = startTimeSelect ? startTimeSelect.value : '09:00';
+  const endTime = endTimeSelect ? endTimeSelect.value : '18:00';
   const applyToSelected = document.getElementById('applyToSelected').checked;
 
   const selectedDays = document.querySelectorAll('.day-cell.selected');
