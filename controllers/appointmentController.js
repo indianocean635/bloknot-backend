@@ -92,6 +92,53 @@ async function getPublicAppointments(req, res) {
   }
 }
 
+// Создать запись (публичный endpoint, без авторизации)
+async function createPublicAppointment(req, res) {
+  try {
+    console.log('[PUBLIC APPOINTMENT REQUEST]', req.body);
+
+    const {
+      businessId,
+      serviceId,
+      masterId,
+      branchId,
+      startsAt,
+      endsAt,
+      customerName,
+      customerPhone,
+      customerEmail,
+      customerComment
+    } = req.body;
+
+    if (!businessId || !serviceId || !masterId || !startsAt || !endsAt || !customerName || !customerPhone) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Save to database
+    const appointment = await prisma.appointment.create({
+      data: {
+        businessId,
+        serviceId: Number(serviceId),
+        masterId: Number(masterId),
+        branchId: branchId ? Number(branchId) : null,
+        startsAt: new Date(startsAt),
+        endsAt: new Date(endsAt),
+        customerName,
+        customerPhone,
+        customerEmail,
+        customerComment,
+        status: 'PENDING'
+      }
+    });
+
+    console.log('✅ Public appointment created in DB:', appointment.id);
+    res.json(appointment);
+  } catch (error) {
+    console.error('❌ createPublicAppointment error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
+
 // Создать запись
 async function createAppointment(req, res) {
   try {
@@ -241,6 +288,7 @@ async function getAppointmentById(req, res) {
 module.exports = {
   getAppointments,
   getPublicAppointments,
+  createPublicAppointment,
   createAppointment,
   updateAppointment,
   deleteAppointment,
