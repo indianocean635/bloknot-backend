@@ -8,7 +8,8 @@ const {
   deleteAppointment, 
   getAppointmentById 
 } = require("../controllers/appointmentController");
-const { requireMagicAuth, getBusinessFromUser, getBusinessBySlug } = require("../middleware/magicAuthMiddleware");
+const { getBusinessBySlug } = require("../controllers/businessController");
+const { requireMagicAuth, getBusinessFromUser, getBusinessBySlug: getBusinessBySlugMiddleware } = require("../middleware/magicAuthMiddleware");
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.get("/appointments", requireMagicAuth, getBusinessFromUser, getAppointmen
 router.delete("/appointments/:id", requireMagicAuth, getBusinessFromUser, deleteAppointment);
 
 // Публичные эндпоинты
+router.get("/public/business/:slug", getBusinessBySlug);
 router.get("/public/appointments", getPublicAppointments);
 router.post("/public/appointments", createPublicAppointment);
 // router.get("/public/appointments/:id", getBusinessBySlug, getAppointmentById); // Temporarily disabled
