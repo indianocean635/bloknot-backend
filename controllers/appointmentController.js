@@ -60,8 +60,11 @@ async function getAppointments(req, res) {
 // Получить записи (публичные)
 async function getPublicAppointments(req, res) {
   try {
-    const { from, to, masterId } = req.query;
-    const businessId = req.business?.id || 'business_1';
+    const { from, to, masterId, businessId } = req.query;
+    
+    if (!businessId) {
+      return res.status(400).json({ error: "Business ID is required" });
+    }
     
     let items = Array.from(memoryAppointments.values()).filter(item => 
       item.businessId === businessId

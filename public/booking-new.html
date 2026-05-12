@@ -1167,7 +1167,7 @@
     // Load appointments and mark occupied time slots
     async function loadAppointmentsAndMarkOccupied() {
       try {
-        const response = await fetch(`/api/public/appointments?masterId=${selectedSpecialist.id}&from=${selectedDate}&to=${selectedDate}`);
+        const response = await fetch(`/api/public/appointments?masterId=${selectedSpecialist.id}&from=${selectedDate}&to=${selectedDate}&businessId=${businessData.business.id}`);
         if (response.ok) {
           const appointments = await response.json();
           

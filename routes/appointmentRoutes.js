@@ -15,8 +15,8 @@ router.get("/appointments", requireMagicAuth, getBusinessFromUser, getAppointmen
 router.delete("/appointments/:id", requireMagicAuth, getBusinessFromUser, deleteAppointment);
 
 // Публичные эндпоинты
-router.get("/public/appointments", getBusinessBySlug, getPublicAppointments);
-router.post("/public/appointments", getBusinessBySlug, createAppointment);
+router.get("/public/appointments", getPublicAppointments);
+router.post("/public/appointments", createAppointment);
 // router.get("/public/appointments/:id", getBusinessBySlug, getAppointmentById); // Temporarily disabled
 
 module.exports = router;
