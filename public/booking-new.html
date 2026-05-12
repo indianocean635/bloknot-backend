@@ -1072,7 +1072,8 @@
         const date = new Date(year, month, day);
         const isToday = date.toDateString() === now.toDateString();
         const isPast = date < now && !isToday;
-        const dateKey = date.toISOString().split('T')[0];
+        // Use local date formatting to avoid timezone issues
+        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
         // Check if this day is in the specialist's schedule
         let isAvailable = !isPast;
