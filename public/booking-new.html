@@ -639,11 +639,6 @@
                 <input type="tel" id="client-phone" class="form-input" required>
               </div>
               <div class="form-group">
-                <label class="form-label">Telegram (необязательно)</label>
-                <input type="text" id="client-telegram" class="form-input" placeholder="@username" value="@">
-                <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">Если хотите получать уведомления в Telegram — нажмите кнопку ниже после записи</div>
-              </div>
-              <div class="form-group">
                 <label class="form-label">Комментарий</label>
                 <input type="text" id="client-comment" class="form-input" placeholder="Комментарий к записи">
               </div>
@@ -1290,7 +1285,6 @@
         endsAt: endsAt.toISOString(),
         customerName: document.getElementById('client-name').value,
         customerPhone: document.getElementById('client-phone').value,
-        customerTelegram: document.getElementById('client-telegram').value,
         customerComment: document.getElementById('client-comment').value
       };
 
@@ -1319,10 +1313,7 @@
             <p style="margin-bottom: 8px;">Дата: ${new Date(selectedDate).toLocaleDateString('ru-RU')} в ${selectedTime}</p>
             <p style="margin-top: 16px;">Спасибо, что выбрали ${businessData.business?.name || businessData.name}!</p>
             <div style="margin-top: 24px; padding: 16px; background: #f8fafc; border-radius: 8px;">
-              <p style="margin-bottom: 12px; font-weight: 500;">Хотите получать уведомления в Telegram?</p>
-              <a href="https://t.me/bloknot_booking_bot" target="_blank" style="display: inline-block; padding: 10px 20px; background: #229ED9; color: white; text-decoration: none; border-radius: 8px; font-weight: 500;">
-                Подключить Telegram
-              </a>
+              <p style="margin-bottom: 0; font-weight: 500;">Запись успешно создана!</p>
             </div>
           </div>
         `;
