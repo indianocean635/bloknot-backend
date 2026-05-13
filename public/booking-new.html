@@ -1282,7 +1282,7 @@
       endsAt.setMinutes(endsAt.getMinutes() + (service?.duration || 60));
 
       const formData = {
-        businessId: businessData.business.id,
+        businessId: businessData.business?.id || businessData.id,
         serviceId: selectedService.id,
         masterId: selectedSpecialist.id,
         branchId: selectedBranch,
