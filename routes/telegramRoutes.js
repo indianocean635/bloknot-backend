@@ -3,6 +3,14 @@ const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { bot } = require('../lib/telegram');
+const { requireMagicAuth } = require('../middleware/magicAuthMiddleware');
+const { createTelegramLink, connectTelegram } = require('../controllers/telegramController');
+
+// POST /api/telegram/create-link - Create Telegram connection link
+router.post('/create-link', requireMagicAuth, createTelegramLink);
+
+// POST /api/telegram/connect - Connect Telegram account (called by bot)
+router.post('/connect', connectTelegram);
 
 // POST /api/telegram/webhook - Telegram bot webhook
 router.post('/webhook', async (req, res) => {
@@ -15,40 +23,41 @@ router.post('/webhook', async (req, res) => {
 
     const chatId = message.chat.id;
     const text = message.text;
+    const username = message.from?.username;
 
-    if (text === '/start') {
-      // User started the bot, send welcome message
-      await bot.sendMessage(chatId, 'Добро пожаловать в Bloknot Booking Bot!\n\nЧтобы получать уведомления о записях, введите ваш номер телефона в формате: +7XXXXXXXXXX');
-    } else if (text.match(/^\+?\d{10,15}$/)) {
-      // User entered phone number, save chat_id
-      const phone = text.replace(/\D/g, '');
+    if (text && text.startsWith('/start ')) {
+      // Extract token from /start TOKEN
+      const token = text.replace('/start ', '').trim();
 
-      // Find the most recent appointment with this phone
-      const appointment = await prisma.appointment.findFirst({
-        where: {
-          customerPhone: {
-            contains: phone
+      if (token) {
+        // Send connection data to backend
+        try {
+          const response = await fetch('https://bloknotservis.ru/api/telegram/connect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              token,
+              chatId,
+              username
+            })
+          });
+
+          if (response.ok) {
+            await bot.sendMessage(chatId, 'Telegram успешно подключен ✅');
+          } else {
+            await bot.sendMessage(chatId, 'Ошибка подключения. Недействительный токен.');
           }
-        },
-        orderBy: {
-          createdAt: 'desc'
+        } catch (error) {
+          console.error('Error connecting Telegram:', error);
+          await bot.sendMessage(chatId, 'Ошибка подключения. Попробуйте позже.');
         }
-      });
-
-      if (appointment) {
-        // Update appointment with chatId
-        await prisma.appointment.update({
-          where: { id: appointment.id },
-          data: { telegramChatId: chatId.toString() }
-        });
-
-        await bot.sendMessage(chatId, 'Отлично! Теперь вы будете получать уведомления о записях в Telegram.');
-      } else {
-        await bot.sendMessage(chatId, 'Не найдено записей с этим номером телефона. Убедитесь, что номер введен правильно.');
       }
+    } else if (text === '/start') {
+      // User started the bot without token
+      await bot.sendMessage(chatId, 'Добро пожаловать в Bloknot Booking Bot!\n\nДля подключения уведомлений, перейдите по ссылке из формы записи.');
     } else {
       // Unknown command
-      await bot.sendMessage(chatId, 'Чтобы подключить уведомления, введите ваш номер телефона в формате: +7XXXXXXXXXX');
+      await bot.sendMessage(chatId, 'Для подключения уведомлений, используйте ссылку из формы записи.');
     }
 
     res.sendStatus(200);

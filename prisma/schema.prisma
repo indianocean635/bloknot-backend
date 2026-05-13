@@ -201,3 +201,14 @@ model Appointment {
 
   @@index([businessId, startsAt])
 }
+
+model TelegramLink {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String?
+  bookingId String?
+  chatId    String?
+  username  String?
+  connected Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

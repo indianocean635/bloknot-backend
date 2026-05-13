@@ -3,9 +3,8 @@ const memoryAppointments = new Map();
 const memoryUsers = new Map();
 let appointmentId = 1;
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-const { sendTelegramMessage } = require('../lib/telegram');
+const { prisma } = require("../services/prismaService");
+const { bot } = require("../lib/telegram");
 
 // Функция для парсинга даты
 function parseDate(value) {
@@ -149,12 +148,20 @@ async function createPublicAppointment(req, res) {
 
     // Send Telegram notification if chatId exists
     if (appointment.telegramChatId) {
-      const dateStr = new Date(appointment.startsAt).toLocaleDateString('ru-RU');
-      const timeStr = new Date(appointment.startsAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      try {
+        const service = await prisma.service.findUnique({ where: { id: appointment.serviceId } });
+        const master = await prisma.master.findUnique({ where: { id: appointment.masterId } });
+        
+        const dateStr = new Date(appointment.startsAt).toLocaleDateString('ru-RU');
+        const timeStr = new Date(appointment.startsAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
-      const message = `Вы записаны!\n\nДата: ${dateStr}\nВремя: ${timeStr}\nМастер: ${appointment.masterId}`;
+        const message = `Вы записаны!\n\n📅 Дата: ${dateStr}\n🕐 Время: ${timeStr}\n💇 Услуга: ${service?.name || 'Не указано'}\n👨‍💼 Мастер: ${master?.name || 'Не указано'}\n\nЖдем вас!`;
 
-      await sendTelegramMessage(appointment.telegramChatId, message);
+        await bot.sendMessage(appointment.telegramChatId, message);
+        console.log('✅ Telegram notification sent to:', appointment.telegramChatId);
+      } catch (error) {
+        console.error('❌ Error sending Telegram notification:', error);
+      }
     }
 
     res.json(appointment);
