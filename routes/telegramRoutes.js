@@ -25,6 +25,8 @@ router.post('/webhook', async (req, res) => {
     const text = message.text;
     const username = message.from?.username;
 
+    let replyText = '';
+
     if (text && text.startsWith('/start ')) {
       // Extract token from /start TOKEN
       const token = text.replace('/start ', '').trim();
@@ -43,21 +45,46 @@ router.post('/webhook', async (req, res) => {
           });
 
           if (response.ok) {
-            await bot.sendMessage(chatId, 'Telegram успешно подключен ✅');
+            replyText = 'Telegram успешно подключен ✅\n\nТеперь вы будете получать уведомления о записях.';
           } else {
-            await bot.sendMessage(chatId, 'Ошибка подключения. Недействительный токен.');
+            replyText = 'Ошибка подключения. Недействительный токен.';
           }
         } catch (error) {
           console.error('Error connecting Telegram:', error);
-          await bot.sendMessage(chatId, 'Ошибка подключения. Попробуйте позже.');
+          replyText = 'Ошибка подключения. Попробуйте позже.';
         }
       }
     } else if (text === '/start') {
       // User started the bot without token
-      await bot.sendMessage(chatId, 'Добро пожаловать в Bloknot Booking Bot!\n\nДля подключения уведомлений, перейдите по ссылке из формы записи.');
+      replyText = 'Бот подключен ✅\n\nДля получения уведомлений о записей, используйте ссылку из формы записи.';
     } else {
       // Unknown command
-      await bot.sendMessage(chatId, 'Для подключения уведомлений, используйте ссылку из формы записи.');
+      replyText = 'Для подключения уведомлений, используйте ссылку из формы записи.';
+    }
+
+    // Send reply via Telegram API using fetch with proxy if configured
+    if (replyText) {
+      try {
+        const fetchOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: replyText
+          })
+        };
+
+        // Use proxy if configured
+        if (process.env.HTTPS_PROXY || process.env.HTTP_PROXY) {
+          const { HttpsProxyAgent } = require('https-proxy-agent');
+          const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+          fetchOptions.agent = new HttpsProxyAgent(proxyUrl);
+        }
+
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, fetchOptions);
+      } catch (error) {
+        console.error('Error sending Telegram reply:', error);
+      }
     }
 
     res.sendStatus(200);
