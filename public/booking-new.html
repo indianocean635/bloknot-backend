@@ -1304,6 +1304,9 @@
           throw new Error('Не удалось создать запись');
         }
 
+        const appointment = await response.json();
+        const bookingId = appointment.id;
+
         // Show success message
         document.getElementById('contact-form-section').innerHTML = `
           <div class="success">
@@ -1327,7 +1330,7 @@
             const response = await fetch('/api/telegram/create-link', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ bookingId: bookingId })
+              body: JSON.stringify({ bookingId: String(bookingId) })
             });
             
             const data = await response.json();
