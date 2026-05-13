@@ -691,6 +691,7 @@
 
         businessData = await response.json();
         console.log('Business data loaded:', businessData);
+        console.log('Business data structure:', JSON.stringify(businessData, null, 2));
 
         // Update business info
         document.getElementById('business-name').textContent = businessData.business?.name || businessData.name || 'Бизнес';
