@@ -26,6 +26,7 @@
     "cors": "2.8.6",
     "dotenv": "17.2.3",
     "express": "5.2.1",
+    "https-proxy-agent": "^9.0.0",
     "jsonwebtoken": "9.0.3",
     "multer": "2.0.2",
     "node-telegram-bot-api": "^0.66.0",

@@ -1,7 +1,18 @@
 const { Telegraf } = require('telegraf');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 require('dotenv').config();
 
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+const botConfig = {};
+
+// Use proxy if configured
+if (process.env.HTTPS_PROXY || process.env.HTTP_PROXY) {
+  const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+  const agent = new HttpsProxyAgent(proxyUrl);
+  botConfig.telegram = { agent };
+  console.log('[TELEGRAM BOT] Using proxy:', proxyUrl);
+}
+
+const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN, botConfig);
 
 // Handle /start command with payload (deep-link)
 bot.start(async (ctx) => {
