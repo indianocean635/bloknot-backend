@@ -1,5 +1,15 @@
 const { prisma } = require("../services/prismaService");
 
+// Generate random short slug
+function generateShortSlug() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let slug = '';
+  for (let i = 0; i < 8; i++) {
+    slug += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return slug;
+}
+
 // Получить бизнес по slug
 async function getBusinessBySlug(req, res) {
   const { slug } = req.params;
@@ -372,8 +382,21 @@ async function createBusiness(req, res) {
       return res.status(400).json({ error: "User already has a business" });
     }
     
-    // Create slug from email
-    const slug = user.email.replace('@', '-').replace('.', '-');
+    // Generate unique short slug
+    let slug;
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    do {
+      slug = generateShortSlug();
+      attempts++;
+      const existing = await prisma.business.findUnique({ where: { slug } });
+      if (!existing) break;
+    } while (attempts < maxAttempts);
+    
+    if (attempts >= maxAttempts) {
+      return res.status(500).json({ error: "Failed to generate unique slug" });
+    }
     
     // Create business with owner
     const business = await prisma.business.create({
