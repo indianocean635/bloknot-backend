@@ -113,7 +113,7 @@
          <button class="btn" id="copyBookingBtn" type="button" style="width:100%">Скопировать</button>
        </div>
      </div>
-     <div class="notice" style="margin-top:10px">Чтобы получить доступ к ссылке, активируйте подписку и привяжите карту.</div>
+     <div class="notice" style="margin-top:10px">Поделитесь этой ссылкой с клиентами для онлайн-записи</div>
    </div>
  </main>
 
@@ -300,15 +300,16 @@
      fetch('/api/business/slug')
        .then(r => r.json())
        .then(data => {
-         const link = String(location.origin || "").replace(/\/$/, "") + "/booking-new.html";
+         const slug = data.slug;
+         const link = String(location.origin || "").replace(/\/$/, "") + "/booking-new.html?slug=" + encodeURIComponent(slug);
          const input = Bloknot.qs("#bookingLink");
-         const isSubscribed = false; // Remove localStorage usage - subscription status from API
+         const isSubscribed = true; // Always allow access to booking link
 
          const open = document.querySelector("#openBookingLink");
          if (open) open.href = link;
 
          function applyGate() {
-          const ok = false; // Remove localStorage usage - subscription status from API
+          const ok = isSubscribed;
           if (ok) {
             input.value = link;
             input.classList.remove("blurred");
@@ -325,23 +326,16 @@
          // Defensive: block manual copy/select when gated
          ["copy", "cut", "paste", "contextmenu"].forEach((ev) => {
            input.addEventListener(ev, (e) => {
-             const isSubscribed = false; // Remove localStorage usage - subscription status from API
              if (!isSubscribed) e.preventDefault();
            });
          });
          input.addEventListener("keydown", (e) => {
-           const isSubscribed = false; // Remove localStorage usage - subscription status from API
            if (!isSubscribed && ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "a"))) e.preventDefault();
          });
 
          const copyBookingBtn = Bloknot.qs("#copyBookingBtn");
          if (copyBookingBtn) {
            copyBookingBtn.addEventListener("click", async () => {
-             const isSubscribed = false; // Remove localStorage usage - subscription status from API
-             if (!isSubscribed) {
-               location.href = "/subscribe.html";
-               return;
-             }
              try {
                await navigator.clipboard.writeText(link);
                showNotice("Ссылка скопирована.");
