@@ -55,21 +55,23 @@ bot.on('message', (ctx) => {
   console.log('[TELEGRAM BOT] Message received:', ctx.message.text);
 });
 
+// Use webhook if WEBHOOK_URL is set
+if (process.env.TELEGRAM_WEBHOOK_URL) {
+  bot.telegram.setWebhook(process.env.TELEGRAM_WEBHOOK_URL);
+  console.log('[TELEGRAM BOT] Using webhook:', process.env.TELEGRAM_WEBHOOK_URL);
+} else {
+  // Use polling
+  bot.launch()
+    .then(() => {
+      console.log('[TELEGRAM BOT] Bot started successfully with polling');
+    })
+    .catch((error) => {
+      console.error('[TELEGRAM BOT] Error starting bot:', error);
+      process.exit(1);
+    });
+}
+
 // Graceful shutdown
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
-
-// Launch bot
-bot.launch()
-  .then(() => {
-    console.log('[TELEGRAM BOT] Bot started successfully');
-  })
-  .catch((error) => {
-    console.error('[TELEGRAM BOT] Error starting bot:', error);
-    process.exit(1);
-  });
-
-// Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
