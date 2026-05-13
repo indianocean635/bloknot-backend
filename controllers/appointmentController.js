@@ -32,10 +32,20 @@ async function getAppointments(req, res) {
     
     const { from, to, masterId } = req.query;
     
-    // Фильтруем записи из памяти
-    let items = Array.from(memoryAppointments.values()).filter(item => 
-      item.businessId === user.businessId
-    );
+    // Загружаем записи из базы данных
+    let items = await prisma.appointment.findMany({
+      where: {
+        businessId: user.businessId
+      },
+      include: {
+        service: true,
+        master: true,
+        branch: true
+      },
+      orderBy: {
+        startsAt: 'asc'
+      }
+    });
     
     // Фильтры по дате
     const fromDate = from ? parseDate(from) : null;

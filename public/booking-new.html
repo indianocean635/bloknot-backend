@@ -640,7 +640,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Telegram (необязательно)</label>
-                <input type="text" id="client-telegram" class="form-input" placeholder="@username">
+                <input type="text" id="client-telegram" class="form-input" placeholder="@username" value="@">
                 <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">Если хотите получать уведомления в Telegram — нажмите кнопку ниже после записи</div>
               </div>
               <div class="form-group">
@@ -1314,8 +1314,8 @@
         document.getElementById('contact-form-section').innerHTML = `
           <div class="success">
             <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">✅ Запись успешно создана</h2>
-            <p style="margin-bottom: 8px;">Услуга: ${businessData.services.find(s => s.id === selectedService.id)?.name}</p>
-            <p style="margin-bottom: 8px;">Специалист: ${businessData.masters.find(m => m.id === selectedSpecialist.id)?.name}</p>
+            <p style="margin-bottom: 8px;">Услуга: ${businessData.services.find(s => s.id == selectedService.id)?.name}</p>
+            <p style="margin-bottom: 8px;">Специалист: ${businessData.masters.find(m => m.id == selectedSpecialist.id)?.name}</p>
             <p style="margin-bottom: 8px;">Дата: ${new Date(selectedDate).toLocaleDateString('ru-RU')} в ${selectedTime}</p>
             <p style="margin-top: 16px;">Спасибо, что выбрали ${businessData.business?.name || businessData.name}!</p>
             <div style="margin-top: 24px; padding: 16px; background: #f8fafc; border-radius: 8px;">

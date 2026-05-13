@@ -187,7 +187,7 @@ async function loadClients() {
           clientsMap.set(key, {
             name: appointment.customerName,
             phone: appointment.customerPhone || '',
-            email: appointment.customerEmail || '',
+            telegram: appointment.customerTelegram || '',
             firstAppointment: appointment.startsAt,
             lastAppointment: appointment.startsAt,
             totalAppointments: 1,
@@ -230,7 +230,7 @@ function renderClients(clients) {
         <div>
           <div class="client-name">${escapeHtml(client.name)}</div>
           ${client.phone ? `<div class="client-phone">📱 ${escapeHtml(client.phone)}</div>` : ''}
-          ${client.email ? `<div class="client-email">✉️ ${escapeHtml(client.email)}</div>` : ''}
+          ${client.telegram ? `<div class="client-email">✈️ ${escapeHtml(client.telegram)}</div>` : ''}
         </div>
       </div>
       <div class="client-stats">
@@ -263,7 +263,7 @@ function filterClients() {
   const filtered = allClients.filter(client => 
     client.name.toLowerCase().includes(searchTerm) ||
     (client.phone && client.phone.includes(searchTerm)) ||
-    (client.email && client.email.toLowerCase().includes(searchTerm))
+    (client.telegram && client.telegram.toLowerCase().includes(searchTerm))
   );
   
   renderClients(filtered);
@@ -279,11 +279,11 @@ function exportToCSV() {
     return;
   }
   
-  const headers = ['Имя', 'Телефон', 'Email', 'Всего записей', 'Первая запись', 'Последняя запись', 'Услуги'];
+  const headers = ['Имя', 'Телефон', 'Telegram', 'Всего записей', 'Первая запись', 'Последняя запись', 'Услуги'];
   const rows = allClients.map(client => [
     client.name,
     client.phone || '',
-    client.email || '',
+    client.telegram || '',
     client.totalAppointments,
     formatDate(client.firstAppointment),
     formatDate(client.lastAppointment),
