@@ -53,25 +53,19 @@ async function cancelBooking(req, res) {
   try {
     console.log('[TELEGRAM] Canceling booking:', req.body);
 
-    const { bookingId, bookingToken, chatId } = req.body;
+    const { bookingId, chatId } = req.body;
 
-    if (!bookingId || !bookingToken || !chatId) {
-      return res.status(400).json({ error: "Booking ID, token, and chatId are required" });
+    if (!bookingId || !chatId) {
+      return res.status(400).json({ error: "Booking ID and chatId are required" });
     }
 
-    // Find booking and validate token
+    // Find booking and validate chatId
     const booking = await prisma.appointment.findUnique({
       where: { id: parseInt(bookingId) }
     });
 
     if (!booking) {
       return res.status(404).json({ error: "Booking not found" });
-    }
-
-    // Validate token (security check)
-    if (booking.bookingToken !== bookingToken) {
-      console.error('[TELEGRAM] Token validation failed for booking:', bookingId);
-      return res.status(403).json({ error: "Invalid token" });
     }
 
     // Validate chatId (user can only cancel their own booking)
@@ -100,13 +94,13 @@ async function generateRescheduleLink(req, res) {
   try {
     console.log('[TELEGRAM] Generating reschedule link:', req.body);
 
-    const { bookingId, bookingToken, chatId } = req.body;
+    const { bookingId, chatId } = req.body;
 
-    if (!bookingId || !bookingToken || !chatId) {
-      return res.status(400).json({ error: "Booking ID, token, and chatId are required" });
+    if (!bookingId || !chatId) {
+      return res.status(400).json({ error: "Booking ID and chatId are required" });
     }
 
-    // Find booking and validate token
+    // Find booking and validate chatId
     const booking = await prisma.appointment.findUnique({
       where: { id: parseInt(bookingId) },
       include: {
@@ -118,12 +112,6 @@ async function generateRescheduleLink(req, res) {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    // Validate token (security check)
-    if (booking.bookingToken !== bookingToken) {
-      console.error('[TELEGRAM] Token validation failed for booking:', bookingId);
-      return res.status(403).json({ error: "Invalid token" });
-    }
-
     // Validate chatId (user can only reschedule their own booking)
     if (booking.telegramChatId !== String(chatId)) {
       console.error('[TELEGRAM] ChatId validation failed for booking:', bookingId);
@@ -132,7 +120,7 @@ async function generateRescheduleLink(req, res) {
 
     // Generate reschedule URL
     const businessSlug = booking.business?.slug;
-    const rescheduleUrl = `https://bloknotservis.ru/booking-new.html?slug=${businessSlug}&reschedule=${bookingToken}`;
+    const rescheduleUrl = `https://bloknotservis.ru/booking-new.html?slug=${businessSlug}&reschedule=${booking.bookingToken}`;
 
     console.log('[TELEGRAM] Reschedule link generated for booking:', bookingId);
 

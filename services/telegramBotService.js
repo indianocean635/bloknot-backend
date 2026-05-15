@@ -1,4 +1,4 @@
-const { Telegraf, Markup } = require('telegraf');
+const { Telegraf } = require('telegraf');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 require('dotenv').config();
 
@@ -58,40 +58,63 @@ bot.start(async (ctx) => {
 
 // Send booking confirmation with action buttons
 async function sendBookingConfirmation(ctx, booking) {
-  const dateStr = new Date(booking.startsAt).toLocaleDateString('ru-RU');
-  const timeStr = new Date(booking.startsAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const bookingDate = new Date(booking.startsAt);
+  const dateTimeStr = bookingDate.toLocaleString('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 
   const message = `
 ✅ Запись подтверждена!
 
 📋 Услуга: ${booking.service?.name}
 👨‍💼 Специалист: ${booking.master?.name}
-📅 Дата: ${dateStr}
-🕐 Время: ${timeStr}
+📅 Дата и время: ${dateTimeStr}
 🏢 ${booking.business?.name}
 📞 Телефон: ${booking.customerPhone}
   `.trim();
 
-  const keyboard = Markup.inlineKeyboard([
-    [
-      Markup.button.callback('❌ Отменить запись', `cancel_${booking.id}`),
-      Markup.button.callback('🔄 Перенести запись', `reschedule_${booking.id}`)
-    ]
-  ]);
-
-  await ctx.reply(message, keyboard);
+  await ctx.reply(message, {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: '❌ Отменить запись',
+            callback_data: `cancel_${booking.id}`
+          }
+        ],
+        [
+          {
+            text: '� Перенести запись',
+            url: 'https://bloknotservis.ru/booking'
+          }
+        ]
+      ]
+    }
+  });
 }
 
 // Handle callback queries (button presses)
 bot.on('callback_query', async (ctx) => {
-  const callbackData = ctx.callbackQuery.data;
+  const callbackQuery = ctx.callbackQuery;
+  
+  if (!callbackQuery?.data) {
+    await ctx.answerCbQuery();
+    return;
+  }
+
+  const data = callbackQuery.data;
   const chatId = ctx.chat.id;
 
-  console.log('[TELEGRAM BOT] Callback received:', callbackData, 'Chat ID:', chatId);
+  console.log('[TELEGRAM BOT] Callback received:', data, 'Chat ID:', chatId);
 
   try {
-    if (callbackData.startsWith('cancel_')) {
-      const bookingId = callbackData.replace('cancel_', '');
+    if (data.startsWith('cancel_')) {
+      const bookingId = data.replace('cancel_', '');
       
       // Call backend to cancel booking
       const response = await fetch('https://bloknotservis.ru/api/telegram/cancel-booking', {
@@ -106,43 +129,19 @@ bot.on('callback_query', async (ctx) => {
       });
 
       if (response.ok) {
-        await ctx.editMessageText('❌ Запись успешно отменена');
-        await ctx.reply('Запись отменена. Вы можете создать новую запись на сайте.');
+        await ctx.editMessageText('❌ Ваша запись отменена');
+        await ctx.answerCbQuery();
+        console.log('[BOOKING CANCELLED] Booking ID:', bookingId, 'Chat ID:', chatId);
       } else {
         await ctx.answerCbQuery('Ошибка при отмене записи', { show_alert: true });
       }
-    } else if (callbackData.startsWith('reschedule_')) {
-      const bookingId = callbackData.replace('reschedule_', '');
-      
-      // Get reschedule link from backend
-      const response = await fetch('https://bloknotservis.ru/api/telegram/reschedule-link', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          bookingId: bookingId,
-          chatId: chatId
-        })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        await ctx.editMessageText(
-          '🔄 Для переноса записи перейдите по ссылке:\n\n' +
-          result.rescheduleUrl + '\n\n' +
-          'Выберите новую дату и время в календаре.'
-        );
-      } else {
-        await ctx.answerCbQuery('Ошибка при получении ссылки для переноса', { show_alert: true });
-      }
+    } else {
+      await ctx.answerCbQuery();
     }
   } catch (error) {
     console.error('[TELEGRAM BOT] Error handling callback:', error);
     await ctx.answerCbQuery('Произошла ошибка. Попробуйте позже.', { show_alert: true });
   }
-
-  await ctx.answerCbQuery();
 });
 
 // Handle other commands
@@ -153,28 +152,44 @@ bot.on('message', (ctx) => {
 // Function to send booking confirmations (can be called from backend)
 async function sendBookingConfirmationMessage(booking, chatId) {
   try {
-    const dateStr = new Date(booking.startsAt).toLocaleDateString('ru-RU');
-    const timeStr = new Date(booking.startsAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    const bookingDate = new Date(booking.startsAt);
+    const dateTimeStr = bookingDate.toLocaleString('ru-RU', {
+      timeZone: 'Europe/Moscow',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
 
     const message = `
 ✅ Запись подтверждена!
 
 📋 Услуга: ${booking.service?.name}
 👨‍💼 Специалист: ${booking.master?.name}
-📅 Дата: ${dateStr}
-🕐 Время: ${timeStr}
+📅 Дата и время: ${dateTimeStr}
 🏢 ${booking.business?.name}
 📞 Телефон: ${booking.customerPhone}
     `.trim();
 
-    const keyboard = Markup.inlineKeyboard([
-      [
-        Markup.button.callback('❌ Отменить запись', `cancel_${booking.id}`),
-        Markup.button.callback('🔄 Перенести запись', `reschedule_${booking.id}`)
-      ]
-    ]);
-
-    await bot.telegram.sendMessage(chatId, message, keyboard);
+    await bot.telegram.sendMessage(chatId, message, {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: '❌ Отменить запись',
+              callback_data: `cancel_${booking.id}`
+            }
+          ],
+          [
+            {
+              text: '� Перенести запись',
+              url: 'https://bloknotservis.ru/booking'
+            }
+          ]
+        ]
+      }
+    });
     console.log('[CONFIRMATION SENT] Booking ID:', booking.id, 'Chat ID:', chatId);
   } catch (error) {
     console.error('[TELEGRAM BOT] Error sending confirmation:', error);
