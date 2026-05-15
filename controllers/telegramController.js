@@ -48,6 +48,101 @@ async function linkBooking(req, res) {
   }
 }
 
+// Cancel booking
+async function cancelBooking(req, res) {
+  try {
+    console.log('[TELEGRAM] Canceling booking:', req.body);
+
+    const { bookingId, bookingToken, chatId } = req.body;
+
+    if (!bookingId || !bookingToken || !chatId) {
+      return res.status(400).json({ error: "Booking ID, token, and chatId are required" });
+    }
+
+    // Find booking and validate token
+    const booking = await prisma.appointment.findUnique({
+      where: { id: parseInt(bookingId) }
+    });
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    // Validate token (security check)
+    if (booking.bookingToken !== bookingToken) {
+      console.error('[TELEGRAM] Token validation failed for booking:', bookingId);
+      return res.status(403).json({ error: "Invalid token" });
+    }
+
+    // Validate chatId (user can only cancel their own booking)
+    if (booking.telegramChatId !== String(chatId)) {
+      console.error('[TELEGRAM] ChatId validation failed for booking:', bookingId);
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    // Update booking status to cancelled
+    const updated = await prisma.appointment.update({
+      where: { id: parseInt(bookingId) },
+      data: { status: 'CANCELLED' }
+    });
+
+    console.log('[TELEGRAM] Booking cancelled successfully:', bookingId);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[TELEGRAM] Error cancelling booking:', error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// Generate reschedule link
+async function generateRescheduleLink(req, res) {
+  try {
+    console.log('[TELEGRAM] Generating reschedule link:', req.body);
+
+    const { bookingId, bookingToken, chatId } = req.body;
+
+    if (!bookingId || !bookingToken || !chatId) {
+      return res.status(400).json({ error: "Booking ID, token, and chatId are required" });
+    }
+
+    // Find booking and validate token
+    const booking = await prisma.appointment.findUnique({
+      where: { id: parseInt(bookingId) },
+      include: {
+        business: true
+      }
+    });
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    // Validate token (security check)
+    if (booking.bookingToken !== bookingToken) {
+      console.error('[TELEGRAM] Token validation failed for booking:', bookingId);
+      return res.status(403).json({ error: "Invalid token" });
+    }
+
+    // Validate chatId (user can only reschedule their own booking)
+    if (booking.telegramChatId !== String(chatId)) {
+      console.error('[TELEGRAM] ChatId validation failed for booking:', bookingId);
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    // Generate reschedule URL
+    const businessSlug = booking.business?.slug;
+    const rescheduleUrl = `https://bloknotservis.ru/booking-new.html?slug=${businessSlug}&reschedule=${bookingToken}`;
+
+    console.log('[TELEGRAM] Reschedule link generated for booking:', bookingId);
+
+    res.json({ rescheduleUrl });
+  } catch (error) {
+    console.error('[TELEGRAM] Error generating reschedule link:', error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 // Send reminders for upcoming bookings
 async function sendReminders(req, res) {
   try {
@@ -163,5 +258,7 @@ async function sendReminders(req, res) {
 
 module.exports = {
   linkBooking,
+  cancelBooking,
+  generateRescheduleLink,
   sendReminders
 };
