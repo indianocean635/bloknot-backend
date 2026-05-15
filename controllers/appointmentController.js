@@ -150,8 +150,29 @@ async function createPublicAppointment(req, res) {
 
     console.log('✅ Public appointment created in DB:', appointment.id);
 
-    // Note: Telegram notifications disabled due to server unable to reach Telegram API
-    // Connection is established in database, but notifications cannot be sent
+    // Send Telegram confirmation if chatId is linked
+    if (appointment.telegramChatId) {
+      try {
+        const { sendBookingConfirmationMessage } = require('../services/telegramBotService');
+        
+        // Get full booking details for confirmation
+        const fullBooking = await prisma.appointment.findUnique({
+          where: { id: appointment.id },
+          include: {
+            service: true,
+            master: true,
+            business: true
+          }
+        });
+        
+        if (fullBooking) {
+          await sendBookingConfirmationMessage(fullBooking, fullBooking.telegramChatId);
+        }
+      } catch (error) {
+        console.error('Error sending Telegram confirmation:', error);
+        // Continue even if Telegram fails
+      }
+    }
 
     res.json(appointment);
   } catch (error) {
