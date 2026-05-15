@@ -127,6 +127,9 @@ async function createPublicAppointment(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    // Generate unique booking token
+    const bookingToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
     // Save to database
     const appointment = await prisma.appointment.create({
       data: {
@@ -140,7 +143,8 @@ async function createPublicAppointment(req, res) {
         customerPhone,
         customerTelegram,
         customerComment,
-        status: 'PENDING'
+        status: 'PENDING',
+        bookingToken
       }
     });
 

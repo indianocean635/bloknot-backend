@@ -1305,7 +1305,7 @@
         }
 
         const appointment = await response.json();
-        const bookingId = appointment.id;
+        const bookingToken = appointment.bookingToken;
 
         // Show success message
         document.getElementById('contact-form-section').innerHTML = `
@@ -1325,23 +1325,9 @@
         `;
 
         // Add event listener to connect Telegram button
-        document.getElementById('connect-telegram-btn').addEventListener('click', async () => {
-          try {
-            const response = await fetch('/api/telegram/create-link', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ bookingId: String(bookingId) })
-            });
-            
-            const data = await response.json();
-            
-            if (data.telegramUrl) {
-              window.open(data.telegramUrl, '_blank');
-            }
-          } catch (error) {
-            console.error('Error creating Telegram link:', error);
-            alert('Ошибка создания ссылки. Попробуйте позже.');
-          }
+        document.getElementById('connect-telegram-btn').addEventListener('click', () => {
+          // Directly open Telegram deep-link with booking token
+          window.open(`https://t.me/bloknot_booking_bot?start=${bookingToken}`, '_blank');
         });
       } catch (error) {
         console.error('Error creating booking:', error);

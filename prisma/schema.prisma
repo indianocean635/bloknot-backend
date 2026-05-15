@@ -179,20 +179,23 @@ model Branch {
 }
 
 model Appointment {
-  id            Int      @id @default(autoincrement())
-  customerName  String
-  customerPhone String?
-  customerTelegram String?
-  telegramChatId String?
-  customerComment String?
-  startsAt      DateTime
-  endsAt        DateTime
-  businessId    String
-  serviceId     Int
-  masterId      Int
-  branchId      Int?
-  status        String   @default("PENDING")
-  createdAt     DateTime @default(now())
+  id                 Int      @id @default(autoincrement())
+  customerName       String
+  customerPhone      String?
+  customerTelegram   String?
+  telegramChatId     String?
+  customerComment    String?
+  startsAt           DateTime
+  endsAt             DateTime
+  businessId         String
+  serviceId          Int
+  masterId           Int
+  branchId           Int?
+  status             String   @default("PENDING")
+  bookingToken       String?  @unique
+  reminderSent24h    Boolean  @default(false)
+  reminderSent1h     Boolean  @default(false)
+  createdAt          DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   service  Service  @relation(fields: [serviceId], references: [id])
@@ -200,15 +203,4 @@ model Appointment {
   branch   Branch?  @relation(fields: [branchId], references: [id])
 
   @@index([businessId, startsAt])
-}
-
-model TelegramLink {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String?
-  bookingId String?
-  chatId    String?
-  username  String?
-  connected Boolean  @default(false)
-  createdAt DateTime @default(now())
 }

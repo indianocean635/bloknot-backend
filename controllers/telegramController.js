@@ -1,106 +1,167 @@
 const { prisma } = require("../services/prismaService");
 
-// Generate unique token
-function generateToken() {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let token = '';
-  for (let i = 0; i < 16; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
-}
-
-// Create Telegram link for connection
-async function createTelegramLink(req, res) {
+// Link Telegram chatId to booking using booking token
+async function linkBooking(req, res) {
   try {
-    console.log('[TELEGRAM] Creating link for user:', req.user?.id);
+    console.log('[TELEGRAM] Linking booking:', req.body);
 
-    const userId = req.user?.id;
-    const bookingId = req.body.bookingId;
+    const { bookingToken, chatId, username } = req.body;
 
-    // Generate unique token
-    let token;
-    let attempts = 0;
-    const maxAttempts = 10;
-
-    do {
-      token = generateToken();
-      attempts++;
-      const existing = await prisma.telegramLink.findUnique({ where: { token } });
-      if (!existing) break;
-    } while (attempts < maxAttempts);
-
-    if (attempts >= maxAttempts) {
-      return res.status(500).json({ error: "Failed to generate unique token" });
+    if (!bookingToken || !chatId) {
+      return res.status(400).json({ error: "Booking token and chatId are required" });
     }
 
-    // Create Telegram link
-    const telegramLink = await prisma.telegramLink.create({
-      data: {
-        token,
-        userId,
-        bookingId
+    // Find booking by token
+    const booking = await prisma.appointment.findUnique({
+      where: { bookingToken },
+      include: {
+        service: true,
+        master: true,
+        business: true
       }
     });
 
-    // Return telegram URL
-    const telegramUrl = `https://t.me/bloknot_booking_bot?start=${token}`;
+    if (!booking) {
+      return res.status(404).json({ error: "Invalid booking token" });
+    }
 
-    res.json({ telegramUrl, token });
+    // Update booking with chatId
+    const updated = await prisma.appointment.update({
+      where: { id: booking.id },
+      data: {
+        telegramChatId: String(chatId),
+        customerTelegram: username || customerTelegram
+      },
+      include: {
+        service: true,
+        master: true,
+        business: true
+      }
+    });
+
+    console.log('[TELEGRAM] Booking linked successfully:', updated.id);
+
+    res.json({ booking: updated });
   } catch (error) {
-    console.error('[TELEGRAM] Error creating link:', error);
+    console.error('[TELEGRAM] Error linking booking:', error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
 
-// Connect Telegram account
-async function connectTelegram(req, res) {
+// Send reminders for upcoming bookings
+async function sendReminders(req, res) {
   try {
-    console.log('[TELEGRAM] Connecting account:', req.body);
+    console.log('[TELEGRAM] Sending reminders...');
 
-    const { token, chatId, username } = req.body;
+    const now = new Date();
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+    const twentyFourHoursLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    if (!token || !chatId) {
-      return res.status(400).json({ error: "Token and chatId are required" });
-    }
-
-    // Find telegram link by token
-    const telegramLink = await prisma.telegramLink.findUnique({
-      where: { token }
-    });
-
-    if (!telegramLink) {
-      return res.status(404).json({ error: "Invalid token" });
-    }
-
-    // Update telegram link with connection info
-    const updated = await prisma.telegramLink.update({
-      where: { id: telegramLink.id },
-      data: {
-        chatId: String(chatId),
-        username,
-        connected: true
+    // Find bookings that need reminders
+    const bookingsNeeding24hReminder = await prisma.appointment.findMany({
+      where: {
+        startsAt: {
+          gte: now,
+          lte: twentyFourHoursLater
+        },
+        reminderSent24h: false,
+        telegramChatId: { not: null },
+        status: 'PENDING'
+      },
+      include: {
+        service: true,
+        master: true,
+        business: true
       }
     });
 
-    // If there's a bookingId, update the appointment with chatId
-    if (updated.bookingId) {
-      await prisma.appointment.updateMany({
-        where: { id: parseInt(updated.bookingId) },
-        data: { telegramChatId: String(chatId) }
+    const bookingsNeeding1hReminder = await prisma.appointment.findMany({
+      where: {
+        startsAt: {
+          gte: now,
+          lte: oneHourLater
+        },
+        reminderSent1h: false,
+        telegramChatId: { not: null },
+        status: 'PENDING'
+      },
+      include: {
+        service: true,
+        master: true,
+        business: true
+      }
+    });
+
+    const reminders = [];
+
+    // Send 24h reminders
+    for (const booking of bookingsNeeding24hReminder) {
+      const dateStr = new Date(booking.startsAt).toLocaleDateString('ru-RU');
+      const timeStr = new Date(booking.startsAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+      const message = `
+⏰ Напоминание: Запись через 24 часа
+
+📋 Услуга: ${booking.service?.name}
+👨‍💼 Специалист: ${booking.master?.name}
+📅 Дата: ${dateStr}
+🕐 Время: ${timeStr}
+🏢 ${booking.business?.name}
+      `.trim();
+
+      // Send via bot (using bot service)
+      // Note: This will be handled by the bot service, we just mark as sent
+      await prisma.appointment.update({
+        where: { id: booking.id },
+        data: { reminderSent24h: true }
+      });
+
+      reminders.push({
+        bookingId: booking.id,
+        type: '24h',
+        chatId: booking.telegramChatId,
+        message
       });
     }
 
-    console.log('[TELEGRAM] Account connected successfully:', updated);
+    // Send 1h reminders
+    for (const booking of bookingsNeeding1hReminder) {
+      const dateStr = new Date(booking.startsAt).toLocaleDateString('ru-RU');
+      const timeStr = new Date(booking.startsAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
-    res.json({ success: true });
+      const message = `
+⏰ Напоминание: Запись через 1 час
+
+📋 Услуга: ${booking.service?.name}
+👨‍💼 Специалист: ${booking.master?.name}
+📅 Дата: ${dateStr}
+🕐 Время: ${timeStr}
+🏢 ${booking.business?.name}
+      `.trim();
+
+      await prisma.appointment.update({
+        where: { id: booking.id },
+        data: { reminderSent1h: true }
+      });
+
+      reminders.push({
+        bookingId: booking.id,
+        type: '1h',
+        chatId: booking.telegramChatId,
+        message
+      });
+    }
+
+    console.log(`[TELEGRAM] Reminders sent: ${reminders.length}`);
+
+    res.json({ reminders });
   } catch (error) {
-    console.error('[TELEGRAM] Error connecting account:', error);
+    console.error('[TELEGRAM] Error sending reminders:', error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
 
 module.exports = {
-  createTelegramLink,
-  connectTelegram
+  linkBooking,
+  sendReminders
 };
