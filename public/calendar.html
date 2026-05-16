@@ -10,12 +10,258 @@
   <div id="app-header"></div>
 
   <main class="container">
-    <h1 class="page-title">Календарь</h1>
+    <div class="card stack">
+      <div class="cal-topbar">
+        <div class="range" id="rangeTitle"></div>
+        <div class="nav">
+          <button type="button" id="prevBtn">←</button>
+          <button type="button" id="todayBtn">Сегодня</button>
+          <button type="button" id="nextBtn">→</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top: 16px;">
+        <label for="masterFilter">Мастер</label>
+        <select id="masterFilter"></select>
+      </div>
+
+      <div class="cal-view active" id="viewDay" style="margin-top: 16px;">
+        <div class="schedule-wrap" style="--hour-h: 48px;">
+          <div class="schedule-head" id="scheduleHead" style="grid-template-columns: 64px repeat(1, 1fr);">
+            <div class="cell">Время</div>
+          </div>
+          <div class="cal-scroll">
+            <div class="schedule-body" id="scheduleBody" style="grid-template-columns: 64px repeat(1, 1fr); height: 624px;">
+              <div class="time-col" id="timeCol"></div>
+              <div id="cols" style="display: contents;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script src="/app.js?v=20260420"></script>
   <script>
     Bloknot.renderHeader('calendar');
+
+    const state = { view: 'day' };
+
+    function ymd(d) {
+      const yy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yy}-${mm}-${dd}`;
+    }
+
+    function startOfDay(d) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+    }
+
+    function addDays(d, n) {
+      const x = new Date(d);
+      x.setDate(x.getDate() + n);
+      return x;
+    }
+
+    function fmtTime(iso) {
+      const d = new Date(iso);
+      const h = String(d.getHours()).padStart(2, '0');
+      const m = String(d.getMinutes()).padStart(2, '0');
+      return h + ':' + m;
+    }
+
+    function fmtDateRu(d) {
+      return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function fmtDayTitle(d) {
+      return d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+    }
+
+    function hashColorClass(value) {
+      const palette = ['c-mint', 'c-blue', 'c-amber', 'c-rose', 'c-violet'];
+      let n = 0;
+      const s = String(value);
+      for (let i = 0; i < s.length; i++) n = (n + s.charCodeAt(i) * (i + 1)) % 100000;
+      return palette[n % palette.length];
+    }
+
+    function getWorkingHours() {
+      return { start: 9, end: 21 };
+    }
+
+    function buildScheduleFrame(visibleMasters) {
+      const head = document.querySelector('#scheduleHead');
+      const body = document.querySelector('#scheduleBody');
+      const timeCol = document.querySelector('#timeCol');
+      const colsHost = document.querySelector('#cols');
+
+      const wh = getWorkingHours();
+      const startHour = wh.start;
+      const endHour = wh.end;
+      const hourH = 48;
+      const bodyHeight = Math.max(1, (endHour - startHour) * hourH);
+      const pxPerMin = hourH / 60;
+
+      head.style.gridTemplateColumns = `64px repeat(${visibleMasters.length}, 1fr)`;
+      body.style.gridTemplateColumns = `64px repeat(${visibleMasters.length}, 1fr)`;
+      body.style.height = bodyHeight + 'px';
+
+      head.innerHTML = '<div class="cell">Время</div>';
+      visibleMasters.forEach((m) => {
+        const c = document.createElement('div');
+        c.className = 'cell name';
+        c.textContent = m.name;
+        head.appendChild(c);
+      });
+
+      timeCol.innerHTML = '';
+      for (let h = Math.floor(startHour); h <= Math.ceil(endHour); h++) {
+        const t = document.createElement('div');
+        t.className = 't';
+        t.textContent = String(h).padStart(2, '0') + ':00';
+        timeCol.appendChild(t);
+      }
+
+      colsHost.innerHTML = '';
+      visibleMasters.forEach((m) => {
+        const col = document.createElement('div');
+        col.className = 'sched-col';
+        col.dataset.masterId = m.id;
+        col.innerHTML = '<div class="gridlines"></div><div class="inner"></div>';
+        colsHost.appendChild(col);
+      });
+
+      return { startHour, endHour, pxPerMin };
+    }
+
+    function renderDay(masters, items) {
+      const filter = document.querySelector('#masterFilter').value;
+      const visibleMasters = masters.filter((m) => (!filter ? true : String(m.id) === String(filter)));
+      if (!visibleMasters.length) {
+        document.querySelector('#cols').innerHTML = '<div class="notice" style="grid-column:1/-1">Добавьте мастеров или выберите другой фильтр.</div>';
+        return;
+      }
+
+      const { startHour, endHour, pxPerMin } = buildScheduleFrame(visibleMasters);
+      const dayInput = document.querySelector('#day');
+      const startBase = new Date(dayInput.value + 'T00:00:00');
+      const dayStart = new Date(startBase.getFullYear(), startBase.getMonth(), startBase.getDate(), Math.floor(startHour), Math.round((startHour % 1) * 60), 0);
+      const dayEnd = new Date(startBase.getFullYear(), startBase.getMonth(), startBase.getDate(), Math.floor(endHour), Math.round((endHour % 1) * 60), 0);
+
+      visibleMasters.forEach((m) => {
+        const col = document.querySelector(`.sched-col[data-master-id="${m.id}"] .inner`);
+        col.innerHTML = '';
+
+        items
+          .filter((a) => String(a.masterId) === String(m.id))
+          .forEach((a) => {
+            const s = new Date(a.startsAt);
+            const e = new Date(a.endsAt);
+            if (e <= dayStart || s >= dayEnd) return;
+
+            const top = Math.max(0, (s.getTime() - dayStart.getTime()) / 60000) * pxPerMin;
+            const height = Math.max(40, (e.getTime() - s.getTime()) / 60000 * pxPerMin);
+            const color = hashColorClass(a.serviceId);
+
+            const b = document.createElement('div');
+            b.className = `booking ${color}`;
+            b.style.top = top + 'px';
+            b.style.height = height + 'px';
+            b.innerHTML = `
+              <div class="b-title">${Bloknot.esc(a.customerName)}</div>
+              <div class="b-sub">${Bloknot.esc(a.service?.name || '')}</div>
+              <div class="b-time">
+                <span>${fmtTime(a.startsAt)}–${fmtTime(a.endsAt)}</span>
+              </div>
+            `;
+            col.appendChild(b);
+          });
+      });
+    }
+
+    function toIsoDayBounds(dayStr) {
+      const d = new Date(dayStr + 'T00:00:00');
+      const from = new Date(d);
+      const to = new Date(d);
+      to.setDate(to.getDate() + 1);
+      return { from: from.toISOString(), to: to.toISOString() };
+    }
+
+    async function loadMasters() {
+      return Bloknot.api('/api/masters');
+    }
+
+    function fillMastersSelect(select, masters, withAll) {
+      select.innerHTML = '';
+      if (withAll) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Все мастера';
+        select.appendChild(opt);
+      }
+      masters.forEach((m) => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name + (m.active ? '' : ' (неактивен)');
+        select.appendChild(opt);
+      });
+    }
+
+    async function loadAppointments(masters) {
+      const dayInput = document.querySelector('#day');
+      const base = new Date(dayInput.value + 'T00:00:00');
+      const { from, to } = toIsoDayBounds(ymd(base));
+      document.querySelector('#rangeTitle').textContent = fmtDayTitle(base);
+
+      const qs = new URLSearchParams({ from, to });
+      const filterMaster = document.querySelector('#masterFilter').value;
+      if (filterMaster) qs.set('masterId', filterMaster);
+
+      const items = await Bloknot.api('/api/appointments?' + qs.toString());
+      renderDay(masters, items);
+    }
+
+    function shiftRange(delta) {
+      const dayInput = document.querySelector('#day');
+      const day = dayInput.value;
+      const d = new Date(day + 'T00:00:00');
+      d.setDate(d.getDate() + delta);
+      dayInput.value = ymd(d);
+      refresh().catch((e) => console.error(e.message));
+    }
+
+    async function refresh() {
+      const masters = await loadMasters();
+      fillMastersSelect(document.querySelector('#masterFilter'), masters, true);
+      await loadAppointments(masters);
+    }
+
+    document.querySelector('#prevBtn').addEventListener('click', () => shiftRange(-1));
+    document.querySelector('#nextBtn').addEventListener('click', () => shiftRange(1));
+    document.querySelector('#todayBtn').addEventListener('click', () => {
+      const now = new Date();
+      document.querySelector('#day').value = now.toISOString().slice(0, 10);
+      refresh().catch((e) => console.error(e.message));
+    });
+    document.querySelector('#masterFilter').addEventListener('change', () => refresh().catch((e) => console.error(e.message)));
+
+    (async function init() {
+      const now = new Date();
+      const dayInput = document.createElement('input');
+      dayInput.type = 'date';
+      dayInput.id = 'day';
+      dayInput.style.display = 'none';
+      dayInput.value = now.toISOString().slice(0, 10);
+      document.body.appendChild(dayInput);
+
+      try {
+        await refresh();
+      } catch (e) {
+        console.error('Не удалось загрузить календарь:', e);
+      }
+    })();
   </script>
 </body>
 </html>
