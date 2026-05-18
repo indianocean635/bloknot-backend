@@ -320,6 +320,61 @@
       color: white;
     }
 
+    .crm-staff-dropdown {
+      margin-top: 8px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .crm-staff-dropdown.active {
+      display: block;
+    }
+
+    .crm-staff-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .crm-staff-item:hover {
+      background: #e2e8f0;
+    }
+
+    .crm-staff-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #cbd5e1;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .crm-staff-checkbox.checked {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .crm-staff-checkbox.checked::after {
+      content: '✓';
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .crm-staff-name {
+      font-size: 13px;
+      color: #475569;
+    }
+
     .crm-btn {
       padding: 8px 16px;
       border-radius: 8px;
@@ -544,9 +599,17 @@
       </div>
 
       <div class="crm-sidebar-menu">
-        <div class="crm-sidebar-menu-item active">
+        <div class="crm-sidebar-menu-item active" id="staffMenuItem">
           <span>👥</span>
           <span>Сотрудники</span>
+          <span style="margin-left: auto; font-size: 12px;">▼</span>
+        </div>
+        <div class="crm-staff-dropdown" id="staffDropdown">
+          <div class="crm-staff-item" id="selectAllStaff">
+            <div class="crm-staff-checkbox checked" id="selectAllCheckbox"></div>
+            <span class="crm-staff-name">Все сотрудники</span>
+          </div>
+          <div id="staffList"></div>
         </div>
         <div class="crm-sidebar-menu-item">
           <span>👤</span>
@@ -578,19 +641,6 @@
         </div>
 
         <div class="crm-toolbar-right">
-          <div class="crm-dropdown">
-            <select id="branchFilter">
-              <option value="">Все филиалы</option>
-            </select>
-          </div>
-          <div class="crm-dropdown">
-            <select id="masterFilter">
-              <option value="">Все мастера</option>
-            </select>
-          </div>
-          <div class="crm-search">
-            <input type="text" placeholder="Поиск..." id="searchInput">
-          </div>
           <button class="crm-btn" id="refreshBtn">🔄</button>
         </div>
       </div>
@@ -679,6 +729,7 @@
       miniCalendarDate: new Date(),
       selectedMaster: null,
       selectedBranch: null,
+      selectedStaffIds: [], // Array of selected staff IDs
       bookings: [],
       masters: [],
       masterSchedules: {},
@@ -790,9 +841,9 @@
 
     function renderEmployeeHeaders() {
       const headers = document.getElementById('employeeHeaders');
-      const visibleMasters = state.selectedMaster 
-        ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
-        : state.masters;
+      const visibleMasters = state.selectedStaffIds.length === 0 
+        ? []
+        : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
 
       let html = '<div class="crm-time-column"></div>';
       visibleMasters.forEach(master => {
@@ -811,9 +862,9 @@
 
     function renderScheduleColumns() {
       const container = document.getElementById('scheduleColumns');
-      const visibleMasters = state.selectedMaster 
-        ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
-        : state.masters;
+      const visibleMasters = state.selectedStaffIds.length === 0 
+        ? []
+        : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
 
       let html = '';
       visibleMasters.forEach(master => {
@@ -910,10 +961,23 @@
     async function loadMasters() {
       try {
         state.masters = await Bloknot.api('/api/masters');
-        const select = document.getElementById('masterFilter');
-        select.innerHTML = '<option value="">Все мастера</option>';
-        state.masters.forEach(m => {
-          select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+        
+        // Initially select all staff
+        state.selectedStaffIds = state.masters.map(m => m.id);
+
+        // Populate staff dropdown
+        const staffList = document.getElementById('staffList');
+        staffList.innerHTML = '';
+        state.masters.forEach(master => {
+          const item = document.createElement('div');
+          item.className = 'crm-staff-item';
+          item.dataset.staffId = master.id;
+          item.innerHTML = `
+            <div class="crm-staff-checkbox checked"></div>
+            <span class="crm-staff-name">${master.name}</span>
+          `;
+          item.addEventListener('click', () => toggleStaffSelection(master.id));
+          staffList.appendChild(item);
         });
 
         // Load schedules for each master
@@ -929,6 +993,54 @@
       } catch (e) {
         console.error('Failed to load masters:', e);
       }
+    }
+
+    function toggleStaffSelection(staffId) {
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+      const index = state.selectedStaffIds.indexOf(staffId);
+      
+      if (index > -1) {
+        state.selectedStaffIds.splice(index, 1);
+      } else {
+        state.selectedStaffIds.push(staffId);
+      }
+
+      // Update checkbox visual state
+      document.querySelector(`[data-staff-id="${staffId}"] .crm-staff-checkbox`).classList.toggle('checked');
+
+      // Update "select all" checkbox state
+      if (state.selectedStaffIds.length === state.masters.length) {
+        selectAllCheckbox.classList.add('checked');
+      } else {
+        selectAllCheckbox.classList.remove('checked');
+      }
+
+      renderCalendar();
+      loadBookings();
+    }
+
+    function toggleSelectAll() {
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+      const isChecked = selectAllCheckbox.classList.contains('checked');
+      
+      if (isChecked) {
+        // Deselect all
+        state.selectedStaffIds = [];
+        selectAllCheckbox.classList.remove('checked');
+        document.querySelectorAll('#staffList .crm-staff-checkbox').forEach(cb => {
+          cb.classList.remove('checked');
+        });
+      } else {
+        // Select all
+        state.selectedStaffIds = state.masters.map(m => m.id);
+        selectAllCheckbox.classList.add('checked');
+        document.querySelectorAll('#staffList .crm-staff-checkbox').forEach(cb => {
+          cb.classList.add('checked');
+        });
+      }
+
+      renderCalendar();
+      loadBookings();
     }
 
     async function loadServices() {
@@ -954,8 +1066,8 @@
           to: weekEnd.toISOString()
         });
 
-        if (state.selectedMaster) {
-          qs.set('masterId', state.selectedMaster);
+        if (state.selectedStaffIds.length > 0) {
+          qs.set('masterId', state.selectedStaffIds.join(','));
         }
 
         state.bookings = await Bloknot.api('/api/appointments?' + qs.toString());
@@ -1099,14 +1211,19 @@
       loadBookings();
     });
 
-    document.getElementById('masterFilter').addEventListener('change', (e) => {
-      state.selectedMaster = e.target.value || null;
-      renderCalendar();
+    document.getElementById('refreshBtn').addEventListener('click', () => {
       loadBookings();
     });
 
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-      loadBookings();
+    // Staff dropdown toggle
+    document.getElementById('staffMenuItem').addEventListener('click', () => {
+      document.getElementById('staffDropdown').classList.toggle('active');
+    });
+
+    // Select all staff
+    document.getElementById('selectAllStaff').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleSelectAll();
     });
 
     document.getElementById('modalClose').addEventListener('click', closeBookingModal);
