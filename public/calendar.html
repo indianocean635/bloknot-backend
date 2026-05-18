@@ -5,53 +5,677 @@
   <title>Календарь — Bloknot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/styles.css?v=20260408" />
+  <style>
+    /* CRM Calendar Styles */
+    .crm-calendar {
+      display: flex;
+      height: calc(100vh - 72px);
+      background: #f8fafc;
+    }
+
+    .crm-sidebar {
+      width: 280px;
+      background: white;
+      border-right: 1px solid #e2e8f0;
+      padding: 20px;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .crm-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .crm-toolbar {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .crm-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .crm-toolbar-center {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .crm-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .crm-calendar-grid {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .crm-employee-headers {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    .crm-employee-header {
+      width: 200px;
+      padding: 12px;
+      border-right: 1px solid #e2e8f0;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .crm-employee-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .crm-employee-info {
+      flex: 1;
+    }
+
+    .crm-employee-name {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 14px;
+    }
+
+    .crm-employee-role {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .crm-time-column {
+      width: 80px;
+      flex-shrink: 0;
+      background: #f8fafc;
+      border-right: 1px solid #e2e8f0;
+    }
+
+    .crm-time-slot {
+      height: 60px;
+      padding: 8px;
+      font-size: 12px;
+      color: #64748b;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: start;
+    }
+
+    .crm-schedule-body {
+      display: flex;
+      flex: 1;
+      overflow: auto;
+    }
+
+    .crm-employee-column {
+      width: 200px;
+      flex-shrink: 0;
+      border-right: 1px solid #e2e8f0;
+      position: relative;
+      background: white;
+    }
+
+    .crm-time-slot-row {
+      height: 60px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .crm-time-slot-row:hover {
+      background: #f8fafc;
+    }
+
+    .crm-booking-card {
+      position: absolute;
+      left: 4px;
+      right: 4px;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .crm-booking-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .crm-booking-card.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+    .crm-booking-card.purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; }
+    .crm-booking-card.yellow { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+    .crm-booking-card.blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
+    .crm-booking-card.pink { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; }
+
+    .crm-booking-time {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .crm-booking-client {
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .crm-booking-service {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+
+    .crm-booking-phone {
+      font-size: 11px;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    .crm-mini-calendar {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .crm-mini-calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .crm-mini-calendar-title {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .crm-mini-calendar-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .crm-mini-calendar-nav button {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .crm-mini-calendar-nav button:hover {
+      background: #f1f5f9;
+    }
+
+    .crm-mini-calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .crm-mini-calendar-day {
+      text-align: center;
+      padding: 8px 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.15s;
+    }
+
+    .crm-mini-calendar-day:hover {
+      background: #e2e8f0;
+    }
+
+    .crm-mini-calendar-day.today {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .crm-mini-calendar-day.selected {
+      background: #8b5cf6;
+      color: white;
+    }
+
+    .crm-mini-calendar-day.other-month {
+      color: #94a3b8;
+    }
+
+    .crm-sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .crm-sidebar-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .crm-sidebar-menu-item:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    .crm-sidebar-menu-item.active {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .crm-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+      color: #1e293b;
+    }
+
+    .crm-btn:hover {
+      background: #f1f5f9;
+    }
+
+    .crm-btn-primary {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    .crm-btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .crm-dropdown {
+      position: relative;
+    }
+
+    .crm-dropdown select {
+      padding: 8px 32px 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      font-size: 14px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    .crm-dropdown select:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .crm-search {
+      position: relative;
+    }
+
+    .crm-search input {
+      padding: 8px 12px 8px 36px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      font-size: 14px;
+      width: 200px;
+    }
+
+    .crm-search input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .crm-search::before {
+      content: '🔍';
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+    }
+
+    .crm-date-display {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .crm-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .crm-modal.active {
+      display: flex;
+    }
+
+    .crm-modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      width: 500px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .crm-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .crm-modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .crm-modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #64748b;
+    }
+
+    .crm-form-group {
+      margin-bottom: 16px;
+    }
+
+    .crm-form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .crm-form-group input,
+    .crm-form-group select,
+    .crm-form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .crm-form-group input:focus,
+    .crm-form-group select:focus,
+    .crm-form-group textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .crm-color-picker {
+      display: flex;
+      gap: 8px;
+    }
+
+    .crm-color-option {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .crm-color-option:hover {
+      transform: scale(1.1);
+    }
+
+    .crm-color-option.selected {
+      border-color: #1e293b;
+    }
+
+    .crm-color-option.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .crm-color-option.purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+    .crm-color-option.yellow { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .crm-color-option.blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+    .crm-color-option.pink { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
+
+    .crm-modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .crm-modal-actions .crm-btn {
+      flex: 1;
+    }
+
+    .crm-modal-actions .crm-btn-danger {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: white;
+    }
+
+    .crm-modal-actions .crm-btn-danger:hover {
+      background: #dc2626;
+    }
+  </style>
 </head>
 <body>
   <div id="app-header"></div>
 
-  <main class="container">
-    <div class="card stack">
-      <div class="cal-topbar">
-        <div class="range" id="rangeTitle"></div>
-        <div class="nav">
-          <button type="button" id="prevBtn">←</button>
-          <button type="button" id="todayBtn">Сегодня</button>
-          <button type="button" id="nextBtn">→</button>
+  <div class="crm-calendar">
+    <!-- Left Sidebar -->
+    <div class="crm-sidebar">
+      <div class="crm-mini-calendar">
+        <div class="crm-mini-calendar-header">
+          <div class="crm-mini-calendar-title" id="miniCalendarTitle">Май 2026</div>
+          <div class="crm-mini-calendar-nav">
+            <button id="miniCalendarPrev">←</button>
+            <button id="miniCalendarNext">→</button>
+          </div>
         </div>
+        <div class="crm-mini-calendar-grid" id="miniCalendarGrid"></div>
       </div>
 
-      <div class="field" style="margin-top: 16px;">
-        <label for="masterFilter">Мастер</label>
-        <select id="masterFilter"></select>
-      </div>
-
-      <div class="cal-view active" id="viewDay" style="margin-top: 16px;">
-        <div class="schedule-wrap" style="--hour-h: 48px;">
-          <div class="schedule-head" id="scheduleHead" style="grid-template-columns: 64px repeat(1, 1fr);">
-            <div class="cell">Время</div>
-          </div>
-          <div class="cal-scroll">
-            <div class="schedule-body" id="scheduleBody" style="grid-template-columns: 64px repeat(1, 1fr); height: 624px;">
-              <div class="time-col" id="timeCol"></div>
-              <div id="cols" style="display: contents;"></div>
-            </div>
-          </div>
+      <div class="crm-sidebar-menu">
+        <div class="crm-sidebar-menu-item active">
+          <span>👥</span>
+          <span>Сотрудники</span>
+        </div>
+        <div class="crm-sidebar-menu-item">
+          <span>👤</span>
+          <span>Клиенты</span>
+        </div>
+        <div class="crm-sidebar-menu-item">
+          <span>⚙️</span>
+          <span>Настройки</span>
         </div>
       </div>
     </div>
-  </main>
+
+    <!-- Main Content -->
+    <div class="crm-main">
+      <!-- Top Toolbar -->
+      <div class="crm-toolbar">
+        <div class="crm-toolbar-left">
+          <div class="crm-date-display" id="dateDisplay">Май 2026</div>
+          <div style="display: flex; gap: 8px;">
+            <button class="crm-btn" id="prevWeek">← Неделя</button>
+            <button class="crm-btn" id="todayBtn">Сегодня</button>
+            <button class="crm-btn" id="nextWeek">Неделя →</button>
+          </div>
+        </div>
+
+        <div class="crm-toolbar-center">
+          <button class="crm-btn crm-btn-primary" id="dayViewBtn">День</button>
+          <button class="crm-btn" id="weekViewBtn">Неделя</button>
+        </div>
+
+        <div class="crm-toolbar-right">
+          <div class="crm-dropdown">
+            <select id="branchFilter">
+              <option value="">Все филиалы</option>
+            </select>
+          </div>
+          <div class="crm-dropdown">
+            <select id="masterFilter">
+              <option value="">Все мастера</option>
+            </select>
+          </div>
+          <div class="crm-search">
+            <input type="text" placeholder="Поиск..." id="searchInput">
+          </div>
+          <button class="crm-btn" id="refreshBtn">🔄</button>
+        </div>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="crm-calendar-grid">
+        <div class="crm-employee-headers" id="employeeHeaders"></div>
+        <div class="crm-schedule-body">
+          <div class="crm-time-column" id="timeColumn"></div>
+          <div id="scheduleColumns"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Booking Modal -->
+  <div class="crm-modal" id="bookingModal">
+    <div class="crm-modal-content">
+      <div class="crm-modal-header">
+        <div class="crm-modal-title" id="modalTitle">Новая запись</div>
+        <button class="crm-modal-close" id="modalClose">×</button>
+      </div>
+      <form id="bookingForm">
+        <div class="crm-form-group">
+          <label>Клиент</label>
+          <input type="text" id="bookingClient" required>
+        </div>
+        <div class="crm-form-group">
+          <label>Телефон</label>
+          <input type="tel" id="bookingPhone">
+        </div>
+        <div class="crm-form-group">
+          <label>Услуга</label>
+          <select id="bookingService" required></select>
+        </div>
+        <div class="crm-form-group">
+          <label>Мастер</label>
+          <select id="bookingMaster" required></select>
+        </div>
+        <div class="crm-form-group">
+          <label>Дата</label>
+          <input type="date" id="bookingDate" required>
+        </div>
+        <div class="crm-form-group">
+          <label>Время</label>
+          <input type="time" id="bookingTime" required>
+        </div>
+        <div class="crm-form-group">
+          <label>Комментарий</label>
+          <textarea id="bookingComment" rows="3"></textarea>
+        </div>
+        <div class="crm-form-group">
+          <label>Цвет</label>
+          <div class="crm-color-picker">
+            <div class="crm-color-option green selected" data-color="green"></div>
+            <div class="crm-color-option purple" data-color="purple"></div>
+            <div class="crm-color-option yellow" data-color="yellow"></div>
+            <div class="crm-color-option blue" data-color="blue"></div>
+            <div class="crm-color-option pink" data-color="pink"></div>
+          </div>
+        </div>
+        <div class="crm-form-group">
+          <label>Статус</label>
+          <select id="bookingStatus">
+            <option value="confirmed">Подтверждено</option>
+            <option value="pending">Ожидает</option>
+            <option value="cancelled">Отменено</option>
+          </select>
+        </div>
+        <div class="crm-modal-actions">
+          <button type="submit" class="crm-btn crm-btn-primary">Сохранить</button>
+          <button type="button" class="crm-btn crm-btn-danger" id="deleteBookingBtn" style="display: none;">Удалить</button>
+          <button type="button" class="crm-btn" id="cancelBookingBtn">Отменить</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="/app.js?v=20260420"></script>
   <script>
     Bloknot.renderHeader('calendar');
 
-    const state = { view: 'day' };
+    const state = {
+      view: 'week',
+      currentDate: new Date(),
+      miniCalendarDate: new Date(),
+      selectedMaster: null,
+      selectedBranch: null,
+      bookings: [],
+      masters: [],
+      services: [],
+      selectedBooking: null,
+      selectedColor: 'green'
+    };
 
     function ymd(d) {
       const yy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
       return `${yy}-${mm}-${dd}`;
+    }
+
+    function startOfWeek(d) {
+      const x = new Date(d);
+      const day = x.getDay();
+      const diff = x.getDate() - day + (day === 0 ? -6 : 1);
+      x.setDate(diff);
+      return startOfDay(x);
     }
 
     function startOfDay(d) {
@@ -64,203 +688,398 @@
       return x;
     }
 
+    function addWeeks(d, n) {
+      return addDays(d, n * 7);
+    }
+
+    function fmtDateRu(d) {
+      return d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+    }
+
+    function fmtDayRu(d) {
+      return d.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+
     function fmtTime(iso) {
       const d = new Date(iso);
       const h = String(d.getHours()).padStart(2, '0');
       const m = String(d.getMinutes()).padStart(2, '0');
-      return h + ':' + m;
+      return `${h}:${m}`;
     }
 
-    function fmtDateRu(d) {
-      return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
+    function renderMiniCalendar() {
+      const grid = document.getElementById('miniCalendarGrid');
+      const title = document.getElementById('miniCalendarTitle');
+      const year = state.miniCalendarDate.getFullYear();
+      const month = state.miniCalendarDate.getMonth();
 
-    function fmtDayTitle(d) {
-      return d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
-    }
+      title.textContent = state.miniCalendarDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
 
-    function hashColorClass(value) {
-      const palette = ['c-mint', 'c-blue', 'c-amber', 'c-rose', 'c-violet'];
-      let n = 0;
-      const s = String(value);
-      for (let i = 0; i < s.length; i++) n = (n + s.charCodeAt(i) * (i + 1)) % 100000;
-      return palette[n % palette.length];
-    }
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDay = firstDay.getDay() || 7;
+      const today = new Date();
 
-    function getWorkingHours() {
-      return { start: 9, end: 21 };
-    }
-
-    function buildScheduleFrame(visibleMasters) {
-      const head = document.querySelector('#scheduleHead');
-      const body = document.querySelector('#scheduleBody');
-      const timeCol = document.querySelector('#timeCol');
-      const colsHost = document.querySelector('#cols');
-
-      const wh = getWorkingHours();
-      const startHour = wh.start;
-      const endHour = wh.end;
-      const hourH = 48;
-      const bodyHeight = Math.max(1, (endHour - startHour) * hourH);
-      const pxPerMin = hourH / 60;
-
-      head.style.gridTemplateColumns = `64px repeat(${visibleMasters.length}, 1fr)`;
-      body.style.gridTemplateColumns = `64px repeat(${visibleMasters.length}, 1fr)`;
-      body.style.height = bodyHeight + 'px';
-
-      head.innerHTML = '<div class="cell">Время</div>';
-      visibleMasters.forEach((m) => {
-        const c = document.createElement('div');
-        c.className = 'cell name';
-        c.textContent = m.name;
-        head.appendChild(c);
+      let html = '';
+      
+      // Days of week
+      const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+      days.forEach(day => {
+        html += `<div class="crm-mini-calendar-day" style="font-weight: 600; color: #64748b;">${day}</div>`;
       });
 
-      timeCol.innerHTML = '';
-      for (let h = Math.floor(startHour); h <= Math.ceil(endHour); h++) {
-        const t = document.createElement('div');
-        t.className = 't';
-        t.textContent = String(h).padStart(2, '0') + ':00';
-        timeCol.appendChild(t);
+      // Empty cells before first day
+      for (let i = 1; i < startDay; i++) {
+        html += `<div class="crm-mini-calendar-day other-month"></div>`;
       }
 
-      colsHost.innerHTML = '';
-      visibleMasters.forEach((m) => {
-        const col = document.createElement('div');
-        col.className = 'sched-col';
-        col.dataset.masterId = m.id;
-        col.innerHTML = '<div class="gridlines"></div><div class="inner"></div>';
-        colsHost.appendChild(col);
-      });
+      // Days of month
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month, day);
+        const isToday = date.toDateString() === today.toDateString();
+        const isSelected = date.toDateString() === state.currentDate.toDateString();
+        const classes = ['crm-mini-calendar-day'];
+        if (isToday) classes.push('today');
+        if (isSelected) classes.push('selected');
+        html += `<div class="${classes.join(' ')}" data-date="${ymd(date)}">${day}</div>`;
+      }
 
-      return { startHour, endHour, pxPerMin };
+      grid.innerHTML = html;
+
+      grid.querySelectorAll('.crm-mini-calendar-day[data-date]').forEach(el => {
+        el.addEventListener('click', () => {
+          state.currentDate = new Date(el.dataset.date);
+          renderMiniCalendar();
+          renderCalendar();
+        });
+      });
     }
 
-    function renderDay(masters, items) {
-      const filter = document.querySelector('#masterFilter').value;
-      const visibleMasters = masters.filter((m) => (!filter ? true : String(m.id) === String(filter)));
-      if (!visibleMasters.length) {
-        document.querySelector('#cols').innerHTML = '<div class="notice" style="grid-column:1/-1">Добавьте мастеров или выберите другой фильтр.</div>';
-        return;
+    function renderTimeColumn() {
+      const column = document.getElementById('timeColumn');
+      let html = '';
+      for (let hour = 9; hour <= 21; hour++) {
+        html += `<div class="crm-time-slot">${String(hour).padStart(2, '0')}:00</div>`;
       }
+      column.innerHTML = html;
+    }
 
-      const { startHour, endHour, pxPerMin } = buildScheduleFrame(visibleMasters);
-      const dayInput = document.querySelector('#day');
-      const startBase = new Date(dayInput.value + 'T00:00:00');
-      const dayStart = new Date(startBase.getFullYear(), startBase.getMonth(), startBase.getDate(), Math.floor(startHour), Math.round((startHour % 1) * 60), 0);
-      const dayEnd = new Date(startBase.getFullYear(), startBase.getMonth(), startBase.getDate(), Math.floor(endHour), Math.round((endHour % 1) * 60), 0);
+    function renderEmployeeHeaders() {
+      const headers = document.getElementById('employeeHeaders');
+      const visibleMasters = state.selectedMaster 
+        ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
+        : state.masters;
 
-      visibleMasters.forEach((m) => {
-        const col = document.querySelector(`.sched-col[data-master-id="${m.id}"] .inner`);
-        col.innerHTML = '';
+      let html = '<div class="crm-time-column"></div>';
+      visibleMasters.forEach(master => {
+        html += `
+          <div class="crm-employee-header">
+            <div class="crm-employee-avatar">${master.name.charAt(0)}</div>
+            <div class="crm-employee-info">
+              <div class="crm-employee-name">${master.name}</div>
+              <div class="crm-employee-role">Мастер</div>
+            </div>
+          </div>
+        `;
+      });
+      headers.innerHTML = html;
+    }
 
-        items
-          .filter((a) => String(a.masterId) === String(m.id))
-          .forEach((a) => {
-            const s = new Date(a.startsAt);
-            const e = new Date(a.endsAt);
-            if (e <= dayStart || s >= dayEnd) return;
+    function renderScheduleColumns() {
+      const container = document.getElementById('scheduleColumns');
+      const visibleMasters = state.selectedMaster 
+        ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
+        : state.masters;
 
-            const top = Math.max(0, (s.getTime() - dayStart.getTime()) / 60000) * pxPerMin;
-            const height = Math.max(40, (e.getTime() - s.getTime()) / 60000 * pxPerMin);
-            const color = hashColorClass(a.serviceId);
+      let html = '';
+      visibleMasters.forEach(master => {
+        html += `<div class="crm-employee-column" data-master-id="${master.id}">`;
+        for (let hour = 9; hour <= 21; hour++) {
+          html += `<div class="crm-time-slot-row" data-hour="${hour}" data-master="${master.id}"></div>`;
+        }
+        html += '</div>';
+      });
+      container.innerHTML = html;
 
-            const b = document.createElement('div');
-            b.className = `booking ${color}`;
-            b.style.top = top + 'px';
-            b.style.height = height + 'px';
-            b.innerHTML = `
-              <div class="b-title">${Bloknot.esc(a.customerName)}</div>
-              <div class="b-sub">${Bloknot.esc(a.service?.name || '')}</div>
-              <div class="b-time">
-                <span>${fmtTime(a.startsAt)}–${fmtTime(a.endsAt)}</span>
-              </div>
-            `;
-            col.appendChild(b);
+      // Render bookings
+      visibleMasters.forEach(master => {
+        const column = container.querySelector(`[data-master-id="${master.id}"]`);
+        const masterBookings = state.bookings.filter(b => String(b.masterId) === String(master.id));
+
+        masterBookings.forEach(booking => {
+          const startDate = new Date(booking.startsAt);
+          const endDate = new Date(booking.endsAt);
+          const startHour = startDate.getHours();
+          const startMin = startDate.getMinutes();
+          const duration = (endDate.getTime() - startDate.getTime()) / 60000;
+          
+          const slotHeight = 60;
+          const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
+          const height = (duration / 60) * slotHeight;
+
+          const service = state.services.find(s => String(s.id) === String(booking.serviceId));
+          const color = booking.color || 'green';
+
+          const card = document.createElement('div');
+          card.className = `crm-booking-card ${color}`;
+          card.style.top = `${top}px`;
+          card.style.height = `${Math.max(height, 40)}px`;
+          card.dataset.bookingId = booking.id;
+          card.innerHTML = `
+            <div class="crm-booking-time">${fmtTime(booking.startsAt)} – ${fmtTime(booking.endsAt)}</div>
+            <div class="crm-booking-client">${booking.customerName}</div>
+            <div class="crm-booking-service">${service?.name || ''}</div>
+            ${booking.customerPhone ? `<div class="crm-booking-phone">${booking.customerPhone}</div>` : ''}
+          `;
+          card.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openBookingModal(booking);
           });
+          column.appendChild(card);
+        });
+      });
+
+      // Add click handlers for empty slots
+      container.querySelectorAll('.crm-time-slot-row').forEach(slot => {
+        slot.addEventListener('click', () => {
+          const hour = parseInt(slot.dataset.hour);
+          const masterId = slot.dataset.master;
+          openBookingModal(null, { masterId, hour });
+        });
       });
     }
 
-    function toIsoDayBounds(dayStr) {
-      const d = new Date(dayStr + 'T00:00:00');
-      const from = new Date(d);
-      const to = new Date(d);
-      to.setDate(to.getDate() + 1);
-      return { from: from.toISOString(), to: to.toISOString() };
+    function renderCalendar() {
+      const dateDisplay = document.getElementById('dateDisplay');
+      const weekStart = state.view === 'week' ? startOfWeek(state.currentDate) : startOfDay(state.currentDate);
+      const weekEnd = addDays(weekStart, state.view === 'week' ? 6 : 0);
+
+      dateDisplay.textContent = state.view === 'week' 
+        ? `${fmtDayRu(weekStart)} – ${fmtDayRu(weekEnd)}`
+        : fmtDayRu(state.currentDate);
+
+      renderTimeColumn();
+      renderEmployeeHeaders();
+      renderScheduleColumns();
     }
 
     async function loadMasters() {
-      return Bloknot.api('/api/masters');
-    }
-
-    function fillMastersSelect(select, masters, withAll) {
-      select.innerHTML = '';
-      if (withAll) {
-        const opt = document.createElement('option');
-        opt.value = '';
-        opt.textContent = 'Все мастера';
-        select.appendChild(opt);
+      try {
+        state.masters = await Bloknot.api('/api/masters');
+        const select = document.getElementById('masterFilter');
+        select.innerHTML = '<option value="">Все мастера</option>';
+        state.masters.forEach(m => {
+          select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+        });
+      } catch (e) {
+        console.error('Failed to load masters:', e);
       }
-      masters.forEach((m) => {
-        const opt = document.createElement('option');
-        opt.value = m.id;
-        opt.textContent = m.name + (m.active ? '' : ' (неактивен)');
-        select.appendChild(opt);
-      });
     }
 
-    async function loadAppointments(masters) {
-      const dayInput = document.querySelector('#day');
-      const base = new Date(dayInput.value + 'T00:00:00');
-      const { from, to } = toIsoDayBounds(ymd(base));
-      document.querySelector('#rangeTitle').textContent = fmtDayTitle(base);
-
-      const qs = new URLSearchParams({ from, to });
-      const filterMaster = document.querySelector('#masterFilter').value;
-      if (filterMaster) qs.set('masterId', filterMaster);
-
-      const items = await Bloknot.api('/api/appointments?' + qs.toString());
-      renderDay(masters, items);
+    async function loadServices() {
+      try {
+        state.services = await Bloknot.api('/api/services');
+        const select = document.getElementById('bookingService');
+        select.innerHTML = '';
+        state.services.forEach(s => {
+          select.innerHTML += `<option value="${s.id}">${s.name} · ${s.duration} мин</option>`;
+        });
+      } catch (e) {
+        console.error('Failed to load services:', e);
+      }
     }
 
-    function shiftRange(delta) {
-      const dayInput = document.querySelector('#day');
-      const day = dayInput.value;
-      const d = new Date(day + 'T00:00:00');
-      d.setDate(d.getDate() + delta);
-      dayInput.value = ymd(d);
-      refresh().catch((e) => console.error(e.message));
+    async function loadBookings() {
+      try {
+        const weekStart = state.view === 'week' ? startOfWeek(state.currentDate) : startOfDay(state.currentDate);
+        const weekEnd = addDays(weekStart, state.view === 'week' ? 7 : 1);
+        
+        const qs = new URLSearchParams({
+          from: weekStart.toISOString(),
+          to: weekEnd.toISOString()
+        });
+
+        if (state.selectedMaster) {
+          qs.set('masterId', state.selectedMaster);
+        }
+
+        state.bookings = await Bloknot.api('/api/appointments?' + qs.toString());
+        renderCalendar();
+      } catch (e) {
+        console.error('Failed to load bookings:', e);
+      }
     }
 
-    async function refresh() {
-      const masters = await loadMasters();
-      fillMastersSelect(document.querySelector('#masterFilter'), masters, true);
-      await loadAppointments(masters);
+    function openBookingModal(booking = null, slotInfo = null) {
+      const modal = document.getElementById('bookingModal');
+      const form = document.getElementById('bookingForm');
+      const title = document.getElementById('modalTitle');
+      const deleteBtn = document.getElementById('deleteBookingBtn');
+
+      state.selectedBooking = booking;
+
+      if (booking) {
+        title.textContent = 'Редактировать запись';
+        document.getElementById('bookingClient').value = booking.customerName;
+        document.getElementById('bookingPhone').value = booking.customerPhone || '';
+        document.getElementById('bookingService').value = booking.serviceId;
+        document.getElementById('bookingMaster').value = booking.masterId;
+        document.getElementById('bookingDate').value = ymd(new Date(booking.startsAt));
+        document.getElementById('bookingTime').value = fmtTime(new Date(booking.startsAt)).substring(0, 5);
+        document.getElementById('bookingComment').value = booking.comment || '';
+        document.getElementById('bookingStatus').value = booking.status || 'confirmed';
+        deleteBtn.style.display = 'block';
+      } else {
+        title.textContent = 'Новая запись';
+        form.reset();
+        if (slotInfo) {
+          document.getElementById('bookingMaster').value = slotInfo.masterId;
+          document.getElementById('bookingDate').value = ymd(state.currentDate);
+          document.getElementById('bookingTime').value = `${String(slotInfo.hour).padStart(2, '0')}:00`;
+        }
+        deleteBtn.style.display = 'none';
+      }
+
+      modal.classList.add('active');
     }
 
-    document.querySelector('#prevBtn').addEventListener('click', () => shiftRange(-1));
-    document.querySelector('#nextBtn').addEventListener('click', () => shiftRange(1));
-    document.querySelector('#todayBtn').addEventListener('click', () => {
-      const now = new Date();
-      document.querySelector('#day').value = now.toISOString().slice(0, 10);
-      refresh().catch((e) => console.error(e.message));
-    });
-    document.querySelector('#masterFilter').addEventListener('change', () => refresh().catch((e) => console.error(e.message)));
+    function closeBookingModal() {
+      const modal = document.getElementById('bookingModal');
+      modal.classList.remove('active');
+      state.selectedBooking = null;
+    }
 
-    (async function init() {
-      const now = new Date();
-      const dayInput = document.createElement('input');
-      dayInput.type = 'date';
-      dayInput.id = 'day';
-      dayInput.style.display = 'none';
-      dayInput.value = now.toISOString().slice(0, 10);
-      document.body.appendChild(dayInput);
+    async function saveBooking(e) {
+      e.preventDefault();
+      
+      const data = {
+        customerName: document.getElementById('bookingClient').value,
+        customerPhone: document.getElementById('bookingPhone').value,
+        serviceId: document.getElementById('bookingService').value,
+        masterId: document.getElementById('bookingMaster').value,
+        startsAt: new Date(`${document.getElementById('bookingDate').value}T${document.getElementById('bookingTime').value}`).toISOString(),
+        comment: document.getElementById('bookingComment').value,
+        color: state.selectedColor,
+        status: document.getElementById('bookingStatus').value
+      };
 
       try {
-        await refresh();
-      } catch (e) {
-        console.error('Не удалось загрузить календарь:', e);
+        if (state.selectedBooking) {
+          await Bloknot.api(`/api/appointments/${state.selectedBooking.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        } else {
+          await Bloknot.api('/api/appointments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        }
+        closeBookingModal();
+        await loadBookings();
+      } catch (err) {
+        alert('Ошибка сохранения: ' + err.message);
       }
+    }
+
+    async function deleteBooking() {
+      if (!state.selectedBooking) return;
+      if (!confirm('Удалить запись?')) return;
+
+      try {
+        await Bloknot.api(`/api/appointments/${state.selectedBooking.id}`, { method: 'DELETE' });
+        closeBookingModal();
+        await loadBookings();
+      } catch (err) {
+        alert('Ошибка удаления: ' + err.message);
+      }
+    }
+
+    // Event listeners
+    document.getElementById('miniCalendarPrev').addEventListener('click', () => {
+      state.miniCalendarDate.setMonth(state.miniCalendarDate.getMonth() - 1);
+      renderMiniCalendar();
+    });
+
+    document.getElementById('miniCalendarNext').addEventListener('click', () => {
+      state.miniCalendarDate.setMonth(state.miniCalendarDate.getMonth() + 1);
+      renderMiniCalendar();
+    });
+
+    document.getElementById('prevWeek').addEventListener('click', () => {
+      state.currentDate = state.view === 'week' ? addWeeks(state.currentDate, -1) : addDays(state.currentDate, -1);
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('nextWeek').addEventListener('click', () => {
+      state.currentDate = state.view === 'week' ? addWeeks(state.currentDate, 1) : addDays(state.currentDate, 1);
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('todayBtn').addEventListener('click', () => {
+      state.currentDate = new Date();
+      state.miniCalendarDate = new Date();
+      renderMiniCalendar();
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('dayViewBtn').addEventListener('click', () => {
+      state.view = 'day';
+      document.getElementById('dayViewBtn').classList.add('crm-btn-primary');
+      document.getElementById('weekViewBtn').classList.remove('crm-btn-primary');
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('weekViewBtn').addEventListener('click', () => {
+      state.view = 'week';
+      document.getElementById('weekViewBtn').classList.add('crm-btn-primary');
+      document.getElementById('dayViewBtn').classList.remove('crm-btn-primary');
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('masterFilter').addEventListener('change', (e) => {
+      state.selectedMaster = e.target.value || null;
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      loadBookings();
+    });
+
+    document.getElementById('modalClose').addEventListener('click', closeBookingModal);
+    document.getElementById('cancelBookingBtn').addEventListener('click', closeBookingModal);
+    document.getElementById('deleteBookingBtn').addEventListener('click', deleteBooking);
+    document.getElementById('bookingForm').addEventListener('submit', saveBooking);
+
+    document.querySelectorAll('.crm-color-option').forEach(option => {
+      option.addEventListener('click', () => {
+        document.querySelectorAll('.crm-color-option').forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+        state.selectedColor = option.dataset.color;
+      });
+    });
+
+    // Initialize
+    (async function init() {
+      await loadMasters();
+      await loadServices();
+      await loadBookings();
+      renderMiniCalendar();
+      renderCalendar();
+
+      // Populate master select in modal
+      const masterSelect = document.getElementById('bookingMaster');
+      state.masters.forEach(m => {
+        masterSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+      });
     })();
   </script>
 </body>
