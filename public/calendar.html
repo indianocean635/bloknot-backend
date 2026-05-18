@@ -84,10 +84,20 @@
       gap: 12px;
       background: white;
       transition: background 0.2s;
+      flex-shrink: 0;
     }
 
     .crm-employee-header:hover {
       background: #f8fafc;
+    }
+
+    .crm-header-today {
+      background: #f0f9ff;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .crm-column-today {
+      background: #f0f9ff;
     }
 
     .crm-employee-avatar {
@@ -102,6 +112,13 @@
       font-weight: 600;
       font-size: 14px;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .crm-employee-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .crm-employee-info {
@@ -127,8 +144,7 @@
     .crm-schedule-body {
       grid-column: 1 / -1;
       display: flex;
-      overflow-x: auto;
-      overflow-y: auto;
+      overflow: auto;
     }
 
     .crm-time-column {
@@ -155,7 +171,6 @@
       flex: 1;
       display: flex;
       position: relative;
-      overflow: hidden;
     }
 
     .crm-employee-column {
@@ -163,7 +178,7 @@
       border-right: 1px solid #e2e8f0;
       position: relative;
       background: white;
-      overflow: hidden;
+      flex-shrink: 0;
     }
 
     .crm-time-slot-row {
@@ -946,127 +961,265 @@
 
     function renderEmployeeHeaders() {
       const headers = document.getElementById('employeeHeaders');
-      const visibleMasters = state.selectedMaster 
-        ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
-        : state.selectedStaffIds.length === 0 
-          ? []
-          : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
-
-      let html = '<div class="crm-time-column"></div>';
-      visibleMasters.forEach(master => {
-        html += `
-          <div class="crm-employee-header">
-            <div class="crm-employee-avatar">${master.name.charAt(0)}</div>
-            <div class="crm-employee-info">
-              <div class="crm-employee-name">${master.name}</div>
-              <div class="crm-employee-role">${master.specializations || 'Мастер'}</div>
+      
+      if (state.view === 'week') {
+        // Show day headers for week view
+        const weekStart = startOfWeek(state.currentDate);
+        const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+        
+        let html = '<div class="crm-time-column"></div>';
+        for (let i = 0; i < 7; i++) {
+          const day = addDays(weekStart, i);
+          const dayName = dayNames[i];
+          const dayDate = day.getDate();
+          const isToday = day.toDateString() === new Date().toDateString();
+          
+          html += `
+            <div class="crm-employee-header ${isToday ? 'crm-header-today' : ''}">
+              <div class="crm-employee-info">
+                <div class="crm-employee-name">${dayName}</div>
+                <div class="crm-employee-role">${dayDate}</div>
+              </div>
             </div>
-          </div>
-        `;
-      });
-      headers.innerHTML = html;
+          `;
+        }
+        headers.innerHTML = html;
+      } else {
+        // Show staff headers for day view
+        const visibleMasters = state.selectedMaster 
+          ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
+          : state.selectedStaffIds.length === 0 
+            ? []
+            : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
+
+        let html = '<div class="crm-time-column"></div>';
+        visibleMasters.forEach(master => {
+          const avatarHtml = master.avatar 
+            ? `<img src="${master.avatar}" alt="${master.name}" />`
+            : master.name.charAt(0);
+          
+          html += `
+            <div class="crm-employee-header">
+              <div class="crm-employee-avatar">${avatarHtml}</div>
+              <div class="crm-employee-info">
+                <div class="crm-employee-name">${master.name}</div>
+                <div class="crm-employee-role">${master.specializations || 'Мастер'}</div>
+              </div>
+            </div>
+          `;
+        });
+        headers.innerHTML = html;
+      }
     }
 
     function renderScheduleColumns() {
       const container = document.getElementById('scheduleColumns');
-      const visibleMasters = state.selectedMaster 
-        ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
-        : state.selectedStaffIds.length === 0 
-          ? []
-          : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
-
-      let html = '';
-      visibleMasters.forEach(master => {
-        html += `<div class="crm-employee-column" data-master-id="${master.id}">`;
-        for (let hour = 9; hour <= 21; hour++) {
-          html += `<div class="crm-time-slot-row" data-hour="${hour}" data-master="${master.id}"></div>`;
-        }
-        html += '</div>';
-      });
-      container.innerHTML = html;
-
-      // Render bookings
-      visibleMasters.forEach(master => {
-        const column = container.querySelector(`[data-master-id="${master.id}"]`);
-        const masterBookings = state.bookings.filter(b => String(b.masterId) === String(master.id));
-
-        masterBookings.forEach(booking => {
-          const startDate = new Date(booking.startsAt);
-          const endDate = new Date(booking.endsAt);
-          const startHour = startDate.getHours();
-          const startMin = startDate.getMinutes();
-          const duration = (endDate.getTime() - startDate.getTime()) / 60000;
-          
-          const slotHeight = 60;
-          const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
-          const height = (duration / 60) * slotHeight;
-
-          const service = state.services.find(s => String(s.id) === String(booking.serviceId));
-          
-          // Determine color based on status
-          let colorClass = 'green';
-          if (booking.status === 'CONFIRMED') {
-            colorClass = 'confirmed';
-          } else if (booking.status === 'COMPLETED') {
-            colorClass = 'completed';
-          } else if (booking.status === 'CANCELLED') {
-            colorClass = 'cancelled';
-          } else if (booking.status === 'PENDING') {
-            colorClass = 'new';
-          } else {
-            colorClass = booking.color || 'green';
-          }
-
-          const card = document.createElement('div');
-          card.className = `crm-booking-card ${colorClass}`;
-          card.style.top = `${top}px`;
-          card.style.height = `${Math.max(height, 40)}px`;
-          card.dataset.bookingId = booking.id;
-          card.innerHTML = `
-            <div class="crm-booking-time">${fmtTime(booking.startsAt)} – ${fmtTime(booking.endsAt)}</div>
-            <div class="crm-booking-client">${booking.customerName}</div>
-            <div class="crm-booking-service">${service?.name || ''}</div>
-            ${booking.customerPhone ? `<div class="crm-booking-phone">${booking.customerPhone}</div>` : ''}
-          `;
-          card.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openBookingModal(booking);
-          });
-          column.appendChild(card);
-        });
-      });
-
-      // Mark closed slots based on schedule
-      const dayOfWeek = state.currentDate.getDay();
-      const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayOfWeek];
-
-      container.querySelectorAll('.crm-time-slot-row').forEach(slot => {
-        const hour = parseInt(slot.dataset.hour);
-        const masterId = slot.dataset.master;
-        const schedule = state.masterSchedules[masterId] || {};
+      
+      if (state.view === 'week') {
+        // Week view: show 7 day columns
+        const weekStart = startOfWeek(state.currentDate);
+        let html = '';
         
-        // Check if this slot is closed based on the schedule
-        const daySchedule = schedule[dayName];
-        if (daySchedule) {
-          const isClosed = daySchedule.closed || 
-                           (daySchedule.start && hour < parseInt(daySchedule.start.split(':')[0])) ||
-                           (daySchedule.end && hour >= parseInt(daySchedule.end.split(':')[0]));
+        for (let i = 0; i < 7; i++) {
+          const day = addDays(weekStart, i);
+          const isToday = day.toDateString() === new Date().toDateString();
+          html += `<div class="crm-employee-column ${isToday ? 'crm-column-today' : ''}" data-day="${day.toISOString()}">`;
           
-          if (isClosed) {
-            slot.classList.add('closed');
+          for (let hour = 9; hour <= 21; hour++) {
+            html += `<div class="crm-time-slot-row" data-hour="${hour}" data-day="${i}"></div>`;
           }
+          html += '</div>';
         }
+        container.innerHTML = html;
 
-        // Add click handlers for open slots only
-        if (!slot.classList.contains('closed')) {
-          slot.addEventListener('click', () => {
-            openBookingModal(null, { masterId, hour });
+        // Render bookings for each day
+        const visibleMasters = state.selectedMaster 
+          ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
+          : state.selectedStaffIds.length === 0 
+            ? []
+            : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
+
+        for (let i = 0; i < 7; i++) {
+          const day = addDays(weekStart, i);
+          const dayStart = startOfDay(day);
+          const dayEnd = endOfDay(day);
+          const column = container.querySelector(`[data-day="${day.toISOString()}"]`);
+          
+          // Filter bookings for this day
+          const dayBookings = state.bookings.filter(b => {
+            const bookingDate = new Date(b.startsAt);
+            return bookingDate >= dayStart && bookingDate <= dayEnd &&
+                   (state.selectedMaster ? String(b.masterId) === String(state.selectedMaster) : true) &&
+                   (state.selectedStaffIds.length > 0 ? state.selectedStaffIds.includes(String(b.masterId)) : true);
+          });
+
+          dayBookings.forEach(booking => {
+            const startDate = new Date(booking.startsAt);
+            const endDate = new Date(booking.endsAt);
+            const startHour = startDate.getHours();
+            const startMin = startDate.getMinutes();
+            const duration = (endDate.getTime() - startDate.getTime()) / 60000;
+            
+            const slotHeight = 60;
+            const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
+            const height = (duration / 60) * slotHeight;
+
+            const service = state.services.find(s => String(s.id) === String(booking.serviceId));
+            const master = state.masters.find(m => String(m.id) === String(booking.masterId));
+            
+            // Determine color based on status
+            let colorClass = 'green';
+            if (booking.status === 'CONFIRMED') {
+              colorClass = 'confirmed';
+            } else if (booking.status === 'COMPLETED') {
+              colorClass = 'completed';
+            } else if (booking.status === 'CANCELLED') {
+              colorClass = 'cancelled';
+            } else if (booking.status === 'PENDING') {
+              colorClass = 'new';
+            } else {
+              colorClass = booking.color || 'green';
+            }
+
+            const card = document.createElement('div');
+            card.className = `crm-booking-card ${colorClass}`;
+            card.style.top = `${top}px`;
+            card.style.height = `${Math.max(height, 40)}px`;
+            card.dataset.bookingId = booking.id;
+            card.innerHTML = `
+              <div class="crm-booking-time">${fmtTime(booking.startsAt)} – ${fmtTime(booking.endsAt)}</div>
+              <div class="crm-booking-client">${booking.customerName}</div>
+              <div class="crm-booking-service">${service?.name || ''}</div>
+              <div class="crm-booking-phone">${master?.name || ''}</div>
+            `;
+            card.addEventListener('click', (e) => {
+              e.stopPropagation();
+              openBookingModal(booking);
+            });
+            column.appendChild(card);
           });
         }
-      });
 
-      // Add current time line
-      renderCurrentTimeLine(container);
+        // Add click handlers for time slots
+        container.querySelectorAll('.crm-time-slot-row').forEach(slot => {
+          slot.addEventListener('click', () => {
+            const dayIndex = parseInt(slot.dataset.day);
+            const hour = parseInt(slot.dataset.hour);
+            const day = addDays(weekStart, dayIndex);
+            openBookingModal(null, { date: day, hour });
+          });
+        });
+
+        // Add current time line for today
+        const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+        const todayColumn = container.querySelector(`[data-day="${addDays(weekStart, todayIndex).toISOString()}"]`);
+        if (todayColumn) {
+          renderCurrentTimeLine(todayColumn);
+        }
+      } else {
+        // Day view: show staff columns
+        const visibleMasters = state.selectedMaster 
+          ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
+          : state.selectedStaffIds.length === 0 
+            ? []
+            : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
+
+        let html = '';
+        visibleMasters.forEach(master => {
+          html += `<div class="crm-employee-column" data-master-id="${master.id}">`;
+          for (let hour = 9; hour <= 21; hour++) {
+            html += `<div class="crm-time-slot-row" data-hour="${hour}" data-master="${master.id}"></div>`;
+          }
+          html += '</div>';
+        });
+        container.innerHTML = html;
+
+        // Render bookings
+        visibleMasters.forEach(master => {
+          const column = container.querySelector(`[data-master-id="${master.id}"]`);
+          const masterBookings = state.bookings.filter(b => {
+            const bookingDate = new Date(b.startsAt);
+            const currentDate = state.currentDate;
+            return bookingDate.toDateString() === currentDate.toDateString() &&
+                   String(b.masterId) === String(master.id);
+          });
+
+          masterBookings.forEach(booking => {
+            const startDate = new Date(booking.startsAt);
+            const endDate = new Date(booking.endsAt);
+            const startHour = startDate.getHours();
+            const startMin = startDate.getMinutes();
+            const duration = (endDate.getTime() - startDate.getTime()) / 60000;
+            
+            const slotHeight = 60;
+            const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
+            const height = (duration / 60) * slotHeight;
+
+            const service = state.services.find(s => String(s.id) === String(booking.serviceId));
+            
+            // Determine color based on status
+            let colorClass = 'green';
+            if (booking.status === 'CONFIRMED') {
+              colorClass = 'confirmed';
+            } else if (booking.status === 'COMPLETED') {
+              colorClass = 'completed';
+            } else if (booking.status === 'CANCELLED') {
+              colorClass = 'cancelled';
+            } else if (booking.status === 'PENDING') {
+              colorClass = 'new';
+            } else {
+              colorClass = booking.color || 'green';
+            }
+
+            const card = document.createElement('div');
+            card.className = `crm-booking-card ${colorClass}`;
+            card.style.top = `${top}px`;
+            card.style.height = `${Math.max(height, 40)}px`;
+            card.dataset.bookingId = booking.id;
+            card.innerHTML = `
+              <div class="crm-booking-time">${fmtTime(booking.startsAt)} – ${fmtTime(booking.endsAt)}</div>
+              <div class="crm-booking-client">${booking.customerName}</div>
+              <div class="crm-booking-service">${service?.name || ''}</div>
+              ${booking.customerPhone ? `<div class="crm-booking-phone">${booking.customerPhone}</div>` : ''}
+            `;
+            card.addEventListener('click', (e) => {
+              e.stopPropagation();
+              openBookingModal(booking);
+            });
+            column.appendChild(card);
+          });
+        });
+
+        // Mark closed slots based on schedule
+        const dayOfWeek = state.currentDate.getDay();
+        const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayOfWeek];
+
+        container.querySelectorAll('.crm-time-slot-row').forEach(slot => {
+          const hour = parseInt(slot.dataset.hour);
+          const masterId = slot.dataset.master;
+          const schedule = state.masterSchedules[masterId] || {};
+          
+          const daySchedule = schedule[dayName];
+          if (daySchedule) {
+            const isClosed = daySchedule.closed || 
+                             (daySchedule.start && hour < parseInt(daySchedule.start.split(':')[0])) ||
+                             (daySchedule.end && hour >= parseInt(daySchedule.end.split(':')[0]));
+            
+            if (isClosed) {
+              slot.classList.add('closed');
+            }
+          }
+
+          if (!slot.classList.contains('closed')) {
+            slot.addEventListener('click', () => {
+              openBookingModal(null, { masterId, hour });
+            });
+          }
+        });
+
+        // Add current time line
+        renderCurrentTimeLine(container);
+      }
     }
 
     function renderCurrentTimeLine(container) {
@@ -1094,12 +1247,14 @@
 
     function renderCalendar() {
       const dateDisplay = document.getElementById('dateDisplay');
-      const weekStart = state.view === 'week' ? startOfWeek(state.currentDate) : startOfDay(state.currentDate);
-      const weekEnd = addDays(weekStart, state.view === 'week' ? 6 : 0);
-
-      dateDisplay.textContent = state.view === 'week' 
-        ? `${fmtDayRu(weekStart)} – ${fmtDayRu(weekEnd)}`
-        : fmtDayRu(state.currentDate);
+      
+      if (state.view === 'week') {
+        const weekStart = startOfWeek(state.currentDate);
+        const weekEnd = addDays(weekStart, 6);
+        dateDisplay.textContent = `${fmtDayRu(weekStart)} – ${fmtDayRu(weekEnd)}`;
+      } else {
+        dateDisplay.textContent = fmtDayRu(state.currentDate);
+      }
 
       renderTimeColumn();
       renderEmployeeHeaders();
