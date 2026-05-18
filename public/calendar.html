@@ -59,81 +59,105 @@
 
     .crm-calendar-grid {
       flex: 1;
-      overflow: auto;
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      overflow: hidden;
+      background: #f7f8fa;
     }
 
     .crm-employee-headers {
+      grid-column: 2;
       display: flex;
-      background: white;
       border-bottom: 1px solid #e2e8f0;
-      flex-shrink: 0;
+      background: white;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
     .crm-employee-header {
-      width: 200px;
-      padding: 12px;
+      min-width: 200px;
+      padding: 12px 16px;
       border-right: 1px solid #e2e8f0;
-      flex-shrink: 0;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      background: white;
+      transition: background 0.2s;
+    }
+
+    .crm-employee-header:hover {
+      background: #f8fafc;
     }
 
     .crm-employee-avatar {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: #e2e8f0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: flex;
       align-items: center;
       justify-content: center;
+      color: white;
       font-weight: 600;
-      color: #64748b;
+      font-size: 14px;
+      flex-shrink: 0;
     }
 
     .crm-employee-info {
       flex: 1;
+      min-width: 0;
     }
 
     .crm-employee-name {
       font-weight: 600;
-      color: #1e293b;
       font-size: 14px;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .crm-employee-role {
       font-size: 12px;
       color: #64748b;
+      margin-top: 2px;
+    }
+
+    .crm-schedule-body {
+      grid-column: 1 / -1;
+      display: flex;
+      overflow-x: auto;
+      overflow-y: auto;
     }
 
     .crm-time-column {
-      width: 80px;
-      flex-shrink: 0;
-      background: #f8fafc;
+      min-width: 60px;
+      background: white;
       border-right: 1px solid #e2e8f0;
+      position: sticky;
+      left: 0;
+      z-index: 5;
     }
 
     .crm-time-slot {
       height: 60px;
-      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 12px;
       color: #64748b;
+      font-weight: 500;
       border-bottom: 1px solid #f1f5f9;
-      display: flex;
-      align-items: start;
     }
 
-    .crm-schedule-body {
-      display: flex;
+    .crm-employee-columns {
       flex: 1;
-      overflow: auto;
+      display: flex;
     }
 
     .crm-employee-column {
-      width: 200px;
-      flex-shrink: 0;
+      min-width: 200px;
       border-right: 1px solid #e2e8f0;
       position: relative;
       background: white;
@@ -145,6 +169,17 @@
       cursor: pointer;
       transition: background 0.15s;
       position: relative;
+    }
+
+    .crm-time-slot-row::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e2e8f0;
+      opacity: 0.5;
     }
 
     .crm-time-slot-row:hover {
@@ -175,47 +210,113 @@
 
     .crm-booking-card {
       position: absolute;
-      left: 4px;
-      right: 4px;
+      left: 6px;
+      right: 6px;
       border-radius: 8px;
-      padding: 8px;
+      padding: 10px 12px;
       font-size: 12px;
       cursor: pointer;
       transition: transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      border: 1px solid rgba(0,0,0,0.05);
       overflow: hidden;
     }
 
     .crm-booking-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
     }
 
-    .crm-booking-card.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
-    .crm-booking-card.purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; }
-    .crm-booking-card.yellow { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
-    .crm-booking-card.blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
-    .crm-booking-card.pink { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; }
+    .crm-booking-card.new {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      border-color: #6ee7b7;
+    }
+
+    .crm-booking-card.confirmed {
+      background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+      border-color: #c4b5fd;
+    }
+
+    .crm-booking-card.completed {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-color: #fcd34d;
+    }
+
+    .crm-booking-card.cancelled {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border-color: #fca5a5;
+    }
+
+    .crm-booking-card.green {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      border-color: #6ee7b7;
+    }
+
+    .crm-booking-card.purple {
+      background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+      border-color: #c4b5fd;
+    }
+
+    .crm-booking-card.yellow {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-color: #fcd34d;
+    }
+
+    .crm-booking-card.blue {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border-color: #93c5fd;
+    }
+
+    .crm-booking-card.pink {
+      background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+      border-color: #f9a8d4;
+    }
 
     .crm-booking-time {
       font-weight: 600;
+      color: #1e293b;
       margin-bottom: 4px;
+      font-size: 11px;
     }
 
     .crm-booking-client {
-      font-weight: 500;
+      font-weight: 600;
+      color: #1e293b;
       margin-bottom: 2px;
+      font-size: 13px;
     }
 
     .crm-booking-service {
+      color: #64748b;
       font-size: 11px;
-      opacity: 0.9;
+      margin-bottom: 2px;
     }
 
     .crm-booking-phone {
+      color: #94a3b8;
       font-size: 11px;
-      opacity: 0.8;
-      margin-top: 2px;
+    }
+
+    /* Current time line */
+    .crm-current-time-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #ef4444;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .crm-current-time-line::before {
+      content: '';
+      position: absolute;
+      left: -6px;
+      top: -4px;
+      width: 10px;
+      height: 10px;
+      background: #ef4444;
+      border-radius: 50%;
     }
 
     .crm-mini-calendar {
@@ -605,10 +706,6 @@
           <span style="margin-left: auto; font-size: 12px;">▼</span>
         </div>
         <div class="crm-staff-dropdown" id="staffDropdown">
-          <div class="crm-staff-item" id="selectAllStaff">
-            <div class="crm-staff-checkbox checked" id="selectAllCheckbox"></div>
-            <span class="crm-staff-name">Все сотрудники</span>
-          </div>
           <div id="staffList"></div>
         </div>
         <div class="crm-sidebar-menu-item">
@@ -650,7 +747,7 @@
         <div class="crm-employee-headers" id="employeeHeaders"></div>
         <div class="crm-schedule-body">
           <div class="crm-time-column" id="timeColumn"></div>
-          <div id="scheduleColumns"></div>
+          <div class="crm-employee-columns" id="scheduleColumns"></div>
         </div>
       </div>
     </div>
@@ -893,10 +990,23 @@
           const height = (duration / 60) * slotHeight;
 
           const service = state.services.find(s => String(s.id) === String(booking.serviceId));
-          const color = booking.color || 'green';
+          
+          // Determine color based on status
+          let colorClass = 'green';
+          if (booking.status === 'CONFIRMED') {
+            colorClass = 'confirmed';
+          } else if (booking.status === 'COMPLETED') {
+            colorClass = 'completed';
+          } else if (booking.status === 'CANCELLED') {
+            colorClass = 'cancelled';
+          } else if (booking.status === 'PENDING') {
+            colorClass = 'new';
+          } else {
+            colorClass = booking.color || 'green';
+          }
 
           const card = document.createElement('div');
-          card.className = `crm-booking-card ${color}`;
+          card.className = `crm-booking-card ${colorClass}`;
           card.style.top = `${top}px`;
           card.style.height = `${Math.max(height, 40)}px`;
           card.dataset.bookingId = booking.id;
@@ -942,6 +1052,32 @@
           });
         }
       });
+
+      // Add current time line
+      renderCurrentTimeLine(container);
+    }
+
+    function renderCurrentTimeLine(container) {
+      // Remove existing time line
+      const existingLine = container.querySelector('.crm-current-time-line');
+      if (existingLine) {
+        existingLine.remove();
+      }
+
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMin = now.getMinutes();
+      
+      // Only show if within our time range (9-21)
+      if (currentHour >= 9 && currentHour <= 21) {
+        const slotHeight = 60;
+        const top = (currentHour - 9) * slotHeight + (currentMin / 60) * slotHeight;
+        
+        const timeLine = document.createElement('div');
+        timeLine.className = 'crm-current-time-line';
+        timeLine.style.top = `${top}px`;
+        container.appendChild(timeLine);
+      }
     }
 
     function renderCalendar() {
@@ -996,7 +1132,6 @@
     }
 
     function toggleStaffSelection(staffId) {
-      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
       const index = state.selectedStaffIds.indexOf(staffId);
       
       if (index > -1) {
@@ -1007,37 +1142,6 @@
 
       // Update checkbox visual state
       document.querySelector(`[data-staff-id="${staffId}"] .crm-staff-checkbox`).classList.toggle('checked');
-
-      // Update "select all" checkbox state
-      if (state.selectedStaffIds.length === state.masters.length) {
-        selectAllCheckbox.classList.add('checked');
-      } else {
-        selectAllCheckbox.classList.remove('checked');
-      }
-
-      renderCalendar();
-      loadBookings();
-    }
-
-    function toggleSelectAll() {
-      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-      const isChecked = selectAllCheckbox.classList.contains('checked');
-      
-      if (isChecked) {
-        // Deselect all
-        state.selectedStaffIds = [];
-        selectAllCheckbox.classList.remove('checked');
-        document.querySelectorAll('#staffList .crm-staff-checkbox').forEach(cb => {
-          cb.classList.remove('checked');
-        });
-      } else {
-        // Select all
-        state.selectedStaffIds = state.masters.map(m => m.id);
-        selectAllCheckbox.classList.add('checked');
-        document.querySelectorAll('#staffList .crm-staff-checkbox').forEach(cb => {
-          cb.classList.add('checked');
-        });
-      }
 
       renderCalendar();
       loadBookings();
@@ -1218,12 +1322,6 @@
     // Staff dropdown toggle
     document.getElementById('staffMenuItem').addEventListener('click', () => {
       document.getElementById('staffDropdown').classList.toggle('active');
-    });
-
-    // Select all staff
-    document.getElementById('selectAllStaff').addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleSelectAll();
     });
 
     document.getElementById('modalClose').addEventListener('click', closeBookingModal);
