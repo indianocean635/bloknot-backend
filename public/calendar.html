@@ -154,6 +154,8 @@
     .crm-employee-columns {
       flex: 1;
       display: flex;
+      position: relative;
+      overflow: hidden;
     }
 
     .crm-employee-column {
@@ -161,6 +163,7 @@
       border-right: 1px solid #e2e8f0;
       position: relative;
       background: white;
+      overflow: hidden;
     }
 
     .crm-time-slot-row {
@@ -738,6 +741,11 @@
         </div>
 
         <div class="crm-toolbar-right">
+          <div class="crm-dropdown">
+            <select id="masterFilter">
+              <option value="">Все мастера</option>
+            </select>
+          </div>
           <button class="crm-btn" id="refreshBtn">🔄</button>
         </div>
       </div>
@@ -938,9 +946,11 @@
 
     function renderEmployeeHeaders() {
       const headers = document.getElementById('employeeHeaders');
-      const visibleMasters = state.selectedStaffIds.length === 0 
-        ? []
-        : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
+      const visibleMasters = state.selectedMaster 
+        ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
+        : state.selectedStaffIds.length === 0 
+          ? []
+          : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
 
       let html = '<div class="crm-time-column"></div>';
       visibleMasters.forEach(master => {
@@ -949,7 +959,7 @@
             <div class="crm-employee-avatar">${master.name.charAt(0)}</div>
             <div class="crm-employee-info">
               <div class="crm-employee-name">${master.name}</div>
-              <div class="crm-employee-role">Мастер</div>
+              <div class="crm-employee-role">${master.specializations || 'Мастер'}</div>
             </div>
           </div>
         `;
@@ -959,9 +969,11 @@
 
     function renderScheduleColumns() {
       const container = document.getElementById('scheduleColumns');
-      const visibleMasters = state.selectedStaffIds.length === 0 
-        ? []
-        : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
+      const visibleMasters = state.selectedMaster 
+        ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
+        : state.selectedStaffIds.length === 0 
+          ? []
+          : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
 
       let html = '';
       visibleMasters.forEach(master => {
@@ -1114,6 +1126,13 @@
           `;
           item.addEventListener('click', () => toggleStaffSelection(master.id));
           staffList.appendChild(item);
+        });
+
+        // Populate master filter dropdown
+        const masterFilter = document.getElementById('masterFilter');
+        masterFilter.innerHTML = '<option value="">Все мастера</option>';
+        state.masters.forEach(m => {
+          masterFilter.innerHTML += `<option value="${m.id}">${m.name}</option>`;
         });
 
         // Load schedules for each master
@@ -1311,6 +1330,12 @@
       state.view = 'week';
       document.getElementById('weekViewBtn').classList.add('crm-btn-primary');
       document.getElementById('dayViewBtn').classList.remove('crm-btn-primary');
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('masterFilter').addEventListener('change', (e) => {
+      state.selectedMaster = e.target.value || null;
       renderCalendar();
       loadBookings();
     });
