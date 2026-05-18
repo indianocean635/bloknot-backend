@@ -144,10 +144,33 @@
       border-bottom: 1px solid #f1f5f9;
       cursor: pointer;
       transition: background 0.15s;
+      position: relative;
     }
 
     .crm-time-slot-row:hover {
       background: #f8fafc;
+    }
+
+    .crm-time-slot-row.closed {
+      background: #f1f5f9;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .crm-time-slot-row.closed::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 5px,
+        #e2e8f0 5px,
+        #e2e8f0 10px
+      );
     }
 
     .crm-booking-card {
@@ -658,6 +681,7 @@
       selectedBranch: null,
       bookings: [],
       masters: [],
+      masterSchedules: {},
       services: [],
       selectedBooking: null,
       selectedColor: 'green'
@@ -839,13 +863,33 @@
         });
       });
 
-      // Add click handlers for empty slots
+      // Mark closed slots based on schedule
+      const dayOfWeek = state.currentDate.getDay();
+      const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayOfWeek];
+
       container.querySelectorAll('.crm-time-slot-row').forEach(slot => {
-        slot.addEventListener('click', () => {
-          const hour = parseInt(slot.dataset.hour);
-          const masterId = slot.dataset.master;
-          openBookingModal(null, { masterId, hour });
-        });
+        const hour = parseInt(slot.dataset.hour);
+        const masterId = slot.dataset.master;
+        const schedule = state.masterSchedules[masterId] || {};
+        
+        // Check if this slot is closed based on the schedule
+        const daySchedule = schedule[dayName];
+        if (daySchedule) {
+          const isClosed = daySchedule.closed || 
+                           (daySchedule.start && hour < parseInt(daySchedule.start.split(':')[0])) ||
+                           (daySchedule.end && hour >= parseInt(daySchedule.end.split(':')[0]));
+          
+          if (isClosed) {
+            slot.classList.add('closed');
+          }
+        }
+
+        // Add click handlers for open slots only
+        if (!slot.classList.contains('closed')) {
+          slot.addEventListener('click', () => {
+            openBookingModal(null, { masterId, hour });
+          });
+        }
       });
     }
 
@@ -871,6 +915,17 @@
         state.masters.forEach(m => {
           select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
         });
+
+        // Load schedules for each master
+        for (const master of state.masters) {
+          try {
+            const scheduleData = await Bloknot.api(`/api/specialists/${master.id}/schedule`);
+            state.masterSchedules[master.id] = scheduleData.schedule || {};
+          } catch (e) {
+            console.error(`Failed to load schedule for master ${master.id}:`, e);
+            state.masterSchedules[master.id] = {};
+          }
+        }
       } catch (e) {
         console.error('Failed to load masters:', e);
       }

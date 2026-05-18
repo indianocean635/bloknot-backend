@@ -199,8 +199,8 @@ router.get('/:id/schedule', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Specialist not found' });
     }
     
-    // For now, return empty schedule - can be extended later
-    res.json({ schedule: '' });
+    // Return the schedule from the master model
+    res.json({ schedule: specialist.schedule || {} });
   } catch (error) {
     console.error('Error fetching specialist schedule:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -225,8 +225,13 @@ router.post('/:id/schedule', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Specialist not found' });
     }
 
-    // For now, just return success - schedule storage can be extended later
-    res.json({ success: true, schedule });
+    // Update the specialist's schedule
+    const updatedSpecialist = await prisma.master.update({
+      where: { id: parseInt(id) },
+      data: { schedule: schedule || {} }
+    });
+
+    res.json({ success: true, schedule: updatedSpecialist.schedule });
   } catch (error) {
     console.error('Error updating specialist schedule:', error);
     res.status(500).json({ error: 'Internal server error' });
