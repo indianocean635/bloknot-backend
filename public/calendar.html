@@ -1108,7 +1108,7 @@
 
     async function loadMasters() {
       try {
-        state.masters = await Bloknot.api('/api/masters');
+        state.masters = await Bloknot.api('/api/masters/masters');
         
         // Initially select all staff
         state.selectedStaffIds = state.masters.map(m => m.id);
@@ -1168,7 +1168,7 @@
 
     async function loadServices() {
       try {
-        state.services = await Bloknot.api('/api/services');
+        state.services = await Bloknot.api('/api/masters/services');
         const select = document.getElementById('bookingService');
         select.innerHTML = '';
         state.services.forEach(s => {
