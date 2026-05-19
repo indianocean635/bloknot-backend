@@ -1350,6 +1350,18 @@
       // Update checkbox visual state
       document.querySelector(`[data-staff-id="${staffId}"] .crm-staff-checkbox`).classList.toggle('checked');
 
+      // Update week button state based on selection
+      const weekViewBtn = document.getElementById('weekViewBtn');
+      if (state.selectedStaffIds.length > 1) {
+        weekViewBtn.disabled = true;
+        weekViewBtn.style.opacity = '0.5';
+        weekViewBtn.style.cursor = 'not-allowed';
+      } else {
+        weekViewBtn.disabled = false;
+        weekViewBtn.style.opacity = '1';
+        weekViewBtn.style.cursor = 'pointer';
+      }
+
       renderCalendar();
       loadBookings();
     }
@@ -1515,6 +1527,12 @@
     });
 
     document.getElementById('weekViewBtn').addEventListener('click', () => {
+      // Check if more than 1 staff is selected
+      if (state.selectedStaffIds.length > 1) {
+        alert('Режим "Неделя" доступен только при выборе одного специалиста');
+        return;
+      }
+      
       state.view = 'week';
       document.getElementById('weekViewBtn').classList.add('crm-btn-primary');
       document.getElementById('dayViewBtn').classList.remove('crm-btn-primary');
