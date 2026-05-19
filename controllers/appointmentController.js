@@ -203,18 +203,54 @@ async function createAppointment(req, res) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const appointment = {
-      id: appointmentId++,
-      ...req.body,
-      businessId: user.businessId, // Обязательно добавляем businessId
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    const {
+      serviceId,
+      masterId,
+      branchId,
+      startsAt,
+      endsAt,
+      customerName,
+      customerPhone,
+      customerTelegram,
+      customerComment,
+      status,
+      color
+    } = req.body;
+
+    if (!serviceId || !masterId || !startsAt || !endsAt || !customerName) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Save to database
+    const appointment = await prisma.appointment.create({
+      data: {
+        businessId: user.businessId,
+        serviceId: Number(serviceId),
+        masterId: Number(masterId),
+        branchId: branchId ? Number(branchId) : null,
+        startsAt: new Date(startsAt),
+        endsAt: new Date(endsAt),
+        customerName,
+        customerPhone,
+        customerTelegram: customerTelegram || null,
+        customerComment: customerComment || null,
+        status: status || 'CONFIRMED',
+        color: color || null
+      }
+    });
+
+    // Fetch the appointment with relations for the response
+    const appointmentWithRelations = await prisma.appointment.findUnique({
+      where: { id: appointment.id },
+      include: {
+        service: true,
+        master: true,
+        branch: true
+      }
+    });
     
-    memoryAppointments.set(appointment.id, appointment);
-    
-    console.log('✅ Appointment created:', appointment.id);
-    res.json(appointment);
+    console.log('✅ Appointment created in DB:', appointment.id);
+    res.json(appointmentWithRelations);
   } catch (error) {
     console.error('❌ createAppointment error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -238,27 +274,63 @@ async function updateAppointment(req, res) {
     }
 
     const { id } = req.params;
-    const appointment = memoryAppointments.get(Number(id));
     
-    if (!appointment) {
+    // Check if appointment exists and belongs to user's business
+    const existing = await prisma.appointment.findFirst({
+      where: {
+        id: Number(id),
+        businessId: user.businessId
+      }
+    });
+    
+    if (!existing) {
       return res.status(404).json({ error: "Appointment not found" });
     }
     
-    // Проверяем, что запись принадлежит бизнесу пользователя
-    if (appointment.businessId !== user.businessId) {
-      console.warn('[SECURITY] Attempting to update appointment from different business', { 
-        userId: user.id, 
-        businessId: user.businessId, 
-        appointmentBusinessId: appointment.businessId 
-      });
-      return res.status(404).json({ error: "Appointment not found" });
-    }
+    const {
+      serviceId,
+      masterId,
+      branchId,
+      startsAt,
+      endsAt,
+      customerName,
+      customerPhone,
+      customerTelegram,
+      customerComment,
+      status,
+      color
+    } = req.body;
     
-    const updated = { ...appointment, ...req.body, updatedAt: new Date() };
-    memoryAppointments.set(Number(id), updated);
+    // Update in database
+    const appointment = await prisma.appointment.update({
+      where: { id: Number(id) },
+      data: {
+        serviceId: serviceId ? Number(serviceId) : undefined,
+        masterId: masterId ? Number(masterId) : undefined,
+        branchId: branchId ? Number(branchId) : (branchId === null ? null : undefined),
+        startsAt: startsAt ? new Date(startsAt) : undefined,
+        endsAt: endsAt ? new Date(endsAt) : undefined,
+        customerName,
+        customerPhone,
+        customerTelegram: customerTelegram !== undefined ? customerTelegram : undefined,
+        customerComment: customerComment !== undefined ? customerComment : undefined,
+        status,
+        color: color !== undefined ? color : undefined
+      }
+    });
+
+    // Fetch with relations for the response
+    const appointmentWithRelations = await prisma.appointment.findUnique({
+      where: { id: appointment.id },
+      include: {
+        service: true,
+        master: true,
+        branch: true
+      }
+    });
     
-    console.log('✅ Appointment updated:', id);
-    res.json(updated);
+    console.log('✅ Appointment updated in DB:', id);
+    res.json(appointmentWithRelations);
   } catch (error) {
     console.error('❌ updateAppointment error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -282,25 +354,25 @@ async function deleteAppointment(req, res) {
     }
 
     const { id } = req.params;
-    const appointment = memoryAppointments.get(Number(id));
     
-    if (!appointment) {
+    // Check if appointment exists and belongs to user's business
+    const existing = await prisma.appointment.findFirst({
+      where: {
+        id: Number(id),
+        businessId: user.businessId
+      }
+    });
+    
+    if (!existing) {
       return res.status(404).json({ error: "Appointment not found" });
     }
     
-    // Проверяем, что запись принадлежит бизнесу пользователя
-    if (appointment.businessId !== user.businessId) {
-      console.warn('[SECURITY] Attempting to delete appointment from different business', { 
-        userId: user.id, 
-        businessId: user.businessId, 
-        appointmentBusinessId: appointment.businessId 
-      });
-      return res.status(404).json({ error: "Appointment not found" });
-    }
+    // Delete from database
+    await prisma.appointment.delete({
+      where: { id: Number(id) }
+    });
     
-    memoryAppointments.delete(Number(id));
-    
-    console.log('✅ Appointment deleted:', id);
+    console.log('✅ Appointment deleted from DB:', id);
     res.json({ success: true });
   } catch (error) {
     console.error('❌ deleteAppointment error:', error);
