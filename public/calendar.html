@@ -60,14 +60,15 @@
     .crm-calendar-grid {
       flex: 1;
       display: grid;
-      grid-template-columns: 60px 1fr;
+      grid-template-columns: 80px repeat(7, 1fr);
       overflow: hidden;
       background: #f7f8fa;
     }
 
     .crm-employee-headers {
-      grid-column: 2;
-      display: flex;
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 80px repeat(7, 1fr);
       border-bottom: 1px solid #e2e8f0;
       background: white;
       position: sticky;
@@ -75,16 +76,24 @@
       z-index: 10;
     }
 
+    .crm-time-header {
+      padding: 12px 8px;
+      border-right: 1px solid #e2e8f0;
+      background: white;
+      font-weight: 600;
+      font-size: 12px;
+      color: #64748b;
+    }
+
     .crm-employee-header {
-      min-width: 200px;
       padding: 12px 16px;
       border-right: 1px solid #e2e8f0;
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      gap: 8px;
       background: white;
       transition: background 0.2s;
-      flex-shrink: 0;
     }
 
     .crm-employee-header:hover {
@@ -143,12 +152,12 @@
 
     .crm-schedule-body {
       grid-column: 1 / -1;
-      display: flex;
+      display: grid;
+      grid-template-columns: 80px repeat(7, 1fr);
       overflow: auto;
     }
 
     .crm-time-column {
-      min-width: 60px;
       background: white;
       border-right: 1px solid #e2e8f0;
       position: sticky;
@@ -156,29 +165,17 @@
       z-index: 5;
     }
 
-    .crm-time-slot {
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      color: #64748b;
-      font-weight: 500;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
     .crm-employee-columns {
-      flex: 1;
-      display: flex;
+      grid-column: 2 / -1;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
       position: relative;
     }
 
     .crm-employee-column {
-      min-width: 200px;
       border-right: 1px solid #e2e8f0;
       position: relative;
       background: white;
-      flex-shrink: 0;
     }
 
     .crm-time-slot-row {
@@ -971,7 +968,7 @@
         const weekStart = startOfWeek(state.currentDate);
         const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
         
-        let html = '<div class="crm-time-column"></div>';
+        let html = '<div class="crm-time-header"></div>';
         for (let i = 0; i < 7; i++) {
           const day = addDays(weekStart, i);
           const dayName = dayNames[i];
@@ -996,7 +993,7 @@
             ? []
             : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
 
-        let html = '<div class="crm-time-column"></div>';
+        let html = '<div class="crm-time-header"></div>';
         visibleMasters.forEach(master => {
           const avatarHtml = master.avatar 
             ? `<img src="${master.avatar}" alt="${master.name}" />`
@@ -1022,7 +1019,11 @@
       if (state.view === 'week') {
         // Week view: show 7 day columns
         const weekStart = startOfWeek(state.currentDate);
-        let html = '';
+        let html = '<div class="crm-time-column">';
+        for (let hour = 9; hour <= 21; hour++) {
+          html += `<div class="crm-time-slot">${String(hour).padStart(2, '0')}:00</div>`;
+        }
+        html += '</div>';
         
         for (let i = 0; i < 7; i++) {
           const day = addDays(weekStart, i);
@@ -1154,7 +1155,12 @@
             ? []
             : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
 
-        let html = '';
+        let html = '<div class="crm-time-column">';
+        for (let hour = 9; hour <= 21; hour++) {
+          html += `<div class="crm-time-slot">${String(hour).padStart(2, '0')}:00</div>`;
+        }
+        html += '</div>';
+        
         visibleMasters.forEach(master => {
           html += `<div class="crm-employee-column" data-master-id="${master.id}">`;
           for (let hour = 9; hour <= 21; hour++) {
