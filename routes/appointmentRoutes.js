@@ -15,7 +15,9 @@ const router = express.Router();
 
 // Protected endpoints
 router.get("/appointments", requireMagicAuth, getBusinessFromUser, getAppointments);
+router.post("/appointments", requireMagicAuth, getBusinessFromUser, createAppointment);
 router.delete("/appointments/:id", requireMagicAuth, getBusinessFromUser, deleteAppointment);
+router.put("/appointments/:id", requireMagicAuth, getBusinessFromUser, updateAppointment);
 
 // Публичные эндпоинты
 router.get("/public/business/:slug", getBusinessBySlug);
