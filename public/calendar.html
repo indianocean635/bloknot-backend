@@ -835,21 +835,11 @@
           <textarea id="bookingComment" rows="3"></textarea>
         </div>
         <div class="crm-form-group">
-          <label>Цвет</label>
-          <div class="crm-color-picker">
-            <div class="crm-color-option green selected" data-color="green"></div>
-            <div class="crm-color-option purple" data-color="purple"></div>
-            <div class="crm-color-option yellow" data-color="yellow"></div>
-            <div class="crm-color-option blue" data-color="blue"></div>
-            <div class="crm-color-option pink" data-color="pink"></div>
-          </div>
-        </div>
-        <div class="crm-form-group">
           <label>Статус</label>
           <select id="bookingStatus">
-            <option value="confirmed">Подтверждено</option>
-            <option value="pending">Ожидает</option>
-            <option value="cancelled">Отменено</option>
+            <option value="CONFIRMED">Подтверждено</option>
+            <option value="COMPLETED">Состоялось</option>
+            <option value="CANCELLED">Отменено</option>
           </select>
         </div>
         <div class="crm-modal-actions">
@@ -1464,6 +1454,20 @@
     async function saveBooking(e) {
       e.preventDefault();
       
+      const status = document.getElementById('bookingStatus').value;
+      
+      // Set color based on status
+      let color;
+      if (status === 'CONFIRMED') {
+        color = 'purple';
+      } else if (status === 'COMPLETED') {
+        color = 'yellow';
+      } else if (status === 'CANCELLED') {
+        color = 'red';
+      } else {
+        color = 'green';
+      }
+      
       const data = {
         customerName: document.getElementById('bookingClient').value,
         customerPhone: document.getElementById('bookingPhone').value,
@@ -1471,8 +1475,8 @@
         masterId: document.getElementById('bookingMaster').value,
         startsAt: new Date(`${document.getElementById('bookingDate').value}T${document.getElementById('bookingTime').value}`).toISOString(),
         comment: document.getElementById('bookingComment').value,
-        color: state.selectedColor,
-        status: document.getElementById('bookingStatus').value
+        color: color,
+        status: status
       };
 
       try {
