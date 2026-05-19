@@ -174,19 +174,22 @@ router.delete('/:id', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Specialist not found' });
     }
     
-    // Check if specialist has appointments
+    // Delete all appointments associated with this specialist
     if (specialist.appointments.length > 0) {
-      return res.status(400).json({ 
-        error: 'Cannot delete specialist with appointments',
-        message: `This specialist has ${specialist.appointments.length} appointment(s). Please delete or reassign the appointments first.`
+      await prisma.appointment.deleteMany({
+        where: { masterId: parseInt(id) }
       });
     }
     
+    // Delete the specialist
     await prisma.master.delete({
       where: { id: parseInt(id) }
     });
     
-    res.json({ success: true });
+    res.json({ 
+      success: true,
+      deletedAppointments: specialist.appointments.length
+    });
   } catch (error) {
     console.error('Error deleting specialist:', error);
     res.status(500).json({ error: 'Internal server error' });
