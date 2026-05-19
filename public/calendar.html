@@ -1049,8 +1049,7 @@
           const dayBookings = state.bookings.filter(b => {
             const bookingDate = new Date(b.startsAt);
             return bookingDate >= dayStart && bookingDate <= dayEnd &&
-                   (state.selectedMaster ? String(b.masterId) === String(state.selectedMaster) : true) &&
-                   (state.selectedStaffIds.length > 0 ? state.selectedStaffIds.includes(String(b.masterId)) : true);
+                   (state.selectedMaster ? String(b.masterId) === String(state.selectedMaster) : true);
           });
 
           dayBookings.forEach(booking => {
