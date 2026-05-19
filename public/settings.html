@@ -1871,8 +1871,12 @@ async function inviteSpecialist(index) {
 async function deleteSpecialist(index) {
   if (confirm('Вы уверены, что хотите удалить этого специалиста?')) {
     try {
-      // Delete specialist from backend
-      const response = await api(`/api/specialists/${index}`, {
+      // Get the actual specialist ID from the dataset
+      const nameInput = document.getElementById(`specialistName${index}`);
+      const specialistId = nameInput?.dataset.specialistId || index;
+      
+      // Delete specialist from backend using actual ID
+      const response = await api(`/api/specialists/${specialistId}`, {
         method: 'DELETE'
       });
       
@@ -1891,9 +1895,12 @@ async function deleteSpecialist(index) {
         `;
       }
       
-      alert('Специалист удален успешно!');
+      // Reload specialists to update UI
+      loadSpecialistsFromAPI();
+      
     } catch (error) {
-      alert('Error deleting specialist: ' + error.message);
+      console.error('[DELETE ERROR]', error);
+      alert('Ошибка удаления специалиста: ' + error.message);
     }
   }
 }
