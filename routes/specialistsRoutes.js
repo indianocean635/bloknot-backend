@@ -164,11 +164,22 @@ router.delete('/:id', requireAuth, async (req, res) => {
       where: {
         id: parseInt(id),
         businessId: req.user.businessId
+      },
+      include: {
+        appointments: true
       }
     });
     
     if (!specialist) {
       return res.status(404).json({ error: 'Specialist not found' });
+    }
+    
+    // Check if specialist has appointments
+    if (specialist.appointments.length > 0) {
+      return res.status(400).json({ 
+        error: 'Cannot delete specialist with appointments',
+        message: `This specialist has ${specialist.appointments.length} appointment(s). Please delete or reassign the appointments first.`
+      });
     }
     
     await prisma.master.delete({
