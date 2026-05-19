@@ -217,8 +217,24 @@ async function createAppointment(req, res) {
       color
     } = req.body;
 
-    if (!serviceId || !masterId || !startsAt || !endsAt || !customerName) {
+    if (!serviceId || !masterId || !startsAt || !customerName) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Calculate endsAt if not provided
+    let calculatedEndsAt = endsAt ? new Date(endsAt) : null;
+    if (!calculatedEndsAt) {
+      // Fetch service to get duration
+      const service = await prisma.service.findUnique({
+        where: { id: Number(serviceId) }
+      });
+      
+      if (service && service.duration) {
+        calculatedEndsAt = new Date(new Date(startsAt).getTime() + service.duration * 60000);
+      } else {
+        // Default to 1 hour if no service duration found
+        calculatedEndsAt = new Date(new Date(startsAt).getTime() + 60 * 60000);
+      }
     }
 
     // Save to database
@@ -229,7 +245,7 @@ async function createAppointment(req, res) {
         masterId: Number(masterId),
         branchId: branchId ? Number(branchId) : null,
         startsAt: new Date(startsAt),
-        endsAt: new Date(endsAt),
+        endsAt: calculatedEndsAt,
         customerName,
         customerPhone,
         customerTelegram: customerTelegram || null,
