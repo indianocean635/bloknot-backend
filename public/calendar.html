@@ -1103,15 +1103,42 @@
           });
         }
 
-        // Add click handlers for time slots
-        container.querySelectorAll('.crm-time-slot-row').forEach(slot => {
-          slot.addEventListener('click', () => {
-            const dayIndex = parseInt(slot.dataset.day);
-            const hour = parseInt(slot.dataset.hour);
-            const day = addDays(weekStart, dayIndex);
-            openBookingModal(null, { date: day, hour });
-          });
-        });
+        // Add click handlers for time slots and mark closed slots
+        for (let i = 0; i < 7; i++) {
+          const day = addDays(weekStart, i);
+          const dayStr = ymd(day);
+          const column = container.querySelector(`[data-day="${day.toISOString()}"]`);
+          
+          if (column) {
+            column.querySelectorAll('.crm-time-slot-row').forEach(slot => {
+              const hour = parseInt(slot.dataset.hour);
+              let isClosed = true;
+              
+              // Check if any specialist has this day enabled in their schedule
+              visibleMasters.forEach(master => {
+                const schedule = state.masterSchedules[master.id] || {};
+                const daySchedule = schedule[dayStr];
+                
+                if (daySchedule && daySchedule.enabled) {
+                  const startHour = parseInt(daySchedule.startTime.split(':')[0]);
+                  const endHour = parseInt(daySchedule.endTime.split(':')[0]);
+                  
+                  if (hour >= startHour && hour < endHour) {
+                    isClosed = false;
+                  }
+                }
+              });
+              
+              if (isClosed) {
+                slot.classList.add('closed');
+              } else {
+                slot.addEventListener('click', () => {
+                  openBookingModal(null, { date: day, hour });
+                });
+              }
+            });
+          }
+        }
 
         // Add current time line for today
         const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
@@ -1194,23 +1221,26 @@
         });
 
         // Mark closed slots based on schedule
-        const dayOfWeek = state.currentDate.getDay();
-        const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayOfWeek];
+        const currentDateStr = ymd(state.currentDate);
 
         container.querySelectorAll('.crm-time-slot-row').forEach(slot => {
           const hour = parseInt(slot.dataset.hour);
           const masterId = slot.dataset.master;
           const schedule = state.masterSchedules[masterId] || {};
           
-          const daySchedule = schedule[dayName];
-          if (daySchedule) {
-            const isClosed = daySchedule.closed || 
-                             (daySchedule.start && hour < parseInt(daySchedule.start.split(':')[0])) ||
-                             (daySchedule.end && hour >= parseInt(daySchedule.end.split(':')[0]));
+          // Check schedule for this specific date
+          const daySchedule = schedule[currentDateStr];
+          if (daySchedule && daySchedule.enabled) {
+            const startHour = parseInt(daySchedule.startTime.split(':')[0]);
+            const endHour = parseInt(daySchedule.endTime.split(':')[0]);
             
-            if (isClosed) {
+            // Mark slot as closed if outside working hours
+            if (hour < startHour || hour >= endHour) {
               slot.classList.add('closed');
             }
+          } else if (!daySchedule) {
+            // No schedule set for this day - mark as closed
+            slot.classList.add('closed');
           }
 
           if (!slot.classList.contains('closed')) {
