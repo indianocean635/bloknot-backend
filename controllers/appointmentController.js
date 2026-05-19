@@ -31,6 +31,9 @@ async function getAppointments(req, res) {
     
     const { from, to, masterId } = req.query;
     
+    // Handle multiple masterIds (comma-separated)
+    const masterIds = masterId ? masterId.split(',').map(id => Number(id.trim())) : null;
+    
     // Загружаем записи из базы данных
     let items = await prisma.appointment.findMany({
       where: {
@@ -56,8 +59,8 @@ async function getAppointments(req, res) {
     if (toDate) {
       items = items.filter(item => new Date(item.startsAt) <= toDate);
     }
-    if (masterId) {
-      items = items.filter(item => item.masterId === Number(masterId));
+    if (masterIds) {
+      items = items.filter(item => masterIds.includes(item.masterId));
     }
     
     // Сортировка
@@ -79,6 +82,9 @@ async function getPublicAppointments(req, res) {
       return res.status(400).json({ error: "Business ID is required" });
     }
     
+    // Handle multiple masterIds (comma-separated)
+    const masterIds = masterId ? masterId.split(',').map(id => Number(id.trim())) : null;
+    
     let items = Array.from(memoryAppointments.values()).filter(item => 
       item.businessId === businessId
     );
@@ -92,8 +98,8 @@ async function getPublicAppointments(req, res) {
     if (toDate) {
       items = items.filter(item => new Date(item.startsAt) <= toDate);
     }
-    if (masterId) {
-      items = items.filter(item => item.masterId === Number(masterId));
+    if (masterIds) {
+      items = items.filter(item => masterIds.includes(item.masterId));
     }
     
     items.sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
