@@ -213,8 +213,7 @@ async function createAppointment(req, res) {
       customerPhone,
       customerTelegram,
       customerComment,
-      status,
-      color
+      status
     } = req.body;
 
     if (!serviceId || !masterId || !startsAt || !customerName) {
@@ -250,8 +249,7 @@ async function createAppointment(req, res) {
         customerPhone,
         customerTelegram: customerTelegram || null,
         customerComment: customerComment || null,
-        status: status || 'CONFIRMED',
-        color: color || null
+        status: status || 'CONFIRMED'
       }
     });
 
@@ -313,8 +311,7 @@ async function updateAppointment(req, res) {
       customerPhone,
       customerTelegram,
       customerComment,
-      status,
-      color
+      status
     } = req.body;
     
     // Update in database
@@ -330,8 +327,7 @@ async function updateAppointment(req, res) {
         customerPhone,
         customerTelegram: customerTelegram !== undefined ? customerTelegram : undefined,
         customerComment: customerComment !== undefined ? customerComment : undefined,
-        status,
-        color: color !== undefined ? color : undefined
+        status
       }
     });
 
