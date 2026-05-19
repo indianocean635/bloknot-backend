@@ -60,15 +60,14 @@
     .crm-calendar-grid {
       flex: 1;
       display: grid;
-      grid-template-columns: 80px repeat(7, 1fr);
+      grid-template-columns: 60px 1fr;
       overflow: hidden;
       background: #f7f8fa;
     }
 
     .crm-employee-headers {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: 80px repeat(7, 1fr);
+      grid-column: 2;
+      display: flex;
       border-bottom: 1px solid #e2e8f0;
       background: white;
       position: sticky;
@@ -76,16 +75,9 @@
       z-index: 10;
     }
 
-    .crm-time-header {
-      padding: 12px 8px;
-      border-right: 1px solid #e2e8f0;
-      background: white;
-      font-weight: 600;
-      font-size: 12px;
-      color: #64748b;
-    }
-
     .crm-employee-header {
+      flex: 1;
+      min-width: 0;
       padding: 12px 16px;
       border-right: 1px solid #e2e8f0;
       display: flex;
@@ -152,12 +144,12 @@
 
     .crm-schedule-body {
       grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: 80px repeat(7, 1fr);
+      display: flex;
       overflow: auto;
     }
 
     .crm-time-column {
+      min-width: 60px;
       background: white;
       border-right: 1px solid #e2e8f0;
       position: sticky;
@@ -166,13 +158,14 @@
     }
 
     .crm-employee-columns {
-      grid-column: 2 / -1;
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      flex: 1;
+      display: flex;
       position: relative;
     }
 
     .crm-employee-column {
+      flex: 1;
+      min-width: 0;
       border-right: 1px solid #e2e8f0;
       position: relative;
       background: white;
@@ -968,7 +961,7 @@
         const weekStart = startOfWeek(state.currentDate);
         const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
         
-        let html = '<div class="crm-time-header"></div>';
+        let html = '';
         for (let i = 0; i < 7; i++) {
           const day = addDays(weekStart, i);
           const dayName = dayNames[i];
@@ -993,7 +986,7 @@
             ? []
             : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
 
-        let html = '<div class="crm-time-header"></div>';
+        let html = '';
         visibleMasters.forEach(master => {
           const avatarHtml = master.avatar 
             ? `<img src="${master.avatar}" alt="${master.name}" />`
@@ -1019,11 +1012,7 @@
       if (state.view === 'week') {
         // Week view: show 7 day columns
         const weekStart = startOfWeek(state.currentDate);
-        let html = '<div class="crm-time-column">';
-        for (let hour = 9; hour <= 21; hour++) {
-          html += `<div class="crm-time-slot">${String(hour).padStart(2, '0')}:00</div>`;
-        }
-        html += '</div>';
+        let html = '';
         
         for (let i = 0; i < 7; i++) {
           const day = addDays(weekStart, i);
@@ -1155,12 +1144,7 @@
             ? []
             : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
 
-        let html = '<div class="crm-time-column">';
-        for (let hour = 9; hour <= 21; hour++) {
-          html += `<div class="crm-time-slot">${String(hour).padStart(2, '0')}:00</div>`;
-        }
-        html += '</div>';
-        
+        let html = '';
         visibleMasters.forEach(master => {
           html += `<div class="crm-employee-column" data-master-id="${master.id}">`;
           for (let hour = 9; hour <= 21; hour++) {
