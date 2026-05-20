@@ -1243,16 +1243,24 @@
           const appointments = await response.json();
           
           appointments.forEach(appointment => {
-            const appointmentDate = new Date(appointment.startsAt);
-            const timeStr = `${String(appointmentDate.getHours()).padStart(2, '0')}:${String(appointmentDate.getMinutes()).padStart(2, '0')}`;
+            const appointmentStart = new Date(appointment.startsAt);
+            const appointmentEnd = new Date(appointment.endsAt);
             
-            const slot = document.querySelector(`.time-slot[data-time="${timeStr}"]`);
-            if (slot) {
-              slot.classList.remove('available');
-              slot.classList.add('occupied');
-              slot.style.pointerEvents = 'none';
-              slot.style.opacity = '0.5';
-            }
+            // Mark all time slots within the appointment duration as occupied
+            document.querySelectorAll('.time-slot.available').forEach(slot => {
+              const slotTime = slot.dataset.time;
+              const [slotHour, slotMin] = slotTime.split(':').map(Number);
+              const slotDate = new Date(selectedDate);
+              slotDate.setHours(slotHour, slotMin, 0, 0);
+              
+              // Check if this slot is within the appointment time range
+              if (slotDate >= appointmentStart && slotDate < appointmentEnd) {
+                slot.classList.remove('available');
+                slot.classList.add('occupied');
+                slot.style.pointerEvents = 'none';
+                slot.style.opacity = '0.5';
+              }
+            });
           });
         }
       } catch (error) {

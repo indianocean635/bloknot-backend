@@ -85,9 +85,23 @@ async function getPublicAppointments(req, res) {
     // Handle multiple masterIds (comma-separated)
     const masterIds = masterId ? masterId.split(',').map(id => Number(id.trim())) : null;
     
-    let items = Array.from(memoryAppointments.values()).filter(item => 
-      item.businessId === businessId
-    );
+    // Query from database instead of memory storage
+    let items = await prisma.appointment.findMany({
+      where: {
+        businessId: businessId,
+        status: {
+          in: ['PENDING', 'CONFIRMED']
+        }
+      },
+      include: {
+        service: true,
+        master: true,
+        branch: true
+      },
+      orderBy: {
+        startsAt: 'asc'
+      }
+    });
     
     const fromDate = from ? parseDate(from) : null;
     const toDate = to ? parseDate(to) : null;
