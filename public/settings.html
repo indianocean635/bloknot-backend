@@ -1577,6 +1577,17 @@ function applyScheduleTime() {
     });
     document.getElementById('timeSettingsPanel').style.display = 'none';
   }
+
+  // Visual feedback on button
+  const applyButton = document.querySelector('button[onclick="applyScheduleTime()"]');
+  if (applyButton) {
+    applyButton.style.backgroundColor = '#10b981';
+    applyButton.textContent = 'Сохранено ✓';
+    setTimeout(function() {
+      applyButton.style.backgroundColor = '';
+      applyButton.textContent = 'Применить';
+    }, 2000);
+  }
 }
 
 // Clear schedule time for selected days
