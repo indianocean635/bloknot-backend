@@ -1207,14 +1207,31 @@
 
           console.log('Start time:', startTime, 'End time:', endTime);
 
-          // Generate time slots with 10-minute step
-          const timeSlots = generateTimeSlots(startTime, endTime, 10);
+          // Generate time slots with the specialist's time step
+          const timeStep = daySchedule.timeStep || 10;
+          const timeSlots = generateTimeSlots(startTime, endTime, timeStep);
 
           console.log('Generated time slots:', timeSlots);
 
-          timeSlotsGrid.innerHTML = timeSlots.map(time => `
-            <div class="time-slot available" data-time="${time}">${time}</div>
-          `).join('');
+          // Filter out time slots that fall within breaks
+          const breaks = daySchedule.breaks || [];
+          const filteredTimeSlots = timeSlots.filter(function(timeSlot) {
+            const slotTime = new Date(selectedDate + 'T' + timeSlot);
+            for (var i = 0; i < breaks.length; i++) {
+              const breakStart = new Date(selectedDate + 'T' + breaks[i].start);
+              const breakEnd = new Date(selectedDate + 'T' + breaks[i].end);
+              if (slotTime >= breakStart && slotTime < breakEnd) {
+                return false;
+              }
+            }
+            return true;
+          });
+
+          console.log('Filtered time slots (after removing breaks):', filteredTimeSlots);
+
+          timeSlotsGrid.innerHTML = filteredTimeSlots.map(function(time) {
+            return '<div class="time-slot available" data-time="' + time + '">' + time + '</div>';
+          }).join('');
         } else {
           console.log('Day not enabled in schedule');
           timeSlotsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Специалист не работает в этот день</div>';

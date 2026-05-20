@@ -1305,6 +1305,14 @@ async function loadSpecialistSettings(index) {
               <input type="time" id="endTime" value="18:00" step="600" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
             </div>
             <div style="margin-bottom: 12px;">
+              <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">Шаг времени (мин):</label>
+              <select id="timeStep" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="10">10 минут</option>
+                <option value="15">15 минут</option>
+                <option value="30">30 минут</option>
+              </select>
+            </div>
+            <div style="margin-bottom: 12px;">
               <label style="display: flex; align-items: center; cursor: pointer;">
                 <input type="checkbox" id="applyToSelected" style="margin-right: 8px;">
                 <span style="font-size: 12px;">Применить к выбранным датам</span>
@@ -1312,6 +1320,12 @@ async function loadSpecialistSettings(index) {
             </div>
             <button class="btn primary" onclick="applyScheduleTime()" style="width: 100%; padding: 8px; font-size: 14px;">Применить</button>
             <button class="btn secondary" onclick="clearScheduleTime()" style="width: 100%; padding: 8px; font-size: 14px; margin-top: 8px;">Очистить</button>
+            
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+              <h5 style="margin: 0 0 12px 0; font-size: 14px;">Перерывы</h5>
+              <div id="breaksList" style="margin-bottom: 12px;"></div>
+              <button class="btn secondary" onclick="addBreak()" style="width: 100%; padding: 8px; font-size: 12px;">+ Добавить перерыв</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1470,6 +1484,28 @@ function renderCalendar(date, scheduleData) {
           const [start, end] = timeDisplay.textContent.split(' - ');
           document.getElementById('startTime').value = start || '09:00';
           document.getElementById('endTime').value = end || '18:00';
+          
+          // Load time step and breaks from schedule data
+          const dateKey = selectedDays[0].dataset.date;
+          if (window.specialistScheduleData[dateKey]) {
+            document.getElementById('timeStep').value = window.specialistScheduleData[dateKey].timeStep || 10;
+            
+            // Load breaks
+            const breaksList = document.getElementById('breaksList');
+            breaksList.innerHTML = '';
+            if (window.specialistScheduleData[dateKey].breaks) {
+              window.specialistScheduleData[dateKey].breaks.forEach(function(breakItem) {
+                const breakElement = document.createElement('div');
+                breakElement.className = 'break-item';
+                breakElement.style.marginBottom = '8px';
+                breakElement.style.display = 'flex';
+                breakElement.style.gap = '4px';
+                breakElement.style.alignItems = 'center';
+                breakElement.innerHTML = '<input type="time" class="break-start" value="' + breakItem.start + '" style="flex: 1; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;"><span>-</span><input type="time" class="break-end" value="' + breakItem.end + '" style="flex: 1; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;"><button onclick="this.parentElement.remove()" style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">×</button>';
+                breaksList.appendChild(breakElement);
+              });
+            }
+          }
         }
       } else {
         timePanel.style.display = 'none';
@@ -1490,7 +1526,16 @@ function changeMonth(delta) {
 function applyScheduleTime() {
   const startTime = document.getElementById('startTime').value;
   const endTime = document.getElementById('endTime').value;
+  const timeStep = document.getElementById('timeStep').value;
   const applyToSelected = document.getElementById('applyToSelected').checked;
+
+  // Get breaks from the breaks list
+  const breaks = [];
+  document.querySelectorAll('.break-item').forEach(function(breakItem) {
+    const start = breakItem.querySelector('.break-start').value;
+    const end = breakItem.querySelector('.break-end').value;
+    breaks.push({ start, end });
+  });
 
   const selectedDays = document.querySelectorAll('.day-cell.selected');
 
@@ -1515,7 +1560,9 @@ function applyScheduleTime() {
       window.specialistScheduleData[dateKey] = {
         enabled: true,
         startTime: startTime,
-        endTime: endTime
+        endTime: endTime,
+        timeStep: parseInt(timeStep),
+        breaks: breaks
       };
     }
   });
@@ -1558,6 +1605,27 @@ function clearScheduleTime() {
   document.getElementById('timeSettingsPanel').style.display = 'none';
 }
 
+// Add break to breaks list
+function addBreak() {
+  const breaksList = document.getElementById('breaksList');
+  const breakIndex = breaksList.children.length;
+  
+  const breakElement = document.createElement('div');
+  breakElement.className = 'break-item';
+  breakElement.style.marginBottom = '8px';
+  breakElement.style.display = 'flex';
+  breakElement.style.gap = '4px';
+  breakElement.style.alignItems = 'center';
+  breakElement.innerHTML = `
+    <input type="time" class="break-start" value="12:00" style="flex: 1; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+    <span>-</span>
+    <input type="time" class="break-end" value="13:00" style="flex: 1; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+    <button onclick="this.parentElement.remove()" style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">×</button>
+  `;
+  
+  breaksList.appendChild(breakElement);
+}
+
 async function saveSpecialistSettings(index) {
   try {
     const nameInput = document.getElementById(`specialistName${index}`);
@@ -1578,7 +1646,9 @@ async function saveSpecialistSettings(index) {
         schedule[dateKey] = {
           enabled: true,
           startTime: start || '09:00',
-          endTime: end || '18:00'
+          endTime: end || '18:00',
+          timeStep: window.specialistScheduleData[dateKey]?.timeStep || 10,
+          breaks: window.specialistScheduleData[dateKey]?.breaks || []
         };
       }
     });
