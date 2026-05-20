@@ -1233,18 +1233,25 @@
     // Load appointments and mark occupied time slots
     async function loadAppointmentsAndMarkOccupied() {
       try {
+        console.log('loadAppointmentsAndMarkOccupied called');
         const businessId = businessData.business?.id || businessData.id;
+        console.log('businessId:', businessId);
         if (!businessId) {
           console.error('No businessId found in businessData:', businessData);
           return;
         }
-        const response = await fetch(`/api/public/appointments?masterId=${selectedSpecialist.id}&from=${selectedDate}&to=${selectedDate}&businessId=${businessId}`);
+        const apiUrl = `/api/public/appointments?masterId=${selectedSpecialist.id}&from=${selectedDate}&to=${selectedDate}&businessId=${businessId}`;
+        console.log('Fetching appointments from:', apiUrl);
+        const response = await fetch(apiUrl);
+        console.log('Response status:', response.status);
         if (response.ok) {
           const appointments = await response.json();
+          console.log('Appointments loaded:', appointments);
           
           appointments.forEach(appointment => {
             const appointmentStart = new Date(appointment.startsAt);
             const appointmentEnd = new Date(appointment.endsAt);
+            console.log('Processing appointment:', appointment.id, 'from', appointmentStart, 'to', appointmentEnd);
             
             // Mark all time slots within the appointment duration as occupied
             document.querySelectorAll('.time-slot.available').forEach(slot => {
@@ -1255,13 +1262,17 @@
               
               // Check if this slot is within the appointment time range
               if (slotDate >= appointmentStart && slotDate < appointmentEnd) {
+                console.log('Marking slot as occupied:', slotTime);
                 slot.classList.remove('available');
                 slot.classList.add('occupied');
                 slot.style.pointerEvents = 'none';
                 slot.style.opacity = '0.5';
+                slot.style.backgroundColor = '#e5e7eb';
               }
             });
           });
+        } else {
+          console.error('Failed to load appointments, status:', response.status);
         }
       } catch (error) {
         console.error('Error loading appointments:', error);
