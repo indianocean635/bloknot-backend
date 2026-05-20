@@ -37,8 +37,17 @@ async function getBusinessBySlug(req, res) {
   });
 
   // Get masters with schedules, categoryIds, and serviceIds
+  // Filter by branch if branchId is provided in query
+  const branchFilter = {};
+  if (req.query.branchId) {
+    branchFilter.branchId = parseInt(req.query.branchId);
+  }
+
   const masters = await prisma.master.findMany({
-    where: { businessId: business.id },
+    where: { 
+      businessId: business.id,
+      ...branchFilter
+    },
     select: {
       id: true,
       name: true,

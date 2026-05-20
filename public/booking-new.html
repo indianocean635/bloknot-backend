@@ -397,6 +397,13 @@
       cursor: not-allowed;
     }
 
+    .time-slot.break {
+      background: #f3f4f6;
+      color: #9ca3af;
+      cursor: not-allowed;
+      border-color: #e5e7eb;
+    }
+
     .contact-form {
       background: #f8fafc;
       border-radius: 12px;
@@ -706,7 +713,12 @@
 
         if (businessSlug) {
           // Load by slug for public booking
-          response = await fetch(`/api/public/business/${encodeURIComponent(businessSlug)}`);
+          let apiUrl = `/api/public/business/${encodeURIComponent(businessSlug)}`;
+          // Add branchId filter if branch is selected
+          if (selectedBranch && selectedBranch.id) {
+            apiUrl += `?branchId=${selectedBranch.id}`;
+          }
+          response = await fetch(apiUrl);
         } else {
           // Load from settings for authenticated user
           response = await fetch('/api/settings/business');
@@ -737,12 +749,15 @@
           document.getElementById('business-logo').innerHTML = `<img src="${proxyUrl}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">`;
         }
 
-        // Load and display branches first
-        loadBranches();
-
-        // Show booking content instead of navigation
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('branches-section').style.display = 'block';
+        // Load and display branches first (only if no branch is selected yet)
+        if (!selectedBranch || !selectedBranch.id) {
+          loadBranches();
+        } else {
+          // If branch is already selected, go directly to selection menu
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('branches-section').style.display = 'none';
+          document.getElementById('selection-menu-section').style.display = 'block';
+        }
 
       } catch (error) {
         console.error('Error loading business data:', error);
@@ -789,6 +804,9 @@
       selectedBranch = {
         id: element.dataset.branchId
       };
+
+      // Reload business data with branch filter
+      loadBusinessData();
 
       // Hide branches, show selection menu
       document.getElementById('branches-section').style.display = 'none';
@@ -1213,24 +1231,33 @@
 
           console.log('Generated time slots:', timeSlots);
 
-          // Filter out time slots that fall within breaks
+          // Filter out time slots that fall within breaks and mark them as gray
           const breaks = daySchedule.breaks || [];
-          const filteredTimeSlots = timeSlots.filter(function(timeSlot) {
-            const slotTime = new Date(selectedDate + 'T' + timeSlot);
+          const timeSlotsWithBreaks = timeSlots.map(function(time) {
+            const slotTime = new Date(selectedDate + 'T' + time);
+            let isBreak = false;
             for (var i = 0; i < breaks.length; i++) {
               const breakStart = new Date(selectedDate + 'T' + breaks[i].start);
               const breakEnd = new Date(selectedDate + 'T' + breaks[i].end);
               if (slotTime >= breakStart && slotTime < breakEnd) {
-                return false;
+                isBreak = true;
+                break;
               }
             }
-            return true;
+            return {
+              time: time,
+              isBreak: isBreak
+            };
           });
 
-          console.log('Filtered time slots (after removing breaks):', filteredTimeSlots);
+          console.log('Time slots with break status:', timeSlotsWithBreaks);
 
-          timeSlotsGrid.innerHTML = filteredTimeSlots.map(function(time) {
-            return '<div class="time-slot available" data-time="' + time + '">' + time + '</div>';
+          timeSlotsGrid.innerHTML = timeSlotsWithBreaks.map(function(slot) {
+            if (slot.isBreak) {
+              return '<div class="time-slot break" data-time="' + slot.time + '">' + slot.time + '</div>';
+            } else {
+              return '<div class="time-slot available" data-time="' + slot.time + '">' + slot.time + '</div>';
+            }
           }).join('');
         } else {
           console.log('Day not enabled in schedule');

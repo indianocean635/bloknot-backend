@@ -1537,6 +1537,8 @@ function applyScheduleTime() {
     breaks.push({ start, end });
   });
 
+  console.log('Applying schedule time with breaks:', breaks);
+
   const selectedDays = document.querySelectorAll('.day-cell.selected');
 
   if (selectedDays.length === 0) {
@@ -1564,6 +1566,8 @@ function applyScheduleTime() {
         timeStep: parseInt(timeStep),
         breaks: breaks
       };
+
+      console.log('Schedule data updated for', dateKey, ':', window.specialistScheduleData[dateKey]);
     }
   });
 
