@@ -1053,8 +1053,13 @@
           // Filter bookings for this day
           const dayBookings = state.bookings.filter(b => {
             const bookingDate = new Date(b.startsAt);
-            return bookingDate >= dayStart && bookingDate <= dayEnd &&
-                   (state.selectedMaster ? String(b.masterId) === String(state.selectedMaster) : true);
+            const matchesDate = bookingDate >= dayStart && bookingDate <= dayEnd;
+            const matchesMaster = state.selectedMaster 
+              ? String(b.masterId) === String(state.selectedMaster)
+              : state.selectedStaffIds.length > 0 
+                ? state.selectedStaffIds.includes(b.masterId)
+                : true;
+            return matchesDate && matchesMaster;
           });
 
           dayBookings.forEach(booking => {
