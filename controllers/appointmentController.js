@@ -78,6 +78,8 @@ async function getPublicAppointments(req, res) {
   try {
     const { from, to, masterId, businessId } = req.query;
     
+    console.log('getPublicAppointments called with:', { from, to, masterId, businessId });
+    
     if (!businessId) {
       return res.status(400).json({ error: "Business ID is required" });
     }
@@ -103,18 +105,26 @@ async function getPublicAppointments(req, res) {
       }
     });
     
+    console.log('Total appointments in DB:', items.length);
+    
     const fromDate = from ? parseDate(from) : null;
     const toDate = to ? parseDate(to) : null;
     
     if (fromDate) {
+      // Set fromDate to start of day (00:00:00)
+      fromDate.setHours(0, 0, 0, 0);
       items = items.filter(item => new Date(item.startsAt) >= fromDate);
     }
     if (toDate) {
+      // Set toDate to end of day (23:59:59)
+      toDate.setHours(23, 59, 59, 999);
       items = items.filter(item => new Date(item.startsAt) <= toDate);
     }
     if (masterIds) {
       items = items.filter(item => masterIds.includes(item.masterId));
     }
+    
+    console.log('Filtered appointments:', items.length);
     
     items.sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
     
@@ -150,6 +160,9 @@ async function createPublicAppointment(req, res) {
     const startDate = new Date(startsAt);
     const endDate = new Date(endsAt);
 
+    console.log('Checking for conflicts with businessId:', businessId, 'masterId:', masterId);
+    console.log('New appointment:', startDate, 'to', endDate);
+
     // Check for time conflicts with existing appointments for the same master
     const existingAppointments = await prisma.appointment.findMany({
       where: {
@@ -183,6 +196,8 @@ async function createPublicAppointment(req, res) {
         ]
       }
     });
+
+    console.log('Existing appointments found:', existingAppointments.length);
 
     if (existingAppointments.length > 0) {
       console.log('❌ Time slot conflict detected for master:', masterId);
