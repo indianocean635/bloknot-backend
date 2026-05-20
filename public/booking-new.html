@@ -1119,6 +1119,7 @@
       }
       
       // Days of month
+      let todayElement = null;
       for (let day = 1; day <= daysInMonth; day++) {
         const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         // Use UTC for date comparison to avoid timezone issues
@@ -1134,19 +1135,31 @@
           isAvailable = !isPast && daySchedule && daySchedule.enabled;
         }
 
-        calendarGrid.innerHTML += `
+        const dayElement = `
           <div class="calendar-day ${isToday ? 'today' : ''} ${isAvailable ? 'available' : 'disabled'}"
                data-date="${dateKey}"
                ${isAvailable ? '' : 'disabled'}>
             ${day}
           </div>
         `;
+        
+        calendarGrid.innerHTML += dayElement;
+        
+        // Save reference to today's element
+        if (isToday && isAvailable) {
+          todayElement = calendarGrid.lastElementChild;
+        }
       }
       
       // Add click handlers
       document.querySelectorAll('.calendar-day.available').forEach(day => {
         day.addEventListener('click', () => selectDate(day));
       });
+      
+      // Automatically select today if available
+      if (todayElement) {
+        setTimeout(() => selectDate(todayElement), 100);
+      }
     }
 
     // Select date
