@@ -639,6 +639,7 @@
           <button class="back-button" onclick="goBack('selection-menu')">← Назад</button>
           <h2 class="section-title">Выберите услугу</h2>
           <div class="services-grid" id="services-grid"></div>
+          <button class="book-button" id="services-continue-btn" style="margin-top: 20px; display: none;" onclick="proceedFromServices()">Далее</button>
         </div>
 
         <div id="calendar-section" class="calendar-section" style="display: none;">
@@ -1014,7 +1015,15 @@
         element.classList.add('selected');
       }
 
-      // Only proceed if at least one service is selected
+      // Show/hide continue button based on selection
+      const continueBtn = document.getElementById('services-continue-btn');
+      if (continueBtn) {
+        continueBtn.style.display = selectedServices.length > 0 ? 'block' : 'none';
+      }
+    }
+
+    // Proceed from services section
+    function proceedFromServices() {
       if (selectedServices.length === 0) {
         return;
       }
