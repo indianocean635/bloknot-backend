@@ -740,14 +740,11 @@
       </div>
 
       <div class="crm-sidebar-menu">
-        <div class="crm-sidebar-menu-item active" id="staffMenuItem">
+        <div class="crm-sidebar-menu-item">
           <span>👥</span>
           <span>Сотрудники</span>
-          <span style="margin-left: auto; font-size: 12px;">▼</span>
         </div>
-        <div class="crm-staff-dropdown" id="staffDropdown">
-          <div id="staffList"></div>
-        </div>
+        <div id="staffList"></div>
       </div>
     </div>
 
@@ -1597,11 +1594,6 @@
 
     document.getElementById('refreshBtn').addEventListener('click', () => {
       loadBookings();
-    });
-
-    // Staff dropdown toggle
-    document.getElementById('staffMenuItem').addEventListener('click', () => {
-      document.getElementById('staffDropdown').classList.toggle('active');
     });
 
     document.getElementById('modalClose').addEventListener('click', closeBookingModal);
