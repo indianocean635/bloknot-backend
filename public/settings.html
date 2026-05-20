@@ -712,6 +712,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (typeof Bloknot !== 'undefined' && Bloknot.renderHeader) {
     Bloknot.renderHeader("settings");
   }
+  
+  // Add phone formatting
+  addPhoneFormatting();
 
   // Load specialist limit from API instead of localStorage
   loadSpecialistLimitFromAPI();
@@ -1029,6 +1032,10 @@ function createSpecialistForm(index) {
         <div class="field">
           <label>Имя:</label>
           <input type="text" id="specialistName${index}" placeholder="Введите имя специалиста" onchange="saveSpecialistData(${index})" oninput="saveSpecialistData(${index})">
+        </div>
+        <div class="field">
+          <label>Phone:</label>
+          <input type="tel" id="specialistPhone${index}" placeholder="+7 (999) 123-45-67" value="+7">
         </div>
         <div class="field">
           <label>Email:</label>
@@ -2511,6 +2518,52 @@ async function deleteWork(id) {
     deletingWorkIds.delete(id);
     console.log('[DELETE WORK] Deletion completed for work', id);
   }
+}
+
+// Phone formatting function
+function formatPhone(input) {
+  // Remove all non-digit characters
+  let digits = input.value.replace(/\D/g, '');
+  
+  // Ensure it starts with 7 (Russian country code)
+  if (digits.length > 0 && !digits.startsWith('7')) {
+    digits = '7' + digits;
+  }
+  
+  // Limit to 11 digits (7 + 10 digit number)
+  digits = digits.substring(0, 11);
+  
+  // Format as +7 (XXX) - XXX - XX - XX
+  let formatted = '+7';
+  if (digits.length > 1) {
+    formatted += ' (' + digits.substring(1, 4) + ')';
+  }
+  if (digits.length > 4) {
+    formatted += ' - ' + digits.substring(4, 7);
+  }
+  if (digits.length > 7) {
+    formatted += ' - ' + digits.substring(7, 9);
+  }
+  if (digits.length > 9) {
+    formatted += ' - ' + digits.substring(9, 11);
+  }
+  
+  input.value = formatted;
+}
+
+// Add phone formatting to specialist forms
+function addPhoneFormatting() {
+  document.querySelectorAll('input[type="tel"][id^="specialistPhone"]').forEach(input => {
+    input.addEventListener('input', (e) => {
+      formatPhone(e.target);
+    });
+    
+    input.addEventListener('focus', (e) => {
+      if (e.target.value === '+7') {
+        e.target.select();
+      }
+    });
+  });
 }
 
 // Open as Client Function

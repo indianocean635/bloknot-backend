@@ -636,7 +636,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Телефон *</label>
-                <input type="tel" id="client-phone" class="form-input" required>
+                <input type="tel" id="client-phone" class="form-input" value="+7" required>
               </div>
               <div class="form-group">
                 <label class="form-label">Комментарий</label>
@@ -1335,8 +1335,55 @@
       }
     });
 
+    // Phone formatting function
+    function formatPhone(input) {
+      // Remove all non-digit characters
+      let digits = input.value.replace(/\D/g, '');
+      
+      // Ensure it starts with 7 (Russian country code)
+      if (digits.length > 0 && !digits.startsWith('7')) {
+        digits = '7' + digits;
+      }
+      
+      // Limit to 11 digits (7 + 10 digit number)
+      digits = digits.substring(0, 11);
+      
+      // Format as +7 (XXX) - XXX - XX - XX
+      let formatted = '+7';
+      if (digits.length > 1) {
+        formatted += ' (' + digits.substring(1, 4) + ')';
+      }
+      if (digits.length > 4) {
+        formatted += ' - ' + digits.substring(4, 7);
+      }
+      if (digits.length > 7) {
+        formatted += ' - ' + digits.substring(7, 9);
+      }
+      if (digits.length > 9) {
+        formatted += ' - ' + digits.substring(9, 11);
+      }
+      
+      input.value = formatted;
+    }
+
     // Load data when page loads
-    document.addEventListener('DOMContentLoaded', loadBusinessData);
+    document.addEventListener('DOMContentLoaded', () => {
+      loadBusinessData();
+      
+      // Add phone formatting
+      const phoneInput = document.getElementById('client-phone');
+      if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+          formatPhone(e.target);
+        });
+        
+        phoneInput.addEventListener('focus', (e) => {
+          if (e.target.value === '+7') {
+            e.target.select();
+          }
+        });
+      }
+    });
   </script>
 </body>
 </html>
