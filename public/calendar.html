@@ -1102,6 +1102,39 @@
             });
             column.appendChild(card);
           });
+
+          // Render breaks for each master
+          visibleMasters.forEach(master => {
+            const schedule = state.masterSchedules[master.id] || {};
+            const daySchedule = schedule[dayStr];
+            
+            if (daySchedule && daySchedule.breaks && daySchedule.breaks.length > 0) {
+              daySchedule.breaks.forEach(breakItem => {
+                const breakStart = new Date(`${ymd(day)}T${breakItem.start}`);
+                const breakEnd = new Date(`${ymd(day)}T${breakItem.end}`);
+                const startHour = breakStart.getHours();
+                const startMin = breakStart.getMinutes();
+                const duration = (breakEnd.getTime() - breakStart.getTime()) / 60000;
+                
+                const slotHeight = 60;
+                const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
+                const height = (duration / 60) * slotHeight;
+
+                const breakCard = document.createElement('div');
+                breakCard.className = 'crm-booking-card break';
+                breakCard.style.top = `${top}px`;
+                breakCard.style.height = `${Math.max(height, 40)}px`;
+                breakCard.style.backgroundColor = '#e5e7eb';
+                breakCard.style.border = '1px solid #d1d5db';
+                breakCard.innerHTML = `
+                  <div class="crm-booking-time">${breakItem.start} – ${breakItem.end}</div>
+                  <div class="crm-booking-client">Перерыв</div>
+                `;
+                breakCard.style.pointerEvents = 'none';
+                column.appendChild(breakCard);
+              });
+            }
+          });
         }
 
         // Add click handlers for time slots and mark closed slots
@@ -1219,6 +1252,37 @@
             });
             column.appendChild(card);
           });
+
+          // Render breaks for this master
+          const schedule = state.masterSchedules[master.id] || {};
+          const daySchedule = schedule[currentDateStr];
+          
+          if (daySchedule && daySchedule.breaks && daySchedule.breaks.length > 0) {
+            daySchedule.breaks.forEach(breakItem => {
+              const breakStart = new Date(`${ymd(state.currentDate)}T${breakItem.start}`);
+              const breakEnd = new Date(`${ymd(state.currentDate)}T${breakItem.end}`);
+              const startHour = breakStart.getHours();
+              const startMin = breakStart.getMinutes();
+              const duration = (breakEnd.getTime() - breakStart.getTime()) / 60000;
+              
+              const slotHeight = 60;
+              const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
+              const height = (duration / 60) * slotHeight;
+
+              const breakCard = document.createElement('div');
+              breakCard.className = 'crm-booking-card break';
+              breakCard.style.top = `${top}px`;
+              breakCard.style.height = `${Math.max(height, 40)}px`;
+              breakCard.style.backgroundColor = '#e5e7eb';
+              breakCard.style.border = '1px solid #d1d5db';
+              breakCard.innerHTML = `
+                <div class="crm-booking-time">${breakItem.start} – ${breakItem.end}</div>
+                <div class="crm-booking-client">Перерыв</div>
+              `;
+              breakCard.style.pointerEvents = 'none';
+              column.appendChild(breakCard);
+            });
+          }
         });
 
         // Mark closed slots based on schedule
