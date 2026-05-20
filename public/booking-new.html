@@ -155,6 +155,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: relative;
     }
 
     .service-item:hover {
@@ -165,6 +166,36 @@
     .service-item.selected {
       border-color: #3b82f6;
       background: #eff6ff;
+    }
+
+    .service-checkbox {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #e5e7eb;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .service-item.selected .service-checkbox {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .service-checkbox::after {
+      content: '✓';
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      display: none;
+    }
+
+    .service-item.selected .service-checkbox::after {
+      display: block;
     }
 
     .service-info {
@@ -653,7 +684,7 @@
   <script>
     // Business data
     let businessData = null;
-    let selectedService = null;
+    let selectedServices = []; // Changed to array for multiple services
     let selectedSpecialist = null;
     let selectedBranch = null;
     let selectedDate = null;
@@ -815,7 +846,7 @@
       if (selectedOption === 'datetime') {
         // Date/Time → Specialist → Services → Contact
         // Go back to services if service was selected, otherwise to specialists
-        if (selectedService) {
+        if (selectedServices.length > 0) {
           goBack('services');
         } else {
           goBack('specialists');
@@ -886,6 +917,7 @@
             html += `<h3 style="margin: 24px 0 16px; font-size: 18px; font-weight: 600; color: #1f2937;">${category.name}</h3>`;
             html += categoryServices.map(service => `
               <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
+                <div class="service-checkbox"></div>
                 <div class="service-info">
                   <div class="service-name">${service.name}</div>
                   <div class="service-duration">${service.duration} мин</div>
@@ -903,6 +935,7 @@
           html += `<h3 style="margin: 24px 0 16px; font-size: 18px; font-weight: 600; color: #1f2937;">Без категории</h3>`;
           html += uncategorizedServices.map(service => `
             <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
+              <div class="service-checkbox"></div>
               <div class="service-info">
                 <div class="service-name">${service.name}</div>
                 <div class="service-duration">${service.duration} мин</div>
@@ -919,6 +952,7 @@
         // No categories, just list all services
         servicesGrid.innerHTML = filteredServices.map(service => `
           <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
+            <div class="service-checkbox"></div>
             <div class="service-info">
               <div class="service-name">${service.name}</div>
               <div class="service-duration">${service.duration} мин</div>
@@ -961,18 +995,29 @@
 
     // Select service
     function selectService(element) {
-      // Remove previous selection
-      document.querySelectorAll('.service-item').forEach(item => {
-        item.classList.remove('selected');
-      });
-
-      // Add selection
-      element.classList.add('selected');
-      selectedService = {
-        id: element.dataset.serviceId,
+      const serviceId = element.dataset.serviceId;
+      const serviceData = {
+        id: serviceId,
         duration: parseInt(element.dataset.duration),
         price: parseInt(element.dataset.price)
       };
+
+      // Toggle selection
+      const existingIndex = selectedServices.findIndex(s => s.id === serviceId);
+      if (existingIndex !== -1) {
+        // Remove selection
+        selectedServices.splice(existingIndex, 1);
+        element.classList.remove('selected');
+      } else {
+        // Add selection
+        selectedServices.push(serviceData);
+        element.classList.add('selected');
+      }
+
+      // Only proceed if at least one service is selected
+      if (selectedServices.length === 0) {
+        return;
+      }
 
       // Hide services
       document.getElementById('services-section').style.display = 'none';
@@ -1268,24 +1313,38 @@
     document.getElementById('contact-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const service = businessData.services.find(s => s.id === selectedService.id);
+      // Calculate total duration from all selected services
+      const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
+      const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
+
       const [hours, minutes] = selectedTime.split(':').map(Number);
       const startsAt = new Date(selectedDate);
       startsAt.setHours(hours, minutes, 0, 0);
       
       const endsAt = new Date(startsAt);
-      endsAt.setMinutes(endsAt.getMinutes() + (service?.duration || 60));
+      endsAt.setMinutes(endsAt.getMinutes() + totalDuration);
+
+      // Use the first service as the primary service (for compatibility with existing API)
+      const primaryService = selectedServices[0];
 
       const formData = {
         businessId: businessData.business?.id || businessData.id,
-        serviceId: selectedService.id,
+        serviceId: primaryService.id,
         masterId: selectedSpecialist.id,
         branchId: selectedBranch,
         startsAt: startsAt.toISOString(),
         endsAt: endsAt.toISOString(),
         customerName: document.getElementById('client-name').value,
         customerPhone: document.getElementById('client-phone').value,
-        customerComment: document.getElementById('client-comment').value
+        customerComment: document.getElementById('client-comment').value,
+        // Include all selected services
+        services: selectedServices.map(s => ({
+          id: s.id,
+          duration: s.duration,
+          price: s.price
+        })),
+        totalDuration: totalDuration,
+        totalPrice: totalPrice
       };
 
       console.log('Booking data:', formData);
@@ -1308,12 +1367,14 @@
         const bookingToken = appointment.bookingToken;
 
         // Show success message
+        const serviceNames = selectedServices.map(s => businessData.services.find(service => service.id == s.id)?.name).join(', ');
         document.getElementById('contact-form-section').innerHTML = `
           <div class="success">
             <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">✅ Запись успешно создана</h2>
-            <p style="margin-bottom: 8px;">Услуга: ${businessData.services.find(s => s.id == selectedService.id)?.name}</p>
+            <p style="margin-bottom: 8px;">Услуги: ${serviceNames}</p>
             <p style="margin-bottom: 8px;">Специалист: ${businessData.masters.find(m => m.id == selectedSpecialist.id)?.name}</p>
             <p style="margin-bottom: 8px;">Дата: ${new Date(selectedDate).toLocaleDateString('ru-RU')} в ${selectedTime}</p>
+            <p style="margin-bottom: 8px;">Общая стоимость: ${totalPrice} ₽</p>
             <p style="margin-top: 16px;">Спасибо, что выбрали ${businessData.business?.name || businessData.name}!</p>
             <div style="margin-top: 24px; padding: 16px; background: #f8fafc; border-radius: 8px;">
               <p style="margin-bottom: 12px; font-weight: 500;">Хотите получать уведомления в Telegram?</p>
