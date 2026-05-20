@@ -712,9 +712,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (typeof Bloknot !== 'undefined' && Bloknot.renderHeader) {
     Bloknot.renderHeader("settings");
   }
-  
-  // Add phone formatting
-  addPhoneFormatting();
 
   // Load specialist limit from API instead of localStorage
   loadSpecialistLimitFromAPI();
@@ -1034,10 +1031,6 @@ function createSpecialistForm(index) {
           <input type="text" id="specialistName${index}" placeholder="Введите имя специалиста" onchange="saveSpecialistData(${index})" oninput="saveSpecialistData(${index})">
         </div>
         <div class="field">
-          <label>Phone:</label>
-          <input type="tel" id="specialistPhone${index}" placeholder="+7 (999) 123-45-67" value="+7">
-        </div>
-        <div class="field">
           <label>Email:</label>
           <input type="email" id="specialistEmail${index}" placeholder="Введите email адрес" onchange="saveSpecialistData(${index})" oninput="saveSpecialistData(${index})">
         </div>
@@ -1200,7 +1193,6 @@ async function saveSpecialist(index) {
   const specialistData = {
     name: document.getElementById(`specialistName${index}`).value,
     email: document.getElementById(`specialistEmail${index}`).value,
-    phone: document.getElementById(`specialistPhone${index}`).value,
     avatar: document.getElementById(`specialistAvatar${index}`).files[0],
     schedule: '' // Remove localStorage usage
   };
