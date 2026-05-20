@@ -1312,6 +1312,11 @@ async function loadSpecialistSettings(index) {
                 <option value="30">30 минут</option>
               </select>
             </div>
+            <div style="margin-bottom: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+              <h5 style="margin: 0 0 12px 0; font-size: 14px;">Перерывы</h5>
+              <div id="breaksList" style="margin-bottom: 12px;"></div>
+              <button class="btn secondary" onclick="addBreak()" style="width: 100%; padding: 8px; font-size: 12px;">+ Добавить перерыв</button>
+            </div>
             <div style="margin-bottom: 12px;">
               <label style="display: flex; align-items: center; cursor: pointer;">
                 <input type="checkbox" id="applyToSelected" style="margin-right: 8px;">
@@ -1320,12 +1325,6 @@ async function loadSpecialistSettings(index) {
             </div>
             <button class="btn primary" onclick="applyScheduleTime()" style="width: 100%; padding: 8px; font-size: 14px;">Применить</button>
             <button class="btn secondary" onclick="clearScheduleTime()" style="width: 100%; padding: 8px; font-size: 14px; margin-top: 8px;">Очистить</button>
-            
-            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
-              <h5 style="margin: 0 0 12px 0; font-size: 14px;">Перерывы</h5>
-              <div id="breaksList" style="margin-bottom: 12px;"></div>
-              <button class="btn secondary" onclick="addBreak()" style="width: 100%; padding: 8px; font-size: 12px;">+ Добавить перерыв</button>
-            </div>
           </div>
         </div>
       </div>
