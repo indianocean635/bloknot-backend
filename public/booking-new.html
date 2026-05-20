@@ -752,6 +752,9 @@
         // Load and display branches first (only if no branch is selected yet)
         if (!selectedBranch || !selectedBranch.id) {
           loadBranches();
+          // Show booking content instead of navigation
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('branches-section').style.display = 'block';
         } else {
           // If branch is already selected, go directly to selection menu
           document.getElementById('loading').style.display = 'none';
