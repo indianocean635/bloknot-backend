@@ -1097,67 +1097,29 @@
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth();
+      const day = now.getDate();
       
-      monthElement.textContent = new Date(year, month).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+      // Show only current day
+      const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      monthElement.textContent = new Date(year, month, day).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       
-      // Day headers
-      const dayHeaders = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-      calendarGrid.innerHTML = dayHeaders.map(day => 
-        `<div class="calendar-day-header">${day}</div>`
-      ).join('');
+      // Clear calendar
+      calendarGrid.innerHTML = '';
       
-      // Calendar days
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      // Show only today
+      const dayElement = `
+        <div class="calendar-day today available" data-date="${dateKey}">
+          ${day}
+        </div>
+      `;
       
-      // Adjust for Monday start
-      const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+      calendarGrid.innerHTML = dayElement;
       
-      // Empty cells for alignment
-      for (let i = 0; i < adjustedFirstDay; i++) {
-        calendarGrid.innerHTML += '<div class="calendar-day disabled"></div>';
-      }
-      
-      // Days of month
-      let todayElement = null;
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        // Use UTC for date comparison to avoid timezone issues
-        const date = new Date(Date.UTC(year, month, day));
-        const nowUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-        const isToday = date.getTime() === nowUTC.getTime();
-        const isPast = date < nowUTC;
-
-        // Check if this day is in the specialist's schedule
-        let isAvailable = !isPast;
-        if (selectedSpecialist && selectedSpecialist.schedule) {
-          const daySchedule = selectedSpecialist.schedule[dateKey];
-          isAvailable = !isPast && daySchedule && daySchedule.enabled;
-        }
-
-        const dayElement = `
-          <div class="calendar-day ${isToday ? 'today' : ''} ${isAvailable ? 'available' : 'disabled'}"
-               data-date="${dateKey}"
-               ${isAvailable ? '' : 'disabled'}>
-            ${day}
-          </div>
-        `;
-        
-        calendarGrid.innerHTML += dayElement;
-        
-        // Save reference to today's element
-        if (isToday && isAvailable) {
-          todayElement = calendarGrid.lastElementChild;
-        }
-      }
-      
-      // Add click handlers
-      document.querySelectorAll('.calendar-day.available').forEach(day => {
-        day.addEventListener('click', () => selectDate(day));
-      });
-      
-      // Automatically select today if available
+      // Add click handler
+      const todayElement = calendarGrid.querySelector('.calendar-day');
       if (todayElement) {
+        todayElement.addEventListener('click', () => selectDate(todayElement));
+        // Automatically select today
         setTimeout(() => selectDate(todayElement), 100);
       }
     }
@@ -1253,7 +1215,9 @@
           console.error('No businessId found in businessData:', businessData);
           return;
         }
-        const apiUrl = `/api/public/appointments?masterId=${selectedSpecialist.id}&from=${selectedDate}&to=${selectedDate}&businessId=${businessId}`;
+        
+        // Load appointments for all specialists for the current day
+        const apiUrl = `/api/public/appointments?from=${selectedDate}&to=${selectedDate}&businessId=${businessId}`;
         console.log('Fetching appointments from:', apiUrl);
         const response = await fetch(apiUrl);
         console.log('Response status:', response.status);
