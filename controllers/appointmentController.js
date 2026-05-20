@@ -133,6 +133,50 @@ async function createPublicAppointment(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    const startDate = new Date(startsAt);
+    const endDate = new Date(endsAt);
+
+    // Check for time conflicts with existing appointments for the same master
+    const existingAppointments = await prisma.appointment.findMany({
+      where: {
+        masterId: Number(masterId),
+        businessId: businessId,
+        status: {
+          in: ['PENDING', 'CONFIRMED']
+        },
+        OR: [
+          {
+            // New appointment starts during an existing appointment
+            AND: [
+              { startsAt: { lte: startDate } },
+              { endsAt: { gt: startDate } }
+            ]
+          },
+          {
+            // New appointment ends during an existing appointment
+            AND: [
+              { startsAt: { lt: endDate } },
+              { endsAt: { gte: endDate } }
+            ]
+          },
+          {
+            // New appointment completely contains an existing appointment
+            AND: [
+              { startsAt: { gte: startDate } },
+              { endsAt: { lte: endDate } }
+            ]
+          }
+        ]
+      }
+    });
+
+    if (existingAppointments.length > 0) {
+      console.log('❌ Time slot conflict detected for master:', masterId);
+      return res.status(409).json({ 
+        error: 'Это время уже занято. Пожалуйста, выберите другое время.' 
+      });
+    }
+
     // Generate unique booking token
     const bookingToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
@@ -234,6 +278,50 @@ async function createAppointment(req, res) {
         // Default to 1 hour if no service duration found
         calculatedEndsAt = new Date(new Date(startsAt).getTime() + 60 * 60000);
       }
+    }
+
+    const startDate = new Date(startsAt);
+    const endDate = calculatedEndsAt;
+
+    // Check for time conflicts with existing appointments for the same master
+    const existingAppointments = await prisma.appointment.findMany({
+      where: {
+        masterId: Number(masterId),
+        businessId: user.businessId,
+        status: {
+          in: ['PENDING', 'CONFIRMED']
+        },
+        OR: [
+          {
+            // New appointment starts during an existing appointment
+            AND: [
+              { startsAt: { lte: startDate } },
+              { endsAt: { gt: startDate } }
+            ]
+          },
+          {
+            // New appointment ends during an existing appointment
+            AND: [
+              { startsAt: { lt: endDate } },
+              { endsAt: { gte: endDate } }
+            ]
+          },
+          {
+            // New appointment completely contains an existing appointment
+            AND: [
+              { startsAt: { gte: startDate } },
+              { endsAt: { lte: endDate } }
+            ]
+          }
+        ]
+      }
+    });
+
+    if (existingAppointments.length > 0) {
+      console.log('❌ Time slot conflict detected for master:', masterId);
+      return res.status(409).json({ 
+        error: 'Это время уже занято. Пожалуйста, выберите другое время.' 
+      });
     }
 
     // Save to database
