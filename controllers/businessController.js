@@ -38,7 +38,7 @@ async function getBusinessBySlug(req, res) {
 
   // Get masters with schedules, categoryIds, and serviceIds
   const masters = await prisma.master.findMany({
-    where: { businessId: business.id, active: true },
+    where: { businessId: business.id },
     select: {
       id: true,
       name: true,
@@ -260,7 +260,7 @@ async function getBusinessByEmail(req, res) {
 
   // Get masters with schedules, categoryIds, and serviceIds
   const masters = await prisma.master.findMany({
-    where: { businessId: business.id, active: true },
+    where: { businessId: business.id },
     select: {
       id: true,
       name: true,

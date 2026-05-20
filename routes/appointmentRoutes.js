@@ -1,15 +1,14 @@
 const express = require("express");
 const { 
   getAppointments, 
-  getPublicAppointments, 
-  createPublicAppointment, 
   createAppointment, 
-  updateAppointment, 
   deleteAppointment, 
-  getAppointmentById 
+  updateAppointment, 
+  getPublicAppointments, 
+  createPublicAppointment 
 } = require("../controllers/appointmentController");
 const { getBusinessBySlug } = require("../controllers/businessController");
-const { requireMagicAuth, getBusinessFromUser, getBusinessBySlug: getBusinessBySlugMiddleware } = require("../middleware/magicAuthMiddleware");
+const { requireMagicAuth, getBusinessFromUser } = require("../middleware/magicAuthMiddleware");
 
 const router = express.Router();
 
@@ -23,6 +22,5 @@ router.put("/appointments/:id", requireMagicAuth, getBusinessFromUser, updateApp
 router.get("/public/business/:slug", getBusinessBySlug);
 router.get("/public/appointments", getPublicAppointments);
 router.post("/public/appointments", createPublicAppointment);
-// router.get("/public/appointments/:id", getBusinessBySlug, getAppointmentById); // Temporarily disabled
 
 module.exports = router;
