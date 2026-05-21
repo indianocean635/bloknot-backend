@@ -941,61 +941,115 @@ function updateSpecialistForms(limit) {
   // Store the maximum limit for later use
   window.maxSpecialistLimit = limit;
 
-  // For plans > 5, start with 5 specialists
-  const initialCount = limit > 5 ? 5 : limit;
-  window.currentSpecialistCount = initialCount;
-
   grid.innerHTML = '';
 
-  for (let i = 1; i <= initialCount; i++) {
-    const form = createSpecialistForm(i);
-    grid.appendChild(form);
+  // Load all specialist data first to determine how many forms we need
+  api('/api/specialists').then(specialists => {
+    const specialistCount = specialists ? specialists.length : 0;
+    // Start with max of 5 or actual specialist count, but not exceeding limit
+    const initialCount = Math.max(Math.min(limit > 5 ? 5 : limit, specialistCount), limit > 5 ? 5 : limit);
+    window.currentSpecialistCount = initialCount;
 
-    // Restore existing data if available
-    if (existingData[i - 1]) {
-      const data = existingData[i - 1];
-      const nameInput = document.getElementById(`specialistName${i}`);
-      const emailInput = document.getElementById(`specialistEmail${i}`);
-      const avatarInput = document.getElementById(`specialistAvatar${i}`);
-      const avatarCircle = form.querySelector('.avatar-circle');
+    for (let i = 1; i <= initialCount; i++) {
+      const form = createSpecialistForm(i);
+      grid.appendChild(form);
 
-      if (nameInput) {
-        nameInput.value = data.name;
-        if (data.specialistId) {
-          nameInput.dataset.specialistId = data.specialistId;
+      // Restore existing data if available
+      if (existingData[i - 1]) {
+        const data = existingData[i - 1];
+        const nameInput = document.getElementById(`specialistName${i}`);
+        const emailInput = document.getElementById(`specialistEmail${i}`);
+        const avatarInput = document.getElementById(`specialistAvatar${i}`);
+        const avatarCircle = form.querySelector('.avatar-circle');
+
+        if (nameInput) {
+          nameInput.value = data.name;
+          if (data.specialistId) {
+            nameInput.dataset.specialistId = data.specialistId;
+          }
+        }
+        if (emailInput) {
+          emailInput.value = data.email;
+        }
+        if (avatarInput && data.avatarId) {
+          avatarInput.dataset.avatarId = data.avatarId;
+        }
+        if (avatarCircle && data.avatarUrl) {
+          avatarCircle.style.backgroundImage = data.avatarUrl;
+          avatarCircle.style.backgroundSize = 'cover';
+          avatarCircle.style.backgroundPosition = 'center';
+          avatarCircle.querySelector('.avatar-plus')?.remove();
+        }
+
+        // Restore specialist settings if available
+        if (data.settings) {
+          window.allSpecialistSettings = window.allSpecialistSettings || {};
+          window.allSpecialistSettings[i] = data.settings;
         }
       }
-      if (emailInput) {
-        emailInput.value = data.email;
-      }
-      if (avatarInput && data.avatarId) {
-        avatarInput.dataset.avatarId = data.avatarId;
-      }
-      if (avatarCircle && data.avatarUrl) {
-        avatarCircle.style.backgroundImage = data.avatarUrl;
-        avatarCircle.style.backgroundSize = 'cover';
-        avatarCircle.style.backgroundPosition = 'center';
-        avatarCircle.querySelector('.avatar-plus')?.remove();
-      }
+    }
 
-      // Restore specialist settings if available
-      if (data.settings) {
-        window.allSpecialistSettings = window.allSpecialistSettings || {};
-        window.allSpecialistSettings[i] = data.settings;
+    // Load all specialist data at once after forms are created
+    loadAllSpecialistData();
+
+    // Update add button - show if plan > 5 and current count < max
+    const addBtn = document.getElementById('addMasterBtn');
+    if (addBtn) {
+      addBtn.style.display = (limit > 5 && window.currentSpecialistCount < limit) ? 'block' : 'none';
+      // Update onclick handler to add one specialist at a time
+      addBtn.onclick = addOneSpecialist;
+    }
+  }).catch(error => {
+    console.error('Error loading specialists for form count:', error);
+    // Fallback to original behavior if API fails
+    const initialCount = limit > 5 ? 5 : limit;
+    window.currentSpecialistCount = initialCount;
+
+    for (let i = 1; i <= initialCount; i++) {
+      const form = createSpecialistForm(i);
+      grid.appendChild(form);
+
+      if (existingData[i - 1]) {
+        const data = existingData[i - 1];
+        const nameInput = document.getElementById(`specialistName${i}`);
+        const emailInput = document.getElementById(`specialistEmail${i}`);
+        const avatarInput = document.getElementById(`specialistAvatar${i}`);
+        const avatarCircle = form.querySelector('.avatar-circle');
+
+        if (nameInput) {
+          nameInput.value = data.name;
+          if (data.specialistId) {
+            nameInput.dataset.specialistId = data.specialistId;
+          }
+        }
+        if (emailInput) {
+          emailInput.value = data.email;
+        }
+        if (avatarInput && data.avatarId) {
+          avatarInput.dataset.avatarId = data.avatarId;
+        }
+        if (avatarCircle && data.avatarUrl) {
+          avatarCircle.style.backgroundImage = data.avatarUrl;
+          avatarCircle.style.backgroundSize = 'cover';
+          avatarCircle.style.backgroundPosition = 'center';
+          avatarCircle.querySelector('.avatar-plus')?.remove();
+        }
+
+        if (data.settings) {
+          window.allSpecialistSettings = window.allSpecialistSettings || {};
+          window.allSpecialistSettings[i] = data.settings;
+        }
       }
     }
-  }
 
-  // Load all specialist data at once after forms are created
-  loadAllSpecialistData();
+    loadAllSpecialistData();
 
-  // Update add button - show if plan > 5 and current count < max
-  const addBtn = document.getElementById('addMasterBtn');
-  if (addBtn) {
-    addBtn.style.display = (limit > 5 && window.currentSpecialistCount < limit) ? 'block' : 'none';
-    // Update onclick handler to add one specialist at a time
-    addBtn.onclick = addOneSpecialist;
-  }
+    const addBtn = document.getElementById('addMasterBtn');
+    if (addBtn) {
+      addBtn.style.display = (limit > 5 && window.currentSpecialistCount < limit) ? 'block' : 'none';
+      addBtn.onclick = addOneSpecialist;
+    }
+  });
 }
 
 function addOneSpecialist() {
