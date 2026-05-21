@@ -770,7 +770,10 @@
           worksGallery.innerHTML = '';
           businessData.workPhotos.forEach(work => {
             const workImg = document.createElement('img');
-            workImg.src = work.imageUrl || work.url;
+            // Use proxy endpoint to avoid CORS issues
+            const imageUrl = work.imageUrl || work.url;
+            const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(imageUrl)}`;
+            workImg.src = proxyUrl;
             workImg.alt = work.description || '';
             workImg.style.cssText = 'width: 100%; height: 200px; object-fit: cover; border-radius: 8px;';
             worksGallery.appendChild(workImg);
