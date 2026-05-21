@@ -105,7 +105,13 @@
       </div>
       
       <div class="branding-item">
-        <h3>Филиалы</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0;">Филиалы</h3>
+          <button class="ios-button" onclick="openAsClient()" style="padding: 8px 16px; font-size: 13px;">
+            <span class="button-icon"></span>
+            <span class="button-text">Открыть как клиент</span>
+          </button>
+        </div>
         <div class="branches-info">
           <button class="btn" id="addBranchBtn">+ Добавить филиал</button>
           <div class="items-grid" id="branchesGrid" style="margin-top: 12px;">
@@ -161,16 +167,6 @@
       
       <div style="display: flex; justify-content: flex-end;">
         <button class="btn primary" id="saveBranchDescriptionBtn" onclick="saveBranchDescription()" style="padding: 8px 16px; font-size: 14px;">Сохранить</button>
-      </div>
-    </section>
-
-    <!-- Client Preview -->
-    <section class="settings-section compact client-preview-section">
-      <div class="client-preview-content">
-        <button class="ios-button" onclick="openAsClient()">
-          <span class="button-icon"></span>
-         <span class="button-text">Открыть как клиент</span>
-        </button>
       </div>
     </section>
   </div>
