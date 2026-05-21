@@ -159,7 +159,7 @@
       background: white;
       border: 1px solid #e5e7eb;
       border-radius: 16px;
-      padding: 32px;
+      padding: 20px;
       position: relative;
       transition: all 0.3s ease;
     }
@@ -210,7 +210,7 @@
     .price-monthly {
       font-size: 36px;
       font-weight: 700;
-      color: #22c55e;
+      color: #0b0f14;
       margin-bottom: 8px;
     }
 
@@ -223,13 +223,6 @@
       list-style: none;
       padding: 0;
       margin: 0 0 32px 0;
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-    }
-
-    .pricing-features.expanded {
-      max-height: 500px;
     }
 
     .pricing-features li {
@@ -499,11 +492,7 @@
           <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
         </div>
         
-        <button class="toggle-features" onclick="toggleFeatures('solo-features')">
-          Что входит в тариф ↓
-        </button>
-        
-        <ul class="pricing-features" id="solo-features">
+        <ul class="pricing-features">
           <li>
             <div class="feature-icon"></div>
             <span>Неограниченное количество записей</span>
@@ -522,7 +511,23 @@
           </li>
           <li>
             <div class="feature-icon"></div>
-            <span>Базовая аналитика</span>
+            <span>Телеграм</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Продвинутая аналитика</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Персональный менеджер</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Экспорт данных</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Кастомизация бренда</span>
           </li>
         </ul>
         
@@ -545,34 +550,42 @@
           <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
         </div>
         
-        <button class="toggle-features" onclick="toggleFeatures('studio-features')">
-          Что входит в тариф ↓
-        </button>
-        
-        <ul class="pricing-features" id="studio-features">
+        <ul class="pricing-features">
           <li>
             <div class="feature-icon"></div>
-            <span>Все из тарифа Solo</span>
+            <span>Неограниченное количество записей</span>
           </li>
           <li>
             <div class="feature-icon"></div>
-            <span>До 5 сотрудников</span>
+            <span>Онлайн-запись клиентов</span>
           </li>
           <li>
             <div class="feature-icon"></div>
-            <span>Расширенная аналитика</span>
+            <span>Управление услугами</span>
           </li>
           <li>
             <div class="feature-icon"></div>
-            <span>Интеграция с мессенджерами</span>
+            <span>Автоматические напоминания</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Телеграм</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Продвинутая аналитика</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Персональный менеджер</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Экспорт данных</span>
           </li>
           <li>
             <div class="feature-icon"></div>
             <span>Кастомизация бренда</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Приоритетная поддержка</span>
           </li>
         </ul>
         
@@ -594,22 +607,26 @@
           <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
         </div>
         
-        <button class="toggle-features" onclick="toggleFeatures('pro-features')">
-          Что входит в тариф ↓
-        </button>
-        
-        <ul class="pricing-features" id="pro-features">
+        <ul class="pricing-features">
           <li>
             <div class="feature-icon"></div>
-            <span>Все из тарифа Studio</span>
+            <span>Неограниченное количество записей</span>
           </li>
           <li>
             <div class="feature-icon"></div>
-            <span>Неограниченное количество сотрудников</span>
+            <span>Онлайн-запись клиентов</span>
           </li>
           <li>
             <div class="feature-icon"></div>
-            <span>API доступ</span>
+            <span>Управление услугами</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Автоматические напоминания</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Телеграм</span>
           </li>
           <li>
             <div class="feature-icon"></div>
@@ -621,11 +638,11 @@
           </li>
           <li>
             <div class="feature-icon"></div>
-            <span>Собственный домен</span>
+            <span>Экспорт данных</span>
           </li>
           <li>
             <div class="feature-icon"></div>
-            <span>Экспорт данных</span>
+            <span>Кастомизация бренда</span>
           </li>
         </ul>
         
@@ -718,19 +735,6 @@
 
   <script>
     let currentPeriod = 1;
-
-    function toggleFeatures(featuresId) {
-      const features = document.getElementById(featuresId);
-      const button = features.previousElementSibling;
-      
-      if (features.classList.contains('expanded')) {
-        features.classList.remove('expanded');
-        button.textContent = 'Что входит в тариф ↓';
-      } else {
-        features.classList.add('expanded');
-        button.textContent = 'Что входит в тариф ↑';
-      }
-    }
 
     function selectPeriod(period) {
       currentPeriod = period;
