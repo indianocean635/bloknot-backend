@@ -131,6 +131,34 @@ router.patch("/business/name", requireAuth, async (req, res) => {
   }
 });
 
+// Update business
+router.patch("/business", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { description } = req.body;
+    
+    const updateData = {};
+    if (description !== undefined) {
+      updateData.description = description?.trim() || null;
+    }
+    
+    const business = await prisma.business.update({
+      where: { id: req.user.businessId },
+      data: updateData
+    });
+    
+    res.json(business);
+  } catch (error) {
+    console.error("Error updating business:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Get branches
 router.get("/branches", requireAuth, async (req, res) => {
   try {
