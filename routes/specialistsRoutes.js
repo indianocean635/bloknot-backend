@@ -313,15 +313,31 @@ router.post('/:id/settings', requireAuth, async (req, res) => {
       }
     }
 
-    // Update specialist settings
+    // Build update data object - only update fields that are provided
+    const updateData = {};
+    
+    if (branchId !== undefined) {
+      updateData.branchId = branchId ? parseInt(branchId) : null;
+    }
+    
+    // Only update schedule if it's provided and not empty
+    // This prevents clearing existing schedule when only updating other settings
+    if (schedule && Object.keys(schedule).length > 0) {
+      updateData.schedule = schedule;
+    }
+    
+    if (categoryIds !== undefined) {
+      updateData.categoryIds = categoryIds ? categoryIds.map(id => parseInt(id)) : [];
+    }
+    
+    if (serviceIds !== undefined) {
+      updateData.serviceIds = serviceIds ? serviceIds.map(id => parseInt(id)) : [];
+    }
+
+    // Update specialist settings with only the provided fields
     const updatedSpecialist = await prisma.master.update({
       where: { id: parseInt(id) },
-      data: {
-        branchId: branchId ? parseInt(branchId) : null,
-        schedule: schedule || {},
-        categoryIds: categoryIds ? categoryIds.map(id => parseInt(id)) : [],
-        serviceIds: serviceIds ? serviceIds.map(id => parseInt(id)) : []
-      }
+      data: updateData
     });
 
     res.json({
