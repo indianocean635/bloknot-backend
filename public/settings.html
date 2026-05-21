@@ -946,8 +946,8 @@ function updateSpecialistForms(limit) {
   // Load all specialist data first to determine how many forms we need
   api('/api/specialists').then(specialists => {
     const specialistCount = specialists ? specialists.length : 0;
-    // Start with max of 5 or actual specialist count, but not exceeding limit
-    const initialCount = Math.max(Math.min(limit > 5 ? 5 : limit, specialistCount), limit > 5 ? 5 : limit);
+    // Show all existing specialists if they exceed 5, otherwise show min(5, limit)
+    const initialCount = specialistCount > 5 ? specialistCount : Math.min(5, limit);
     window.currentSpecialistCount = initialCount;
 
     for (let i = 1; i <= initialCount; i++) {
