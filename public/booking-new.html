@@ -595,6 +595,9 @@
       <div class="booking-header">
         <div class="business-logo" id="business-logo"></div>
         <div class="business-name" id="business-name">Loading...</div>
+        <button id="about-branch-btn" onclick="toggleAboutBranch()" style="margin-top: 8px; padding: 6px 12px; background: transparent; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; color: #6b7280; cursor: pointer; display: none; align-items: center; gap: 4px;">
+          О филиале <span id="about-branch-arrow">▼</span>
+        </button>
         <div class="branch-selector" id="branch-selector">
           <div class="branch-selected">
             <span id="selected-branch">Main Branch</span>
@@ -607,6 +610,11 @@
           </div>
         </div>
         <div class="business-address" id="business-address">Loading...</div>
+      </div>
+      
+      <div id="about-branch-section" style="display: none; padding: 24px 32px; border-bottom: 1px solid #e5e7eb;">
+        <div id="branch-description" style="margin-bottom: 20px; font-size: 14px; color: #374151; line-height: 1.6;"></div>
+        <div id="works-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;"></div>
       </div>
       
       <div class="booking-content">
@@ -747,6 +755,32 @@
           // Use proxy endpoint to avoid CORS issues
           const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(logo)}`;
           document.getElementById('business-logo').innerHTML = `<img src="${proxyUrl}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">`;
+        }
+
+        // Load branch description and work photos
+        const branchDescription = businessData.business?.description || businessData.description;
+        const branchDescriptionEl = document.getElementById('branch-description');
+        if (branchDescription && branchDescriptionEl) {
+          branchDescriptionEl.textContent = branchDescription;
+        }
+
+        // Load work photos
+        const worksGallery = document.getElementById('works-gallery');
+        if (worksGallery && businessData.workPhotos && businessData.workPhotos.length > 0) {
+          worksGallery.innerHTML = '';
+          businessData.workPhotos.forEach(work => {
+            const workImg = document.createElement('img');
+            workImg.src = work.imageUrl || work.url;
+            workImg.alt = work.description || '';
+            workImg.style.cssText = 'width: 100%; height: 200px; object-fit: cover; border-radius: 8px;';
+            worksGallery.appendChild(workImg);
+          });
+        }
+
+        // Show "О филиале" button if there's description or work photos
+        const aboutBranchBtn = document.getElementById('about-branch-btn');
+        if (aboutBranchBtn && (branchDescription || (businessData.workPhotos && businessData.workPhotos.length > 0))) {
+          aboutBranchBtn.style.display = 'flex';
         }
 
         // Load and display branches first (only if no branch is selected yet)
@@ -1500,6 +1534,20 @@
       }
       
       input.value = formatted;
+    }
+
+    // Toggle about branch section
+    function toggleAboutBranch() {
+      const section = document.getElementById('about-branch-section');
+      const arrow = document.getElementById('about-branch-arrow');
+      
+      if (section.style.display === 'none') {
+        section.style.display = 'block';
+        arrow.textContent = '▲';
+      } else {
+        section.style.display = 'none';
+        arrow.textContent = '▼';
+      }
     }
 
     // Load data when page loads

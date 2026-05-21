@@ -100,7 +100,8 @@ async function getBusinessBySlug(req, res) {
       id: business.id,
       name: business.name,
       slug: business.slug,
-      logo: logoPhoto?.imageUrl || null
+      logo: logoPhoto?.imageUrl || null,
+      description: business.description || null
     },
     services: services,
     categories: categories,
