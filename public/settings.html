@@ -11,6 +11,14 @@
 <div id="app-header"></div>
 
 <main class="container">
+  <!-- Video Instruction Button -->
+  <div style="display: flex; justify-content: center; margin-bottom: 16px;">
+    <button class="ios-button" onclick="openVideoInstruction()" style="padding: 10px 20px; font-size: 13px;">
+      <span class="button-icon">▶</span>
+      <span class="button-text">Видео инструкция настроек</span>
+    </button>
+  </div>
+
   <!-- Specialists -->
   <section class="settings-section">
     <div class="section-header">
@@ -2783,6 +2791,21 @@ function openAsClient() {
   // Open online booking page in new window/tab
   const bookingUrl = 'https://bloknotservis.ru/booking-new.html';
   window.open(bookingUrl, '_blank');
+}
+
+// Open Video Instruction Function
+function openVideoInstruction() {
+  // VK video ID - replace with actual video ID when available
+  const vkVideoId = ''; // Add VK video ID here later
+  
+  if (!vkVideoId) {
+    alert('Видео инструкция скоро появится. Добавьте ссылку на видео в код.');
+    return;
+  }
+  
+  // Open VK video in new window
+  const videoUrl = `https://vk.com/video_ext.php?oid=${vkVideoId}`;
+  window.open(videoUrl, '_blank');
 }
 </script>
 
