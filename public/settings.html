@@ -878,14 +878,14 @@ async function processPayment() {
   const planName = document.getElementById('selectedPlanName').textContent;
   console.log('Selected plan name:', planName);
   
-  // Map plan name to plan ID
+  // Map plan name to plan ID - check PRO first since it contains "5"
   let planId = 'SOLO';
-  if (planName.includes('Solo') || planName.includes('1') || planName.includes('1 специалист')) {
+  if (planName.includes('Более 5') || planName.includes('Pro') || planName.includes('15')) {
+    planId = 'PRO';
+  } else if (planName.includes('Solo') || planName.includes('1') || planName.includes('1 специалист')) {
     planId = 'SOLO';
   } else if (planName.includes('Studio') || planName.includes('5') || planName.includes('5 специалистов')) {
     planId = 'STUDIO';
-  } else if (planName.includes('Pro') || planName.includes('15') || planName.includes('Более 5')) {
-    planId = 'PRO';
   }
   console.log('Mapped plan ID:', planId);
   
