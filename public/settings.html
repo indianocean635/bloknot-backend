@@ -879,11 +879,11 @@ async function processPayment() {
   
   // Map plan name to plan ID
   let planId = 'SOLO';
-  if (planName.includes('Solo') || planName.includes('1')) {
+  if (planName.includes('Solo') || planName.includes('1') || planName.includes('1 специалист')) {
     planId = 'SOLO';
-  } else if (planName.includes('Studio') || planName.includes('5')) {
+  } else if (planName.includes('Studio') || planName.includes('5') || planName.includes('5 специалистов')) {
     planId = 'STUDIO';
-  } else if (planName.includes('Pro') || planName.includes('15')) {
+  } else if (planName.includes('Pro') || planName.includes('15') || planName.includes('Более 5')) {
     planId = 'PRO';
   }
   
