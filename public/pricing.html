@@ -159,7 +159,7 @@
       background: white;
       border: 1px solid #e5e7eb;
       border-radius: 16px;
-      padding: 20px;
+      padding: 16px;
       position: relative;
       transition: all 0.3s ease;
     }
@@ -208,7 +208,7 @@
     }
 
     .price-monthly {
-      font-size: 36px;
+      font-size: 28px;
       font-weight: 700;
       color: #0b0f14;
       margin-bottom: 8px;
@@ -603,7 +603,7 @@
         </div>
         
         <div class="pricing-price">
-          <div class="price-monthly" data-monthly="1490" data-yearly="14304">1490₽</div>
+          <div class="price-monthly" data-monthly="1490" data-yearly="14304">1 490₽</div>
           <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
         </div>
         
@@ -752,10 +752,14 @@
         const monthlyPrice = element.getAttribute('data-monthly');
         const yearlyPrice = element.getAttribute('data-yearly');
         
+        const formatNumber = (num) => {
+          return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        };
+        
         if (currentPeriod === 1) {
-          element.textContent = `${monthlyPrice}₽`;
+          element.textContent = `${formatNumber(monthlyPrice)}₽`;
         } else {
-          element.textContent = `${yearlyPrice}₽`;
+          element.textContent = `${formatNumber(yearlyPrice)}₽`;
         }
       });
       
