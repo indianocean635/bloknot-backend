@@ -1958,12 +1958,14 @@ async function deleteSpecialist(index) {
     try {
       // Get the actual specialist ID from the dataset
       const nameInput = document.getElementById(`specialistName${index}`);
-      const specialistId = nameInput?.dataset.specialistId || index;
+      const specialistId = nameInput?.dataset.specialistId;
       
-      // Delete specialist from backend using actual ID
-      const response = await api(`/api/specialists/${specialistId}`, {
-        method: 'DELETE'
-      });
+      // Only delete from backend if specialist was actually saved (has real ID)
+      if (specialistId && specialistId !== String(index)) {
+        await api(`/api/specialists/${specialistId}`, {
+          method: 'DELETE'
+        });
+      }
       
       // Replace form with + button
       const form = document.querySelector(`.specialist-form:nth-child(${index})`);
@@ -1978,6 +1980,15 @@ async function deleteSpecialist(index) {
             </div>
           </div>
         `;
+      }
+      
+      // Clear the specialist ID from the input
+      if (nameInput) {
+        delete nameInput.dataset.specialistId;
+      }
+      const emailInput = document.getElementById(`specialistEmail${index}`);
+      if (emailInput) {
+        delete emailInput.dataset.specialistId;
       }
       
       // Reload specialists to update UI
