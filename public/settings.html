@@ -876,6 +876,7 @@ async function processPayment() {
   }
   
   const planName = document.getElementById('selectedPlanName').textContent;
+  console.log('Selected plan name:', planName);
   
   // Map plan name to plan ID
   let planId = 'SOLO';
@@ -886,6 +887,7 @@ async function processPayment() {
   } else if (planName.includes('Pro') || planName.includes('15') || planName.includes('Более 5')) {
     planId = 'PRO';
   }
+  console.log('Mapped plan ID:', planId);
   
   try {
     // Call subscription API to save the subscription
