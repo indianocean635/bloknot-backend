@@ -112,10 +112,10 @@
       }
       
       // Load services to get prices
-      const services = await Bloknot.api('/api/services');
+      const services = await Bloknot.api('/api/settings/services');
       
       // Load masters
-      const masters = await Bloknot.api('/api/masters');
+      const masters = await Bloknot.api('/api/masters/masters');
       
       // Calculate total revenue
       let totalRevenue = 0;
