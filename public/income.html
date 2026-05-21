@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Income - Bloknot</title>
+  <title>Доходы - Bloknot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="cache-control" content="no-cache, no-store, must-revalidate">
   <meta name="pragma" content="no-cache">
@@ -14,31 +14,43 @@
 <div id="app-header"></div>
 
 <main class="container">
-  <h1 class="page-title">Income</h1>
-  <p class="page-subtitle">View your revenue for selected period</p>
+  <h1 class="page-title">Доходы</h1>
+  <p class="page-subtitle">Просмотр дохода за выбранный период</p>
 
   <div class="card" style="margin-top:12px">
-    <div class="item-title">Revenue Calculation</div>
-    <div class="item-meta">Select date range to calculate your income</div>
+    <div class="item-title">Расчет дохода</div>
+    <div class="item-meta">Выберите диапазон дат для расчета дохода</div>
     
     <div class="row two" style="margin-top:12px">
       <div class="field">
-        <label for="revFrom">From</label>
+        <label for="revFrom">С</label>
         <input id="revFrom" type="date" />
       </div>
       <div class="field">
-        <label for="revTo">To</label>
+        <label for="revTo">По</label>
         <input id="revTo" type="date" />
       </div>
     </div>
     
     <div class="actions" style="justify-content:space-between">
-      <div class="badge" id="revenueBadge">0 RUB</div>
-      <button class="btn secondary" id="revenueBtn" type="button">Calculate</button>
+      <div class="badge" id="revenueBadge">0 руб</div>
+      <button class="btn secondary" id="revenueBtn" type="button">Рассчитать</button>
     </div>
   </div>
 
   <div id="notice" class="notice" style="display:none; margin-top:10px"></div>
+
+  <div id="statsSection" style="display:none; margin-top:20px">
+    <div class="card">
+      <div class="item-title">Статистика по услугам</div>
+      <div id="servicesStats"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="item-title">Статистика по специалистам</div>
+      <div id="mastersStats"></div>
+    </div>
+  </div>
 </main>
 
 <script src="/app.js?v=20260420"></script>
@@ -72,34 +84,118 @@
     const revenueBtn = document.getElementById("revenueBtn");
     
     if (!from || !to) {
-      showNotice("Please select both dates");
+      showNotice("Выберите обе даты");
       return;
     }
     
     if (new Date(from) > new Date(to)) {
-      showNotice("Start date cannot be after end date");
+      showNotice("Начальная дата не может быть позже конечной");
       return;
     }
     
     revenueBtn.disabled = true;
-    revenueBtn.textContent = "Calculating...";
+    revenueBtn.textContent = "Загрузка...";
     showNotice("");
     
     try {
-      const response = await Bloknot.api(`/api/business/revenue?from=${from}&to=${to}`);
+      // Load appointments with status COMPLETED
+      const appointments = await Bloknot.api(`/api/appointments?from=${from}&to=${to}`);
       
-      if (response.revenue !== undefined) {
-        document.getElementById("revenueBadge").textContent = `${response.revenue} RUB`;
-        showNotice(`Revenue calculated for ${from} to ${to}`);
-      } else {
-        throw new Error("Invalid response");
+      // Filter only completed appointments
+      const completedAppointments = appointments.filter(a => a.status === 'COMPLETED');
+      
+      if (completedAppointments.length === 0) {
+        document.getElementById("revenueBadge").textContent = "0 руб";
+        document.getElementById("statsSection").style.display = "none";
+        showNotice("Нет состоявшихся записей за выбранный период");
+        return;
       }
+      
+      // Load services to get prices
+      const services = await Bloknot.api('/api/services');
+      
+      // Load masters
+      const masters = await Bloknot.api('/api/masters');
+      
+      // Calculate total revenue
+      let totalRevenue = 0;
+      const servicesStats = {};
+      const mastersStats = {};
+      
+      completedAppointments.forEach(appointment => {
+        const service = services.find(s => String(s.id) === String(appointment.serviceId));
+        if (service) {
+          totalRevenue += service.price || 0;
+          
+          // Services statistics
+          if (!servicesStats[service.name]) {
+            servicesStats[service.name] = {
+              count: 0,
+              totalRevenue: 0,
+              price: service.price
+            };
+          }
+          servicesStats[service.name].count += 1;
+          servicesStats[service.name].totalRevenue += service.price;
+        }
+        
+        // Masters statistics
+        const master = masters.find(m => String(m.id) === String(appointment.masterId));
+        if (master) {
+          if (!mastersStats[master.name]) {
+            mastersStats[master.name] = {
+              count: 0,
+              totalRevenue: 0
+            };
+          }
+          mastersStats[master.name].count += 1;
+          if (service) {
+            mastersStats[master.name].totalRevenue += service.price;
+          }
+        }
+      });
+      
+      // Display total revenue
+      document.getElementById("revenueBadge").textContent = `${totalRevenue} руб`;
+      
+      // Display services statistics
+      let servicesHtml = '';
+      Object.entries(servicesStats).forEach(([serviceName, stats]) => {
+        servicesHtml += `
+          <div style="padding: 8px; border-bottom: 1px solid #e5e7eb;">
+            <div style="font-weight: 500;">${serviceName}</div>
+            <div style="font-size: 12px; color: #666; margin-top: 4px;">
+              Количество: ${stats.count} | Цена: ${stats.price} руб | Доход: ${stats.totalRevenue} руб
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById("servicesStats").innerHTML = servicesHtml;
+      
+      // Display masters statistics
+      let mastersHtml = '';
+      Object.entries(mastersStats).forEach(([masterName, stats]) => {
+        mastersHtml += `
+          <div style="padding: 8px; border-bottom: 1px solid #e5e7eb;">
+            <div style="font-weight: 500;">${masterName}</div>
+            <div style="font-size: 12px; color: #666; margin-top: 4px;">
+              Количество записей: ${stats.count} | Доход: ${stats.totalRevenue} руб
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById("mastersStats").innerHTML = mastersHtml;
+      
+      // Show statistics section
+      document.getElementById("statsSection").style.display = "block";
+      
+      showNotice(`Доход рассчитан за период с ${from} по ${to}`);
     } catch (error) {
       console.error("Revenue calculation error:", error);
-      showNotice("Failed to calculate revenue. Please try again.");
+      showNotice("Не удалось рассчитать доход. Попробуйте снова.");
     } finally {
       revenueBtn.disabled = false;
-      revenueBtn.textContent = "Calculate";
+      revenueBtn.textContent = "Рассчитать";
     }
   }
 
