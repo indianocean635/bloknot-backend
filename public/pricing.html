@@ -726,9 +726,6 @@
         <button class="btn-primary" onclick="processCardPayment()">
           💳 Оплатить картой
         </button>
-        <button class="btn-secondary" onclick="closePaymentModal()">
-          ❌ Отмена
-        </button>
       </div>
     </div>
   </div>
@@ -791,9 +788,6 @@
           <button class="btn-primary" onclick="processCardPayment()">
             💳 Оплатить картой
           </button>
-          <button class="btn-secondary" onclick="closePaymentModal()">
-            ❌ Отмена
-          </button>
         `;
       } else {
         modalSubtitle.textContent = 'Выберите способ оплаты годовой подписки со скидкой 20%';
@@ -803,9 +797,6 @@
           </button>
           <button class="btn-secondary" onclick="processInvoicePayment()">
             📄 Выставить счет
-          </button>
-          <button class="btn-secondary" onclick="closePaymentModal()">
-            ❌ Отмена
           </button>
         `;
       }
