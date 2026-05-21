@@ -1046,6 +1046,7 @@
 
         for (let i = 0; i < 7; i++) {
           const day = addDays(weekStart, i);
+          const dayStr = ymd(day);
           const dayStart = startOfDay(day);
           const dayEnd = endOfDay(day);
           const column = container.querySelector(`[data-day="${day.toISOString()}"]`);
@@ -1204,6 +1205,7 @@
         container.innerHTML = html;
 
         // Render bookings
+        const currentDateStr = ymd(state.currentDate);
         visibleMasters.forEach(master => {
           const column = container.querySelector(`[data-master-id="${master.id}"]`);
           const masterBookings = state.bookings.filter(b => {
@@ -1291,8 +1293,6 @@
         });
 
         // Mark closed slots based on schedule
-        const currentDateStr = ymd(state.currentDate);
-
         container.querySelectorAll('.crm-time-slot-row').forEach(slot => {
           const hour = parseInt(slot.dataset.hour);
           const masterId = slot.dataset.master;
