@@ -720,6 +720,160 @@
     .crm-modal-actions .crm-btn-danger:hover {
       background: #dc2626;
     }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+      .crm-calendar {
+        flex-direction: column;
+        height: calc(100vh - 56px);
+      }
+
+      .crm-sidebar {
+        display: none;
+      }
+
+      .crm-toolbar {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .crm-toolbar-left {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .crm-toolbar-center {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .crm-toolbar-right {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .crm-date-display {
+        font-size: 14px;
+      }
+
+      .crm-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .crm-toolbar-left > div {
+        flex-wrap: wrap;
+      }
+
+      .crm-calendar-grid {
+        grid-template-columns: 50px 1fr;
+      }
+
+      .crm-time-column {
+        min-width: 50px;
+      }
+
+      .crm-time-slot {
+        font-size: 10px;
+        height: 50px;
+      }
+
+      .crm-time-slot-row {
+        height: 50px;
+      }
+
+      .crm-employee-header {
+        padding: 8px 4px;
+      }
+
+      .crm-employee-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+      }
+
+      .crm-employee-name {
+        font-size: 12px;
+      }
+
+      .crm-employee-role {
+        font-size: 10px;
+      }
+
+      .crm-booking-card {
+        padding: 6px 8px;
+        font-size: 11px;
+        left: 4px;
+        right: 4px;
+      }
+
+      .crm-booking-time {
+        font-size: 10px;
+      }
+
+      .crm-booking-client {
+        font-size: 12px;
+      }
+
+      .crm-booking-service {
+        font-size: 10px;
+      }
+
+      .crm-booking-phone {
+        font-size: 10px;
+      }
+
+      .crm-dropdown select {
+        padding: 6px 28px 6px 10px;
+        font-size: 12px;
+      }
+
+      .crm-search input {
+        width: 100%;
+        font-size: 12px;
+        padding: 6px 10px 6px 32px;
+      }
+
+      .crm-modal-content {
+        width: 95%;
+        max-height: 90vh;
+        margin: 20px auto;
+      }
+
+      .crm-modal-header {
+        padding: 16px;
+      }
+
+      .crm-modal-body {
+        padding: 16px;
+      }
+
+      .crm-form-group {
+        margin-bottom: 16px;
+      }
+
+      .crm-form-group label {
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+
+      .crm-form-group input,
+      .crm-form-group select {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+
+      .crm-modal-actions {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .crm-modal-actions .crm-btn {
+        padding: 10px 16px;
+      }
+    }
   </style>
 </head>
 <body>
