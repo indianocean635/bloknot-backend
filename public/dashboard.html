@@ -120,6 +120,16 @@
 <script src="/app.js?v=20260425-data-isolation&t=1713633600"></script>
  <script>
   console.log('DASHBOARD: Page loaded, script executing');
+  
+  // Check for auth token in localStorage (iOS PWA fallback)
+  const hasToken = localStorage.getItem('auth_token');
+  console.log('DASHBOARD: Token in localStorage:', !!hasToken);
+  
+  if (!hasToken) {
+    console.log('DASHBOARD: No token found, redirecting to login');
+    window.location.href = '/';
+  }
+  
   // JWT Cookie Only - No localStorage
   // Authentication handled by server middleware
   console.log('DASHBOARD: Bloknot object:', typeof Bloknot);
