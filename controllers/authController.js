@@ -26,27 +26,31 @@ function parseCookies(req) {
 
 function setAuthCookie(res, token) {
   const maxAge = 90 * 24 * 60 * 60;
+  const expires = new Date(Date.now() + maxAge * 1000).toUTCString();
   const parts = [
     `${JWT_COOKIE_NAME}=${encodeURIComponent(token)}`,
     `Max-Age=${maxAge}`,
+    `Expires=${expires}`,
     "Path=/",
     "HttpOnly",
-    "SameSite=Lax",
+    "SameSite=None",
+    "Secure",
   ];
-  if (IS_PROD) parts.push("Secure");
   res.setHeader("Set-Cookie", parts.join("; "));
 }
 
 function setSuperAdminCookie(res, token) {
   const maxAge = 90 * 24 * 60 * 60;
+  const expires = new Date(Date.now() + maxAge * 1000).toUTCString();
   const parts = [
     `${SUPERADMIN_COOKIE_NAME}=${encodeURIComponent(token)}`,
     `Max-Age=${maxAge}`,
+    `Expires=${expires}`,
     "Path=/",
     "HttpOnly",
-    "SameSite=Lax",
+    "SameSite=None",
+    "Secure",
   ];
-  if (IS_PROD) parts.push("Secure");
   res.setHeader("Set-Cookie", parts.join("; "));
 }
 
@@ -56,9 +60,9 @@ function clearAuthCookie(res) {
     "Max-Age=0",
     "Path=/",
     "HttpOnly",
-    "SameSite=Lax",
+    "SameSite=None",
+    "Secure",
   ];
-  if (IS_PROD) parts.push("Secure");
   res.setHeader("Set-Cookie", parts.join("; "));
 }
 
