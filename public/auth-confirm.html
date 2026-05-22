@@ -157,6 +157,14 @@
             console.log('Token saved to localStorage and IndexedDB for iOS PWA');
           }
           
+          // Also set cookie directly via JavaScript for iOS PWA
+          if (data.token) {
+            const maxAge = 90 * 24 * 60 * 60;
+            const expires = new Date(Date.now() + maxAge * 1000).toUTCString();
+            document.cookie = `auth=${encodeURIComponent(data.token)}; Max-Age=${maxAge}; Expires=${expires}; Path=/; SameSite=None; Secure`;
+            console.log('Token saved to cookie via JavaScript for iOS PWA');
+          }
+          
           console.log('Login successful - JWT cookie + localStorage + IndexedDB for iOS PWA');
           
           console.log('Stored user session:', {

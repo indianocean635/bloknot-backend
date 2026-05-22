@@ -138,6 +138,17 @@
       }
     }
     
+    // If still no token, try cookie
+    if (!token) {
+      const cookies = document.cookie.split(';').map(c => c.trim());
+      const authCookie = cookies.find(c => c.startsWith('auth='));
+      if (authCookie) {
+        token = decodeURIComponent(authCookie.substring(5));
+        localStorage.setItem('auth_token', token);
+        console.log('Token found in cookie, synced to localStorage');
+      }
+    }
+    
     const headers = {
       'Content-Type': 'application/json',
       ...opts?.headers
