@@ -727,14 +727,35 @@
 <script>
 console.log('SETTINGS PAGE LOADED - VERSION: 20260420-1-TIMESTAMP');
 
-// Check for auth token in localStorage (iOS PWA fallback)
-const hasToken = localStorage.getItem('auth_token');
-console.log('SETTINGS: Token in localStorage:', !!hasToken);
+// Check for auth token in localStorage and IndexedDB (iOS PWA fallback)
+async function checkAuthToken() {
+  let hasToken = localStorage.getItem('auth_token');
+  
+  if (!hasToken) {
+    try {
+      const db = await indexedDB.open('bloknot-auth', 1);
+      const tx = db.transaction('auth', 'readonly');
+      const store = tx.objectStore('auth');
+      const result = await store.get('token');
+      if (result) {
+        hasToken = result.value;
+        localStorage.setItem('auth_token', hasToken);
+      }
+      db.close();
+    } catch (e) {
+      console.log('IndexedDB not available:', e);
+    }
+  }
+  
+  console.log('SETTINGS: Token found:', !!hasToken);
 
-if (!hasToken) {
-  console.log('SETTINGS: No token found, redirecting to login');
-  window.location.href = '/';
+  if (!hasToken) {
+    console.log('SETTINGS: No token found, redirecting to login');
+    window.location.href = '/';
+  }
 }
+
+checkAuthToken();
 </script>
 <script src="/app.js?v=20260420-1&t=1713633600"></script>
 <script>

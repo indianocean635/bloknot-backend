@@ -117,8 +117,26 @@
   }
 
   async function api(path, opts) {
-    // Check for token in localStorage (for password login)
-    const token = localStorage.getItem('auth_token');
+    // Check for token in IndexedDB (for iOS PWA fallback)
+    let token = localStorage.getItem('auth_token');
+    
+    // If not in localStorage, try IndexedDB
+    if (!token) {
+      try {
+        const db = await indexedDB.open('bloknot-auth', 1);
+        const tx = db.transaction('auth', 'readonly');
+        const store = tx.objectStore('auth');
+        const result = await store.get('token');
+        if (result) {
+          token = result.value;
+          // Sync back to localStorage
+          localStorage.setItem('auth_token', token);
+        }
+        db.close();
+      } catch (e) {
+        console.log('IndexedDB not available:', e);
+      }
+    }
     
     const headers = {
       'Content-Type': 'application/json',
@@ -152,6 +170,37 @@
     const ct = res.headers.get("content-type") || "";
     if (ct.includes("application/json")) return res.json();
     return res.text();
+  }
+
+  // Save token to both localStorage and IndexedDB
+  async function saveAuthToken(token) {
+    localStorage.setItem('auth_token', token);
+    try {
+      const db = await indexedDB.open('bloknot-auth', 1);
+      if (!db.objectStoreNames.contains('auth')) {
+        db.createObjectStore('auth');
+      }
+      const tx = db.transaction('auth', 'readwrite');
+      const store = tx.objectStore('auth');
+      await store.put({ id: 'token', value: token });
+      db.close();
+    } catch (e) {
+      console.log('IndexedDB save failed:', e);
+    }
+  }
+
+  // Clear token from both localStorage and IndexedDB
+  async function clearAuthToken() {
+    localStorage.removeItem('auth_token');
+    try {
+      const db = await indexedDB.open('bloknot-auth', 1);
+      const tx = db.transaction('auth', 'readwrite');
+      const store = tx.objectStore('auth');
+      await store.delete('token');
+      db.close();
+    } catch (e) {
+      console.log('IndexedDB clear failed:', e);
+    }
   }
 
   let deferredInstallPrompt = null;
@@ -367,5 +416,7 @@
     esc,
     api,
     renderHeader,
+    saveAuthToken,
+    clearAuthToken,
   };
 })();

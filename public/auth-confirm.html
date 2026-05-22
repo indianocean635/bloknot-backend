@@ -151,13 +151,13 @@
       console.log('Magic link confirmed - JWT cookie manages session');
           showSetPassword();
         } else if (data.status === 'LOGIN_SUCCESS') {
-          // Save token to localStorage for iOS PWA fallback
-          if (data.token) {
-            localStorage.setItem('auth_token', data.token);
-            console.log('Token saved to localStorage for iOS PWA');
+          // Save token to both localStorage and IndexedDB for iOS PWA fallback
+          if (data.token && typeof Bloknot !== 'undefined' && Bloknot.saveAuthToken) {
+            Bloknot.saveAuthToken(data.token);
+            console.log('Token saved to localStorage and IndexedDB for iOS PWA');
           }
           
-          console.log('Login successful - JWT cookie + localStorage for iOS PWA');
+          console.log('Login successful - JWT cookie + localStorage + IndexedDB for iOS PWA');
           
           console.log('Stored user session:', {
             email: data.user.email,
