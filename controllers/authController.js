@@ -139,7 +139,11 @@ async function loginWithMagicLink(req, res) {
     const sessionToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "90d" });
     setAuthCookie(res, sessionToken);
 
-    res.json({ user: { id: user.id, email: user.email, role: user.role } });
+    // Return token in response body for localStorage fallback (iOS PWA)
+    res.json({ 
+      user: { id: user.id, email: user.email, role: user.role },
+      token: sessionToken 
+    });
   } catch (e) {
     return res.status(401).json({ error: "Invalid token" });
   }
@@ -148,7 +152,7 @@ async function loginWithMagicLink(req, res) {
 // Выход
 async function logout(req, res) {
   clearAuthCookie(res);
-  res.json({ message: "Logged out" });
+  res.json({ message: "Logged out", clearLocalStorage: true });
 }
 
 // Получить текущего пользователя

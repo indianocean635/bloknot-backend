@@ -85,8 +85,11 @@
     try {
       const params = new URLSearchParams(location.search || "");
       if (params.get("logged") === "1") {
-        // Remove localStorage usage - auth via JWT cookie
-      console.log('Login successful - JWT cookie manages session');
+        // Check if token is in localStorage from magic link callback
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          console.log('Login successful - token saved to localStorage for iOS PWA');
+        }
         params.delete("logged");
         const next = location.pathname + (params.toString() ? "?" + params.toString() : "") + (location.hash || "");
         history.replaceState(null, "", next);
