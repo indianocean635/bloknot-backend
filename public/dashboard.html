@@ -141,10 +141,22 @@
       }
     }
     
+    // If still no token, check if cookie exists
+    if (!hasToken) {
+      const cookies = document.cookie.split(';').map(c => c.trim());
+      const authCookie = cookies.find(c => c.startsWith('auth='));
+      if (authCookie) {
+        hasToken = decodeURIComponent(authCookie.substring(5));
+        localStorage.setItem('auth_token', hasToken);
+        console.log('DASHBOARD: Token found in cookie, synced to localStorage');
+      }
+    }
+    
     console.log('DASHBOARD: Token found:', !!hasToken);
     
+    // Only redirect if absolutely no token anywhere
     if (!hasToken) {
-      console.log('DASHBOARD: No token found, redirecting to login');
+      console.log('DASHBOARD: No token found anywhere, redirecting to login');
       window.location.href = '/';
     }
   }
