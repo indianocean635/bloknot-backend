@@ -151,18 +151,22 @@ bot.on('message', (ctx) => {
 
 // Function to send booking confirmations (can be called from backend)
 async function sendBookingConfirmationMessage(booking, chatId) {
-  try {
-    const bookingDate = new Date(booking.startsAt);
-    const dateTimeStr = bookingDate.toLocaleString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Moscow'
-    });
+  const maxRetries = 3;
+  const retryDelay = 1000; // 1 second
 
-    const message = `
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const bookingDate = new Date(booking.startsAt);
+      const dateTimeStr = bookingDate.toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Europe/Moscow'
+      });
+
+      const message = `
 ✅ Запись подтверждена!
 
 📋 Услуга: ${booking.service?.name}
@@ -170,29 +174,38 @@ async function sendBookingConfirmationMessage(booking, chatId) {
 📅 Дата и время: ${dateTimeStr}
 🏢 ${booking.business?.name}
 📞 Телефон: ${booking.customerPhone}
-    `.trim();
+      `.trim();
 
-    await bot.telegram.sendMessage(chatId, message, {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: '❌ Отменить запись',
-              callback_data: `cancel_${booking.id}`
-            }
-          ],
-          [
-            {
-              text: '� Перенести запись',
-              url: 'https://bloknotservis.ru/booking'
-            }
+      await bot.telegram.sendMessage(chatId, message, {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: '❌ Отменить запись',
+                callback_data: `cancel_${booking.id}`
+              }
+            ],
+            [
+              {
+                text: '📅 Перенести запись',
+                url: 'https://bloknotservis.ru/booking'
+              }
+            ]
           ]
-        ]
+        }
+      });
+      console.log('[CONFIRMATION SENT] Booking ID:', booking.id, 'Chat ID:', chatId);
+      return; // Success, exit function
+    } catch (error) {
+      console.error(`[TELEGRAM BOT] Error sending confirmation (attempt ${attempt}/${maxRetries}):`, error.message);
+      
+      if (attempt < maxRetries) {
+        console.log(`[TELEGRAM BOT] Retrying in ${retryDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      } else {
+        console.error('[TELEGRAM BOT] Failed to send confirmation after all retries');
       }
-    });
-    console.log('[CONFIRMATION SENT] Booking ID:', booking.id, 'Chat ID:', chatId);
-  } catch (error) {
-    console.error('[TELEGRAM BOT] Error sending confirmation:', error);
+    }
   }
 }
 
