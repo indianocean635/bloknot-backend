@@ -197,7 +197,11 @@ async function sendBookingConfirmationMessage(booking, chatId) {
       console.log('[CONFIRMATION SENT] Booking ID:', booking.id, 'Chat ID:', chatId);
       return; // Success, exit function
     } catch (error) {
-      console.error(`[TELEGRAM BOT] Error sending confirmation (attempt ${attempt}/${maxRetries}):`, error.message);
+      console.error(`[TELEGRAM BOT] Error sending confirmation (attempt ${attempt}/${maxRetries}):`);
+      console.error('[TELEGRAM BOT] Error:', error);
+      console.error('[TELEGRAM BOT] Error message:', error.message);
+      console.error('[TELEGRAM BOT] Error code:', error.code);
+      console.error('[TELEGRAM BOT] Error stack:', error.stack);
       
       if (attempt < maxRetries) {
         console.log(`[TELEGRAM BOT] Retrying in ${retryDelay}ms...`);
@@ -222,12 +226,20 @@ async function sendReminderMessage(reminder) {
 // Graceful shutdown
 process.once('SIGINT', () => {
   console.log('[TELEGRAM BOT] Received SIGINT, stopping bot...');
-  bot.stop('SIGINT');
+  if (bot && bot.isRunning) {
+    bot.stop('SIGINT');
+  } else {
+    console.log('[TELEGRAM BOT] Bot is not running, skipping stop');
+  }
 });
 
 process.once('SIGTERM', () => {
   console.log('[TELEGRAM BOT] Received SIGTERM, stopping bot...');
-  bot.stop('SIGTERM');
+  if (bot && bot.isRunning) {
+    bot.stop('SIGTERM');
+  } else {
+    console.log('[TELEGRAM BOT] Bot is not running, skipping stop');
+  }
 });
 
 // Start bot with conflict handling
