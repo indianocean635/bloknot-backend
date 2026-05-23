@@ -1082,9 +1082,16 @@
 
           console.log("REGISTER SUCCESS:", data);
           
-          localStorage.clear();
-          localStorage.setItem('auth_token', data.token);
-          localStorage.setItem('auth_user', JSON.stringify(data.user));
+          // Save token using Bloknot.saveAuthToken if available (localStorage + IndexedDB + cookie)
+          if (data.token && typeof Bloknot !== 'undefined' && Bloknot.saveAuthToken) {
+            Bloknot.saveAuthToken(data.token);
+            console.log('Token saved via Bloknot.saveAuthToken for iOS PWA');
+          } else {
+            // Fallback to localStorage
+            localStorage.clear();
+            localStorage.setItem('auth_token', data.token);
+            localStorage.setItem('auth_user', JSON.stringify(data.user));
+          }
           
           if (!data.user.businessId) {
             console.error("CRITICAL: user has no business after registration:", data.user);
@@ -1115,9 +1122,16 @@
 
           console.log("LOGIN SUCCESS:", data);
           
-          localStorage.clear();
-          localStorage.setItem('auth_token', data.token);
-          localStorage.setItem('auth_user', JSON.stringify(data.user));
+          // Save token using Bloknot.saveAuthToken if available (localStorage + IndexedDB + cookie)
+          if (data.token && typeof Bloknot !== 'undefined' && Bloknot.saveAuthToken) {
+            Bloknot.saveAuthToken(data.token);
+            console.log('Token saved via Bloknot.saveAuthToken for iOS PWA');
+          } else {
+            // Fallback to localStorage
+            localStorage.clear();
+            localStorage.setItem('auth_token', data.token);
+            localStorage.setItem('auth_user', JSON.stringify(data.user));
+          }
           
           closeModal();
           showNotice("Вход выполнен!");

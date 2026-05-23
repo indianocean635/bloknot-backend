@@ -228,11 +228,15 @@ router.post('/login', async (req, res) => {
       { expiresIn: '90d' }
     );
     
-    // Set authentication cookie
+    // Set authentication cookie with SameSite=None, Secure for iOS PWA
+    const maxAge = 90 * 24 * 60 * 60;
+    const expires = new Date(Date.now() + maxAge * 1000).toUTCString();
     res.cookie('auth', token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'Lax',
+      sameSite: 'None',
+      maxAge: maxAge,
+      expires: new Date(Date.now() + maxAge * 1000),
       path: '/',
     });
     
