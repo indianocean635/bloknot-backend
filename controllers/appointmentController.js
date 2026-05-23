@@ -229,6 +229,9 @@ async function createPublicAppointment(req, res) {
       }
     });
 
+    console.log('[APPOINTMENT CREATED] startsAtLocal:', appointment.startsAtLocal);
+    console.log('[APPOINTMENT CREATED] endsAtLocal:', appointment.endsAtLocal);
+
     // Send Telegram confirmation if chatId is linked
     if (appointment.telegramChatId) {
       try {
