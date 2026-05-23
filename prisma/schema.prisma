@@ -188,6 +188,8 @@ model Appointment {
   customerComment    String?
   startsAt           DateTime
   endsAt             DateTime
+  startsAtLocal      String?  // Store original time with timezone offset for Telegram display
+  endsAtLocal        String?  // Store original end time with timezone offset for Telegram display
   businessId         String
   serviceId          Int
   masterId           Int

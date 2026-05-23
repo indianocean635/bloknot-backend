@@ -156,15 +156,27 @@ async function sendBookingConfirmationMessage(booking, chatId) {
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const bookingDate = new Date(booking.startsAt);
-      const dateTimeStr = bookingDate.toLocaleString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Europe/Moscow'
-      });
+      // Use startsAtLocal if available (original time with timezone), otherwise fallback to startsAt
+      const timeToUse = booking.startsAtLocal || booking.startsAt;
+      const bookingDate = new Date(timeToUse);
+      
+      // If using startsAtLocal, format it directly without timezone conversion
+      const dateTimeStr = booking.startsAtLocal 
+        ? bookingDate.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : bookingDate.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Europe/Moscow'
+          });
 
       const message = `
 ✅ Запись подтверждена!
