@@ -1440,8 +1440,8 @@
       const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
 
       const [hours, minutes] = selectedTime.split(':').map(Number);
-      const startsAt = new Date(selectedDate);
-      startsAt.setHours(hours, minutes, 0, 0);
+      // Create date in Moscow timezone (UTC+3) to match Telegram bot
+      const startsAt = new Date(selectedDate + 'T' + selectedTime + ':00+03:00');
       
       const endsAt = new Date(startsAt);
       endsAt.setMinutes(endsAt.getMinutes() + totalDuration);
