@@ -158,6 +158,8 @@ async function sendBookingConfirmationMessage(booking, chatId) {
     try {
       // Use startsAtLocal if available (original time with timezone), otherwise fallback to startsAt
       const timeToUse = booking.startsAtLocal || booking.startsAt;
+      console.log('[TELEGRAM] timeToUse:', timeToUse);
+      console.log('[TELEGRAM] startsAtLocal:', booking.startsAtLocal);
       
       // Parse ISO string directly without Date conversion to avoid timezone issues
       // Format: 2026-05-27T10:00:00+03:00
@@ -165,6 +167,7 @@ async function sendBookingConfirmationMessage(booking, chatId) {
         /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).*/,
         '$3.$2.$1 $4:$5'
       );
+      console.log('[TELEGRAM] dateTimeStr:', dateTimeStr);
 
       const message = `
 ✅ Запись подтверждена!
