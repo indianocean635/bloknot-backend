@@ -64,7 +64,8 @@ async function sendBookingConfirmation(ctx, booking) {
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    timeZone: 'Europe/Moscow'
   });
 
   const message = `
@@ -157,7 +158,8 @@ async function sendBookingConfirmationMessage(booking, chatId) {
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Europe/Moscow'
     });
 
     const message = `

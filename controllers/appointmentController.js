@@ -227,11 +227,6 @@ async function createPublicAppointment(req, res) {
       }
     });
 
-    console.log('✅ Public appointment created in DB:', appointment.id);
-    console.log('startsAt (raw):', startsAt);
-    console.log('startsAt (saved):', appointment.startsAt);
-    console.log('startsAt (ISO):', appointment.startsAt.toISOString());
-
     // Send Telegram confirmation if chatId is linked
     if (appointment.telegramChatId) {
       try {
