@@ -260,11 +260,39 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
       border: 1px solid rgba(0,0,0,0.05);
       overflow: hidden;
+      user-select: none;
     }
 
     .crm-booking-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .crm-booking-card.dragging {
+      opacity: 0.8;
+      cursor: grabbing;
+      z-index: 1000;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .crm-booking-card.resizing {
+      cursor: ns-resize;
+      z-index: 1000;
+    }
+
+    .crm-booking-resize-handle {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      cursor: ns-resize;
+      background: linear-gradient(to top, rgba(0,0,0,0.1), transparent);
+      border-radius: 0 0 8px 8px;
+    }
+
+    .crm-booking-resize-handle:hover {
+      background: linear-gradient(to top, rgba(0,0,0,0.2), transparent);
     }
 
     .crm-booking-card.new {
@@ -1250,15 +1278,125 @@
             card.style.top = `${top}px`;
             card.style.height = `${Math.max(height, 40)}px`;
             card.dataset.bookingId = booking.id;
+            card.dataset.startsAt = booking.startsAt;
+            card.dataset.endsAt = booking.endsAt;
+            card.dataset.masterId = booking.masterId;
             card.innerHTML = `
               <div class="crm-booking-time">${fmtTime(booking.startsAt)} – ${fmtTime(booking.endsAt)}</div>
               <div class="crm-booking-client">${booking.customerName}</div>
               <div class="crm-booking-service">${service?.name || ''}</div>
               <div class="crm-booking-phone">${master?.name || ''}</div>
+              <div class="crm-booking-resize-handle"></div>
             `;
+            
+            // Add drag functionality
+            let isDragging = false;
+            let startY = 0;
+            let startTop = 0;
+            let startHeight = 0;
+            let isResizing = false;
+            
+            card.addEventListener('mousedown', (e) => {
+              if (e.target.classList.contains('crm-booking-resize-handle')) {
+                // Start resize
+                isResizing = true;
+                startY = e.clientY;
+                startHeight = card.offsetHeight;
+                card.classList.add('resizing');
+                e.preventDefault();
+              } else {
+                // Start drag
+                isDragging = true;
+                startY = e.clientY;
+                startTop = card.offsetTop;
+                card.classList.add('dragging');
+                e.preventDefault();
+              }
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+              if (isDragging) {
+                const deltaY = e.clientY - startY;
+                const slotHeight = 60;
+                const newTop = startTop + deltaY;
+                
+                // Snap to 15-minute intervals (15px = 15 minutes)
+                const snappedTop = Math.round(newTop / 15) * 15;
+                card.style.top = `${snappedTop}px`;
+              } else if (isResizing) {
+                const deltaY = e.clientY - startY;
+                const newHeight = Math.max(40, startHeight + deltaY);
+                
+                // Snap to 15-minute intervals
+                const snappedHeight = Math.round(newHeight / 15) * 15;
+                card.style.height = `${snappedHeight}px`;
+              }
+            });
+            
+            document.addEventListener('mouseup', async (e) => {
+              if (isDragging || isResizing) {
+                const bookingId = card.dataset.bookingId;
+                const masterId = card.dataset.masterId;
+                const slotHeight = 60;
+                
+                // Calculate new start time
+                const newTop = parseInt(card.style.top);
+                const startHour = 9 + Math.floor(newTop / slotHeight);
+                const startMin = Math.round((newTop % slotHeight) / slotHeight * 60);
+                
+                // Calculate new end time
+                const newHeight = parseInt(card.style.height);
+                const duration = Math.round((newHeight / slotHeight) * 60);
+                const endHour = startHour + Math.floor((startMin + duration) / 60);
+                const endMin = (startMin + duration) % 60;
+                
+                // Create new date strings
+                const dayStr = ymd(day);
+                const newStartsAt = new Date(`${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`).toISOString();
+                const newEndsAt = new Date(`${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`).toISOString();
+                
+                // Update booking on server
+                try {
+                  const response = await fetch(`/api/appointments/${bookingId}`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      startsAt: newStartsAt,
+                      endsAt: newEndsAt,
+                    }),
+                    credentials: 'include'
+                  });
+                  
+                  if (response.ok) {
+                    console.log('Booking updated successfully');
+                    // Reload bookings to reflect changes
+                    loadBookings();
+                  } else {
+                    console.error('Failed to update booking');
+                    // Revert to original position
+                    card.style.top = `${top}px`;
+                    card.style.height = `${Math.max(height, 40)}px`;
+                  }
+                } catch (error) {
+                  console.error('Error updating booking:', error);
+                  // Revert to original position
+                  card.style.top = `${top}px`;
+                  card.style.height = `${Math.max(height, 40)}px`;
+                }
+                
+                isDragging = false;
+                isResizing = false;
+                card.classList.remove('dragging', 'resizing');
+              }
+            });
+            
             card.addEventListener('click', (e) => {
-              e.stopPropagation();
-              openBookingModal(booking);
+              if (!isDragging && !isResizing) {
+                e.stopPropagation();
+                openBookingModal(booking);
+              }
             });
             column.appendChild(card);
           });
@@ -1401,15 +1539,125 @@
             card.style.top = `${top}px`;
             card.style.height = `${Math.max(height, 40)}px`;
             card.dataset.bookingId = booking.id;
+            card.dataset.startsAt = booking.startsAt;
+            card.dataset.endsAt = booking.endsAt;
+            card.dataset.masterId = booking.masterId;
             card.innerHTML = `
               <div class="crm-booking-time">${fmtTime(booking.startsAt)} – ${fmtTime(booking.endsAt)}</div>
               <div class="crm-booking-client">${booking.customerName}</div>
               <div class="crm-booking-service">${service?.name || ''}</div>
               ${booking.customerPhone ? `<div class="crm-booking-phone">${booking.customerPhone}</div>` : ''}
+              <div class="crm-booking-resize-handle"></div>
             `;
+            
+            // Add drag functionality for day view
+            let isDragging = false;
+            let startY = 0;
+            let startTop = 0;
+            let startHeight = 0;
+            let isResizing = false;
+            
+            card.addEventListener('mousedown', (e) => {
+              if (e.target.classList.contains('crm-booking-resize-handle')) {
+                // Start resize
+                isResizing = true;
+                startY = e.clientY;
+                startHeight = card.offsetHeight;
+                card.classList.add('resizing');
+                e.preventDefault();
+              } else {
+                // Start drag
+                isDragging = true;
+                startY = e.clientY;
+                startTop = card.offsetTop;
+                card.classList.add('dragging');
+                e.preventDefault();
+              }
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+              if (isDragging) {
+                const deltaY = e.clientY - startY;
+                const slotHeight = 60;
+                const newTop = startTop + deltaY;
+                
+                // Snap to 15-minute intervals (15px = 15 minutes)
+                const snappedTop = Math.round(newTop / 15) * 15;
+                card.style.top = `${snappedTop}px`;
+              } else if (isResizing) {
+                const deltaY = e.clientY - startY;
+                const newHeight = Math.max(40, startHeight + deltaY);
+                
+                // Snap to 15-minute intervals
+                const snappedHeight = Math.round(newHeight / 15) * 15;
+                card.style.height = `${snappedHeight}px`;
+              }
+            });
+            
+            document.addEventListener('mouseup', async (e) => {
+              if (isDragging || isResizing) {
+                const bookingId = card.dataset.bookingId;
+                const masterId = card.dataset.masterId;
+                const slotHeight = 60;
+                
+                // Calculate new start time
+                const newTop = parseInt(card.style.top);
+                const startHour = 9 + Math.floor(newTop / slotHeight);
+                const startMin = Math.round((newTop % slotHeight) / slotHeight * 60);
+                
+                // Calculate new end time
+                const newHeight = parseInt(card.style.height);
+                const duration = Math.round((newHeight / slotHeight) * 60);
+                const endHour = startHour + Math.floor((startMin + duration) / 60);
+                const endMin = (startMin + duration) % 60;
+                
+                // Create new date strings
+                const dayStr = ymd(state.currentDate);
+                const newStartsAt = new Date(`${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`).toISOString();
+                const newEndsAt = new Date(`${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`).toISOString();
+                
+                // Update booking on server
+                try {
+                  const response = await fetch(`/api/appointments/${bookingId}`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      startsAt: newStartsAt,
+                      endsAt: newEndsAt,
+                    }),
+                    credentials: 'include'
+                  });
+                  
+                  if (response.ok) {
+                    console.log('Booking updated successfully');
+                    // Reload bookings to reflect changes
+                    loadBookings();
+                  } else {
+                    console.error('Failed to update booking');
+                    // Revert to original position
+                    card.style.top = `${top}px`;
+                    card.style.height = `${Math.max(height, 40)}px`;
+                  }
+                } catch (error) {
+                  console.error('Error updating booking:', error);
+                  // Revert to original position
+                  card.style.top = `${top}px`;
+                  card.style.height = `${Math.max(height, 40)}px`;
+                }
+                
+                isDragging = false;
+                isResizing = false;
+                card.classList.remove('dragging', 'resizing');
+              }
+            });
+            
             card.addEventListener('click', (e) => {
-              e.stopPropagation();
-              openBookingModal(booking);
+              if (!isDragging && !isResizing) {
+                e.stopPropagation();
+                openBookingModal(booking);
+              }
             });
             column.appendChild(card);
           });
