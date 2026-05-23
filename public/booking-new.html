@@ -1440,9 +1440,8 @@
       const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
 
       const [hours, minutes] = selectedTime.split(':').map(Number);
-      // Create date as local time (without timezone indicator)
-      // This will be interpreted as local time by the server
-      const startsAt = new Date(selectedDate + 'T' + selectedTime + ':00');
+      // Create date with explicit Moscow timezone (UTC+3) to prevent UTC conversion
+      const startsAt = new Date(selectedDate + 'T' + selectedTime + ':00+03:00');
       
       const endsAt = new Date(startsAt);
       endsAt.setMinutes(endsAt.getMinutes() + totalDuration);
