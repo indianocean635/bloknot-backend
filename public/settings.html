@@ -1528,8 +1528,9 @@ function renderCalendar(date, scheduleData) {
   // Re-attach event listeners
   container.querySelectorAll('.day-cell').forEach(cell => {
     cell.addEventListener('click', function(e) {
-      // Handle multi-select with Ctrl/Cmd
-      if (!e.ctrlKey && !e.metaKey) {
+      // Handle multi-select with Ctrl/Cmd or "Apply to selected" checkbox
+      const applyToSelected = document.getElementById('applyToSelected').checked;
+      if (!e.ctrlKey && !e.metaKey && !applyToSelected) {
         // Deselect all other cells
         container.querySelectorAll('.day-cell.selected').forEach(c => {
           if (c !== this) {
