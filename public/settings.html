@@ -1287,6 +1287,9 @@ async function saveSpecialist(index) {
 }
 
 function openScheduleSettings(index) {
+  // Store current specialist index globally for use in applyScheduleTime
+  window.currentSpecialistIndex = index;
+  
   // Get specialist info
   const nameInput = document.getElementById(`specialistName${index}`);
   const emailInput = document.getElementById(`specialistEmail${index}`);
@@ -1663,6 +1666,11 @@ function applyScheduleTime() {
       applyButton.style.backgroundColor = '';
       applyButton.textContent = 'Применить';
     }, 2000);
+  }
+
+  // Also save the schedule to the server
+  if (window.currentSpecialistIndex !== undefined) {
+    saveSpecialistSettings(window.currentSpecialistIndex);
   }
 }
 
