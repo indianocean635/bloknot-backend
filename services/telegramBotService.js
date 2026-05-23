@@ -60,7 +60,6 @@ bot.start(async (ctx) => {
 async function sendBookingConfirmation(ctx, booking) {
   const bookingDate = new Date(booking.startsAt);
   const dateTimeStr = bookingDate.toLocaleString('ru-RU', {
-    timeZone: 'Europe/Moscow',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -154,7 +153,6 @@ async function sendBookingConfirmationMessage(booking, chatId) {
   try {
     const bookingDate = new Date(booking.startsAt);
     const dateTimeStr = bookingDate.toLocaleString('ru-RU', {
-      timeZone: 'Europe/Moscow',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
