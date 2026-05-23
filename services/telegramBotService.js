@@ -153,6 +153,8 @@ bot.on('message', (ctx) => {
 async function sendBookingConfirmationMessage(booking, chatId) {
   try {
     const bookingDate = new Date(booking.startsAt);
+    console.log('[TELEGRAM] Raw startsAt:', booking.startsAt);
+    console.log('[TELEGRAM] bookingDate ISO:', bookingDate.toISOString());
     const dateTimeStr = bookingDate.toLocaleString('ru-RU', {
       day: '2-digit',
       month: '2-digit',
@@ -161,6 +163,7 @@ async function sendBookingConfirmationMessage(booking, chatId) {
       minute: '2-digit',
       timeZone: 'Europe/Moscow'
     });
+    console.log('[TELEGRAM] Formatted dateTimeStr:', dateTimeStr);
 
     const message = `
 ✅ Запись подтверждена!
