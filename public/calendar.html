@@ -1295,11 +1295,14 @@
             let startTop = 0;
             let startHeight = 0;
             let isResizing = false;
+            let hasMoved = false;
             
             card.addEventListener('mousedown', (e) => {
               if (e.target.classList.contains('crm-booking-resize-handle')) {
                 // Start resize
                 isResizing = true;
+                isDragging = false;
+                hasMoved = false;
                 startY = e.clientY;
                 startHeight = card.offsetHeight;
                 card.classList.add('resizing');
@@ -1307,6 +1310,8 @@
               } else {
                 // Start drag
                 isDragging = true;
+                isResizing = false;
+                hasMoved = false;
                 startY = e.clientY;
                 startTop = card.offsetTop;
                 card.classList.add('dragging');
@@ -1316,6 +1321,7 @@
             
             document.addEventListener('mousemove', (e) => {
               if (isDragging) {
+                hasMoved = true;
                 const deltaY = e.clientY - startY;
                 const slotHeight = 60;
                 const newTop = startTop + deltaY;
@@ -1324,6 +1330,7 @@
                 const snappedTop = Math.round(newTop / 15) * 15;
                 card.style.top = `${snappedTop}px`;
               } else if (isResizing) {
+                hasMoved = true;
                 const deltaY = e.clientY - startY;
                 const newHeight = Math.max(40, startHeight + deltaY);
                 
@@ -1335,65 +1342,72 @@
             
             document.addEventListener('mouseup', async (e) => {
               if (isDragging || isResizing) {
-                const bookingId = card.dataset.bookingId;
-                const masterId = card.dataset.masterId;
-                const slotHeight = 60;
-                
-                // Calculate new start time
-                const newTop = parseInt(card.style.top);
-                const startHour = 9 + Math.floor(newTop / slotHeight);
-                const startMin = Math.round((newTop % slotHeight) / slotHeight * 60);
-                
-                // Calculate new end time
-                const newHeight = parseInt(card.style.height);
-                const duration = Math.round((newHeight / slotHeight) * 60);
-                const endHour = startHour + Math.floor((startMin + duration) / 60);
-                const endMin = (startMin + duration) % 60;
-                
-                // Create new date strings
-                const dayStr = ymd(day);
-                const newStartsAt = new Date(`${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`).toISOString();
-                const newEndsAt = new Date(`${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`).toISOString();
-                
-                // Update booking on server
-                try {
-                  const response = await fetch(`/api/appointments/${bookingId}`, {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      startsAt: newStartsAt,
-                      endsAt: newEndsAt,
-                    }),
-                    credentials: 'include'
-                  });
+                if (hasMoved) {
+                  const bookingId = card.dataset.bookingId;
+                  const masterId = card.dataset.masterId;
+                  const slotHeight = 60;
                   
-                  if (response.ok) {
-                    console.log('Booking updated successfully');
-                    // Reload bookings to reflect changes
-                    loadBookings();
-                  } else {
-                    console.error('Failed to update booking');
+                  // Calculate new start time
+                  const newTop = parseInt(card.style.top);
+                  const startHour = 9 + Math.floor(newTop / slotHeight);
+                  const startMin = Math.round((newTop % slotHeight) / slotHeight * 60);
+                  
+                  // Calculate new end time
+                  const newHeight = parseInt(card.style.height);
+                  const duration = Math.round((newHeight / slotHeight) * 60);
+                  const endHour = startHour + Math.floor((startMin + duration) / 60);
+                  const endMin = (startMin + duration) % 60;
+                  
+                  // Create new date strings
+                  const dayStr = ymd(day);
+                  const newStartsAt = new Date(`${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`).toISOString();
+                  const newEndsAt = new Date(`${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`).toISOString();
+                  
+                  // Update booking on server
+                  try {
+                    const response = await fetch(`/api/appointments/${bookingId}`, {
+                      method: 'PUT',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        startsAt: newStartsAt,
+                        endsAt: newEndsAt,
+                      }),
+                      credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                      console.log('Booking updated successfully');
+                      // Reload bookings to reflect changes
+                      loadBookings();
+                    } else {
+                      console.error('Failed to update booking');
+                      // Revert to original position
+                      card.style.top = `${top}px`;
+                      card.style.height = `${Math.max(height, 40)}px`;
+                    }
+                  } catch (error) {
+                    console.error('Error updating booking:', error);
                     // Revert to original position
                     card.style.top = `${top}px`;
                     card.style.height = `${Math.max(height, 40)}px`;
                   }
-                } catch (error) {
-                  console.error('Error updating booking:', error);
-                  // Revert to original position
+                } else {
+                  // No movement, revert position
                   card.style.top = `${top}px`;
                   card.style.height = `${Math.max(height, 40)}px`;
                 }
                 
                 isDragging = false;
                 isResizing = false;
+                hasMoved = false;
                 card.classList.remove('dragging', 'resizing');
               }
             });
             
             card.addEventListener('click', (e) => {
-              if (!isDragging && !isResizing) {
+              if (!hasMoved && !isDragging && !isResizing) {
                 e.stopPropagation();
                 openBookingModal(booking);
               }
@@ -1556,11 +1570,14 @@
             let startTop = 0;
             let startHeight = 0;
             let isResizing = false;
+            let hasMoved = false;
             
             card.addEventListener('mousedown', (e) => {
               if (e.target.classList.contains('crm-booking-resize-handle')) {
                 // Start resize
                 isResizing = true;
+                isDragging = false;
+                hasMoved = false;
                 startY = e.clientY;
                 startHeight = card.offsetHeight;
                 card.classList.add('resizing');
@@ -1568,6 +1585,8 @@
               } else {
                 // Start drag
                 isDragging = true;
+                isResizing = false;
+                hasMoved = false;
                 startY = e.clientY;
                 startTop = card.offsetTop;
                 card.classList.add('dragging');
@@ -1577,6 +1596,7 @@
             
             document.addEventListener('mousemove', (e) => {
               if (isDragging) {
+                hasMoved = true;
                 const deltaY = e.clientY - startY;
                 const slotHeight = 60;
                 const newTop = startTop + deltaY;
@@ -1585,6 +1605,7 @@
                 const snappedTop = Math.round(newTop / 15) * 15;
                 card.style.top = `${snappedTop}px`;
               } else if (isResizing) {
+                hasMoved = true;
                 const deltaY = e.clientY - startY;
                 const newHeight = Math.max(40, startHeight + deltaY);
                 
@@ -1596,65 +1617,72 @@
             
             document.addEventListener('mouseup', async (e) => {
               if (isDragging || isResizing) {
-                const bookingId = card.dataset.bookingId;
-                const masterId = card.dataset.masterId;
-                const slotHeight = 60;
-                
-                // Calculate new start time
-                const newTop = parseInt(card.style.top);
-                const startHour = 9 + Math.floor(newTop / slotHeight);
-                const startMin = Math.round((newTop % slotHeight) / slotHeight * 60);
-                
-                // Calculate new end time
-                const newHeight = parseInt(card.style.height);
-                const duration = Math.round((newHeight / slotHeight) * 60);
-                const endHour = startHour + Math.floor((startMin + duration) / 60);
-                const endMin = (startMin + duration) % 60;
-                
-                // Create new date strings
-                const dayStr = ymd(state.currentDate);
-                const newStartsAt = new Date(`${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`).toISOString();
-                const newEndsAt = new Date(`${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`).toISOString();
-                
-                // Update booking on server
-                try {
-                  const response = await fetch(`/api/appointments/${bookingId}`, {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      startsAt: newStartsAt,
-                      endsAt: newEndsAt,
-                    }),
-                    credentials: 'include'
-                  });
+                if (hasMoved) {
+                  const bookingId = card.dataset.bookingId;
+                  const masterId = card.dataset.masterId;
+                  const slotHeight = 60;
                   
-                  if (response.ok) {
-                    console.log('Booking updated successfully');
-                    // Reload bookings to reflect changes
-                    loadBookings();
-                  } else {
-                    console.error('Failed to update booking');
+                  // Calculate new start time
+                  const newTop = parseInt(card.style.top);
+                  const startHour = 9 + Math.floor(newTop / slotHeight);
+                  const startMin = Math.round((newTop % slotHeight) / slotHeight * 60);
+                  
+                  // Calculate new end time
+                  const newHeight = parseInt(card.style.height);
+                  const duration = Math.round((newHeight / slotHeight) * 60);
+                  const endHour = startHour + Math.floor((startMin + duration) / 60);
+                  const endMin = (startMin + duration) % 60;
+                  
+                  // Create new date strings
+                  const dayStr = ymd(state.currentDate);
+                  const newStartsAt = new Date(`${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`).toISOString();
+                  const newEndsAt = new Date(`${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`).toISOString();
+                  
+                  // Update booking on server
+                  try {
+                    const response = await fetch(`/api/appointments/${bookingId}`, {
+                      method: 'PUT',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        startsAt: newStartsAt,
+                        endsAt: newEndsAt,
+                      }),
+                      credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                      console.log('Booking updated successfully');
+                      // Reload bookings to reflect changes
+                      loadBookings();
+                    } else {
+                      console.error('Failed to update booking');
+                      // Revert to original position
+                      card.style.top = `${top}px`;
+                      card.style.height = `${Math.max(height, 40)}px`;
+                    }
+                  } catch (error) {
+                    console.error('Error updating booking:', error);
                     // Revert to original position
                     card.style.top = `${top}px`;
                     card.style.height = `${Math.max(height, 40)}px`;
                   }
-                } catch (error) {
-                  console.error('Error updating booking:', error);
-                  // Revert to original position
+                } else {
+                  // No movement, revert position
                   card.style.top = `${top}px`;
                   card.style.height = `${Math.max(height, 40)}px`;
                 }
                 
                 isDragging = false;
                 isResizing = false;
+                hasMoved = false;
                 card.classList.remove('dragging', 'resizing');
               }
             });
             
             card.addEventListener('click', (e) => {
-              if (!isDragging && !isResizing) {
+              if (!hasMoved && !isDragging && !isResizing) {
                 e.stopPropagation();
                 openBookingModal(booking);
               }

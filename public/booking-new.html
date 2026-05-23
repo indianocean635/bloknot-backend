@@ -1235,6 +1235,7 @@
       console.log('loadTimeSlots called');
       console.log('selectedSpecialist:', selectedSpecialist);
       console.log('selectedSpecialist.schedule:', selectedSpecialist?.schedule);
+      console.log('selectedDate:', selectedDate);
 
       if (!selectedSpecialist || !selectedSpecialist.schedule) {
         console.log('No schedule found, using default time slots');
@@ -1255,7 +1256,7 @@
         const dateKey = selectedDate;
         const daySchedule = schedule[dateKey];
 
-        console.log('Schedule:', schedule);
+        console.log('Schedule keys:', Object.keys(schedule));
         console.log('Date key:', dateKey);
         console.log('Day schedule:', daySchedule);
 
@@ -1300,7 +1301,7 @@
             }
           }).join('');
         } else {
-          console.log('Day not enabled in schedule');
+          console.log('Day not enabled in schedule or no day schedule found');
           timeSlotsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Специалист не работает в этот день</div>';
         }
       }
