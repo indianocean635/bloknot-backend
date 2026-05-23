@@ -1,4 +1,5 @@
 const { prisma } = require("../services/prismaService");
+const { sendBookingConfirmationMessage } = require("../services/telegramBotService");
 
 // Link Telegram chatId to booking using booking token
 async function linkBooking(req, res) {
@@ -40,6 +41,9 @@ async function linkBooking(req, res) {
     });
 
     console.log('[TELEGRAM] Booking linked successfully:', updated.id);
+
+    // Send confirmation message to Telegram
+    await sendBookingConfirmationMessage(updated, chatId);
 
     res.json({ booking: updated });
   } catch (error) {
