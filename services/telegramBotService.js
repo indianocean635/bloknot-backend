@@ -176,7 +176,7 @@ async function sendBookingConfirmationMessage(booking, chatId) {
 📞 Телефон: ${booking.customerPhone}
       `.trim();
 
-      await bot.telegram.sendMessage(chatId, message, {
+      const payload = {
         reply_markup: {
           inline_keyboard: [
             [
@@ -193,7 +193,34 @@ async function sendBookingConfirmationMessage(booking, chatId) {
             ]
           ]
         }
-      });
+      };
+
+      console.log('[TELEGRAM] Full payload:', JSON.stringify(payload, null, 2));
+      console.log('[TELEGRAM] Message text:', message);
+      console.log('[TELEGRAM] Chat ID:', chatId);
+      console.log('[TELEGRAM] Booking ID:', booking.id);
+
+      // HARDCODE TEST: Send simple test button first
+      try {
+        await bot.telegram.sendMessage(chatId, 'TEST BUTTONS', {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: 'TEST',
+                  callback_data: 'test'
+                }
+              ]
+            ]
+          }
+        });
+        console.log('[TELEGRAM] Test button sent successfully');
+      } catch (testError) {
+        console.error('[TELEGRAM] Test button failed:', testError);
+      }
+
+      const response = await bot.telegram.sendMessage(chatId, message, payload);
+      console.log('[TELEGRAM] Message sent successfully, response:', JSON.stringify(response, null, 2));
       console.log('[CONFIRMATION SENT] Booking ID:', booking.id, 'Chat ID:', chatId);
       return; // Success, exit function
     } catch (error) {
