@@ -1,8 +1,9 @@
 # Bloknot Project Backup & Rollback Instructions
 
-## **Backup Date**: 2026-05-01
-## **Backup Version**: SPECIALIST_INVITATION_SYSTEM_v1.0
-## **Git Commit**: abd3c96
+## **Backup Date**: 2026-05-23
+## **Backup Version**: TIMEZONE_FIX_v1.0
+## **Git Commit**: ecf68b2
+## **Git Tag**: backup-2026-05-23-timezone-fix
 ## **Branch**: main
 
 ---
@@ -11,7 +12,7 @@
 
 ### **Backend Components:**
 - **Complete backend code** (`/var/www/bloknot-backend/`)
-- **Database schema** (Prisma schema with Master, Staff, StaffInvite, Business, User, Subscription tables)
+- **Database schema** (Prisma schema with Master, Staff, StaffInvite, Business, User, Subscription, Appointment tables)
 - **All API endpoints** working perfectly
 - **Email sending** (Yandex SMTP configured for specialist invitations)
 - **User authentication** (Email/Password login + JWT cookies)
@@ -19,6 +20,8 @@
 - **Admin panel** (User management working)
 - **Subscription system** (Specialist limits based on subscription tier)
 - **Settings system** (Business settings, specialists management)
+- **Telegram bot integration** (Booking confirmations with inline keyboard buttons)
+- **Timezone fix** (Local time display without UTC conversion)
 - **All dependencies** (package.json, node_modules)
 
 ### **Frontend Components:**
@@ -28,16 +31,20 @@
 - **Specialist schedule settings** (`public/specialist-schedule.html`)
 - **Booking link page** (`public/booking-link.html`)
 - **Admin panel** (`public/admin.html`) with user management
+- **Calendar page** (`public/calendar.html`) with appointment management
+- **Booking form** (`public/booking-new.html`) with timezone-aware time selection
 - **All CSS/JS files** working perfectly
 - **All static assets**
 
 ### **Database:**
 - **User data** (names, emails, phones, passwords, roles: OWNER, STAFF, SUPER_ADMIN)
 - **Business data** (name, slug, settings, subscription)
-- **Specialist data** (Master records with names, emails, active status)
+- **Specialist data** (Master records with names, emails, active status, schedules)
 - **Staff data** (Staff records linking users to businesses)
 - **Staff invitations** (StaffInvite records with email, businessId, status: pending/accepted)
 - **Subscription data** (Subscription records with tiers: FREE, STARTER, PROFESSIONAL, ENTERPRISE)
+- **Appointment data** (Booking records with startsAtLocal, endsAtLocal for timezone-aware display)
+- **Telegram integration** (Chat IDs, message IDs, booking tokens)
 - **Login tokens** (JWT with 30-day expiry)
 - **All tables and relationships**
 
@@ -59,6 +66,8 @@
 - **Specialist schedule settings** (Working hours, break times)
 - **Booking link generation** (Personal booking pages)
 - **Email sending** via Yandex SMTP
+- **Telegram bot integration** (Booking confirmations with inline keyboard buttons)
+- **Timezone fix** (Local time display without UTC conversion - shows client's selected time exactly)
 - **All redirects work perfectly**
 - **Database operations** work flawlessly
 
@@ -71,6 +80,9 @@
 - **Race condition fixes** (Registration redirect with localStorage token)
 - **Duplicate invitation prevention** (StaffInvite table checks)
 - **Staff role assignment** (Invited users become STAFF in business)
+- **Timezone-aware booking** (startsAtLocal and endsAtLocal fields store original client time)
+- **Telegram bot stability** (isRunning check before bot.stop, full error logging)
+- **Inline keyboard buttons** (Cancel and Reschedule buttons in Telegram messages)
 
 ---
 
@@ -86,11 +98,11 @@ cd /var/www/bloknot-backend
 git status
 git log --oneline -5
 
-# 3. Rollback to backup state (May 1, 2026)
-git checkout abd3c96
+# 3. Rollback to backup state (May 23, 2026)
+git checkout backup-2026-05-23-timezone-fix
 
 # 4. Restore all files
-git reset --hard abd3c96
+git reset --hard backup-2026-05-23-timezone-fix
 
 # 5. Install dependencies (if needed)
 npm install
@@ -263,9 +275,9 @@ npx prisma migrate reset
 
 ### **Git Repository:**
 - **URL**: https://github.com/indianocean635/bloknot-backend.git
-- **Backup Commit**: abd3c96
+- **Backup Commit**: ecf68b2
 - **Branch**: main
-- **Backup Tag**: backup-2026-05-01
+- **Backup Tag**: backup-2026-05-23-timezone-fix
 
 ### **Server Information:**
 - **Backend Port**: 3001
@@ -289,11 +301,57 @@ After rollback, test these scenarios:
 8. **Invited user registration** (should become STAFF in business)
 9. **Subscription system** (specialist limits should work correctly)
 10. **Settings save** (business settings and specialists should persist)
+11. **Booking creation** (time should be saved without timezone conversion)
+12. **Telegram bot** (inline keyboard buttons should appear when API is accessible)
 
 **If all these work perfectly, the rollback was successful!**
 
 ---
 
+## **DATABASE BACKUP INSTRUCTIONS:**
+
+### **Create Database Backup:**
+
+```bash
+# 1. Go to backend directory
+cd /var/www/bloknot-backend
+
+# 2. Export database to SQL file
+pg_dump $DATABASE_URL > backup-database-$(date +%Y%m%d).sql
+
+# 3. Compress the backup
+gzip backup-database-$(date +%Y%m%d).sql
+
+# 4. Move to safe location
+mv backup-database-$(date +%Y%m%d).sql.gz /root/backups/
+```
+
+### **Restore Database from Backup:**
+
+```bash
+# 1. Go to backend directory
+cd /var/www/bloknot-backend
+
+# 2. Decompress backup
+gunzip /root/backups/backup-database-20260523.sql.gz
+
+# 3. Restore database
+psql $DATABASE_URL < /root/backups/backup-database-20260523.sql
+
+# 4. Verify data
+npx prisma studio
+```
+
+### **Automated Daily Backup (Optional):**
+
+```bash
+# Add to crontab: crontab -e
+# Run daily at 3 AM
+0 3 * * * cd /var/www/bloknot-backend && pg_dump $DATABASE_URL | gzip > /root/backups/backup-database-$(date +\%Y\%m\%d).sql.gz
+```
+
+---
+
 **Created by: Cascade AI Assistant**
-**Date: 2026-05-01**
-**Status: SPECIALIST_INVITATION_SYSTEM_WORKING_STATE_ACHIEVED**
+**Date: 2026-05-23**
+**Status: TIMEZONE_FIX_WORKING_STATE_ACHIEVED**
