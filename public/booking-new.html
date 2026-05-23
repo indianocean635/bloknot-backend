@@ -1440,16 +1440,15 @@
       const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
 
       const [hours, minutes] = selectedTime.split(':').map(Number);
-      // Create ISO string with explicit Moscow timezone (UTC+3)
-      // Send the string directly to avoid Date constructor conversion
-      const startsAtISO = selectedDate + 'T' + selectedTime + ':00+03:00';
+      // Use simple format without timezone offset to avoid UTC conversion
+      const startsAtISO = selectedDate + 'T' + selectedTime + ':00';
       
-      // Calculate endsAt with same timezone offset
+      // Calculate endsAt with same format
       const endHours = hours + Math.floor((minutes + totalDuration) / 60);
       const endMinutes = (minutes + totalDuration) % 60;
       const endsAtISO = selectedDate + 'T' + 
         String(endHours).padStart(2, '0') + ':' + 
-        String(endMinutes).padStart(2, '0') + ':00+03:00';
+        String(endMinutes).padStart(2, '0') + ':00';
 
       // Use the first service as the primary service (for compatibility with existing API)
       const primaryService = selectedServices[0];

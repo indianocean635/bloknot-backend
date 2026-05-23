@@ -58,13 +58,13 @@ bot.start(async (ctx) => {
 
 // Send booking confirmation with action buttons
 async function sendBookingConfirmation(ctx, booking) {
-  // Use startsAtLocal if available (original time with timezone), otherwise fallback to startsAt
+  // Use startsAtLocal directly as text without any Date conversion
+  // Format: 2026-05-27T10:00:00
   const timeToUse = booking.startsAtLocal || booking.startsAt;
   
-  // Parse ISO string directly without Date conversion to avoid timezone issues
-  // Format: 2026-05-27T10:00:00+03:00
+  // Format: 2026-05-27T10:00:00 -> 27.05.2026 10:00
   const dateTimeStr = timeToUse.replace(
-    /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).*/,
+    /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}).*/,
     '$3.$2.$1 $4:$5'
   );
 
@@ -156,13 +156,13 @@ async function sendBookingConfirmationMessage(booking, chatId) {
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      // Use startsAtLocal if available (original time with timezone), otherwise fallback to startsAt
+      // Use startsAtLocal directly as text without any Date conversion
+      // Format: 2026-05-27T10:00:00
       const timeToUse = booking.startsAtLocal || booking.startsAt;
       
-      // Parse ISO string directly without Date conversion to avoid timezone issues
-      // Format: 2026-05-27T10:00:00+03:00
+      // Format: 2026-05-27T10:00:00 -> 27.05.2026 10:00
       const dateTimeStr = timeToUse.replace(
-        /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).*/,
+        /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}).*/,
         '$3.$2.$1 $4:$5'
       );
 

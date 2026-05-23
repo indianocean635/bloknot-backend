@@ -218,8 +218,8 @@ async function createPublicAppointment(req, res) {
         branchId: branchId ? Number(branchId) : null,
         startsAt: new Date(startsAt),
         endsAt: new Date(endsAt),
-        startsAtLocal: startsAt, // Store original time with timezone offset
-        endsAtLocal: endsAt,     // Store original end time with timezone offset
+        startsAtLocal: startsAt, // Store original time as string without timezone conversion
+        endsAtLocal: endsAt,     // Store original end time as string without timezone conversion
         customerName,
         customerPhone,
         customerTelegram,
