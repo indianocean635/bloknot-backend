@@ -58,15 +58,15 @@ bot.start(async (ctx) => {
 
 // Send booking confirmation with action buttons
 async function sendBookingConfirmation(ctx, booking) {
-  const bookingDate = new Date(booking.startsAt);
-  const dateTimeStr = bookingDate.toLocaleString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Europe/Moscow'
-  });
+  // Use startsAtLocal if available (original time with timezone), otherwise fallback to startsAt
+  const timeToUse = booking.startsAtLocal || booking.startsAt;
+  
+  // Parse ISO string directly without Date conversion to avoid timezone issues
+  // Format: 2026-05-27T10:00:00+03:00
+  const dateTimeStr = timeToUse.replace(
+    /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).*/,
+    '$3.$2.$1 $4:$5'
+  );
 
   const message = `
 ✅ Запись подтверждена!
@@ -158,25 +158,13 @@ async function sendBookingConfirmationMessage(booking, chatId) {
     try {
       // Use startsAtLocal if available (original time with timezone), otherwise fallback to startsAt
       const timeToUse = booking.startsAtLocal || booking.startsAt;
-      const bookingDate = new Date(timeToUse);
       
-      // If using startsAtLocal, format it directly without timezone conversion
-      const dateTimeStr = booking.startsAtLocal 
-        ? bookingDate.toLocaleString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        : bookingDate.toLocaleString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'Europe/Moscow'
-          });
+      // Parse ISO string directly without Date conversion to avoid timezone issues
+      // Format: 2026-05-27T10:00:00+03:00
+      const dateTimeStr = timeToUse.replace(
+        /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).*/,
+        '$3.$2.$1 $4:$5'
+      );
 
       const message = `
 ✅ Запись подтверждена!
