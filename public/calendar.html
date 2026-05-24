@@ -1292,10 +1292,13 @@
             // Add drag functionality
             let isDragging = false;
             let startY = 0;
+            let startX = 0;
             let startTop = 0;
+            let startLeft = 0;
             let startHeight = 0;
             let isResizing = false;
             let hasMoved = false;
+            let startColumn = null;
             
             card.addEventListener('mousedown', (e) => {
               if (e.target.classList.contains('crm-booking-resize-handle')) {
@@ -1313,7 +1316,10 @@
                 isResizing = false;
                 hasMoved = false;
                 startY = e.clientY;
+                startX = e.clientX;
                 startTop = card.offsetTop;
+                startLeft = card.offsetLeft;
+                startColumn = card.parentElement;
                 card.classList.add('dragging');
                 e.preventDefault();
               }
@@ -1323,12 +1329,17 @@
               if (isDragging) {
                 hasMoved = true;
                 const deltaY = e.clientY - startY;
+                const deltaX = e.clientX - startX;
                 const slotHeight = 60;
                 const newTop = startTop + deltaY;
+                const newLeft = startLeft + deltaX;
                 
                 // Snap to 15-minute intervals (15px = 15 minutes)
                 const snappedTop = Math.round(newTop / 15) * 15;
                 card.style.top = `${snappedTop}px`;
+                card.style.left = `${newLeft}px`;
+                card.style.position = 'absolute';
+                card.style.zIndex = '1000';
               } else if (isResizing) {
                 hasMoved = true;
                 const deltaY = e.clientY - startY;
@@ -1347,6 +1358,17 @@
                   const masterId = card.dataset.masterId;
                   const slotHeight = 60;
                   
+                  // Find which column the card was dropped on
+                  const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+                  const targetColumn = dropTarget?.closest('.crm-employee-column');
+                  
+                  // Use target column's date if dropped on a different day, otherwise use original day
+                  let targetDay = day;
+                  if (targetColumn && targetColumn !== startColumn) {
+                    const targetDayIso = targetColumn.dataset.day;
+                    targetDay = new Date(targetDayIso);
+                  }
+                  
                   // Calculate new start time
                   const newTop = parseInt(card.style.top);
                   const startHour = 9 + Math.floor(newTop / slotHeight);
@@ -1359,7 +1381,7 @@
                   const endMin = (startMin + duration) % 60;
                   
                   // Create new date strings
-                  const dayStr = ymd(day);
+                  const dayStr = ymd(targetDay);
                   const newStartsAt = new Date(`${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`).toISOString();
                   const newEndsAt = new Date(`${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`).toISOString();
                   
@@ -1373,6 +1395,8 @@
                       body: JSON.stringify({
                         startsAt: newStartsAt,
                         endsAt: newEndsAt,
+                        startsAtLocal: `${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`,
+                        endsAtLocal: `${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`,
                       }),
                       credentials: 'include'
                     });
@@ -1386,23 +1410,35 @@
                       // Revert to original position
                       card.style.top = `${top}px`;
                       card.style.height = `${Math.max(height, 40)}px`;
+                      card.style.left = '';
+                      card.style.position = '';
+                      card.style.zIndex = '';
                     }
                   } catch (error) {
                     console.error('Error updating booking:', error);
                     // Revert to original position
                     card.style.top = `${top}px`;
                     card.style.height = `${Math.max(height, 40)}px`;
+                    card.style.left = '';
+                    card.style.position = '';
+                    card.style.zIndex = '';
                   }
                 } else {
                   // No movement, revert position
                   card.style.top = `${top}px`;
                   card.style.height = `${Math.max(height, 40)}px`;
+                  card.style.left = '';
+                  card.style.position = '';
+                  card.style.zIndex = '';
                 }
                 
                 isDragging = false;
                 isResizing = false;
                 hasMoved = false;
                 card.classList.remove('dragging', 'resizing');
+                card.style.left = '';
+                card.style.position = '';
+                card.style.zIndex = '';
               }
             });
             
@@ -1648,6 +1684,8 @@
                       body: JSON.stringify({
                         startsAt: newStartsAt,
                         endsAt: newEndsAt,
+                        startsAtLocal: `${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`,
+                        endsAtLocal: `${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`,
                       }),
                       credentials: 'include'
                     });
