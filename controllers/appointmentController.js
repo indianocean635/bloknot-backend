@@ -209,13 +209,20 @@ async function createPublicAppointment(req, res) {
 
     if (existingAppointments.length > 0) {
       console.log('❌ Time slot conflict detected for master:', masterId);
-      return res.status(409).json({ 
-        error: 'Это время уже занято. Пожалуйста, выберите другое время.' 
+      return res.status(409).json({
+        error: 'Это время уже занято. Пожалуйста, выберите другое время.'
       });
     }
 
+    console.log('✅ No conflicts, creating appointment...');
+
     // Generate unique booking token
     const bookingToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+    // Extract branchId from object if needed
+    const branchIdValue = branchId && typeof branchId === 'object' ? branchId.id : branchId;
+
+    console.log('Branch ID:', branchIdValue);
 
     // Save to database
     const appointment = await prisma.appointment.create({
@@ -223,7 +230,7 @@ async function createPublicAppointment(req, res) {
         businessId,
         serviceId: Number(serviceId),
         masterId: Number(masterId),
-        branchId: branchId ? Number(branchId) : null,
+        branchId: branchIdValue ? Number(branchIdValue) : null,
         startsAt: new Date(startsAt),
         endsAt: new Date(endsAt),
         startsAtLocal: startsAt, // Store original time as string without timezone conversion
@@ -236,6 +243,8 @@ async function createPublicAppointment(req, res) {
         bookingToken
       }
     });
+
+    console.log('✅ Appointment created in DB:', appointment.id);
 
     // Send Telegram confirmation if chatId is linked
     if (appointment.telegramChatId) {
