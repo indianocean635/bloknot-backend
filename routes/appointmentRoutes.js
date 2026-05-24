@@ -3,6 +3,7 @@ const {
   getAppointments, 
   createAppointment, 
   deleteAppointment, 
+  deletePublicAppointment,
   updateAppointment, 
   getPublicAppointments, 
   createPublicAppointment 
@@ -22,5 +23,6 @@ router.put("/appointments/:id", requireMagicAuth, getBusinessFromUser, updateApp
 router.get("/public/business/:slug", getBusinessBySlug);
 router.get("/public/appointments", getPublicAppointments);
 router.post("/public/appointments", createPublicAppointment);
+router.delete("/public/appointments/:id", deletePublicAppointment);
 
 module.exports = router;

@@ -509,6 +509,35 @@ async function deleteAppointment(req, res) {
   }
 }
 
+// Публичное удаление записи (для онлайн записи)
+async function deletePublicAppointment(req, res) {
+  try {
+    const { id } = req.params;
+    
+    // Check if appointment exists
+    const existing = await prisma.appointment.findFirst({
+      where: {
+        id: Number(id)
+      }
+    });
+    
+    if (!existing) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+    
+    // Delete from database
+    await prisma.appointment.delete({
+      where: { id: Number(id) }
+    });
+    
+    console.log('✅ Public appointment deleted from DB:', id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ deletePublicAppointment error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
+
 // Получить запись по ID (публичная)
 async function getAppointmentById(req, res) {
   try {
@@ -541,5 +570,6 @@ module.exports = {
   createAppointment,
   updateAppointment,
   deleteAppointment,
+  deletePublicAppointment,
   getAppointmentById
 };
