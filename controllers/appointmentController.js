@@ -169,7 +169,7 @@ async function createPublicAppointment(req, res) {
         masterId: Number(masterId),
         businessId: businessId,
         status: {
-          in: ['PENDING', 'CONFIRMED']
+          in: ['CONFIRMED']
         },
         OR: [
           {
@@ -326,7 +326,7 @@ async function createAppointment(req, res) {
         masterId: Number(masterId),
         businessId: user.businessId,
         status: {
-          in: ['PENDING', 'CONFIRMED']
+          in: ['CONFIRMED']
         },
         OR: [
           {
