@@ -198,6 +198,14 @@ async function createPublicAppointment(req, res) {
     });
 
     console.log('Existing appointments found:', existingAppointments.length);
+    if (existingAppointments.length > 0) {
+      console.log('Conflicting appointments:', existingAppointments.map(a => ({
+        id: a.id,
+        startsAt: a.startsAt,
+        endsAt: a.endsAt,
+        status: a.status
+      })));
+    }
 
     if (existingAppointments.length > 0) {
       console.log('❌ Time slot conflict detected for master:', masterId);
