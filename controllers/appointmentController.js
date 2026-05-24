@@ -106,24 +106,26 @@ async function getPublicAppointments(req, res) {
     });
     
     console.log('Total appointments in DB:', items.length);
-    
+
     const fromDate = from ? parseDate(from) : null;
     const toDate = to ? parseDate(to) : null;
-    
+
+    console.log('Date filter:', { from, to, fromDate, toDate });
+
     if (fromDate) {
-      // Set fromDate to start of day (00:00:00)
-      fromDate.setHours(0, 0, 0, 0);
+      // Set fromDate to start of day (00:00:00) in UTC
+      fromDate.setUTCHours(0, 0, 0, 0);
       items = items.filter(item => new Date(item.startsAt) >= fromDate);
     }
     if (toDate) {
-      // Set toDate to end of day (23:59:59)
-      toDate.setHours(23, 59, 59, 999);
+      // Set toDate to end of day (23:59:59) in UTC
+      toDate.setUTCHours(23, 59, 59, 999);
       items = items.filter(item => new Date(item.startsAt) <= toDate);
     }
     if (masterIds) {
       items = items.filter(item => masterIds.includes(item.masterId));
     }
-    
+
     console.log('Filtered appointments:', items.length);
     
     items.sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
