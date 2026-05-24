@@ -77,7 +77,8 @@ async function sendBookingConfirmation(ctx, booking) {
 🏢 ${booking.business?.name}
 📞 Телефон: ${booking.customerPhone}
 
-🔗 Управление записью: https://bloknotservis.ru/booking?slug=${booking.business?.slug}
+Управление записью:
+https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}
 Ждем вас!
   `.trim();
 
@@ -178,7 +179,8 @@ async function sendBookingConfirmationMessage(booking, chatId) {
 🏢 ${booking.business?.name}
 📞 Телефон: ${booking.customerPhone}
 
-🔗 Управление записью: https://bloknotservis.ru/booking?slug=${booking.business?.slug}
+Управление записью:
+https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}
 Ждем вас!
       `.trim();
 
