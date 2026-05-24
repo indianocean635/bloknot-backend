@@ -76,6 +76,9 @@ async function sendBookingConfirmation(ctx, booking) {
 📅 Дата и время: ${dateTimeStr}
 🏢 ${booking.business?.name}
 📞 Телефон: ${booking.customerPhone}
+
+🔗 Управление записью: https://bloknotservis.ru/booking?slug=${booking.business?.slug}
+Ждем вас!
   `.trim();
 
   await ctx.reply(message, {
@@ -174,6 +177,9 @@ async function sendBookingConfirmationMessage(booking, chatId) {
 📅 Дата и время: ${dateTimeStr}
 🏢 ${booking.business?.name}
 📞 Телефон: ${booking.customerPhone}
+
+🔗 Управление записью: https://bloknotservis.ru/booking?slug=${booking.business?.slug}
+Ждем вас!
       `.trim();
 
       await bot.telegram.sendMessage(chatId, message, {
