@@ -247,14 +247,19 @@ async function createPublicAppointment(req, res) {
     console.log('Branch ID:', branchIdValue);
 
     // Save to database
+    // Parse local time string and treat it as UTC+3 (Moscow time)
+    // Format: 2026-05-27T09:00:00
+    const startsAtDate = new Date(startsAt + '+03:00');
+    const endsAtDate = new Date(endsAt + '+03:00');
+
     const appointment = await prisma.appointment.create({
       data: {
         businessId,
         serviceId: Number(serviceId),
         masterId: Number(masterId),
         branchId: branchIdValue ? Number(branchIdValue) : null,
-        startsAt: new Date(startsAt),
-        endsAt: new Date(endsAt),
+        startsAt: startsAtDate,
+        endsAt: endsAtDate,
         startsAtLocal: startsAt, // Store original time as string without timezone conversion
         endsAtLocal: endsAt,     // Store original end time as string without timezone conversion
         customerName,
