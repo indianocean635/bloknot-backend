@@ -1568,14 +1568,6 @@
             <p style="margin-bottom: 8px;">Дата: ${new Date(selectedDate).toLocaleDateString('ru-RU')} в ${selectedTime}</p>
             <p style="margin-bottom: 8px;">Общая стоимость: ${totalPrice} ₽</p>
             <p style="margin-top: 16px;">Спасибо, что выбрали ${businessData.business?.name || businessData.name}!</p>
-            <div style="margin-top: 24px; display: flex; gap: 8px; flex-wrap: wrap;">
-              <button id="reschedule-btn" style="flex: 1; padding: 4px 8px; font-size: 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; font-weight: 500; cursor: pointer;">
-                📅 Перенести
-              </button>
-              <button id="cancel-btn" style="flex: 1; padding: 4px 8px; font-size: 12px; background: #ef4444; color: white; border: none; border-radius: 4px; font-weight: 500; cursor: pointer;">
-                ❌ Отменить
-              </button>
-            </div>
             <div style="margin-top: 24px; padding: 16px; background: #f8fafc; border-radius: 8px;">
               <p style="margin-bottom: 12px; font-weight: 500;">Хотите получать уведомления в Telegram?</p>
               <button id="connect-telegram-btn" style="padding: 10px 20px; background: #229ED9; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer;">
@@ -1589,64 +1581,6 @@
         document.getElementById('connect-telegram-btn').addEventListener('click', () => {
           // Directly open Telegram deep-link with booking token
           window.open(`https://t.me/bloknot_booking_bot?start=${bookingToken}`, '_blank');
-        });
-
-        // Add event listener to reschedule button
-        document.getElementById('reschedule-btn').addEventListener('click', async () => {
-          // Cancel current booking first
-          try {
-            const response = await fetch(`/api/public/appointments/${appointmentId}`, {
-              method: 'DELETE'
-            });
-
-            if (response.ok) {
-              // Reset to date/time selection with same specialist
-              document.getElementById('contact-form-section').style.display = 'none';
-              document.getElementById('calendar-section').style.display = 'block';
-              document.getElementById('time-section').style.display = 'block';
-              // Keep selected specialist and services
-            } else {
-              alert('Ошибка при подготовке переноса записи. Пожалуйста, попробуйте еще раз.');
-            }
-          } catch (error) {
-            console.error('Error preparing reschedule:', error);
-            alert('Ошибка при подготовке переноса записи. Пожалуйста, попробуйте еще раз.');
-          }
-        });
-
-        // Add event listener to cancel button
-        document.getElementById('cancel-btn').addEventListener('click', async () => {
-          if (confirm('Вы уверены, что хотите отменить запись?')) {
-            try {
-              const response = await fetch(`/api/public/appointments/${appointmentId}`, {
-                method: 'DELETE'
-              });
-
-              if (response.ok) {
-                // Show cancelled message with "Book again" button
-                document.getElementById('contact-form-section').innerHTML = `
-                  <div class="success">
-                    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">❌ Запись отменена</h2>
-                    <p style="margin-bottom: 16px;">Ваш слот снова доступен для записи.</p>
-                    <button id="book-again-btn" style="padding: 12px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer;">
-                      Записаться еще
-                    </button>
-                  </div>
-                `;
-
-                // Add event listener to book again button
-                document.getElementById('book-again-btn').addEventListener('click', () => {
-                  // Reset to beginning (branch selection)
-                  window.location.href = '/booking';
-                });
-              } else {
-                alert('Ошибка при отмене записи. Пожалуйста, попробуйте еще раз.');
-              }
-            } catch (error) {
-              console.error('Error cancelling booking:', error);
-              alert('Ошибка при отмене записи. Пожалуйста, попробуйте еще раз.');
-            }
-          }
         });
       } catch (error) {
         console.error('Error creating booking:', error);
