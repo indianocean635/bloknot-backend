@@ -1,9 +1,8 @@
 # Bloknot Project Backup & Rollback Instructions
 
-## **Backup Date**: 2026-05-23
-## **Backup Version**: TIMEZONE_FIX_v1.0
-## **Git Commit**: ecf68b2
-## **Git Tag**: backup-2026-05-23-timezone-fix
+## **Backup Date**: 2026-05-25
+## **Backup Version**: TELEGRAM_FIX_v2.0
+## **Git Commit**: 85401a1
 ## **Branch**: main
 
 ---
@@ -22,6 +21,10 @@
 - **Settings system** (Business settings, specialists management)
 - **Telegram bot integration** (Booking confirmations with inline keyboard buttons)
 - **Timezone fix** (Local time display without UTC conversion)
+- **Duplicate callback protection** (Prevents double processing of Telegram button presses)
+- **Auto-refresh calendar** (30-second auto-refresh to show Telegram cancellations)
+- **UTC+3 timezone fix** (Correct time display in calendar for Moscow time)
+- **Auto-Telegram notifications** (Repeat customers get notifications without /start)
 - **All dependencies** (package.json, node_modules)
 
 ### **Frontend Components:**
@@ -88,7 +91,58 @@
 
 ## **ROLLBACK INSTRUCTIONS:**
 
-### **Method 1: Git Rollback (Recommended)**
+### **Method 1: Automated Backup Script (Recommended)**
+
+#### **Create Backup:**
+
+```bash
+# 1. Make the backup script executable
+chmod +x /var/www/bloknot-backend/backup.sh
+
+# 2. Run the backup script
+cd /var/www/bloknot-backend
+./backup.sh
+
+# 3. Backup will be created in /var/www/backups/bloknot/
+# Format: bloknot_backup_YYYYMMDD_HHMMSS_full.tar.gz
+# Retention: 30 days (old backups automatically deleted)
+```
+
+#### **Restore from Backup:**
+
+```bash
+# 1. Make the restore script executable
+chmod +x /var/www/bloknot-backend/restore.sh
+
+# 2. Run the restore script with backup file path
+cd /var/www/bloknot-backend
+./restore.sh /var/www/backups/bloknot/bloknot_backup_20260525_183000_full.tar.gz
+
+# 3. The script will:
+#    - Stop PM2 processes
+#    - Create safety backup of current state
+#    - Restore .env file
+#    - Restore project files
+#    - Restore database
+#    - Restore PM2 configuration
+#    - Install dependencies
+#    - Run Prisma migrations
+#    - Restart PM2 processes
+```
+
+#### **What Gets Backed Up:**
+- **PostgreSQL database** (complete SQL dump)
+- **Project files** (all code, excluding node_modules and logs)
+- **.env file** (all environment variables)
+- **PM2 configuration** (process list and dump file)
+
+#### **Safety Features:**
+- Automatic safety backup before restore
+- 30-day retention policy
+- Combined archive for easy storage
+- Detailed logging of each step
+
+### **Method 2: Git Rollback**
 
 ```bash
 # 1. Go to backend directory
@@ -98,11 +152,11 @@ cd /var/www/bloknot-backend
 git status
 git log --oneline -5
 
-# 3. Rollback to backup state (May 23, 2026)
-git checkout backup-2026-05-23-timezone-fix
+# 3. Rollback to backup state (May 25, 2026)
+git checkout 85401a1
 
 # 4. Restore all files
-git reset --hard backup-2026-05-23-timezone-fix
+git reset --hard 85401a1
 
 # 5. Install dependencies (if needed)
 npm install
@@ -275,9 +329,8 @@ npx prisma migrate reset
 
 ### **Git Repository:**
 - **URL**: https://github.com/indianocean635/bloknot-backend.git
-- **Backup Commit**: ecf68b2
+- **Backup Commit**: 85401a1
 - **Branch**: main
-- **Backup Tag**: backup-2026-05-23-timezone-fix
 
 ### **Server Information:**
 - **Backend Port**: 3001
