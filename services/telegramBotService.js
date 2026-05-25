@@ -122,7 +122,7 @@ bot.on('callback_query', async (ctx) => {
 
   try {
     if (data.startsWith('cancel_')) {
-      const bookingId = data.replace('cancel_');
+      const bookingId = data.substring(7); // Remove 'cancel_' prefix (7 characters)
       console.log('[TELEGRAM BOT] Processing cancel for booking:', bookingId);
 
       // Call backend to cancel booking
@@ -182,71 +182,56 @@ bot.on('message', (ctx) => {
 
 // Function to send booking confirmations (can be called from backend)
 async function sendBookingConfirmationMessage(booking, chatId) {
-  const maxRetries = 3;
-  const retryDelay = 1000; // 1 second
+  try {
+    // Use startsAtLocal directly as text without any Date conversion
+    // Format: 2026-05-27T10:00:00
+    const timeToUse = booking.startsAtLocal || booking.startsAt;
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      // Use startsAtLocal directly as text without any Date conversion
-      // Format: 2026-05-27T10:00:00
-      const timeToUse = booking.startsAtLocal || booking.startsAt;
+    // Format: 2026-05-27T10:00:00 -> 27.05.2026 and 10:00
+    const dateStr = timeToUse.replace(
+      /(\d{4})-(\d{2})-(\d{2})T.*/,
+      '$3.$2.$1'
+    );
+    const timeStr = timeToUse.replace(
+      /.*T(\d{2}):(\d{2}).*/,
+      '$1:$2'
+    );
 
-      // Format: 2026-05-27T10:00:00 -> 27.05.2026 and 10:00
-      const dateStr = timeToUse.replace(
-        /(\d{4})-(\d{2})-(\d{2})T.*/,
-        '$3.$2.$1'
-      );
-      const timeStr = timeToUse.replace(
-        /.*T(\d{2}):(\d{2}).*/,
-        '$1:$2'
-      );
-
-      const message = `
+    const message = `
 ✅ Запись подтверждена!
 
 📋 Услуга: ${booking.service?.name}
 👨‍💼 Специалист: ${booking.master?.name}
 📅 Дата: ${dateStr}
-� Время: ${timeStr}
+🕐 Время: ${timeStr}
 🏢 ${booking.business?.name}
 
 Ждем вас!
-      `.trim();
+    `.trim();
 
-      await bot.telegram.sendMessage(chatId, message, {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: 'Отменить запись',
-                callback_data: `cancel_${booking.id}`
-              }
-            ],
-            [
-              {
-                text: 'Перезаписаться',
-                url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}&token=${booking.bookingToken}&reschedule=true`
-              }
-            ]
+    await bot.telegram.sendMessage(chatId, message, {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: 'Отменить запись',
+              callback_data: `cancel_${booking.id}`
+            }
+          ],
+          [
+            {
+              text: 'Перезаписаться',
+              url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}&token=${booking.bookingToken}&reschedule=true`
+            }
           ]
-        }
-      });
-      console.log('[CONFIRMATION SENT] Booking ID:', booking.id, 'Chat ID:', chatId);
-      return; // Success, exit function
-    } catch (error) {
-      console.error(`[TELEGRAM BOT] Error sending confirmation (attempt ${attempt}/${maxRetries}):`);
-      console.error('[TELEGRAM BOT] Error:', error);
-      console.error('[TELEGRAM BOT] Error message:', error.message);
-      console.error('[TELEGRAM BOT] Error code:', error.code);
-      console.error('[TELEGRAM BOT] Error stack:', error.stack);
-      
-      if (attempt < maxRetries) {
-        console.log(`[TELEGRAM BOT] Retrying in ${retryDelay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
-      } else {
-        console.error('[TELEGRAM BOT] Failed to send confirmation after all retries');
+        ]
       }
-    }
+    });
+    console.log('[CONFIRMATION SENT] Booking ID:', booking.id, 'Chat ID:', chatId);
+  } catch (error) {
+    console.error('[TELEGRAM BOT] Error sending confirmation:', error);
+    console.error('[TELEGRAM BOT] Error message:', error.message);
+    // Don't throw - let the backend continue even if Telegram fails
   }
 }
 
