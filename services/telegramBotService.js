@@ -42,12 +42,14 @@ bot.start(async (ctx) => {
     if (response.ok) {
       const result = await response.json();
       const booking = result.booking;
-      
-      // Send confirmation message with buttons
-      await sendBookingConfirmation(ctx, booking);
-      
-      console.log('[CONFIRMATION SENT] Booking ID:', booking.id, 'Chat ID:', ctx.chat.id);
+
+      // Confirmation message is sent from backend controller
+      console.log('[TELEGRAM BOT] Booking linked, confirmation sent from backend:', booking.id);
+      await ctx.reply('Telegram успешно подключен ✅\n\nТеперь вы будете получать уведомления о записях.');
     } else {
+      console.log('[TELEGRAM BOT] Backend response status:', response.status);
+      const errorText = await response.text();
+      console.log('[TELEGRAM BOT] Backend error response:', errorText);
       await ctx.reply('Ошибка подключения. Недействительный токен.');
     }
   } catch (error) {
@@ -55,54 +57,6 @@ bot.start(async (ctx) => {
     await ctx.reply('Ошибка подключения. Попробуйте позже.');
   }
 });
-
-// Send booking confirmation with action buttons
-async function sendBookingConfirmation(ctx, booking) {
-  // Use startsAtLocal directly as text without any Date conversion
-  // Format: 2026-05-27T10:00:00
-  const timeToUse = booking.startsAtLocal || booking.startsAt;
-
-  // Format: 2026-05-27T10:00:00 -> 27.05.2026 and 10:00
-  const dateStr = timeToUse.replace(
-    /(\d{4})-(\d{2})-(\d{2})T.*/,
-    '$3.$2.$1'
-  );
-  const timeStr = timeToUse.replace(
-    /.*T(\d{2}):(\d{2}).*/,
-    '$1:$2'
-  );
-
-  const message = `
-✅ Запись подтверждена!
-
-📋 Услуга: ${booking.service?.name}
-👨‍💼 Специалист: ${booking.master?.name}
-📅 Дата: ${dateStr}
-� Время: ${timeStr}
-🏢 ${booking.business?.name}
-
-Ждем вас!
-  `.trim();
-
-  await ctx.reply(message, {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: 'Отменить запись',
-            callback_data: `cancel_${booking.id}`
-          }
-        ],
-        [
-          {
-            text: 'Перезаписаться',
-            url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}&token=${booking.bookingToken}&reschedule=true`
-          }
-        ]
-      ]
-    }
-  });
-}
 
 // Handle callback queries (button presses)
 bot.on('callback_query', async (ctx) => {
