@@ -1082,7 +1082,15 @@
       return d.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
     }
 
-    function fmtTime(iso) {
+    function fmtTime(iso, localIso) {
+      // Use startsAtLocal if available (local time without timezone conversion)
+      if (localIso) {
+        const match = localIso.match(/T(\d{2}):(\d{2})/);
+        if (match) {
+          return `${match[1]}:${match[2]}`;
+        }
+      }
+      // Fallback to UTC date
       const d = new Date(iso);
       const h = String(d.getHours()).padStart(2, '0');
       const m = String(d.getMinutes()).padStart(2, '0');
@@ -1246,11 +1254,29 @@
           });
 
           dayBookings.forEach(booking => {
-            const startDate = new Date(booking.startsAt);
-            const endDate = new Date(booking.endsAt);
-            const startHour = startDate.getHours();
-            const startMin = startDate.getMinutes();
-            const duration = (endDate.getTime() - startDate.getTime()) / 60000;
+            // Use startsAtLocal for correct local time display
+            const timeToUse = booking.startsAtLocal || booking.startsAt;
+            const timeToUseEnd = booking.endsAtLocal || booking.endsAt;
+
+            let startHour, startMin, duration;
+
+            if (booking.startsAtLocal) {
+              // Parse local time string (format: 2026-05-26T09:00:00)
+              const startMatch = timeToUse.match(/T(\d{2}):(\d{2})/);
+              const endMatch = timeToUseEnd.match(/T(\d{2}):(\d{2})/);
+              startHour = parseInt(startMatch[1]);
+              startMin = parseInt(startMatch[2]);
+              const endHour = parseInt(endMatch[1]);
+              const endMin = parseInt(endMatch[2]);
+              duration = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+            } else {
+              // Fallback to UTC date
+              const startDate = new Date(timeToUse);
+              const endDate = new Date(timeToUseEnd);
+              startHour = startDate.getHours();
+              startMin = startDate.getMinutes();
+              duration = (endDate.getTime() - startDate.getTime()) / 60000;
+            }
             
             const slotHeight = 60;
             const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
@@ -1282,7 +1308,7 @@
             card.dataset.endsAt = booking.endsAt;
             card.dataset.masterId = booking.masterId;
             card.innerHTML = `
-              <div class="crm-booking-time">${fmtTime(booking.startsAt)} – ${fmtTime(booking.endsAt)}</div>
+              <div class="crm-booking-time">${fmtTime(booking.startsAt, booking.startsAtLocal)} – ${fmtTime(booking.endsAt, booking.endsAtLocal)}</div>
               <div class="crm-booking-client">${booking.customerName}</div>
               <div class="crm-booking-service">${service?.name || ''}</div>
               <div class="crm-booking-phone">${master?.name || ''}</div>
@@ -1558,11 +1584,29 @@
           });
 
           masterBookings.forEach(booking => {
-            const startDate = new Date(booking.startsAt);
-            const endDate = new Date(booking.endsAt);
-            const startHour = startDate.getHours();
-            const startMin = startDate.getMinutes();
-            const duration = (endDate.getTime() - startDate.getTime()) / 60000;
+            // Use startsAtLocal for correct local time display
+            const timeToUse = booking.startsAtLocal || booking.startsAt;
+            const timeToUseEnd = booking.endsAtLocal || booking.endsAt;
+
+            let startHour, startMin, duration;
+
+            if (booking.startsAtLocal) {
+              // Parse local time string (format: 2026-05-26T09:00:00)
+              const startMatch = timeToUse.match(/T(\d{2}):(\d{2})/);
+              const endMatch = timeToUseEnd.match(/T(\d{2}):(\d{2})/);
+              startHour = parseInt(startMatch[1]);
+              startMin = parseInt(startMatch[2]);
+              const endHour = parseInt(endMatch[1]);
+              const endMin = parseInt(endMatch[2]);
+              duration = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+            } else {
+              // Fallback to UTC date
+              const startDate = new Date(timeToUse);
+              const endDate = new Date(timeToUseEnd);
+              startHour = startDate.getHours();
+              startMin = startDate.getMinutes();
+              duration = (endDate.getTime() - startDate.getTime()) / 60000;
+            }
             
             const slotHeight = 60;
             const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
@@ -1593,7 +1637,7 @@
             card.dataset.endsAt = booking.endsAt;
             card.dataset.masterId = booking.masterId;
             card.innerHTML = `
-              <div class="crm-booking-time">${fmtTime(booking.startsAt)} – ${fmtTime(booking.endsAt)}</div>
+              <div class="crm-booking-time">${fmtTime(booking.startsAt, booking.startsAtLocal)} – ${fmtTime(booking.endsAt, booking.endsAtLocal)}</div>
               <div class="crm-booking-client">${booking.customerName}</div>
               <div class="crm-booking-service">${service?.name || ''}</div>
               ${booking.customerPhone ? `<div class="crm-booking-phone">${booking.customerPhone}</div>` : ''}
