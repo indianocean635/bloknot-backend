@@ -2,17 +2,17 @@ const { Telegraf } = require('telegraf');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 require('dotenv').config();
 
-const botConfig = {};
+const proxyAgent = process.env.HTTPS_PROXY
+  ? new HttpsProxyAgent(process.env.HTTPS_PROXY)
+  : undefined;
 
-// Use proxy if configured
-if (process.env.HTTPS_PROXY || process.env.HTTP_PROXY) {
-  const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
-  const agent = new HttpsProxyAgent(proxyUrl);
-  botConfig.telegram = { agent };
-  console.log('[TELEGRAM BOT] Using proxy:', proxyUrl);
-}
+console.log('[TELEGRAM BOT] Proxy agent enabled:', !!proxyAgent);
 
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN, botConfig);
+const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN, {
+  telegram: {
+    agent: proxyAgent
+  }
+});
 
 // Handle /start command with payload (deep-link)
 bot.start(async (ctx) => {
@@ -93,8 +93,8 @@ https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.
         ],
         [
           {
-            text: '� Перенести запись',
-            url: 'https://bloknotservis.ru/booking'
+            text: '📅 Перенести запись',
+            url: `https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}`
           }
         ]
       ]
@@ -196,7 +196,7 @@ https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.
             [
               {
                 text: '📅 Перенести запись',
-                url: 'https://bloknotservis.ru/booking'
+                url: `https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}`
               }
             ]
           ]
