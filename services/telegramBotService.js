@@ -106,9 +106,11 @@ async function sendBookingConfirmation(ctx, booking) {
 
 // Handle callback queries (button presses)
 bot.on('callback_query', async (ctx) => {
+  console.log('[TELEGRAM BOT] Callback query received');
   const callbackQuery = ctx.callbackQuery;
-  
+
   if (!callbackQuery?.data) {
+    console.log('[TELEGRAM BOT] No callback data, answering empty');
     await ctx.answerCbQuery();
     return;
   }
@@ -120,7 +122,8 @@ bot.on('callback_query', async (ctx) => {
 
   try {
     if (data.startsWith('cancel_')) {
-      const bookingId = data.replace('cancel_', '');
+      const bookingId = data.replace('cancel_');
+      console.log('[TELEGRAM BOT] Processing cancel for booking:', bookingId);
 
       // Call backend to cancel booking
       const response = await fetch('https://bloknotservis.ru/api/telegram/cancel-booking', {
@@ -134,9 +137,13 @@ bot.on('callback_query', async (ctx) => {
         })
       });
 
+      console.log('[TELEGRAM BOT] Cancel response status:', response.status);
+
       if (response.ok) {
         const result = await response.json();
         const { booking } = result;
+
+        console.log('[TELEGRAM BOT] Cancel result:', result);
 
         // Format date and time for cancellation message
         const timeToUse = booking?.startsAtLocal || booking?.startsAt;
@@ -155,9 +162,11 @@ bot.on('callback_query', async (ctx) => {
         await ctx.answerCbQuery('Запись успешно отменена');
         console.log('[BOOKING CANCELLED] Booking ID:', bookingId, 'Chat ID:', chatId);
       } else {
+        console.log('[TELEGRAM BOT] Cancel request failed');
         await ctx.answerCbQuery('Ошибка при отмене записи', { show_alert: true });
       }
     } else {
+      console.log('[TELEGRAM BOT] Unknown callback data:', data);
       await ctx.answerCbQuery();
     }
   } catch (error) {
@@ -347,19 +356,28 @@ if (require.main === module) {
   console.log('🚀 Starting Telegram Bot...');
   console.log('📡 Mode: Polling');
   console.log('🔗 Backend URL: https://bloknotservis.ru');
-  
+
+  // Clear webhook before starting in polling mode
+  bot.telegram.deleteWebhook()
+    .then(() => {
+      console.log('[TELEGRAM BOT] Webhook cleared');
+    })
+    .catch((error) => {
+      console.error('[TELEGRAM BOT] Error clearing webhook:', error);
+    });
+
   // Start health check server
   const express = require('express');
   const healthApp = express();
-  
+
   healthApp.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
-  
+
   healthApp.listen(8080, () => {
     console.log('🚀 Health check server listening on port 8080');
   });
-  
+
   // Start the bot
   startBot();
 }
