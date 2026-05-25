@@ -42,8 +42,8 @@ async function linkBooking(req, res) {
 
     console.log('[TELEGRAM] Booking linked successfully:', updated.id);
 
-    // Send confirmation message to Telegram
-    await sendBookingConfirmationMessage(updated, chatId);
+    // Don't send confirmation here - it's already sent from createPublicAppointment
+    // await sendBookingConfirmationMessage(updated, chatId);
 
     res.json({ booking: updated });
   } catch (error) {

@@ -96,7 +96,7 @@ async function sendBookingConfirmation(ctx, booking) {
         [
           {
             text: 'Перезаписаться',
-            url: `https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}&reschedule=true`
+            url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}&token=${booking.bookingToken}&reschedule=true`
           }
         ]
       ]
@@ -152,7 +152,7 @@ bot.on('callback_query', async (ctx) => {
         `.trim();
 
         await ctx.editMessageText(cancelMessage);
-        await ctx.answerCbQuery();
+        await ctx.answerCbQuery('Запись успешно отменена');
         console.log('[BOOKING CANCELLED] Booking ID:', bookingId, 'Chat ID:', chatId);
       } else {
         await ctx.answerCbQuery('Ошибка при отмене записи', { show_alert: true });
@@ -216,7 +216,7 @@ async function sendBookingConfirmationMessage(booking, chatId) {
             [
               {
                 text: 'Перезаписаться',
-                url: `https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}&reschedule=true`
+                url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}&token=${booking.bookingToken}&reschedule=true`
               }
             ]
           ]
