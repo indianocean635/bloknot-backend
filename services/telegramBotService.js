@@ -61,11 +61,15 @@ async function sendBookingConfirmation(ctx, booking) {
   // Use startsAtLocal directly as text without any Date conversion
   // Format: 2026-05-27T10:00:00
   const timeToUse = booking.startsAtLocal || booking.startsAt;
-  
-  // Format: 2026-05-27T10:00:00 -> 27.05.2026 10:00
-  const dateTimeStr = timeToUse.replace(
-    /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}).*/,
-    '$3.$2.$1 $4:$5'
+
+  // Format: 2026-05-27T10:00:00 -> 27.05.2026 and 10:00
+  const dateStr = timeToUse.replace(
+    /(\d{4})-(\d{2})-(\d{2})T.*/,
+    '$3.$2.$1'
+  );
+  const timeStr = timeToUse.replace(
+    /.*T(\d{2}):(\d{2}).*/,
+    '$1:$2'
   );
 
   const message = `
@@ -73,12 +77,10 @@ async function sendBookingConfirmation(ctx, booking) {
 
 📋 Услуга: ${booking.service?.name}
 👨‍💼 Специалист: ${booking.master?.name}
-📅 Дата и время: ${dateTimeStr}
+📅 Дата: ${dateStr}
+� Время: ${timeStr}
 🏢 ${booking.business?.name}
-📞 Телефон: ${booking.customerPhone}
 
-Управление записью:
-https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}
 Ждем вас!
   `.trim();
 
@@ -87,14 +89,14 @@ https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.
       inline_keyboard: [
         [
           {
-            text: '❌ Отменить запись',
+            text: 'Отменить запись',
             callback_data: `cancel_${booking.id}`
           }
         ],
         [
           {
-            text: '📅 Перенести запись',
-            url: `https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}`
+            text: 'Перезаписаться',
+            url: `https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}&reschedule=true`
           }
         ]
       ]
@@ -119,7 +121,7 @@ bot.on('callback_query', async (ctx) => {
   try {
     if (data.startsWith('cancel_')) {
       const bookingId = data.replace('cancel_', '');
-      
+
       // Call backend to cancel booking
       const response = await fetch('https://bloknotservis.ru/api/telegram/cancel-booking', {
         method: 'POST',
@@ -133,7 +135,23 @@ bot.on('callback_query', async (ctx) => {
       });
 
       if (response.ok) {
-        await ctx.editMessageText('❌ Ваша запись отменена');
+        const result = await response.json();
+        const { booking } = result;
+
+        // Format date and time for cancellation message
+        const timeToUse = booking?.startsAtLocal || booking?.startsAt;
+        const dateStr = timeToUse?.replace(/(\d{4})-(\d{2})-(\d{2})T.*/, '$3.$2.$1') || '';
+        const timeStr = timeToUse?.replace(/.*T(\d{2}):(\d{2}).*/, '$1:$2') || '';
+
+        const cancelMessage = `
+❌ Запись отменена
+
+📅 ${dateStr}
+🕐 ${timeStr}
+👨‍💼 ${booking?.master?.name || ''}
+        `.trim();
+
+        await ctx.editMessageText(cancelMessage);
         await ctx.answerCbQuery();
         console.log('[BOOKING CANCELLED] Booking ID:', bookingId, 'Chat ID:', chatId);
       } else {
@@ -163,11 +181,15 @@ async function sendBookingConfirmationMessage(booking, chatId) {
       // Use startsAtLocal directly as text without any Date conversion
       // Format: 2026-05-27T10:00:00
       const timeToUse = booking.startsAtLocal || booking.startsAt;
-      
-      // Format: 2026-05-27T10:00:00 -> 27.05.2026 10:00
-      const dateTimeStr = timeToUse.replace(
-        /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}).*/,
-        '$3.$2.$1 $4:$5'
+
+      // Format: 2026-05-27T10:00:00 -> 27.05.2026 and 10:00
+      const dateStr = timeToUse.replace(
+        /(\d{4})-(\d{2})-(\d{2})T.*/,
+        '$3.$2.$1'
+      );
+      const timeStr = timeToUse.replace(
+        /.*T(\d{2}):(\d{2}).*/,
+        '$1:$2'
       );
 
       const message = `
@@ -175,12 +197,10 @@ async function sendBookingConfirmationMessage(booking, chatId) {
 
 📋 Услуга: ${booking.service?.name}
 👨‍💼 Специалист: ${booking.master?.name}
-📅 Дата и время: ${dateTimeStr}
+📅 Дата: ${dateStr}
+� Время: ${timeStr}
 🏢 ${booking.business?.name}
-📞 Телефон: ${booking.customerPhone}
 
-Управление записью:
-https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}
 Ждем вас!
       `.trim();
 
@@ -189,14 +209,14 @@ https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.
           inline_keyboard: [
             [
               {
-                text: '❌ Отменить запись',
+                text: 'Отменить запись',
                 callback_data: `cancel_${booking.id}`
               }
             ],
             [
               {
-                text: '📅 Перенести запись',
-                url: `https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}`
+                text: 'Перезаписаться',
+                url: `https://bloknotservis.ru/booking?slug=${booking.business?.slug}&token=${booking.bookingToken}&reschedule=true`
               }
             ]
           ]

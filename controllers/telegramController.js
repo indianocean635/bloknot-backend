@@ -65,7 +65,10 @@ async function cancelBooking(req, res) {
 
     // Find booking and validate chatId
     const booking = await prisma.appointment.findUnique({
-      where: { id: parseInt(bookingId) }
+      where: { id: parseInt(bookingId) },
+      include: {
+        master: true
+      }
     });
 
     if (!booking) {
@@ -81,12 +84,15 @@ async function cancelBooking(req, res) {
     // Update booking status to cancelled
     const updated = await prisma.appointment.update({
       where: { id: parseInt(bookingId) },
-      data: { status: 'CANCELLED' }
+      data: { status: 'CANCELLED' },
+      include: {
+        master: true
+      }
     });
 
     console.log('[TELEGRAM] Booking cancelled successfully:', bookingId);
 
-    res.json({ success: true });
+    res.json({ success: true, booking: updated });
   } catch (error) {
     console.error('[TELEGRAM] Error cancelling booking:', error);
     res.status(500).json({ error: "Internal server error" });

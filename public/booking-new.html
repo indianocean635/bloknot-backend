@@ -713,6 +713,51 @@
       return urlParams.get('slug') || urlParams.get('business');
     }
 
+    // Get reschedule token from URL
+    function getRescheduleToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('token');
+    }
+
+    // Check if in reschedule mode
+    function isRescheduleMode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('reschedule') === 'true';
+    }
+
+    // Load existing booking for reschedule
+    async function loadExistingBooking(token) {
+      try {
+        const response = await fetch(`/api/public/appointment/${token}`);
+        if (!response.ok) {
+          console.error('Failed to load existing booking');
+          return;
+        }
+
+        const booking = await response.json();
+        console.log('Existing booking loaded:', booking);
+
+        // Store existing booking for later deletion
+        window.existingBooking = booking;
+
+        // Pre-select specialist and service from existing booking
+        if (booking.masterId) {
+          selectedSpecialist = businessData.masters.find(m => m.id === booking.masterId);
+        }
+        if (booking.serviceId) {
+          selectedService = businessData.services.find(s => s.id === booking.serviceId);
+        }
+
+        // Skip to date/time selection
+        selectedOption = 'datetime';
+        document.getElementById('selection-menu-section').style.display = 'none';
+        showDateTimeSection();
+
+      } catch (error) {
+        console.error('Error loading existing booking:', error);
+      }
+    }
+
     // Load business data
     async function loadBusinessData() {
       try {
@@ -739,6 +784,14 @@
         businessData = await response.json();
         console.log('Business data loaded:', businessData);
         console.log('Business data structure:', JSON.stringify(businessData, null, 2));
+
+        // Check if in reschedule mode and load existing booking
+        if (isRescheduleMode()) {
+          const rescheduleToken = getRescheduleToken();
+          if (rescheduleToken) {
+            await loadExistingBooking(rescheduleToken);
+          }
+        }
 
         // Update business info
         document.getElementById('business-name').textContent = businessData.business?.name || businessData.name || 'Бизнес';
@@ -1476,6 +1529,18 @@
       console.log('Booking data:', formData);
 
       try {
+        // If in reschedule mode, delete old booking first
+        if (isRescheduleMode() && window.existingBooking) {
+          try {
+            await fetch(`/api/public/appointments/${window.existingBooking.id}`, {
+              method: 'DELETE'
+            });
+            console.log('Old booking deleted for reschedule');
+          } catch (error) {
+            console.error('Error deleting old booking:', error);
+          }
+        }
+
         // Send booking data to API
         const response = await fetch('/api/public/appointments', {
           method: 'POST',

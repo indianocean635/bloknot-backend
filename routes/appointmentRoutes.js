@@ -1,12 +1,13 @@
 const express = require("express");
-const { 
-  getAppointments, 
-  createAppointment, 
-  deleteAppointment, 
+const {
+  getAppointments,
+  createAppointment,
+  deleteAppointment,
   deletePublicAppointment,
-  updateAppointment, 
-  getPublicAppointments, 
-  createPublicAppointment 
+  updateAppointment,
+  getPublicAppointments,
+  createPublicAppointment,
+  getPublicAppointmentByToken
 } = require("../controllers/appointmentController");
 const { getBusinessBySlug } = require("../controllers/businessController");
 const { requireMagicAuth, getBusinessFromUser } = require("../middleware/magicAuthMiddleware");
@@ -22,6 +23,7 @@ router.put("/appointments/:id", requireMagicAuth, getBusinessFromUser, updateApp
 // Публичные эндпоинты
 router.get("/public/business/:slug", getBusinessBySlug);
 router.get("/public/appointments", getPublicAppointments);
+router.get("/public/appointment/:token", getPublicAppointmentByToken);
 router.post("/public/appointments", createPublicAppointment);
 router.delete("/public/appointments/:id", deletePublicAppointment);
 

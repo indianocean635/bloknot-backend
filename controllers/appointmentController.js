@@ -557,14 +557,47 @@ async function deletePublicAppointment(req, res) {
   }
 }
 
+// Получить запись по токену (публичная)
+async function getPublicAppointmentByToken(req, res) {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      return res.status(400).json({ error: "Token is required" });
+    }
+
+    const appointment = await prisma.appointment.findUnique({
+      where: { bookingToken: token },
+      include: {
+        service: true,
+        master: true,
+        business: true
+      }
+    });
+
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    if (appointment.status === 'CANCELLED') {
+      return res.status(410).json({ error: "Appointment already cancelled" });
+    }
+
+    res.json(appointment);
+  } catch (error) {
+    console.error('❌ getPublicAppointmentByToken error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
+
 // Получить запись по ID (публичная)
 async function getAppointmentById(req, res) {
   try {
     const { id } = req.params;
     const businessId = req.business?.id || 'business_1';
-    
+
     const appointment = memoryAppointments.get(Number(id));
-    
+
     if (!appointment) {
       return res.status(404).json({ error: "Appointment not found" });
     }
@@ -590,5 +623,6 @@ module.exports = {
   updateAppointment,
   deleteAppointment,
   deletePublicAppointment,
-  getAppointmentById
+  getAppointmentById,
+  getPublicAppointmentByToken
 };
