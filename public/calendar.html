@@ -2177,6 +2177,11 @@
       loadBookings();
     });
 
+    // Auto-refresh bookings every 30 seconds to catch changes from Telegram
+    setInterval(() => {
+      loadBookings();
+    }, 30000);
+
     document.getElementById('modalClose').addEventListener('click', closeBookingModal);
     document.getElementById('cancelBookingBtn').addEventListener('click', closeBookingModal);
     document.getElementById('deleteBookingBtn').addEventListener('click', deleteBooking);
