@@ -248,29 +248,29 @@ async function createPublicAppointment(req, res) {
 
     console.log('✅ Appointment created in DB:', appointment.id);
 
-    // Send Telegram confirmation if chatId is linked
-    if (appointment.telegramChatId) {
-      try {
-        const { sendBookingConfirmationMessage } = require('../services/telegramBotService');
-        
-        // Get full booking details for confirmation
-        const fullBooking = await prisma.appointment.findUnique({
-          where: { id: appointment.id },
-          include: {
-            service: true,
-            master: true,
-            business: true
-          }
-        });
-        
-        if (fullBooking) {
-          await sendBookingConfirmationMessage(fullBooking, fullBooking.telegramChatId);
-        }
-      } catch (error) {
-        console.error('Error sending Telegram confirmation:', error);
-        // Continue even if Telegram fails
-      }
-    }
+    // Don't send Telegram confirmation here - it's sent from linkBooking
+    // if (appointment.telegramChatId) {
+    //   try {
+    //     const { sendBookingConfirmationMessage } = require('../services/telegramBotService');
+    //
+    //     // Get full booking details for confirmation
+    //     const fullBooking = await prisma.appointment.findUnique({
+    //       where: { id: appointment.id },
+    //       include: {
+    //         service: true,
+    //         master: true,
+    //         business: true
+    //       }
+    //     });
+    //
+    //     if (fullBooking) {
+    //       await sendBookingConfirmationMessage(fullBooking, fullBooking.telegramChatId);
+    //     }
+    //   } catch (error) {
+    //     console.error('Error sending Telegram confirmation:', error);
+    //     // Continue even if Telegram fails
+    //   }
+    // }
 
     res.json(appointment);
   } catch (error) {
