@@ -112,7 +112,18 @@ bot.on('callback_query', async (ctx) => {
 👨‍💼 ${booking?.master?.name || ''}
         `.trim();
 
-        await ctx.editMessageText(cancelMessage);
+        await ctx.editMessageText(cancelMessage, {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '📅 Перезаписаться',
+                  url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}`
+                }
+              ]
+            ]
+          }
+        });
         await ctx.answerCbQuery('Запись успешно отменена');
         console.log('[BOOKING CANCELLED] Booking ID:', bookingId, 'Chat ID:', chatId);
       } else {
