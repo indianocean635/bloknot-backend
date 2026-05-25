@@ -218,6 +218,26 @@ async function createPublicAppointment(req, res) {
 
     console.log('✅ No conflicts, creating appointment...');
 
+    // Check if user has existing Telegram chatId from previous bookings
+    let existingChatId = null;
+    if (customerPhone || customerTelegram) {
+      const existingBooking = await prisma.appointment.findFirst({
+        where: {
+          OR: [
+            { customerPhone: customerPhone || undefined },
+            { customerTelegram: customerTelegram || undefined }
+          ],
+          telegramChatId: { not: null }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (existingBooking && existingBooking.telegramChatId) {
+        existingChatId = existingBooking.telegramChatId;
+        console.log('[TELEGRAM] Found existing chatId for user:', existingChatId);
+      }
+    }
+
     // Generate unique booking token
     const bookingToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
@@ -242,35 +262,37 @@ async function createPublicAppointment(req, res) {
         customerTelegram,
         customerComment,
         status: 'PENDING',
-        bookingToken
+        bookingToken,
+        telegramChatId: existingChatId // Auto-link if user has existing chatId
       }
     });
 
     console.log('✅ Appointment created in DB:', appointment.id);
 
-    // Don't send Telegram confirmation here - it's sent from linkBooking
-    // if (appointment.telegramChatId) {
-    //   try {
-    //     const { sendBookingConfirmationMessage } = require('../services/telegramBotService');
-    //
-    //     // Get full booking details for confirmation
-    //     const fullBooking = await prisma.appointment.findUnique({
-    //       where: { id: appointment.id },
-    //       include: {
-    //         service: true,
-    //         master: true,
-    //         business: true
-    //       }
-    //     });
-    //
-    //     if (fullBooking) {
-    //       await sendBookingConfirmationMessage(fullBooking, fullBooking.telegramChatId);
-    //     }
-    //   } catch (error) {
-    //     console.error('Error sending Telegram confirmation:', error);
-    //     // Continue even if Telegram fails
-    //   }
-    // }
+    // Send Telegram confirmation if user has existing chatId
+    if (appointment.telegramChatId) {
+      try {
+        const { sendBookingConfirmationMessage } = require('../services/telegramBotService');
+
+        // Get full booking details for confirmation
+        const fullBooking = await prisma.appointment.findUnique({
+          where: { id: appointment.id },
+          include: {
+            service: true,
+            master: true,
+            business: true
+          }
+        });
+
+        if (fullBooking) {
+          await sendBookingConfirmationMessage(fullBooking, fullBooking.telegramChatId);
+          console.log('[TELEGRAM] Auto-confirmation sent for booking:', appointment.id);
+        }
+      } catch (error) {
+        console.error('Error sending Telegram confirmation:', error);
+        // Continue even if Telegram fails
+      }
+    }
 
     res.json(appointment);
   } catch (error) {

@@ -45,7 +45,6 @@ bot.start(async (ctx) => {
 
       // Confirmation message is sent from backend controller
       console.log('[TELEGRAM BOT] Booking linked, confirmation sent from backend:', booking.id);
-      await ctx.reply('Telegram успешно подключен ✅\n\nТеперь вы будете получать уведомления о записях.');
     } else {
       console.log('[TELEGRAM BOT] Backend response status:', response.status);
       const errorText = await response.text();
