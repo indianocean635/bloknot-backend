@@ -14,6 +14,9 @@ const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN, {
   }
 });
 
+// Track processed callback IDs to prevent duplicate processing
+const processedCallbacks = new Set();
+
 // Handle /start command with payload (deep-link)
 bot.start(async (ctx) => {
   const payload = ctx.startPayload;
@@ -61,6 +64,7 @@ bot.start(async (ctx) => {
 bot.on('callback_query', async (ctx) => {
   console.log('[TELEGRAM BOT] Callback query received');
   const callbackQuery = ctx.callbackQuery;
+  const callbackId = callbackQuery.id;
 
   if (!callbackQuery?.data) {
     console.log('[TELEGRAM BOT] No callback data, answering empty');
@@ -68,10 +72,23 @@ bot.on('callback_query', async (ctx) => {
     return;
   }
 
+  // Prevent duplicate processing
+  if (processedCallbacks.has(callbackId)) {
+    console.log('[TELEGRAM BOT] Callback already processed, skipping:', callbackId);
+    return;
+  }
+  processedCallbacks.add(callbackId);
+
+  // Clean up old callback IDs (keep last 1000)
+  if (processedCallbacks.size > 1000) {
+    const firstItem = processedCallbacks.values().next().value;
+    processedCallbacks.delete(firstItem);
+  }
+
   const data = callbackQuery.data;
   const chatId = ctx.chat.id;
 
-  console.log('[TELEGRAM BOT] Callback received:', data, 'Chat ID:', chatId);
+  console.log('[TELEGRAM BOT] Callback received:', data, 'Chat ID:', chatId, 'Callback ID:', callbackId);
 
   try {
     if (data.startsWith('cancel_')) {
@@ -111,19 +128,43 @@ bot.on('callback_query', async (ctx) => {
 👨‍💼 ${booking?.master?.name || ''}
         `.trim();
 
-        await ctx.editMessageText(cancelMessage, {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: '📅 Перезаписаться',
-                  url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}`
-                }
+        try {
+          await ctx.editMessageText(cancelMessage, {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: '📅 Перезаписаться',
+                    url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}`
+                  }
+                ]
               ]
-            ]
-          }
-        });
-        await ctx.answerCbQuery('Запись успешно отменена');
+            }
+          });
+        } catch (editError) {
+          // If edit fails (e.g., query too old), send a new message instead
+          console.log('[TELEGRAM BOT] Edit message failed, sending new message:', editError.message);
+          await ctx.reply(cancelMessage, {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: '📅 Перезаписаться',
+                    url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}`
+                  }
+                ]
+              ]
+            }
+          });
+        }
+
+        try {
+          await ctx.answerCbQuery('Запись успешно отменена');
+        } catch (answerError) {
+          // Ignore answer callback errors (e.g., query too old)
+          console.log('[TELEGRAM BOT] Answer callback query failed (ignoring):', answerError.message);
+        }
+
         console.log('[BOOKING CANCELLED] Booking ID:', bookingId, 'Chat ID:', chatId);
       } else {
         console.log('[TELEGRAM BOT] Cancel request failed');
@@ -135,7 +176,11 @@ bot.on('callback_query', async (ctx) => {
     }
   } catch (error) {
     console.error('[TELEGRAM BOT] Error handling callback:', error);
-    await ctx.answerCbQuery('Произошла ошибка. Попробуйте позже.', { show_alert: true });
+    try {
+      await ctx.answerCbQuery('Произошла ошибка. Попробуйте позже.', { show_alert: true });
+    } catch (answerError) {
+      console.log('[TELEGRAM BOT] Answer callback query failed in error handler (ignoring):', answerError.message);
+    }
   }
 });
 
