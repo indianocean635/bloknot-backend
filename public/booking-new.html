@@ -1113,10 +1113,15 @@
     // Select service
     function selectService(element) {
       const serviceId = element.dataset.serviceId;
+      const duration = parseInt(element.dataset.duration) || 0;
+      const price = parseInt(element.dataset.price) || 0;
+
+      console.log('Selecting service:', serviceId, 'duration:', duration, 'price:', price);
+
       const serviceData = {
         id: serviceId,
-        duration: parseInt(element.dataset.duration),
-        price: parseInt(element.dataset.price)
+        duration: duration,
+        price: price
       };
 
       // Toggle selection
@@ -1502,9 +1507,36 @@
         return;
       }
 
+      // Validate services
+      if (!selectedServices || selectedServices.length === 0) {
+        alert('Пожалуйста, выберите хотя бы одну услугу');
+        return;
+      }
+
+      // Validate time
+      if (!selectedTime) {
+        alert('Пожалуйста, выберите время записи');
+        return;
+      }
+
+      // Validate date
+      if (!selectedDate) {
+        alert('Пожалуйста, выберите дату записи');
+        return;
+      }
+
       // Calculate total duration from all selected services
-      const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
-      const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
+      console.log('Selected services:', selectedServices);
+      const totalDuration = selectedServices.reduce((sum, service) => {
+        const duration = parseInt(service.duration) || 0;
+        return sum + duration;
+      }, 0);
+      const totalPrice = selectedServices.reduce((sum, service) => {
+        const price = parseInt(service.price) || 0;
+        return sum + price;
+      }, 0);
+
+      console.log('Total duration:', totalDuration, 'Total price:', totalPrice);
 
       const [hours, minutes] = selectedTime.split(':').map(Number);
       // Use simple format without timezone offset to avoid UTC conversion
