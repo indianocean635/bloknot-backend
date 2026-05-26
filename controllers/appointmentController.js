@@ -92,7 +92,7 @@ async function getPublicAppointments(req, res) {
       where: {
         businessId: businessId,
         status: {
-          in: ['PENDING', 'CONFIRMED', 'CANCELLED']
+          in: ['PENDING', 'CONFIRMED']
         }
       },
       include: {

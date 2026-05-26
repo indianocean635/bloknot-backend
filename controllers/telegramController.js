@@ -86,11 +86,13 @@ async function cancelBooking(req, res) {
       where: { id: parseInt(bookingId) },
       data: { status: 'CANCELLED' },
       include: {
-        master: true
+        master: true,
+        business: true
       }
     });
 
     console.log('[TELEGRAM] Booking cancelled successfully:', bookingId);
+    console.log('[TELEGRAM] Booking status after cancellation:', updated.status);
 
     res.json({ success: true, booking: updated });
   } catch (error) {
