@@ -1493,6 +1493,15 @@
     document.getElementById('contact-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      // Validate phone number
+      const phoneInput = document.getElementById('client-phone');
+      const phoneValue = phoneInput.value.replace(/\D/g, '');
+      if (phoneValue.length < 11) {
+        alert('Пожалуйста, введите полный номер телефона (11 цифр)');
+        phoneInput.focus();
+        return;
+      }
+
       // Calculate total duration from all selected services
       const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
       const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);

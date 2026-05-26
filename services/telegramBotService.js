@@ -29,7 +29,10 @@ bot.start(async (ctx) => {
   }
 
   try {
-    // Send connection data to backend
+    // Send connection data to backend with timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
     const response = await fetch('https://bloknotservis.ru/api/telegram/link-booking', {
       method: 'POST',
       headers: {
@@ -39,8 +42,11 @@ bot.start(async (ctx) => {
         bookingToken: payload,
         chatId: ctx.chat.id,
         username: ctx.from.username
-      })
+      }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeout);
 
     if (response.ok) {
       const result = await response.json();
@@ -55,8 +61,13 @@ bot.start(async (ctx) => {
       await ctx.reply('Ошибка подключения. Недействительный токен.');
     }
   } catch (error) {
-    console.error('[TELEGRAM BOT] Error connecting:', error);
-    await ctx.reply('Ошибка подключения. Попробуйте позже.');
+    if (error.name === 'AbortError') {
+      console.error('[TELEGRAM BOT] Request timeout after 30 seconds');
+      await ctx.reply('Сервер перегружен. Попробуйте подключить Telegram позже через форму записи.');
+    } else {
+      console.error('[TELEGRAM BOT] Error connecting:', error);
+      await ctx.reply('Ошибка подключения. Попробуйте позже.');
+    }
   }
 });
 
