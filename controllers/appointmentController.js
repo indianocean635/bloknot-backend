@@ -224,10 +224,15 @@ async function createPublicAppointment(req, res) {
     // Check if user has existing Telegram chatId from previous bookings
     let existingChatId = null;
     if (customerPhone || customerTelegram) {
+      // Normalize phone number for comparison (remove all non-digit characters)
+      const normalizedPhone = customerPhone ? customerPhone.replace(/\D/g, '') : null;
+
+      console.log('[TELEGRAM] Searching for existing chatId with phone:', normalizedPhone, 'telegram:', customerTelegram);
+
       const existingBooking = await prisma.appointment.findFirst({
         where: {
           OR: [
-            { customerPhone: customerPhone || undefined },
+            { customerPhone: normalizedPhone || undefined },
             { customerTelegram: customerTelegram || undefined }
           ],
           telegramChatId: { not: null }
@@ -238,6 +243,8 @@ async function createPublicAppointment(req, res) {
       if (existingBooking && existingBooking.telegramChatId) {
         existingChatId = existingBooking.telegramChatId;
         console.log('[TELEGRAM] Found existing chatId for user:', existingChatId);
+      } else {
+        console.log('[TELEGRAM] No existing chatId found for user');
       }
     }
 
@@ -255,6 +262,9 @@ async function createPublicAppointment(req, res) {
     const startsAtDate = new Date(startsAt + '+03:00');
     const endsAtDate = new Date(endsAt + '+03:00');
 
+    // Normalize phone number for storage
+    const normalizedPhoneForStorage = customerPhone ? customerPhone.replace(/\D/g, '') : customerPhone;
+
     const appointment = await prisma.appointment.create({
       data: {
         businessId,
@@ -266,7 +276,7 @@ async function createPublicAppointment(req, res) {
         startsAtLocal: startsAt, // Store original time as string without timezone conversion
         endsAtLocal: endsAt,     // Store original end time as string without timezone conversion
         customerName,
-        customerPhone,
+        customerPhone: normalizedPhoneForStorage,
         customerTelegram,
         customerComment,
         status: 'PENDING',
