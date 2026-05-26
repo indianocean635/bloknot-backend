@@ -171,7 +171,7 @@ async function createPublicAppointment(req, res) {
         masterId: Number(masterId),
         businessId: businessId,
         status: {
-          in: ['CONFIRMED']
+          in: ['CONFIRMED', 'PENDING']
         },
         OR: [
           {
@@ -209,7 +209,10 @@ async function createPublicAppointment(req, res) {
       })));
     }
 
-    if (existingAppointments.length > 0) {
+    // Filter out cancelled appointments from conflicts
+    const activeConflicts = existingAppointments.filter(a => a.status !== 'CANCELLED');
+
+    if (activeConflicts.length > 0) {
       console.log('❌ Time slot conflict detected for master:', masterId);
       return res.status(409).json({
         error: 'Это время уже занято. Пожалуйста, выберите другое время.'
