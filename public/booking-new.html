@@ -1642,10 +1642,15 @@
             <p style="margin-bottom: 8px;">Общая стоимость: ${totalPrice} ₽</p>
             <p style="margin-top: 16px;">Спасибо, что выбрали ${businessData.business?.name || businessData.name}!</p>
             <div style="margin-top: 24px; padding: 16px; background: #f8fafc; border-radius: 8px;">
-              <p style="margin-bottom: 12px; font-weight: 500;">Хотите получать уведомления в Telegram?</p>
-              <button id="connect-telegram-btn" style="padding: 10px 20px; background: #229ED9; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer;">
-                Подключить Telegram
-              </button>
+              <p style="margin-bottom: 12px; font-weight: 500;">Где удобно получить напоминание?</p>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button id="connect-telegram-btn" style="padding: 10px 20px; background: #229ED9; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer;">
+                  Подключить Telegram
+                </button>
+                <button id="connect-whatsapp-btn" style="padding: 10px 20px; background: #25D366; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer;">
+                  Подключить WhatsApp
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -1654,6 +1659,13 @@
         document.getElementById('connect-telegram-btn').addEventListener('click', () => {
           // Directly open Telegram deep-link with booking token
           window.open(`https://t.me/bloknot_booking_bot?start=${bookingToken}`, '_blank');
+        });
+
+        // Add event listener to connect WhatsApp button
+        document.getElementById('connect-whatsapp-btn').addEventListener('click', () => {
+          // Open WhatsApp with booking info
+          const message = encodeURIComponent(`Здравствуйте! Я записался на ${new Date(selectedDate).toLocaleDateString('ru-RU')} в ${selectedTime}. Услуги: ${serviceNames}.`);
+          window.open(`https://wa.me/79999999999?text=${message}`, '_blank');
         });
       } catch (error) {
         console.error('Error creating booking:', error);
