@@ -1635,7 +1635,7 @@
         const serviceNames = selectedServices.map(s => businessData.services.find(service => service.id == s.id)?.name).join(', ');
         document.getElementById('contact-form-section').innerHTML = `
           <div class="success">
-            <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">✅ Запись успешно создана</h2>
+            <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;"><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #22c55e; border-radius: 50%; color: white; font-size: 18px; margin-right: 8px;">✓</span>Запись успешно создана</h2>
             <p style="margin-bottom: 8px;">Услуги: ${serviceNames}</p>
             <p style="margin-bottom: 8px;">Специалист: ${businessData.masters.find(m => m.id == selectedSpecialist.id)?.name}</p>
             <p style="margin-bottom: 8px;">Дата: ${new Date(selectedDate).toLocaleDateString('ru-RU')} в ${selectedTime}</p>
