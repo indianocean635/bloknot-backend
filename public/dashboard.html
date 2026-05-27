@@ -489,11 +489,19 @@
    }
 
    // Retry logic for auth with race condition protection
-  async function waitForAuth(retries = 10) {
+  async function waitForAuth(retries = 3) {
+    // Prevent concurrent auth checks
+    if (window.authInProgress) {
+      console.log('[DASHBOARD] Auth already in progress, waiting...');
+      await new Promise(r => setTimeout(r, 500));
+      return window.lastAuthResult || null;
+    }
+    window.authInProgress = true;
+
     for (let i = 0; i < retries; i++) {
       try {
         console.log(`Auth attempt ${i + 1}/${retries} at ${new Date().toISOString()}`);
-        
+
         // Use api function to include localStorage token
         const res = await window.Bloknot.api('/api/auth/me', {
           method: 'GET'
@@ -503,6 +511,8 @@
 
         if (res) {
           console.log('Auth success:', res);
+          window.lastAuthResult = res;
+          window.authInProgress = false;
           return res;
         }
 
@@ -514,11 +524,19 @@
     }
 
     console.warn('Auth failed after all retries');
+    window.authInProgress = false;
     return null;
   }
 
   // Unified dashboard initialization to prevent race conditions
   async function initDashboard() {
+    // Prevent multiple initializations
+    if (window.dashboardInitialized) {
+      console.log('[DASHBOARD] Already initialized, skipping');
+      return;
+    }
+    window.dashboardInitialized = true;
+
     // Prevent infinite redirect loop
     const redirectCount = sessionStorage.getItem('auth_redirect_count') || '0';
     if (parseInt(redirectCount) > 3) {
