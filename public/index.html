@@ -824,18 +824,25 @@
     // Проверяем статус авторизации
     async function checkAuthStatus() {
       try {
-        // Check if auth cookie exists
+        // Check for token in multiple storage locations
+        const token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
         const cookies = document.cookie.split(';').map(c => c.trim());
         const authCookie = cookies.find(c => c.startsWith('auth='));
 
-        if (authCookie) {
-          // User has auth cookie, verify it's valid
+        // If we have a token in storage or cookie, verify it's valid
+        if (token || authCookie) {
           try {
+            const headers = {};
+            if (token) {
+              headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch('/api/auth/me', {
-              credentials: 'include'
+              credentials: 'include',
+              headers: headers
             });
             if (response.ok) {
-              // Cookie is valid, redirect to dashboard
+              // Token/cookie is valid, redirect to dashboard
               console.log('[INDEX] User is authenticated, redirecting to dashboard');
               window.location.href = '/dashboard.html';
               return;

@@ -117,10 +117,10 @@
   }
 
   async function api(path, opts) {
-    // Check for token in IndexedDB (for iOS PWA fallback)
-    let token = localStorage.getItem('auth_token');
+    // Check for token in multiple storage locations with priority
+    let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
     
-    // If not in localStorage, try IndexedDB
+    // If not in storage, try IndexedDB
     if (!token) {
       try {
         const db = await indexedDB.open('bloknot-auth', 1);
@@ -129,8 +129,10 @@
         const result = await store.get('token');
         if (result) {
           token = result.value;
-          // Sync back to localStorage
+          // Sync back to all storage locations
           localStorage.setItem('auth_token', token);
+          sessionStorage.setItem('auth_token', token);
+          console.log('Token found in IndexedDB, synced to storage');
         }
         db.close();
       } catch (e) {
@@ -144,8 +146,10 @@
       const authCookie = cookies.find(c => c.startsWith('auth='));
       if (authCookie) {
         token = decodeURIComponent(authCookie.substring(5));
+        // Sync to all storage locations
         localStorage.setItem('auth_token', token);
-        console.log('Token found in cookie, synced to localStorage');
+        sessionStorage.setItem('auth_token', token);
+        console.log('Token found in cookie, synced to storage');
       }
     }
     
@@ -191,9 +195,14 @@
     return res.text();
   }
 
-  // Save token to both localStorage and IndexedDB
+  // Save token to all storage locations for maximum reliability
   async function saveAuthToken(token) {
+    console.log('[SAVE TOKEN] Saving token to all storage locations');
+    // Save to localStorage
     localStorage.setItem('auth_token', token);
+    // Save to sessionStorage (for current session)
+    sessionStorage.setItem('auth_token', token);
+    // Save to IndexedDB (for iOS PWA)
     try {
       const db = await indexedDB.open('bloknot-auth', 1);
       if (!db.objectStoreNames.contains('auth')) {
@@ -203,23 +212,29 @@
       const store = tx.objectStore('auth');
       await store.put({ id: 'token', value: token });
       db.close();
+      console.log('[SAVE TOKEN] Saved to IndexedDB');
     } catch (e) {
-      console.log('IndexedDB save failed:', e);
+      console.log('[SAVE TOKEN] IndexedDB save failed:', e);
     }
+    console.log('[SAVE TOKEN] Token saved successfully');
   }
 
-  // Clear token from both localStorage and IndexedDB
+  // Clear token from all storage locations
   async function clearAuthToken() {
+    console.log('[CLEAR TOKEN] Clearing token from all storage locations');
     localStorage.removeItem('auth_token');
+    sessionStorage.removeItem('auth_token');
     try {
       const db = await indexedDB.open('bloknot-auth', 1);
       const tx = db.transaction('auth', 'readwrite');
       const store = tx.objectStore('auth');
       await store.delete('token');
       db.close();
+      console.log('[CLEAR TOKEN] Cleared from IndexedDB');
     } catch (e) {
-      console.log('IndexedDB clear failed:', e);
+      console.log('[CLEAR TOKEN] IndexedDB clear failed:', e);
     }
+    console.log('[CLEAR TOKEN] Token cleared successfully');
   }
 
   let deferredInstallPrompt = null;
