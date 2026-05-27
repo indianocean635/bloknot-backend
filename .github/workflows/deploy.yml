@@ -20,6 +20,10 @@ jobs:
             set -e
             cd /var/www/bloknot-backend
 
+            # Clean untracked files to avoid merge conflicts
+            git clean -fd
+            git reset --hard HEAD
+
             # Retry logic for git operations
             MAX_RETRIES=3
             RETRY_COUNT=0
