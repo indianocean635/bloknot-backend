@@ -11,8 +11,8 @@
   <main class="container">
     <div class="admin-login-container">
       <div class="admin-login-header">
-        <h1 class="page-title">Вход Супер Админа</h1>
-        <p class="page-subtitle">Только для владельца Bloknot</p>
+        <h1 class="page-title">Вход в Админ Панель</h1>
+        <p class="page-subtitle">Для супер админа и сотрудников отдела продаж</p>
         <button onclick="clearCache()" style="background: #ff6b6b; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 10px;">
           Очистить кэш
         </button>
@@ -32,7 +32,7 @@
       <div class="notice" id="notice" style="display:none; margin-top:10px"></div>
 
       <div class="actions" style="margin-top:14px">
-        <button class="btn" id="loginBtn" type="button">Войти как Супер Админ</button>
+        <button class="btn" id="loginBtn" type="button">Войти</button>
       </div>
 
       <div class="actions" style="margin-top:10px">
@@ -63,12 +63,6 @@
 
       if (!email || !password) {
         showNotice('Please enter email and password');
-        return;
-      }
-
-      // Allow apeskov635@gmail.com (owner) and admin@bloknotservis.ru
-      if (email !== 'apeskov635@gmail.com' && email !== 'admin@bloknotservis.ru') {
-        showNotice('Access denied. Only Bloknot owner can login.');
         return;
       }
 

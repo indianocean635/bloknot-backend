@@ -9,34 +9,38 @@
 </head>
 <body class="admin-page">
   <script>
-    // Check if user is authenticated as super admin - via API call
+    // Check if user is authenticated as super admin or sales staff - via API call
     async function checkAuth() {
       try {
         const response = await fetch('/api/admin/me', {
           method: 'GET',
           credentials: 'include'
         });
-        
+
         if (!response.ok) {
           throw new Error('Not authenticated');
         }
-        
+
         const data = await response.json();
-        
-        if (!data.success || data.user.role !== 'SUPER_ADMIN') {
-          throw new Error('Not super admin');
+
+        if (!data.success || (data.user.role !== 'SUPER_ADMIN' && data.user.role !== 'SALES_STAFF')) {
+          throw new Error('Not authorized');
         }
-        
-        // User is authenticated as super admin - continue loading page
-        console.log('Super admin authenticated:', data.user.email);
-        
+
+        // User is authenticated - continue loading page
+        console.log('User authenticated:', data.user.email, 'Role:', data.user.role);
+        window.currentUser = data.user;
+
+        // Load page content based on role
+        loadPageContent();
+
       } catch (error) {
         console.log('Authentication failed:', error.message);
         // Redirect to login page
         window.location.href = '/admin-login.html';
       }
     }
-    
+
     // Check authentication immediately
     checkAuth();
   </script>
@@ -101,7 +105,16 @@
       <a class="btn secondary" href="/api/admin/return" style="padding:8px 10px; border-radius:10px">Вернуться в админ</a>
     </div>
 
-    <div class="row three" style="margin-top:14px">
+    <!-- Tab Navigation -->
+    <div class="actions" style="margin-top:20px; gap:10px;">
+      <button class="btn secondary" id="tabUsers" onclick="switchTab('users')" style="padding:8px 16px; border-radius:10px">Пользователи</button>
+      <button class="btn secondary" id="tabSalesStaff" onclick="switchTab('sales-staff')" style="padding:8px 16px; border-radius:10px; display:none;">Сотрудники отдела продаж</button>
+      <button class="btn secondary" id="tabMyClients" onclick="switchTab('my-clients')" style="padding:8px 16px; border-radius:10px; display:none;">Мои клиенты</button>
+    </div>
+
+    <!-- Users Section -->
+    <div id="section-users">
+      <div class="row three" style="margin-top:14px">
       <div class="card">
         <div class="item-title">Всего пользователей</div>
         <div id="statTotal" style="font-size:28px; font-weight:1000; margin-top:6px">—</div>
@@ -152,6 +165,80 @@
           </thead>
           <tbody id="tbody"></tbody>
         </table>
+      </div>
+    </div>
+    </div>
+
+    <!-- Sales Staff Section (SUPER_ADMIN only) -->
+    <div id="section-sales-staff" style="display:none;">
+      <div class="card" style="margin-top:14px">
+        <div class="actions" style="justify-content:space-between">
+          <div>
+            <div class="item-title">Сотрудники отдела продаж</div>
+            <div class="item-meta">Управление сотрудниками отдела продаж</div>
+          </div>
+          <div class="actions">
+            <button class="btn secondary" id="addSalesStaffBtn" type="button">Добавить сотрудника</button>
+            <button class="btn secondary" id="refreshSalesStaffBtn" type="button">Обновить</button>
+          </div>
+        </div>
+
+        <div style="overflow:auto; margin-top:12px">
+          <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:13px">
+            <thead>
+              <tr>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:30%">Email</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:20%">Name</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:20%">Phone</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Создан</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Клиентов</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:10%">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="salesStaffTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Clients Section (SALES_STAFF only) -->
+    <div id="section-my-clients" style="display:none;">
+      <div class="card" style="margin-top:14px">
+        <div class="actions" style="justify-content:space-between">
+          <div>
+            <div class="item-title">Мои клиенты</div>
+            <div class="item-meta">Клиенты, закрепленные за вами</div>
+          </div>
+          <div class="actions">
+            <button class="btn secondary" id="addClientBtn" type="button">Добавить клиента</button>
+            <button class="btn secondary" id="refreshClientsBtn" type="button">Обновить</button>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:12px">
+          <label for="clientSearch">Поиск клиента по email</label>
+          <input id="clientSearch" placeholder="Введите email клиента" />
+          <button class="btn secondary" id="searchClientBtn" type="button" style="margin-left:10px;">Найти</button>
+        </div>
+
+        <div id="searchResult" style="margin-top:12px; display:none;"></div>
+
+        <div style="overflow:auto; margin-top:12px">
+          <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:13px">
+            <thead>
+              <tr>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:25%">Email</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Name</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Phone</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:20%">Бизнес</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:10%">Paying</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:10%">Закреплен</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:10%">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="clientsTbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </main>
@@ -229,7 +316,15 @@
     }
 
     async function loadUsers() {
-      const users = await api('/api/admin/users');
+      let users;
+      
+      // If sales staff, load only assigned clients
+      if (window.currentUser && window.currentUser.role === 'SALES_STAFF') {
+        users = await api('/api/admin/assigned-clients');
+      } else {
+        users = await api('/api/admin/users');
+      }
+      
       const query = String(q.value || '').trim().toLowerCase();
       const filtered = query ? users.filter(u => String(u.email||'').toLowerCase().includes(query)) : users;
 
@@ -360,10 +455,226 @@
       loadUsers().catch(() => {});
     });
 
+    // Load page content based on user role
+    function loadPageContent() {
+      if (!window.currentUser) return;
+
+      const role = window.currentUser.role;
+
+      // Show/hide tabs based on role
+      if (role === 'SUPER_ADMIN') {
+        document.getElementById('tabSalesStaff').style.display = 'inline-block';
+        document.getElementById('tabMyClients').style.display = 'none';
+        switchTab('users');
+      } else if (role === 'SALES_STAFF') {
+        document.getElementById('tabUsers').style.display = 'inline-block';
+        document.getElementById('tabSalesStaff').style.display = 'none';
+        document.getElementById('tabMyClients').style.display = 'inline-block';
+        switchTab('my-clients');
+      } else {
+        switchTab('users');
+      }
+    }
+
+    // Switch between tabs
+    function switchTab(tabName) {
+      // Hide all sections
+      document.getElementById('section-users').style.display = 'none';
+      document.getElementById('section-sales-staff').style.display = 'none';
+      document.getElementById('section-my-clients').style.display = 'none';
+
+      // Show selected section
+      document.getElementById(`section-${tabName}`).style.display = 'block';
+
+      // Update tab button styles
+      document.getElementById('tabUsers').classList.remove('primary');
+      document.getElementById('tabSalesStaff').classList.remove('primary');
+      document.getElementById('tabMyClients').classList.remove('primary');
+
+      if (tabName === 'users') {
+        document.getElementById('tabUsers').classList.add('primary');
+        loadStats();
+        loadUsers();
+      } else if (tabName === 'sales-staff') {
+        document.getElementById('tabSalesStaff').classList.add('primary');
+        loadSalesStaff();
+      } else if (tabName === 'my-clients') {
+        document.getElementById('tabMyClients').classList.add('primary');
+        loadAssignedClients();
+      }
+    }
+
+    // Load sales staff
+    async function loadSalesStaff() {
+      try {
+        const salesStaff = await api('/api/admin/sales-staff');
+        const salesStaffTbody = document.getElementById('salesStaffTbody');
+
+        salesStaffTbody.innerHTML = salesStaff.map(staff => `
+          <tr>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${esc(staff.email)}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${esc(staff.name || '-')}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${esc(staff.phone || '-')}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${fmtDate(staff.createdAt)}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${staff._count?.salesStaffAssignments || 0}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
+              <button class="btn danger" data-action="delete-sales-staff" data-id="${esc(staff.id)}" type="button" style="padding:4px 8px; font-size:11px">Delete</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        showNotice('Ошибка загрузки сотрудников: ' + error.message);
+      }
+    }
+
+    // Add sales staff
+    document.getElementById('addSalesStaffBtn').addEventListener('click', async () => {
+      const email = prompt('Введите email сотрудника:');
+      if (!email) return;
+
+      const name = prompt('Введите имя сотрудника (опционально):') || null;
+      const password = prompt('Введите пароль сотрудника:');
+      if (!password) return;
+
+      try {
+        await api('/api/admin/sales-staff', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, name, password })
+        });
+        showNotice('Сотрудник добавлен');
+        loadSalesStaff();
+      } catch (error) {
+        showNotice('Ошибка добавления сотрудника: ' + error.message);
+      }
+    });
+
+    // Delete sales staff
+    document.getElementById('refreshSalesStaffBtn').addEventListener('click', () => {
+      loadSalesStaff();
+    });
+
+    // Load assigned clients
+    async function loadAssignedClients() {
+      try {
+        const clients = await api('/api/admin/assigned-clients');
+        const clientsTbody = document.getElementById('clientsTbody');
+
+        clientsTbody.innerHTML = clients.map(client => `
+          <tr>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
+              <a href="#" data-action="impersonate" data-id="${esc(client.id)}" style="font-weight:700; font-size:12px">${esc(client.email)}</a>
+            </td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${esc(client.name || '-')}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${esc(client.phone || '-')}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${esc(client.business?.name || '-')}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${client.isPaying ? 'Yes' : 'No'}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${fmtDate(client.assignedAt)}</td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
+              <button class="btn danger" data-action="unassign-client" data-email="${esc(client.email)}" type="button" style="padding:4px 8px; font-size:11px">Открепить</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        showNotice('Ошибка загрузки клиентов: ' + error.message);
+      }
+    }
+
+    // Search client by email
+    document.getElementById('searchClientBtn').addEventListener('click', async () => {
+      const email = document.getElementById('clientSearch').value.trim();
+      if (!email) {
+        showNotice('Введите email для поиска');
+        return;
+      }
+
+      try {
+        const client = await api(`/api/admin/search-client?email=${encodeURIComponent(email)}`);
+        const searchResult = document.getElementById('searchResult');
+
+        searchResult.style.display = 'block';
+        searchResult.innerHTML = `
+          <div style="padding:12px; background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px;">
+            <div style="font-weight:600; margin-bottom:8px;">Клиент найден:</div>
+            <div>Email: ${esc(client.email)}</div>
+            <div>Name: ${esc(client.name || '-')}</div>
+            <div>Phone: ${esc(client.phone || '-')}</div>
+            <div>Business: ${esc(client.business?.name || '-')}</div>
+            <div style="margin-top:8px;">
+              <button class="btn primary" id="assignClientBtn" type="button">Закрепить за собой</button>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('assignClientBtn').addEventListener('click', async () => {
+          try {
+            await api('/api/admin/assign-client', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ clientEmail: client.email, salesStaffId: window.currentUser.id })
+            });
+            showNotice('Клиент закреплен');
+            searchResult.style.display = 'none';
+            document.getElementById('clientSearch').value = '';
+            loadAssignedClients();
+          } catch (error) {
+            showNotice('Ошибка закрепления: ' + error.message);
+          }
+        });
+      } catch (error) {
+        showNotice('Клиент не найден: ' + error.message);
+        document.getElementById('searchResult').style.display = 'none';
+      }
+    });
+
+    // Refresh clients
+    document.getElementById('refreshClientsBtn').addEventListener('click', () => {
+      loadAssignedClients();
+    });
+
     document.addEventListener('click', async (e) => {
       const saveBtn = e.target && e.target.closest && e.target.closest('button[data-action="save"]');
       const delBtn = e.target && e.target.closest && e.target.closest('button[data-action="delete"]');
+      const delSalesStaffBtn = e.target && e.target.closest && e.target.closest('button[data-action="delete-sales-staff"]');
+      const unassignClientBtn = e.target && e.target.closest && e.target.closest('button[data-action="unassign-client"]');
       const impLink = e.target && e.target.closest && e.target.closest('a[data-action="impersonate"]');
+
+      if (delSalesStaffBtn) {
+        const id = delSalesStaffBtn.getAttribute('data-id');
+        showNotice('');
+        delSalesStaffBtn.disabled = true;
+        try {
+          const confirmDelete = window.confirm('Удалить сотрудника отдела продаж? Все закрепленные клиенты будут откреплены.');
+          if (!confirmDelete) {
+            delSalesStaffBtn.disabled = false;
+            return;
+          }
+          await api(`/api/admin/sales-staff/${id}`, { method: 'DELETE' });
+          showNotice('Сотрудник удален');
+          loadSalesStaff();
+        } catch (err) {
+          showNotice('Ошибка удаления: ' + (err && err.message ? err.message : ''));
+        } finally {
+          delSalesStaffBtn.disabled = false;
+        }
+        return;
+      }
+
+      if (unassignClientBtn) {
+        const email = unassignClientBtn.getAttribute('data-email');
+        showNotice('');
+        unassignClientBtn.disabled = true;
+        try {
+          await api(`/api/admin/assign-client?clientEmail=${encodeURIComponent(email)}&salesStaffId=${window.currentUser.id}`, { method: 'DELETE' });
+          showNotice('Клиент откреплен');
+          loadAssignedClients();
+        } catch (err) {
+          showNotice('Ошибка открепления: ' + (err && err.message ? err.message : ''));
+        } finally {
+          unassignClientBtn.disabled = false;
+        }
+        return;
+      }
 
       if (impLink) {
         e.preventDefault();

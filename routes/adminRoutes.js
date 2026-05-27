@@ -704,8 +704,8 @@ router.get('/me', requireAuth, async (req, res) => {
       }
     });
 
-    if (!user || user.role !== 'SUPER_ADMIN') {
-      return res.status(403).json({ error: 'Access denied. Super admin only.' });
+    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'SALES_STAFF')) {
+      return res.status(403).json({ error: 'Access denied. Admin or Sales Staff only.' });
     }
 
     res.json({
@@ -722,17 +722,17 @@ router.get('/me', requireAuth, async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find super admin user
+    // Find user (super admin or sales staff)
     const user = await prisma.user.findUnique({
       where: { email }
     });
 
-    if (!user || user.role !== 'SUPER_ADMIN') {
+    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'SALES_STAFF')) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -776,6 +776,380 @@ router.post('/login', async (req, res) => {
 router.get('/return', requireAuth, (req, res) => {
   res.clearCookie('impersonate');
   res.redirect('/admin.html');
+});
+
+// SALES STAFF MANAGEMENT
+
+// Get all sales staff
+router.get('/sales-staff', requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
+    const salesStaff = await prisma.user.findMany({
+      where: { role: 'SALES_STAFF' },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        createdAt: true,
+        _count: {
+          select: { salesStaffAssignments: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(salesStaff);
+  } catch (error) {
+    console.error('Get sales staff error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create sales staff
+router.post('/sales-staff', requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
+    const { email, name, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+
+    // Hash password
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create sales staff user
+    const salesStaff = await prisma.user.create({
+      data: {
+        email: email.toLowerCase(),
+        name: name || null,
+        password: hashedPassword,
+        role: 'SALES_STAFF',
+        createdAt: new Date()
+      }
+    });
+
+    console.log(`[SALES STAFF] Created sales staff: ${email} by admin: ${req.user.email}`);
+
+    res.json(salesStaff);
+  } catch (error) {
+    console.error('Create sales staff error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete sales staff
+router.delete('/sales-staff/:id', requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Admin authentication check
+    if (!req.user || req.user.role !== 'SUPER_ADMIN') {
+      console.warn('[SECURITY] Unauthorized admin access attempt', { userId: req.user?.id });
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
+    const { id } = req.params;
+
+    // Delete sales staff and their assignments
+    await prisma.salesStaffAssignment.deleteMany({
+      where: { salesStaffId: id }
+    });
+
+    await prisma.user.delete({
+      where: { id }
+    });
+
+    console.log(`[SALES STAFF] Deleted sales staff: ${id} by admin: ${req.user.email}`);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete sales staff error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Search client by email (for sales staff)
+router.get('/search-client', requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Only SUPER_ADMIN and SALES_STAFF can search
+    if (!req.user || (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'SALES_STAFF')) {
+      console.warn('[SECURITY] Unauthorized access attempt', { userId: req.user?.id, role: req.user?.role });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email parameter is required' });
+    }
+
+    // Search for user by email
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        businessId: true,
+        business: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        },
+        isPaying: true,
+        totalPaid: true,
+        nextBillingAt: true,
+        createdAt: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Search client error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Assign client to sales staff
+router.post('/assign-client', requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Only SUPER_ADMIN and SALES_STAFF can assign
+    if (!req.user || (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'SALES_STAFF')) {
+      console.warn('[SECURITY] Unauthorized access attempt', { userId: req.user?.id, role: req.user?.role });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const { clientEmail, salesStaffId } = req.body;
+
+    if (!clientEmail || !salesStaffId) {
+      return res.status(400).json({ error: 'Client email and sales staff ID are required' });
+    }
+
+    // Verify client exists
+    const client = await prisma.user.findUnique({
+      where: { email: clientEmail.toLowerCase() }
+    });
+
+    if (!client) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    // Verify sales staff exists
+    const salesStaff = await prisma.user.findUnique({
+      where: { id: salesStaffId }
+    });
+
+    if (!salesStaff || salesStaff.role !== 'SALES_STAFF') {
+      return res.status(404).json({ error: 'Sales staff not found' });
+    }
+
+    // If sales staff is assigning to themselves, allow it
+    // If admin is assigning, allow it
+    if (req.user.role === 'SALES_STAFF' && req.user.id !== salesStaffId) {
+      return res.status(403).json({ error: 'Sales staff can only assign clients to themselves' });
+    }
+
+    // Create or update assignment
+    const assignment = await prisma.salesStaffAssignment.upsert({
+      where: {
+        salesStaffId_clientEmail: {
+          salesStaffId: salesStaffId,
+          clientEmail: clientEmail.toLowerCase()
+        }
+      },
+      update: {
+        assignedAt: new Date(),
+        assignedBy: req.user.email
+      },
+      create: {
+        salesStaffId: salesStaffId,
+        clientEmail: clientEmail.toLowerCase(),
+        assignedBy: req.user.email
+      }
+    });
+
+    console.log(`[SALES STAFF] Assigned client ${clientEmail} to sales staff ${salesStaffId} by ${req.user.email}`);
+
+    res.json(assignment);
+  } catch (error) {
+    console.error('Assign client error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get assigned clients for sales staff
+router.get('/assigned-clients', requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Only SUPER_ADMIN and SALES_STAFF can view
+    if (!req.user || (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'SALES_STAFF')) {
+      console.warn('[SECURITY] Unauthorized access attempt', { userId: req.user?.id, role: req.user?.role });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    let salesStaffId = req.user.id;
+
+    // If admin, can view assignments for any staff
+    if (req.user.role === 'SUPER_ADMIN' && req.query.salesStaffId) {
+      salesStaffId = req.query.salesStaffId;
+    }
+
+    // Get assignments
+    const assignments = await prisma.salesStaffAssignment.findMany({
+      where: { salesStaffId },
+      include: {
+        salesStaff: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        }
+      },
+      orderBy: { assignedAt: 'desc' }
+    });
+
+    // Get full client data for each assignment
+    const clients = await Promise.all(
+      assignments.map(async (assignment) => {
+        const client = await prisma.user.findUnique({
+          where: { email: assignment.clientEmail },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            phone: true,
+            businessId: true,
+            business: {
+              select: {
+                id: true,
+                name: true,
+                slug: true
+              }
+            },
+            isPaying: true,
+            totalPaid: true,
+            nextBillingAt: true,
+            createdAt: true
+          }
+        });
+        return {
+          ...client,
+          assignedAt: assignment.assignedAt,
+          assignedBy: assignment.assignedBy
+        };
+      })
+    );
+
+    res.json(clients);
+  } catch (error) {
+    console.error('Get assigned clients error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Unassign client from sales staff
+router.delete('/assign-client', requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    // Only SUPER_ADMIN and SALES_STAFF can unassign
+    if (!req.user || (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'SALES_STAFF')) {
+      console.warn('[SECURITY] Unauthorized access attempt', { userId: req.user?.id, role: req.user?.role });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const { clientEmail, salesStaffId } = req.query;
+
+    if (!clientEmail || !salesStaffId) {
+      return res.status(400).json({ error: 'Client email and sales staff ID are required' });
+    }
+
+    // If sales staff is unassigning, must be their own assignment
+    if (req.user.role === 'SALES_STAFF' && req.user.id !== salesStaffId) {
+      return res.status(403).json({ error: 'Sales staff can only unassign their own clients' });
+    }
+
+    await prisma.salesStaffAssignment.deleteMany({
+      where: {
+        salesStaffId: salesStaffId,
+        clientEmail: clientEmail.toLowerCase()
+      }
+    });
+
+    console.log(`[SALES STAFF] Unassigned client ${clientEmail} from sales staff ${salesStaffId} by ${req.user.email}`);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Unassign client error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 module.exports = router;

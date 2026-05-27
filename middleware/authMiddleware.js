@@ -137,8 +137,20 @@ async function getBusinessBySlug(req, res, next) {
   next();
 }
 
+// Middleware for admin and sales staff access
+async function requireAdminOrSalesStaff(req, res, next) {
+  await requireAuth(req, res, () => {
+    if (!req.user || (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'SALES_STAFF')) {
+      console.warn('[SECURITY] Unauthorized access attempt', { userId: req.user?.id, role: req.user?.role });
+      return res.status(403).json({ error: 'Forbidden - Admin or Sales Staff access required' });
+    }
+    next();
+  });
+}
+
 module.exports = {
   requireAuth,
   getBusinessBySlug,
-  getAuthUser
+  getAuthUser,
+  requireAdminOrSalesStaff
 };

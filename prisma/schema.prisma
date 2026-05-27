@@ -26,6 +26,7 @@ model User {
 
   staffProfile Staff?
   loginTokens  LoginToken[]
+  salesStaffAssignments SalesStaffAssignment[]
 }
 
 model Business {
@@ -206,4 +207,17 @@ model Appointment {
   branch   Branch?  @relation(fields: [branchId], references: [id])
 
   @@index([businessId, startsAt])
+}
+
+model SalesStaffAssignment {
+  id         String   @id @default(uuid())
+  salesStaffId String
+  clientEmail  String
+  assignedAt  DateTime @default(now())
+  assignedBy  String
+
+  salesStaff User @relation(fields: [salesStaffId], references: [id], onDelete: Cascade)
+
+  @@unique([salesStaffId, clientEmail])
+  @@index([clientEmail])
 }
