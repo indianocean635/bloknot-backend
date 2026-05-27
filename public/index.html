@@ -822,9 +822,31 @@
     const mainNav = document.getElementById("mainNav");
 
     // Проверяем статус авторизации
-    function checkAuthStatus() {
+    async function checkAuthStatus() {
       try {
-        const isLoggedIn = false; // Remove localStorage usage - auth via JWT cookie
+        // Check if auth cookie exists
+        const cookies = document.cookie.split(';').map(c => c.trim());
+        const authCookie = cookies.find(c => c.startsWith('auth='));
+
+        if (authCookie) {
+          // User has auth cookie, verify it's valid
+          try {
+            const response = await fetch('/api/auth/me', {
+              credentials: 'include'
+            });
+            if (response.ok) {
+              // Cookie is valid, redirect to dashboard
+              console.log('[INDEX] User is authenticated, redirecting to dashboard');
+              window.location.href = '/dashboard.html';
+              return;
+            }
+          } catch (e) {
+            console.log('[INDEX] Auth check failed:', e);
+          }
+        }
+
+        // No valid auth, show login/registration
+        const isLoggedIn = false;
         if (isLoggedIn) {
           // Показываем "Мой кабинет" для авторизованных
           mainNav.innerHTML = `
