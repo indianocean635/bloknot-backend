@@ -1094,7 +1094,34 @@
         return;
       }
 
-      specialistsGrid.innerHTML = businessData.masters.map(master => `
+      // Filter specialists by selected services
+      let filteredMasters = businessData.masters;
+
+      if (selectedServices && selectedServices.length > 0) {
+        const selectedServiceIds = selectedServices.map(s => parseInt(s.id));
+        console.log('Filtering specialists by selected service IDs:', selectedServiceIds);
+
+        filteredMasters = businessData.masters.filter(master => {
+          // Check if master has any of the selected services in their serviceIds
+          if (master.serviceIds && master.serviceIds.length > 0) {
+            const hasMatchingService = master.serviceIds.some(serviceId =>
+              selectedServiceIds.includes(parseInt(serviceId))
+            );
+            console.log(`Master ${master.name} has matching service:`, hasMatchingService, 'serviceIds:', master.serviceIds);
+            return hasMatchingService;
+          }
+          return false;
+        });
+
+        console.log('Filtered masters:', filteredMasters);
+      }
+
+      if (filteredMasters.length === 0) {
+        specialistsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Нет специалистов, которые могут выполнить выбранные услуги</div>';
+        return;
+      }
+
+      specialistsGrid.innerHTML = filteredMasters.map(master => `
         <div class="specialist-item" data-specialist-id="${master.id}">
           <div class="specialist-photo">
             ${master.avatarUrl ? `<img src="/api/proxy/image?url=${encodeURIComponent(master.avatarUrl)}" alt="${master.name}">` : '<span>?</span>'}
