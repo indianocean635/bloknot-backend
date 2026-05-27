@@ -180,14 +180,14 @@
         text = await res.text();
       } catch (e) {}
       console.error('[API ERROR]', { path, status: res.status, text });
-      
-      // If 401 Unauthorized, redirect to login
+
+      // Don't auto-redirect on 401 - let the page handle it
+      // This prevents infinite redirect loops
       if (res.status === 401) {
-        console.log('[API] 401 Unauthorized, redirecting to login');
-        window.location.href = '/';
+        console.log('[API] 401 Unauthorized - not auto-redirecting');
         throw new Error('Unauthorized');
       }
-      
+
       throw new Error(text || ("HTTP " + res.status));
     }
     const ct = res.headers.get("content-type") || "";
