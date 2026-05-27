@@ -824,6 +824,14 @@
     // Проверяем статус авторизации
     async function checkAuthStatus() {
       try {
+        // Prevent infinite redirect loop
+        const redirectCount = sessionStorage.getItem('auth_redirect_count') || '0';
+        if (parseInt(redirectCount) > 3) {
+          console.log('[INDEX] Too many redirects, stopping auth check');
+          sessionStorage.removeItem('auth_redirect_count');
+          return;
+        }
+
         // Check for token in multiple storage locations
         const token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
         const cookies = document.cookie.split(';').map(c => c.trim());
@@ -844,6 +852,7 @@
             if (response.ok) {
               // Token/cookie is valid, redirect to dashboard
               console.log('[INDEX] User is authenticated, redirecting to dashboard');
+              sessionStorage.setItem('auth_redirect_count', (parseInt(redirectCount) + 1).toString());
               window.location.href = '/dashboard.html';
               return;
             }
