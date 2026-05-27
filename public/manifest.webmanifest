@@ -2,7 +2,7 @@
   "name": "Bloknot",
   "short_name": "Bloknot",
   "description": "Bloknot — кабинет и записи",
-  "start_url": "/",
+  "start_url": "/dashboard.html",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",

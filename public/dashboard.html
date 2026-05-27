@@ -523,17 +523,10 @@
 
     if (!authData || !authData.user) {
       console.warn('Auth failed after retries');
-      // Try one more time with a longer delay
-      await new Promise(r => setTimeout(r, 1000));
-      const retryAuth = await waitForAuth(3);
-      
-      if (!retryAuth || !retryAuth.user) {
-        showNotice('Ошибка авторизации. Пожалуйста, войдите снова.');
-        return;
-      }
-      
-      // If retry succeeded, use that data
-      authData = retryAuth;
+      // Redirect to login page if not authenticated
+      console.log('[DASHBOARD] Not authenticated, redirecting to login');
+      window.location.href = '/';
+      return;
     }
 
     const user = authData.user;
