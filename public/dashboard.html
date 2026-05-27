@@ -537,27 +537,15 @@
     }
     window.dashboardInitialized = true;
 
-    // Prevent infinite redirect loop
-    const redirectCount = sessionStorage.getItem('auth_redirect_count') || '0';
-    if (parseInt(redirectCount) > 3) {
-      console.log('[DASHBOARD] Too many redirects, stopping auth check');
-      sessionStorage.removeItem('auth_redirect_count');
-      return;
-    }
-
     const authData = await waitForAuth();
 
     if (!authData || !authData.user) {
       console.warn('Auth failed after retries');
-      // Redirect to login page if not authenticated
-      console.log('[DASHBOARD] Not authenticated, redirecting to login');
-      sessionStorage.setItem('auth_redirect_count', (parseInt(redirectCount) + 1).toString());
-      window.location.href = '/';
+      // Don't auto-redirect - show error message instead
+      console.log('[DASHBOARD] Not authenticated - showing error');
+      showNotice('Ошибка авторизации. Пожалуйста, войдите снова.');
       return;
     }
-
-    // Clear redirect count on successful auth
-    sessionStorage.removeItem('auth_redirect_count');
 
     const user = authData.user;
 

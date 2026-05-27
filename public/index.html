@@ -824,109 +824,77 @@
     // Проверяем статус авторизации
     async function checkAuthStatus() {
       try {
-        // Prevent infinite redirect loop
-        const redirectCount = sessionStorage.getItem('auth_redirect_count') || '0';
-        if (parseInt(redirectCount) > 3) {
-          console.log('[INDEX] Too many redirects, stopping auth check');
-          sessionStorage.removeItem('auth_redirect_count');
-          return;
-        }
-
-        // Check for token in multiple storage locations
-        const token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
-        const cookies = document.cookie.split(';').map(c => c.trim());
-        const authCookie = cookies.find(c => c.startsWith('auth='));
-
-        // If we have a token in storage or cookie, verify it's valid
-        if (token || authCookie) {
-          try {
-            const headers = {};
-            if (token) {
-              headers['Authorization'] = `Bearer ${token}`;
-            }
-
-            const response = await fetch('/api/auth/me', {
-              credentials: 'include',
-              headers: headers
-            });
-            if (response.ok) {
-              // Token/cookie is valid, redirect to dashboard
-              console.log('[INDEX] User is authenticated, redirecting to dashboard');
-              sessionStorage.setItem('auth_redirect_count', (parseInt(redirectCount) + 1).toString());
-              window.location.href = '/dashboard.html';
-              return;
-            }
-          } catch (e) {
-            console.log('[INDEX] Auth check failed:', e);
-          }
-        }
-
-        // No valid auth, show login/registration
-        const isLoggedIn = false;
-        if (isLoggedIn) {
-          // Показываем "Мой кабинет" для авторизованных
-          mainNav.innerHTML = `
-            <a href="/dashboard.html" class="auth-pill">Мой кабинет</a>
-            <a href="#" id="logoutLink" class="auth-pill">Выйти</a>
-          `;
-          
-          // Обновляем CTA для авторизованных
-          const ctaSection = document.getElementById("ctaSection");
-          if (ctaSection) {
-            ctaSection.innerHTML = `
-              <h2>Добро пожаловать в ваш кабинет!</h2>
-              <p>Управляйте услугами, мастерами и принимайте онлайн-записи от клиентов.</p>
-              <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
-                <a href="/dashboard.html" class="btn">Перейти в кабинет</a>
-                <a href="/booking-link.html" class="btn secondary">Моя ссылка записи</a>
-              </div>
-            `;
-          }
-          
-          // Добавляем обработчик выхода
-          document.getElementById("logoutLink").addEventListener("click", (e) => {
-            e.preventDefault();
-            // Remove localStorage usage - logout via JWT cookie removal
-            document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            checkAuthStatus();
-          });
-        } else {
-          // Показываем вход/регистрацию для неавторизованных
-          mainNav.innerHTML = `
-            <a href="#" id="loginLink" class="auth-pill">Войти</a>
-            <a href="#" id="signupLink" class="auth-pill">Регистрация</a>
-          `;
-          
-          // Восстанавливаем CTA для неавторизованных
-          const ctaSection = document.getElementById("ctaSection");
-          if (ctaSection) {
-            ctaSection.innerHTML = `
-              <h2>Клиенты могут записаться уже сегодня</h2>
-              <a href="#" class="btn" id="bookBtn">Создать ссылку онлайн записи</a>
-            `;
-          }
-          
-          // Добавляем обработчики для входа/регистрации
-          document.getElementById("loginLink").addEventListener("click", (e) => {
-            e.preventDefault();
-            openModal();
-          });
-          document.getElementById("signupLink").addEventListener("click", (e) => {
-            e.preventDefault();
-            openModal();
-          });
-          
-          // Добавляем обработчик для bookBtn
-          const bookBtn = document.getElementById("bookBtn");
-          if (bookBtn) {
-            bookBtn.addEventListener("click", (e) => {
-              e.preventDefault();
-              openModal();
-            });
-          }
-        }
+        // Disabled auto-redirect to prevent infinite loops on mobile
+        // User must manually click "Мой кабинет" to access dashboard
+        console.log('[INDEX] Auth check disabled - manual navigation required');
+        return;
       } catch (e) {
-        console.error('Error checking auth status:', e);
+        console.log('[INDEX] Auth check error:', e);
+      }
+    }
+
+    // No valid auth, show login/registration
+    const isLoggedIn = false;
+    if (isLoggedIn) {
+      // Показываем "Мой кабинет" для авторизованных
+      mainNav.innerHTML = `
+        <a href="/dashboard.html" class="auth-pill">Мой кабинет</a>
+        <a href="#" id="logoutLink" class="auth-pill">Выйти</a>
+      `;
+
+      // Обновляем CTA для авторизованных
+      const ctaSection = document.getElementById("ctaSection");
+      if (ctaSection) {
+        ctaSection.innerHTML = `
+          <h2>Добро пожаловать в ваш кабинет!</h2>
+          <p>Управляйте услугами, мастерами и принимайте онлайн-записи от клиентов.</p>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+            <a href="/dashboard.html" class="btn">Перейти в кабинет</a>
+            <a href="/booking-link.html" class="btn secondary">Моя ссылка записи</a>
+          </div>
+        `;
+      }
+
+      // Добавляем обработчик выхода
+      document.getElementById("logoutLink").addEventListener("click", (e) => {
+        e.preventDefault();
+        // Remove localStorage usage - logout via JWT cookie removal
+        document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        checkAuthStatus();
+      });
+    } else {
+      // Показываем вход/регистрацию для неавторизованных
+      mainNav.innerHTML = `
+        <a href="#" id="loginLink" class="auth-pill">Войти</a>
+        <a href="#" id="signupLink" class="auth-pill">Регистрация</a>
+      `;
+
+      // Восстанавливаем CTA для неавторизованных
+      const ctaSection = document.getElementById("ctaSection");
+      if (ctaSection) {
+        ctaSection.innerHTML = `
+          <h2>Клиенты могут записаться уже сегодня</h2>
+          <a href="#" class="btn" id="bookBtn">Создать ссылку онлайн записи</a>
+        `;
+      }
+
+      // Добавляем обработчики для входа/регистрации
+      document.getElementById("loginLink").addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal();
+      });
+      document.getElementById("signupLink").addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal();
+      });
+
+      // Добавляем обработчик для bookBtn
+      const bookBtn = document.getElementById("bookBtn");
+      if (bookBtn) {
+        bookBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          openModal();
+        });
       }
     }
 
