@@ -1624,7 +1624,12 @@
         });
 
         if (!response.ok) {
-          throw new Error('Не удалось создать запись');
+          const errorData = await response.json().catch(() => ({}));
+          if (response.status === 409) {
+            // Time slot conflict - show specific error
+            throw new Error(errorData.error || 'Это время уже занято. Пожалуйста, выберите другое время.');
+          }
+          throw new Error(errorData.error || 'Не удалось создать запись');
         }
 
         const appointment = await response.json();
