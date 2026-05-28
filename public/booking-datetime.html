@@ -419,11 +419,14 @@
       document.querySelectorAll('.calendar-day').forEach(day => {
         day.classList.remove('selected');
       });
-      
+
       // Add selection
       element.classList.add('selected');
       selectedDate = element.dataset.date;
-      
+
+      // Reload time slots to update disabled state based on selected date
+      loadTimeSlots();
+
       // Check if both date and time are selected
       checkContinueButton();
     }
@@ -431,20 +434,33 @@
     // Load time slots
     function loadTimeSlots() {
       const timeSlotsGrid = document.getElementById('time-slots-grid');
-      
+
       const timeSlots = [
         '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
         '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
         '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
         '18:00', '18:30', '19:00', '19:30'
       ];
-      
-      timeSlotsGrid.innerHTML = timeSlots.map(time => `
-        <div class="time-slot available" data-time="${time}">${time}</div>
-      `).join('');
-      
-      // Add click handlers
-      document.querySelectorAll('.time-slot').forEach(slot => {
+
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+
+      timeSlotsGrid.innerHTML = timeSlots.map(time => {
+        // Check if time slot is in the past for today
+        let isDisabled = false;
+        if (selectedDate === todayStr) {
+          const [hours, minutes] = time.split(':').map(Number);
+          const slotTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+          isDisabled = slotTime <= now;
+        }
+
+        return `
+          <div class="time-slot ${isDisabled ? 'disabled' : 'available'}" data-time="${time}">${time}</div>
+        `;
+      }).join('');
+
+      // Add click handlers only for available slots
+      document.querySelectorAll('.time-slot.available').forEach(slot => {
         slot.addEventListener('click', () => selectTime(slot));
       });
     }
