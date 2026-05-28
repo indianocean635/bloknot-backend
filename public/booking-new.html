@@ -1327,6 +1327,11 @@
       console.log('selectedSpecialist.schedule:', selectedSpecialist?.schedule);
       console.log('selectedDate:', selectedDate);
 
+      // Get current time for disabling past slots
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const isToday = selectedDate === todayStr;
+
       if (!selectedSpecialist || !selectedSpecialist.schedule) {
         console.log('No schedule found, using default time slots');
         // Default time slots if no schedule
@@ -1337,9 +1342,17 @@
           '18:00', '18:30', '19:00', '19:30'
         ];
 
-        timeSlotsGrid.innerHTML = timeSlots.map(time => `
-          <div class="time-slot available" data-time="${time}">${time}</div>
-        `).join('');
+        timeSlotsGrid.innerHTML = timeSlots.map(time => {
+          // Check if time slot is in the past for today
+          let isDisabled = false;
+          if (isToday) {
+            const [hours, minutes] = time.split(':').map(Number);
+            const slotTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+            isDisabled = slotTime <= now;
+          }
+
+          return `<div class="time-slot ${isDisabled ? 'disabled' : 'available'}" data-time="${time}">${time}</div>`;
+        }).join('');
       } else {
         // Use specialist's schedule
         const schedule = selectedSpecialist.schedule;
@@ -1384,8 +1397,18 @@
           console.log('Time slots with break status:', timeSlotsWithBreaks);
 
           timeSlotsGrid.innerHTML = timeSlotsWithBreaks.map(function(slot) {
+            // Check if time slot is in the past for today
+            let isDisabled = false;
+            if (isToday && !slot.isBreak) {
+              const [hours, minutes] = slot.time.split(':').map(Number);
+              const slotTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+              isDisabled = slotTime <= now;
+            }
+
             if (slot.isBreak) {
               return '<div class="time-slot break" data-time="' + slot.time + '">' + slot.time + '</div>';
+            } else if (isDisabled) {
+              return '<div class="time-slot disabled" data-time="' + slot.time + '">' + slot.time + '</div>';
             } else {
               return '<div class="time-slot available" data-time="' + slot.time + '">' + slot.time + '</div>';
             }
@@ -1399,16 +1422,24 @@
             '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
             '18:00', '18:30', '19:00', '19:30'
           ];
-          timeSlotsGrid.innerHTML = timeSlots.map(time => `
-            <div class="time-slot available" data-time="${time}">${time}</div>
-          `).join('');
+          timeSlotsGrid.innerHTML = timeSlots.map(time => {
+            // Check if time slot is in the past for today
+            let isDisabled = false;
+            if (isToday) {
+              const [hours, minutes] = time.split(':').map(Number);
+              const slotTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+              isDisabled = slotTime <= now;
+            }
+
+            return `<div class="time-slot ${isDisabled ? 'disabled' : 'available'}" data-time="${time}">${time}</div>`;
+          }).join('');
         }
       }
 
       // Load existing appointments and mark occupied slots
       loadAppointmentsAndMarkOccupied();
 
-      // Add click handlers
+      // Add click handlers only for available slots
       document.querySelectorAll('.time-slot.available').forEach(slot => {
         slot.addEventListener('click', () => selectTime(slot));
       });
