@@ -155,15 +155,18 @@ async function createPublicAppointment(req, res) {
       customerComment
     } = req.body;
 
+    console.log('[STEP 1] Validating required fields');
+
     if (!businessId || !serviceId || !masterId || !startsAt || !endsAt || !customerName || !customerPhone) {
+      console.log('[STEP 1] Missing required fields:', { businessId, serviceId, masterId, startsAt, endsAt, customerName, customerPhone });
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     const startDate = new Date(startsAt);
     const endDate = new Date(endsAt);
 
-    console.log('Checking for conflicts with businessId:', businessId, 'masterId:', masterId);
-    console.log('New appointment:', startDate, 'to', endDate);
+    console.log('[STEP 2] Checking for conflicts with businessId:', businessId, 'masterId:', masterId);
+    console.log('[STEP 2] New appointment:', startDate, 'to', endDate);
 
     // Check for time conflicts with existing appointments for the same master
     const existingAppointments = await prisma.appointment.findMany({
@@ -199,9 +202,9 @@ async function createPublicAppointment(req, res) {
       }
     });
 
-    console.log('Existing appointments found:', existingAppointments.length);
+    console.log('[STEP 2] Existing appointments found:', existingAppointments.length);
     if (existingAppointments.length > 0) {
-      console.log('Conflicting appointments:', existingAppointments.map(a => ({
+      console.log('[STEP 2] Conflicting appointments:', existingAppointments.map(a => ({
         id: a.id,
         startsAt: a.startsAt,
         endsAt: a.endsAt,
@@ -213,13 +216,13 @@ async function createPublicAppointment(req, res) {
     const activeConflicts = existingAppointments.filter(a => a.status !== 'CANCELLED');
 
     if (activeConflicts.length > 0) {
-      console.log('❌ Time slot conflict detected for master:', masterId);
+      console.log('[STEP 2] ❌ Time slot conflict detected for master:', masterId);
       return res.status(409).json({
         error: 'Это время уже занято. Пожалуйста, выберите другое время.'
       });
     }
 
-    console.log('✅ No conflicts, creating appointment...');
+    console.log('[STEP 3] ✅ No conflicts, creating appointment...');
 
     // Check if user has existing Telegram chatId from previous bookings
     let existingChatId = null;
@@ -227,7 +230,7 @@ async function createPublicAppointment(req, res) {
       // Normalize phone number for comparison (remove all non-digit characters)
       const normalizedPhone = customerPhone ? customerPhone.replace(/\D/g, '') : null;
 
-      console.log('[TELEGRAM] Searching for existing chatId with phone:', normalizedPhone, 'telegram:', customerTelegram);
+      console.log('[STEP 4] [TELEGRAM] Searching for existing chatId with phone:', normalizedPhone, 'telegram:', customerTelegram);
 
       const existingBooking = await prisma.appointment.findFirst({
         where: {
@@ -242,9 +245,9 @@ async function createPublicAppointment(req, res) {
 
       if (existingBooking && existingBooking.telegramChatId) {
         existingChatId = existingBooking.telegramChatId;
-        console.log('[TELEGRAM] Found existing chatId for user:', existingChatId);
+        console.log('[STEP 4] [TELEGRAM] Found existing chatId for user:', existingChatId);
       } else {
-        console.log('[TELEGRAM] No existing chatId found for user');
+        console.log('[STEP 4] [TELEGRAM] No existing chatId found for user');
       }
     }
 
@@ -254,7 +257,7 @@ async function createPublicAppointment(req, res) {
     // Extract branchId from object if needed
     const branchIdValue = branchId && typeof branchId === 'object' ? branchId.id : branchId;
 
-    console.log('Branch ID:', branchIdValue);
+    console.log('[STEP 5] Branch ID:', branchIdValue);
 
     // Save to database
     // Parse local time string and treat it as UTC+3 (Moscow time)
@@ -264,6 +267,8 @@ async function createPublicAppointment(req, res) {
 
     // Normalize phone number for storage
     const normalizedPhoneForStorage = customerPhone ? customerPhone.replace(/\D/g, '') : customerPhone;
+
+    console.log('[STEP 6] Creating appointment in DB...');
 
     const appointment = await prisma.appointment.create({
       data: {
@@ -285,10 +290,11 @@ async function createPublicAppointment(req, res) {
       }
     });
 
-    console.log('✅ Appointment created in DB:', appointment.id);
+    console.log('[STEP 6] ✅ Appointment created in DB:', appointment.id);
 
     // Send Telegram confirmation if user has existing chatId
     if (appointment.telegramChatId) {
+      console.log('[STEP 7] Sending Telegram confirmation...');
       try {
         const { sendBookingConfirmationMessage } = require('../services/telegramBotService');
 
@@ -304,17 +310,22 @@ async function createPublicAppointment(req, res) {
 
         if (fullBooking) {
           await sendBookingConfirmationMessage(fullBooking, fullBooking.telegramChatId);
-          console.log('[TELEGRAM] Auto-confirmation sent for booking:', appointment.id);
+          console.log('[STEP 7] [TELEGRAM] Auto-confirmation sent for booking:', appointment.id);
         }
       } catch (error) {
-        console.error('Error sending Telegram confirmation:', error);
+        console.error('[STEP 7] Error sending Telegram confirmation:', error);
         // Continue even if Telegram fails
       }
+    } else {
+      console.log('[STEP 7] Skipping Telegram - no chatId');
     }
 
+    console.log('[STEP 8] Sending response to client');
     res.json(appointment);
+    console.log('[STEP 8] ✅ Response sent successfully');
   } catch (error) {
-    console.error('❌ createPublicAppointment error:', error);
+    console.error('[ERROR] ❌ createPublicAppointment error:', error);
+    console.error('[ERROR] Error stack:', error.stack);
     res.status(500).json({ error: 'Server error' });
   }
 }
