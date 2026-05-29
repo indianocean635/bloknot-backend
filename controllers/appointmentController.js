@@ -320,6 +320,46 @@ async function createPublicAppointment(req, res) {
       console.log('[STEP 7] Skipping Telegram - no chatId');
     }
 
+    // Send WhatsApp confirmation if phone is provided
+    if (customerPhone) {
+      console.log('[STEP 7.5] Sending WhatsApp confirmation...');
+      try {
+        const { sendWhatsAppMessage } = require('../services/whatsappService');
+
+        // Get full booking details for confirmation
+        const fullBooking = await prisma.appointment.findUnique({
+          where: { id: appointment.id },
+          include: {
+            service: true,
+            master: true,
+            business: true
+          }
+        });
+
+        if (fullBooking) {
+          // Format date and time
+          const timeToUse = fullBooking.startsAtLocal || fullBooking.startsAt;
+          const dateStr = timeToUse.replace(/(\d{4})-(\d{2})-(\d{2})T.*/, '$3.$2.$1');
+          const timeStr = timeToUse.replace(/.*T(\d{2}):(\d{2}).*/, '$1:$2');
+
+          const message = `Вы записаны ✅
+
+Услуга: ${fullBooking.service?.name}
+Дата: ${dateStr}
+Время: ${timeStr}
+Специалист: ${fullBooking.master?.name}`;
+
+          await sendWhatsAppMessage(customerPhone, message);
+          console.log('[STEP 7.5] [WHATSAPP] Auto-confirmation sent for booking:', appointment.id);
+        }
+      } catch (error) {
+        console.error('[STEP 7.5] Error sending WhatsApp confirmation:', error);
+        // Continue even if WhatsApp fails
+      }
+    } else {
+      console.log('[STEP 7.5] Skipping WhatsApp - no phone');
+    }
+
     console.log('[STEP 8] Sending response to client');
     res.json(appointment);
     console.log('[STEP 8] ✅ Response sent successfully');
