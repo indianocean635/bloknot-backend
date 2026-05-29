@@ -2217,9 +2217,20 @@ function closeModal() {
 
 // API helper
 async function api(url, options = {}) {
+  // Get token from localStorage or cookie
+  let token = localStorage.getItem('auth_token');
+  if (!token) {
+    const cookies = document.cookie.split(';').map(c => c.trim());
+    const authCookie = cookies.find(c => c.startsWith('auth='));
+    if (authCookie) {
+      token = decodeURIComponent(authCookie.substring(5));
+    }
+  }
+
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
     },
     credentials: 'include',
   };
