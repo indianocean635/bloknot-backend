@@ -4,7 +4,7 @@ const { prisma } = require("../services/prismaService");
 function requireMagicAuth(req, res, next) {
   const jwt = require('jsonwebtoken');
 
-  const token = req.cookies?.auth || req.cookies?.token;
+  const token = req.cookies?.auth || req.cookies?.token || req.headers?.authorization?.replace('Bearer ', '');
 
   if (!token) {
     return res.status(401).json({ error: 'No token' });
@@ -40,7 +40,7 @@ function requireMagicAuth(req, res, next) {
         const slug = payload.email.toLowerCase().replace('@', '-').replace('.', '-');
         const business = await prisma.business.create({
           data: {
-            name: `${payload.email}'s Business`,
+            name: '',
             slug: slug,
             ownerId: user.id
           },
@@ -101,7 +101,7 @@ async function getBusinessFromUser(req, res, next) {
       const slug = user.email.toLowerCase().replace('@', '-').replace('.', '-');
       const business = await prisma.business.create({
         data: {
-          name: `${user.email}'s Business`,
+          name: '',
           slug: slug,
           ownerId: user.id
         }
