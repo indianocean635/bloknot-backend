@@ -911,8 +911,8 @@ async function loadSpecialistLimitFromAPI() {
 
     // Make API calls in parallel for faster loading
     const [userResponse, businessResponse] = await Promise.all([
-      api('/api/auth/me'),
-      api('/api/settings/business')
+      Bloknot.api('/api/auth/me'),
+      Bloknot.api('/api/settings/business')
     ]);
 
     const user = userResponse.user;
@@ -960,7 +960,7 @@ function showNoBusinessUI() {
 // Load specialists from API
 async function loadSpecialistsFromAPI() {
   try {
-    const specialists = await api('/api/specialists');
+    const specialists = await Bloknot.api('/api/specialists');
     console.log('Loaded specialists from API:', specialists);
     
     // Update UI with loaded specialists
@@ -1022,7 +1022,7 @@ async function processPayment() {
   
   try {
     // Call subscription API to save the subscription
-    await api('/api/subscription/subscription', {
+    await Bloknot.api('/api/subscription/subscription', {
       method: 'POST',
       body: JSON.stringify({ plan: planId })
     });
@@ -1075,7 +1075,7 @@ function updateSpecialistForms(limit) {
   grid.innerHTML = '';
 
   // Load all specialist data first to determine how many forms we need
-  api('/api/specialists').then(specialists => {
+  Bloknot.api('/api/specialists').then(specialists => {
     const specialistCount = specialists ? specialists.length : 0;
     // Show all existing specialists if they exceed 5, otherwise show min(5, limit)
     const initialCount = specialistCount > 5 ? specialistCount : Math.min(5, limit);
@@ -1274,14 +1274,14 @@ function saveSpecialistData(index) {
 
       if (specialistId) {
         // Update existing specialist by ID
-        await api(`/api/specialists/${specialistId}`, {
+        await Bloknot.api(`/api/specialists/${specialistId}`, {
           method: 'PUT',
           body: JSON.stringify(specialistData)
         });
         console.log(`Updated specialist ${index} (ID: ${specialistId}):`, specialistData);
       } else if (name && email) {
         // Create new specialist only if we have required fields
-        const newSpecialist = await api('/api/specialists', {
+        const newSpecialist = await Bloknot.api('/api/specialists', {
           method: 'POST',
           body: JSON.stringify(specialistData)
         });
@@ -1305,7 +1305,7 @@ function saveSpecialistData(index) {
 async function loadAllSpecialistData() {
   try {
     console.log('[LOAD SPECIALISTS] Fetching specialists...');
-    const specialists = await api('/api/specialists');
+    const specialists = await Bloknot.api('/api/specialists');
     console.log('[LOAD SPECIALISTS] Specialists:', specialists);
 
     if (specialists && specialists.length > 0) {
@@ -1353,7 +1353,7 @@ async function loadAllSpecialistData() {
 // Load specialist data from API (kept for backward compatibility)
 async function loadSpecialistData(index) {
   try {
-    const specialists = await api('/api/specialists');
+    const specialists = await Bloknot.api('/api/specialists');
 
     if (specialists && specialists.length >= index) {
       const specialist = specialists[index - 1];
@@ -1386,7 +1386,7 @@ async function saveSpecialist(index) {
   
   try {
     // Save specialist to backend
-    const response = await api('/api/specialists', {
+    const response = await Bloknot.api('/api/specialists', {
       method: 'POST',
       body: JSON.stringify(specialistData)
     });
@@ -1448,14 +1448,14 @@ async function loadSpecialistSettings(index) {
     let specialistSettings = null;
     if (specialistId) {
       try {
-        specialistSettings = await api(`/api/specialists/${specialistId}/settings`);
+        specialistSettings = await Bloknot.api(`/api/specialists/${specialistId}/settings`);
       } catch (error) {
         console.log('No existing settings found, using defaults');
       }
     }
 
     // Load business data for categories, services, and branches
-    const businessData = await api('/api/settings/business');
+    const businessData = await Bloknot.api('/api/settings/business');
     const categories = businessData.categories || [];
     const services = categories?.flatMap(cat => cat.services) || [];
     const branches = businessData.branches || [];
@@ -1894,7 +1894,7 @@ async function saveSpecialistSettings(index) {
 
     console.log('Sending settings data:', settingsData);
 
-    const response = await api(`/api/specialists/${specialistId}/settings`, {
+    const response = await Bloknot.api(`/api/specialists/${specialistId}/settings`, {
       method: 'POST',
       body: JSON.stringify(settingsData)
     });
@@ -1936,7 +1936,7 @@ async function handleAvatarSelect(index, input) {
           businessId: businessData?.id
         };
 
-        const response = await api('/api/specialists', {
+        const response = await Bloknot.api('/api/specialists', {
           method: 'POST',
           body: JSON.stringify(specialistData)
         });
@@ -2118,7 +2118,7 @@ async function inviteSpecialist(index) {
 
   try {
     // Get current user and business info from API
-    const userResponse = await api('/api/auth/me');
+    const userResponse = await Bloknot.api('/api/auth/me');
     const businessId = userResponse.user.businessId;
     const companyName = document.getElementById('companyNameInput')?.value || userResponse.user.business?.name || 'Bloknot';
 
@@ -2128,7 +2128,7 @@ async function inviteSpecialist(index) {
     }
 
     // Send invitation email with link to main page
-    const response = await api('/api/settings/invite-specialist', {
+    const response = await Bloknot.api('/api/settings/invite-specialist', {
       method: 'POST',
       body: JSON.stringify({
         email: email,
@@ -2158,7 +2158,7 @@ async function deleteSpecialist(index) {
       
       // Only delete from backend if specialist was actually saved (has real ID)
       if (specialistId && specialistId !== String(index)) {
-        await api(`/api/specialists/${specialistId}`, {
+        await Bloknot.api(`/api/specialists/${specialistId}`, {
           method: 'DELETE'
         });
       }
@@ -2215,41 +2215,6 @@ function closeModal() {
   document.getElementById('modal').style.display = 'none';
 }
 
-// API helper
-async function api(url, options = {}) {
-  // Get token from localStorage or cookie
-  let token = localStorage.getItem('auth_token');
-  if (!token) {
-    const cookies = document.cookie.split(';').map(c => c.trim());
-    const authCookie = cookies.find(c => c.startsWith('auth='));
-    if (authCookie) {
-      token = decodeURIComponent(authCookie.substring(5));
-    }
-  }
-
-  const defaultOptions = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-    },
-    credentials: 'include',
-  };
-
-  const finalOptions = { ...defaultOptions, ...options };
-
-  if (finalOptions.body && typeof finalOptions.body === 'string') {
-    finalOptions.body = finalOptions.body;
-  }
-
-  const response = await fetch(url, finalOptions);
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  return response.json();
-}
-
 // Loading all data
 async function loadAllData() {
   console.log('[LOAD ALL] Starting to load all data...');
@@ -2275,7 +2240,7 @@ async function loadAllData() {
 async function loadLogo() {
   try {
     console.log('[LOAD LOGO] Fetching works...');
-    const works = await api('/api/upload/works');
+    const works = await Bloknot.api('/api/upload/works');
     console.log('[LOAD LOGO] Works:', works);
     const logo = works.find(w => w.isLogo);
     if (logo && logo.url) {
@@ -2297,7 +2262,7 @@ async function loadLogo() {
 
 async function loadCompanyName() {
   try {
-    const businessData = await api('/api/settings/business');
+    const businessData = await Bloknot.api('/api/settings/business');
     const companyNameInput = document.getElementById('companyNameInput');
     if (companyNameInput && businessData?.name) {
       companyNameInput.value = businessData.name;
@@ -2317,7 +2282,7 @@ async function saveCompanyName() {
       return;
     }
 
-    await api('/api/business/name', {
+    await Bloknot.api('/api/business/name', {
       method: 'PATCH',
       body: JSON.stringify({ name: companyName.trim() })
     });
@@ -2331,7 +2296,7 @@ async function saveCompanyName() {
 
 async function loadBranches() {
   try {
-    const branches = await api('/api/settings/branches');
+    const branches = await Bloknot.api('/api/settings/branches');
     const branchesGrid = document.getElementById('branchesGrid');
     if (branchesGrid && branches) {
       branchesGrid.innerHTML = branches.map(branch => `
@@ -2360,7 +2325,7 @@ async function openBranchModal(branchId = null) {
   let branch = null;
   if (branchId) {
     try {
-      const branches = await api('/api/settings/branches');
+      const branches = await Bloknot.api('/api/settings/branches');
       branch = branches.find(b => b.id === branchId);
     } catch (error) {
       console.error('Error loading branch:', error);
@@ -2421,7 +2386,7 @@ async function saveBranch(branchId = null) {
     }
 
     if (branchId) {
-      await api(`/api/settings/branches/${branchId}`, {
+      await Bloknot.api(`/api/settings/branches/${branchId}`, {
         method: 'PATCH',
         body: JSON.stringify({
           name: name.trim(),
@@ -2432,7 +2397,7 @@ async function saveBranch(branchId = null) {
         })
       });
     } else {
-      await api('/api/settings/branches', {
+      await Bloknot.api('/api/settings/branches', {
         method: 'POST',
         body: JSON.stringify({
           name: name.trim(),
@@ -2463,7 +2428,7 @@ async function deleteBranch(branchId) {
   }
 
   try {
-    await api(`/api/settings/branches/${branchId}`, {
+    await Bloknot.api(`/api/settings/branches/${branchId}`, {
       method: 'DELETE'
     });
     await loadBranches();
@@ -2476,7 +2441,7 @@ async function deleteBranch(branchId) {
 
 async function loadCategories() {
   try {
-    const categories = await api('/api/settings/categories');
+    const categories = await Bloknot.api('/api/settings/categories');
     const categoriesGrid = document.getElementById('categoriesGrid');
     if (categoriesGrid && categories) {
       categoriesGrid.innerHTML = categories.map(category => `
@@ -2500,7 +2465,7 @@ async function openCategoryModal(categoryId = null) {
   let category = null;
   if (categoryId) {
     try {
-      const categories = await api('/api/settings/categories');
+      const categories = await Bloknot.api('/api/settings/categories');
       category = categories.find(c => c.id === categoryId);
     } catch (error) {
       console.error('Error loading category:', error);
@@ -2541,12 +2506,12 @@ async function saveCategory(categoryId = null) {
     }
 
     if (categoryId) {
-      await api(`/api/settings/categories/${categoryId}`, {
+      await Bloknot.api(`/api/settings/categories/${categoryId}`, {
         method: 'PATCH',
         body: JSON.stringify({ name: name.trim() })
       });
     } else {
-      await api('/api/settings/categories', {
+      await Bloknot.api('/api/settings/categories', {
         method: 'POST',
         body: JSON.stringify({ name: name.trim() })
       });
@@ -2571,7 +2536,7 @@ async function deleteCategory(categoryId) {
   }
 
   try {
-    await api(`/api/settings/categories/${categoryId}`, {
+    await Bloknot.api(`/api/settings/categories/${categoryId}`, {
       method: 'DELETE'
     });
     await loadCategories();
@@ -2584,8 +2549,8 @@ async function deleteCategory(categoryId) {
 
 async function loadServices() {
   try {
-    const services = await api('/api/settings/services');
-    const categories = await api('/api/settings/categories');
+    const services = await Bloknot.api('/api/settings/services');
+    const categories = await Bloknot.api('/api/settings/categories');
     const servicesGrid = document.getElementById('servicesGrid');
     if (servicesGrid && services) {
       servicesGrid.innerHTML = services.map(service => `
@@ -2614,7 +2579,7 @@ async function openServiceModal(serviceId = null) {
   let categories = [];
   if (serviceId) {
     try {
-      const services = await api('/api/settings/services');
+      const services = await Bloknot.api('/api/settings/services');
       service = services.find(s => s.id === serviceId);
     } catch (error) {
       console.error('Error loading service:', error);
@@ -2622,7 +2587,7 @@ async function openServiceModal(serviceId = null) {
   }
 
   try {
-    categories = await api('/api/settings/categories');
+    categories = await Bloknot.api('/api/settings/categories');
   } catch (error) {
     console.error('Error loading categories:', error);
   }
@@ -2686,12 +2651,12 @@ async function saveService(serviceId = null) {
     };
 
     if (serviceId) {
-      await api(`/api/settings/services/${serviceId}`, {
+      await Bloknot.api(`/api/settings/services/${serviceId}`, {
         method: 'PATCH',
         body: JSON.stringify(data)
       });
     } else {
-      await api('/api/settings/services', {
+      await Bloknot.api('/api/settings/services', {
         method: 'POST',
         body: JSON.stringify(data)
       });
@@ -2716,7 +2681,7 @@ async function deleteService(serviceId) {
   }
 
   try {
-    await api(`/api/settings/services/${serviceId}`, {
+    await Bloknot.api(`/api/settings/services/${serviceId}`, {
       method: 'DELETE'
     });
     await loadServices();
@@ -2732,7 +2697,7 @@ async function loadMasters() {
   // But we need to load avatars here
   try {
     console.log('[LOAD MASTERS] Fetching specialists...');
-    const specialists = await api('/api/specialists');
+    const specialists = await Bloknot.api('/api/specialists');
     console.log('[LOAD MASTERS] Specialists:', specialists);
     if (specialists && specialists.length > 0) {
       console.log('[LOAD MASTERS] Processing', specialists.length, 'specialists');
@@ -2768,7 +2733,7 @@ async function loadSchedule() {
 
 async function loadWorks() {
   try {
-    const works = await api('/api/upload/works');
+    const works = await Bloknot.api('/api/upload/works');
     const worksGrid = document.getElementById('worksGrid');
     if (worksGrid && works.length > 0) {
       worksGrid.innerHTML = '';
@@ -2793,7 +2758,7 @@ async function loadWorks() {
 
 async function loadBranchDescription() {
   try {
-    const businessData = await api('/api/settings/business');
+    const businessData = await Bloknot.api('/api/settings/business');
     const branchDescription = document.getElementById('branchDescription');
     if (branchDescription && businessData.description) {
       branchDescription.value = businessData.description;
@@ -2816,7 +2781,7 @@ async function saveBranchDescription() {
     saveBtn.textContent = 'Сохранение...';
     saveBtn.disabled = true;
     
-    await api('/api/settings/business', {
+    await Bloknot.api('/api/settings/business', {
       method: 'PATCH',
       body: JSON.stringify({ description })
     });
@@ -2856,7 +2821,7 @@ async function deleteWork(id) {
   console.log('[DELETE WORK] Starting deletion for work', id);
 
   try {
-    await api(`/api/upload/works/${id}`, {
+    await Bloknot.api(`/api/upload/works/${id}`, {
       method: 'DELETE'
     });
     alert('Фото удалено');
