@@ -711,6 +711,8 @@
     let selectedDate = null;
     let selectedTime = null;
     let selectedOption = null; // 'specialist', 'service', or 'datetime'
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
 
     // Get business slug from URL
     function getBusinessSlug() {
@@ -1241,11 +1243,10 @@
     function loadCalendar() {
       const calendarGrid = document.getElementById('calendar-grid');
       const monthElement = document.getElementById('calendar-month');
-      
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth();
-      
+
+      const year = currentYear;
+      const month = currentMonth;
+
       monthElement.textContent = new Date(year, month).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
       
       // Day headers
@@ -1294,6 +1295,25 @@
       // Add click handlers
       document.querySelectorAll('.calendar-day.available').forEach(day => {
         day.addEventListener('click', () => selectDate(day));
+      });
+
+      // Add month navigation handlers
+      document.getElementById('prev-month').addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+          currentMonth = 11;
+          currentYear--;
+        }
+        loadCalendar();
+      });
+
+      document.getElementById('next-month').addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
+        }
+        loadCalendar();
       });
     }
 
