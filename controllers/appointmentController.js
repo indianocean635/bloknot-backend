@@ -352,19 +352,8 @@ async function createPublicAppointment(req, res) {
 
 Для управления записью нажмите кнопку ниже.`;
 
-          // Create interactive buttons
-          const buttons = [
-            {
-              id: `reschedule_${appointment.id}`,
-              title: 'Перенести запись'
-            },
-            {
-              id: `cancel_${appointment.id}`,
-              title: 'Отменить запись'
-            }
-          ];
-
-          await sendWhatsAppMessage(customerPhone, message, buttons);
+          // Temporarily send simple text message without buttons for testing
+          await sendWhatsAppMessage(customerPhone, message, null);
           console.log('[STEP 7.5] [WHATSAPP] Auto-confirmation sent for booking:', appointment.id);
         }
       } catch (error) {
