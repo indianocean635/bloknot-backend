@@ -320,8 +320,8 @@ async function createPublicAppointment(req, res) {
       console.log('[STEP 7] Skipping Telegram - no chatId');
     }
 
-    // Send WhatsApp confirmation if phone is provided
-    if (customerPhone) {
+    // Send WhatsApp confirmation if phone is provided and WhatsApp notifications enabled
+    if (customerPhone && req.body.whatsappNotifications) {
       console.log('[STEP 7.5] Sending WhatsApp confirmation...');
       try {
         const { sendWhatsAppMessage } = require('../services/whatsappService');
@@ -342,14 +342,29 @@ async function createPublicAppointment(req, res) {
           const dateStr = timeToUse.replace(/(\d{4})-(\d{2})-(\d{2})T.*/, '$3.$2.$1');
           const timeStr = timeToUse.replace(/.*T(\d{2}):(\d{2}).*/, '$1:$2');
 
-          const message = `Вы записаны ✅
+          const message = `Здравствуйте, ${customerName}!
 
-Услуга: ${fullBooking.service?.name}
-Дата: ${dateStr}
-Время: ${timeStr}
-Специалист: ${fullBooking.master?.name}`;
+Вы записаны:
+📅 Дата: ${dateStr}
+⏰ Время: ${timeStr}
+✂️ Услуга: ${fullBooking.service?.name}
+👤 Специалист: ${fullBooking.master?.name}
 
-          await sendWhatsAppMessage(customerPhone, message);
+Для управления записью нажмите кнопку ниже.`;
+
+          // Create interactive buttons
+          const buttons = [
+            {
+              id: `reschedule_${appointment.id}`,
+              title: 'Перенести запись'
+            },
+            {
+              id: `cancel_${appointment.id}`,
+              title: 'Отменить запись'
+            }
+          ];
+
+          await sendWhatsAppMessage(customerPhone, message, buttons);
           console.log('[STEP 7.5] [WHATSAPP] Auto-confirmation sent for booking:', appointment.id);
         }
       } catch (error) {
@@ -357,7 +372,7 @@ async function createPublicAppointment(req, res) {
         // Continue even if WhatsApp fails
       }
     } else {
-      console.log('[STEP 7.5] Skipping WhatsApp - no phone');
+      console.log('[STEP 7.5] Skipping WhatsApp - no phone or notifications disabled');
     }
 
     console.log('[STEP 8] Sending response to client');

@@ -15,6 +15,7 @@ const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const magicLinkRoutes = require('./routes/magicLinkRoutes');
 const specialistsRoutes = require('./routes/specialistsRoutes');
 const telegramRoutes = require('./routes/telegramRoutes');
+const notificationsRoutes = require('./routes/notificationsRoutes');
 const { requireMagicAuth, getBusinessFromUser, adminAuth, optionalAuth } = require('./middleware/magicAuthMiddleware');
 const app = express();
 const PORT = 3001;
@@ -51,6 +52,7 @@ app.use('/api/magic', magicLinkRoutes); // Changed from /api/auth to avoid confl
 app.use('/api/specialists', specialistsRoutes);
 app.use('/api/masters', settingsRoutes); // Masters endpoints are in settingsRoutes
 app.use('/api/telegram', telegramRoutes);
+app.use('/api/notifications', notificationsRoutes);
 app.use('/api', appointmentRoutes);
 
 console.log('Business routes loaded:', typeof businessRoutes);
@@ -203,6 +205,23 @@ app.get('/auth/confirm', async (req, res) => {
 
 // Static files (в самом конце!)
 app.use(express.static('public'));
+
+// WhatsApp reminder scheduler
+if (process.env.WHATSAPP_ENABLED === 'true') {
+  const { checkAndSendReminders } = require('./services/whatsappReminderService');
+  
+  // Check for reminders every hour
+  setInterval(() => {
+    console.log('[SCHEDULER] Running WhatsApp reminder check...');
+    checkAndSendReminders();
+  }, 60 * 60 * 1000); // Every hour
+  
+  // Run once on startup
+  setTimeout(() => {
+    console.log('[SCHEDULER] Running initial WhatsApp reminder check...');
+    checkAndSendReminders();
+  }, 5000); // 5 seconds after startup
+}
 
 // 404 fallback (в самом конце!)
 app.use((req, res) => {

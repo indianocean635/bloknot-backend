@@ -694,6 +694,10 @@
                 <label class="form-label">Комментарий</label>
                 <input type="text" id="client-comment" class="form-input" placeholder="Комментарий к записи">
               </div>
+              <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="whatsapp-notifications" style="width: 20px; height: 20px;">
+                <label for="whatsapp-notifications" class="form-label" style="margin: 0;">Получать уведомления в WhatsApp</label>
+              </div>
             </div>
             <button type="submit" class="book-button" id="book-button">Записаться</button>
           </form>
@@ -1641,6 +1645,7 @@
         customerName: document.getElementById('client-name').value,
         customerPhone: document.getElementById('client-phone').value,
         customerComment: document.getElementById('client-comment').value,
+        whatsappNotifications: document.getElementById('whatsapp-notifications').checked,
         // Include all selected services
         services: selectedServices.map(s => ({
           id: s.id,
@@ -1704,9 +1709,6 @@
                 <button id="connect-telegram-btn" style="padding: 10px 20px; background: #229ED9; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; width: fit-content;">
                   Подключить Telegram
                 </button>
-                <button id="connect-whatsapp-btn" style="padding: 10px 20px; background: #25D366; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; width: fit-content;">
-                  Подключить WhatsApp
-                </button>
               </div>
             </div>
           </div>
@@ -1718,12 +1720,8 @@
           window.open(`https://t.me/bloknot_booking_bot?start=${bookingToken}`, '_blank');
         });
 
-        // Add event listener to connect WhatsApp button
-        document.getElementById('connect-whatsapp-btn').addEventListener('click', () => {
-          // Open WhatsApp with booking info
-          const message = encodeURIComponent(`Здравствуйте! Я записался на ${new Date(selectedDate).toLocaleDateString('ru-RU')} в ${selectedTime}. Услуги: ${serviceNames}.`);
-          window.open(`https://wa.me/79999999999?text=${message}`, '_blank');
-        });
+        // WhatsApp notifications are sent automatically via backend
+        // No manual connection needed
       } catch (error) {
         console.error('Error creating booking:', error);
         alert('Ошибка при создании записи. Пожалуйста, попробуйте еще раз.');
