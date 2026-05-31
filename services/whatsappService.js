@@ -47,9 +47,11 @@ function normalizePhone(phone) {
  * @returns {Promise<void>}
  */
 async function sendWhatsAppMessage(phone, text, buttons = null) {
+  console.log('[WHATSAPP] START SEND - Phone:', phone);
+  
   // Check if WhatsApp is enabled
   if (process.env.WHATSAPP_ENABLED !== 'true') {
-    console.log('[WHATSAPP] WhatsApp notifications are disabled (WHATSAPP_ENABLED !== true)');
+    console.log('[WHATSAPP] SKIPPED - WhatsApp notifications are disabled (WHATSAPP_ENABLED !== true)');
     return;
   }
 
@@ -60,14 +62,14 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
   console.log('[WHATSAPP] WHATSAPP_PHONE_NUMBER_ID:', phoneNumberId);
 
   if (!token || !phoneNumberId) {
-    console.warn('[WHATSAPP] WHATSAPP_TOKEN or WHATSAPP_PHONE_NUMBER_ID not set in environment variables');
+    console.warn('[WHATSAPP] SKIPPED - WHATSAPP_TOKEN or WHATSAPP_PHONE_NUMBER_ID not set in environment variables');
     return;
   }
 
   // Normalize phone number
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedPhone) {
-    console.warn('[WHATSAPP] Invalid phone number provided');
+    console.warn('[WHATSAPP] SKIPPED - Invalid phone number provided');
     return;
   }
 
@@ -128,8 +130,9 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
     console.log('[WHATSAPP] Response status:', response.status);
     console.log('[WHATSAPP] Response headers:', response.headers);
     console.log('[WHATSAPP] Response data:', JSON.stringify(response.data, null, 2));
+    console.log('[WHATSAPP] END SEND - Success');
   } catch (error) {
-    console.error('[WHATSAPP] Error sending message');
+    console.error('[WHATSAPP] END SEND - Error');
     console.error('[WHATSAPP] Error status:', error.response?.status);
     console.error('[WHATSAPP] Error status text:', error.response?.statusText);
     console.error('[WHATSAPP] Error headers:', error.response?.headers);
