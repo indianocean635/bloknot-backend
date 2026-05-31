@@ -1,4 +1,12 @@
 const axios = require('axios');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+
+// Configure proxy agent for WhatsApp API requests
+const proxyAgent = process.env.HTTPS_PROXY
+  ? new HttpsProxyAgent(process.env.HTTPS_PROXY)
+  : undefined;
+
+console.log('[WHATSAPP] Proxy agent enabled:', !!proxyAgent);
 
 /**
  * Normalize phone number to international format
@@ -119,12 +127,20 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
     console.log('[WHATSAPP] Phone number type:', typeof messageBody.to);
     console.log('[WHATSAPP] Phone number value:', messageBody.to);
     
-    const response = await axios.post(url, messageBody, {
+    const axiosConfig = {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
-    });
+    };
+    
+    // Add proxy agent if configured
+    if (proxyAgent) {
+      axiosConfig.httpsAgent = proxyAgent;
+      console.log('[WHATSAPP] Using proxy agent for request');
+    }
+    
+    const response = await axios.post(url, messageBody, axiosConfig);
 
     console.log('[WHATSAPP] Message sent successfully to:', normalizedPhone);
     console.log('[WHATSAPP] Response status:', response.status);
