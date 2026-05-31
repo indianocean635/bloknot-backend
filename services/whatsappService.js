@@ -11,14 +11,23 @@ const axios = require('axios');
 function normalizePhone(phone) {
   if (!phone) return null;
   
-  // Remove + and spaces
-  let normalized = phone.replace(/\+/g, '').replace(/\s/g, '');
+  // Remove all non-digit characters
+  let normalized = phone.replace(/\D/g, '');
+  
+  console.log('[WHATSAPP] Original phone:', phone);
+  console.log('[WHATSAPP] Normalized phone (digits only):', normalized);
   
   // If it doesn't start with country code (assuming Russia +7 by default)
-  // You can adjust this logic based on your needs
   if (!normalized.startsWith('7') && !normalized.startsWith('1') && !normalized.startsWith('44')) {
     // Default to Russia if no country code
     normalized = '7' + normalized;
+    console.log('[WHATSAPP] Added country code, final phone:', normalized);
+  }
+  
+  // Validate phone length (should be 11-15 digits for international numbers)
+  if (normalized.length < 10 || normalized.length > 15) {
+    console.warn('[WHATSAPP] Invalid phone length:', normalized.length);
+    return null;
   }
   
   return normalized;
@@ -41,6 +50,9 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
   const token = process.env.WHATSAPP_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
+  console.log('[WHATSAPP] WHATSAPP_TOKEN set:', !!token);
+  console.log('[WHATSAPP] WHATSAPP_PHONE_NUMBER_ID:', phoneNumberId);
+
   if (!token || !phoneNumberId) {
     console.warn('[WHATSAPP] WHATSAPP_TOKEN or WHATSAPP_PHONE_NUMBER_ID not set in environment variables');
     return;
@@ -55,6 +67,7 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
 
   try {
     const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+    console.log('[WHATSAPP] Sending to URL:', url);
     
     let messageBody;
     
@@ -80,6 +93,7 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
           }
         }
       };
+      console.log('[WHATSAPP] Sending interactive message with buttons:', buttons.map(b => b.title));
     } else {
       // Send simple text message
       messageBody = {
@@ -90,7 +104,14 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
           body: text
         }
       };
+      console.log('[WHATSAPP] Sending simple text message');
     }
+    
+    console.log('[WHATSAPP] Request body (without sensitive data):', {
+      messaging_product: messageBody.messaging_product,
+      to: normalizedPhone,
+      type: messageBody.type
+    });
     
     const response = await axios.post(url, messageBody, {
       headers: {
@@ -102,7 +123,10 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
     console.log('[WHATSAPP] Message sent successfully to:', normalizedPhone);
     console.log('[WHATSAPP] Response:', response.data);
   } catch (error) {
-    console.error('[WHATSAPP] Error sending message:', error.response?.data || error.message);
+    console.error('[WHATSAPP] Error sending message');
+    console.error('[WHATSAPP] Error status:', error.response?.status);
+    console.error('[WHATSAPP] Error data:', error.response?.data);
+    console.error('[WHATSAPP] Error message:', error.message);
     // Don't throw - let the calling function handle the error gracefully
   }
 }
