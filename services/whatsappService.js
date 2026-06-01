@@ -2,9 +2,16 @@ const axios = require('axios');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 
 // Configure dedicated proxy agent for WhatsApp API requests
-const whatsappProxy = process.env.WHATSAPP_PROXY
-  ? new HttpsProxyAgent(process.env.WHATSAPP_PROXY)
-  : undefined;
+let whatsappProxy = undefined;
+
+if (process.env.WHATSAPP_PROXY) {
+  try {
+    whatsappProxy = new HttpsProxyAgent(process.env.WHATSAPP_PROXY);
+    console.log('[WHATSAPP] Dedicated proxy URL:', process.env.WHATSAPP_PROXY.replace(/:.*@/, ':****@'));
+  } catch (error) {
+    console.error('[WHATSAPP] Error creating proxy agent:', error.message);
+  }
+}
 
 console.log('[WHATSAPP] Dedicated proxy enabled:', !!whatsappProxy);
 
