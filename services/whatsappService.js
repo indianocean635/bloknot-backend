@@ -1,19 +1,29 @@
 const axios = require('axios');
-const { HttpsProxyAgent } = require('https-proxy-agent');
 
-// Configure dedicated proxy agent for WhatsApp API requests
-let whatsappProxy = undefined;
+// Parse proxy URL for WhatsApp API requests
+let whatsappProxyConfig = undefined;
 
 if (process.env.WHATSAPP_PROXY) {
   try {
-    whatsappProxy = new HttpsProxyAgent(process.env.WHATSAPP_PROXY);
-    console.log('[WHATSAPP] Dedicated proxy URL:', process.env.WHATSAPP_PROXY.replace(/:.*@/, ':****@'));
+    const proxyUrl = new URL(process.env.WHATSAPP_PROXY);
+    whatsappProxyConfig = {
+      host: proxyUrl.hostname,
+      port: parseInt(proxyUrl.port) || 8080,
+      auth: {
+        username: proxyUrl.username,
+        password: proxyUrl.password
+      },
+      protocol: 'http'
+    };
+    console.log('[WHATSAPP] Dedicated proxy host:', proxyUrl.hostname);
+    console.log('[WHATSAPP] Dedicated proxy port:', proxyUrl.port);
+    console.log('[WHATSAPP] Dedicated proxy user:', proxyUrl.username);
   } catch (error) {
-    console.error('[WHATSAPP] Error creating proxy agent:', error.message);
+    console.error('[WHATSAPP] Error parsing proxy URL:', error.message);
   }
 }
 
-console.log('[WHATSAPP] Dedicated proxy enabled:', !!whatsappProxy);
+console.log('[WHATSAPP] Dedicated proxy enabled:', !!whatsappProxyConfig);
 
 /**
  * Normalize phone number to international format
@@ -135,15 +145,19 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
     console.log('[WHATSAPP] Phone number value:', messageBody.to);
     console.log('[WHATSAPP] Sending via dedicated proxy');
     
-    const response = await axios.post(url, messageBody, {
+    const axiosConfig = {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      httpsAgent: whatsappProxy,
-      proxy: false,
       timeout: 30000
-    });
+    };
+    
+    if (whatsappProxyConfig) {
+      axiosConfig.proxy = whatsappProxyConfig;
+    }
+    
+    const response = await axios.post(url, messageBody, axiosConfig);
 
     console.log('[WHATSAPP] Message sent successfully to:', normalizedPhone);
     console.log('[WHATSAPP] Response status:', response.status);
