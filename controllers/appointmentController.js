@@ -352,9 +352,13 @@ async function createPublicAppointment(req, res) {
 
 Для управления записью нажмите кнопку ниже.`;
 
-          // Send WhatsApp asynchronously (fire and forget) to not block response
-          sendWhatsAppMessage(customerPhone, message, null)
-            .then(() => console.log('[STEP 7.5] [WHATSAPP] Auto-confirmation sent for booking:', appointment.id))
+          // Send WhatsApp with interactive buttons (fire and forget) to not block response
+          const buttons = [
+            { id: `cancel_booking:${appointment.id}`, title: 'Отменить' },
+            { id: `reschedule_booking:${appointment.id}`, title: 'Перенести' }
+          ];
+          sendWhatsAppMessage(customerPhone, message, buttons)
+            .then(() => console.log('[STEP 7.5] [WHATSAPP BUTTON] Auto-confirmation sent for booking:', appointment.id))
             .catch((error) => console.error('[STEP 7.5] Error sending WhatsApp confirmation:', error));
         }
       } catch (error) {
