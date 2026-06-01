@@ -134,7 +134,7 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
         'Content-Type': 'application/json'
       },
       proxy: false,
-      timeout: 20000
+      timeout: 60000
     });
 
     console.log('[WHATSAPP] Message sent successfully to:', normalizedPhone);
