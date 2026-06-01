@@ -126,21 +126,16 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
     console.log('[WHATSAPP] Full request payload:', JSON.stringify(messageBody, null, 2));
     console.log('[WHATSAPP] Phone number type:', typeof messageBody.to);
     console.log('[WHATSAPP] Phone number value:', messageBody.to);
+    console.log('[WHATSAPP] Sending WITHOUT proxy');
     
-    const axiosConfig = {
+    const response = await axios.post(url, messageBody, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
-      }
-    };
-    
-    // Add proxy agent if configured
-    if (proxyAgent) {
-      axiosConfig.httpsAgent = proxyAgent;
-      console.log('[WHATSAPP] Using proxy agent for request');
-    }
-    
-    const response = await axios.post(url, messageBody, axiosConfig);
+      },
+      proxy: false,
+      timeout: 20000
+    });
 
     console.log('[WHATSAPP] Message sent successfully to:', normalizedPhone);
     console.log('[WHATSAPP] Response status:', response.status);
