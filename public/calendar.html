@@ -1470,11 +1470,18 @@
                   
                   // Update booking on server
                   try {
+                    // Get token for authorization
+                    let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+                    const headers = {
+                      'Content-Type': 'application/json',
+                    };
+                    if (token) {
+                      headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
                     const response = await fetch(`/api/appointments/${bookingId}`, {
                       method: 'PUT',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
+                      headers: headers,
                       body: JSON.stringify({
                         startsAt: newStartsAt,
                         endsAt: newEndsAt,
@@ -1489,7 +1496,8 @@
                       // Reload bookings to reflect changes
                       loadBookings();
                     } else {
-                      console.error('Failed to update booking');
+                      const errorText = await response.text();
+                      console.error('Failed to update booking:', errorText);
                       // Revert to original position
                       card.style.top = `${top}px`;
                       card.style.height = `${Math.max(height, 40)}px`;
@@ -1777,11 +1785,18 @@
                   
                   // Update booking on server
                   try {
+                    // Get token for authorization
+                    let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+                    const headers = {
+                      'Content-Type': 'application/json',
+                    };
+                    if (token) {
+                      headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
                     const response = await fetch(`/api/appointments/${bookingId}`, {
                       method: 'PUT',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
+                      headers: headers,
                       body: JSON.stringify({
                         startsAt: newStartsAt,
                         endsAt: newEndsAt,
@@ -1796,7 +1811,8 @@
                       // Reload bookings to reflect changes
                       loadBookings();
                     } else {
-                      console.error('Failed to update booking');
+                      const errorText = await response.text();
+                      console.error('Failed to update booking:', errorText);
                       // Revert to original position
                       card.style.top = `${top}px`;
                       card.style.height = `${Math.max(height, 40)}px`;
