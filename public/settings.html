@@ -977,6 +977,9 @@ async function loadSpecialistLimitFromAPI() {
     console.log('Business data:', business);
     console.log('Subscription:', business.subscription);
 
+    // Store business data globally for tariff checks
+    window.currentBusiness = business;
+
     // Update specialist forms based on subscription
     const subscription = business.subscription || { plan: 'FREE' };
     const specialistLimit = getSpecialistLimitFromPlan(subscription.plan);
@@ -988,6 +991,17 @@ async function loadSpecialistLimitFromAPI() {
   } catch (error) {
     console.error('Error loading specialist limit:', error);
     showNoBusinessUI();
+  }
+}
+
+// Load business data and update window.currentBusiness
+async function loadBusinessData() {
+  try {
+    const business = await Bloknot.api('/api/settings/business');
+    window.currentBusiness = business;
+    console.log('[LOAD BUSINESS] Updated window.currentBusiness:', business);
+  } catch (error) {
+    console.error('Error loading business data:', error);
   }
 }
 
@@ -1051,15 +1065,24 @@ function closeTariffRequiredModal() {
 // Check if user has selected tariff and added card
 function hasTariffAndCard() {
   const business = window.currentBusiness;
-  if (!business) return false;
+  console.log('[TARIFF CHECK] window.currentBusiness:', business);
+  
+  if (!business) {
+    console.log('[TARIFF CHECK] No business found');
+    return false;
+  }
   
   const subscription = business.subscription;
+  console.log('[TARIFF CHECK] subscription:', subscription);
+  
   if (!subscription || !subscription.plan || subscription.plan === 'FREE' || subscription.plan === 'free') {
+    console.log('[TARIFF CHECK] No valid subscription plan, plan:', subscription?.plan);
     return false;
   }
   
   // Check if card is added (we can check if subscription has card info or if payment was processed)
   // For now, we'll assume if plan is not FREE, card is added
+  console.log('[TARIFF CHECK] Has valid tariff:', subscription.plan);
   return true;
 }
 
