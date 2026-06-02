@@ -16,6 +16,14 @@ async function getBusinessBySlug(req, res) {
 
   console.log('[PUBLIC API] getBusinessBySlug called with slug:', slug);
 
+  if (!slug || slug === 'undefined' || slug === '') {
+    console.log('[PUBLIC API] Invalid slug provided');
+    return res.status(400).json({ 
+      error: "Invalid slug parameter",
+      message: "Slug is required. Please provide a valid business slug in the URL parameter."
+    });
+  }
+
   const business = await prisma.business.findUnique({
     where: { slug }
   });
