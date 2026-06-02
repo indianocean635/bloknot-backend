@@ -196,16 +196,17 @@ async function getWorks(req, res) {
 // Получить название// Get business slug for booking link
 async function getBusinessName(req, res) {
   try {
-    console.log('[REQUEST]', {
-      userId: req.user?.id,
-      businessId: req.user?.businessId,
-      route: req.originalUrl
+    console.log('[BOOKING LINK] Request for business slug');
+    console.log('[BOOKING LINK] User:', {
+      id: req.user?.id,
+      email: req.user?.email,
+      businessId: req.user?.businessId
     });
 
     const user = req.user;
     
     if (!user || !user.businessId) {
-      console.warn('[SECURITY] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
+      console.warn('[BOOKING LINK] Missing user or businessId', { userId: req.user?.id, businessId: req.user?.businessId });
       return res.status(403).json({ error: "Forbidden" });
     }
     
@@ -213,14 +214,20 @@ async function getBusinessName(req, res) {
       where: { id: user.businessId }
     });
     
+    console.log('[BOOKING LINK] Business found:', business ? 'YES' : 'NO');
+    if (business) {
+      console.log('[BOOKING LINK] Business slug:', business.slug);
+    }
+    
     if (!business) {
+      console.error('[BOOKING LINK] Business not found for businessId:', user.businessId);
       return res.status(404).json({ error: "Business not found" });
     }
     
     // Return slug for booking link generation
     res.json({ slug: business.slug });
   } catch (error) {
-    console.error("Error getting business name:", error);
+    console.error("[BOOKING LINK] Error getting business slug:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
