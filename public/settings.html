@@ -2067,10 +2067,20 @@ async function handleAvatarSelect(index, input) {
 
     try {
       console.log('[AVATAR] Uploading avatar for specialist ID:', specialistId);
+      
+      // Get token for authorization
+      let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+      
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`/api/upload/masters/${specialistId}/avatar`, {
         method: 'POST',
         body: formData,
-        credentials: 'include'
+        credentials: 'include',
+        headers: headers
       });
 
       if (!response.ok) {
@@ -2105,10 +2115,20 @@ async function handleLogoSelect(input) {
 
     try {
       console.log('[LOGO] Uploading logo...');
+      
+      // Get token for authorization
+      let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+      
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/upload/works', {
         method: 'POST',
         body: formData,
-        credentials: 'include'
+        credentials: 'include',
+        headers: headers
       });
 
       if (!response.ok) {
@@ -2173,10 +2193,20 @@ async function handleAddWork() {
 
     try {
       console.log('[WORKS] Uploading work...');
+      
+      // Get token for authorization
+      let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+      
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/upload/works', {
         method: 'POST',
         body: formData,
-        credentials: 'include'
+        credentials: 'include',
+        headers: headers
       });
 
       if (!response.ok) {
