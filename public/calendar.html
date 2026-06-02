@@ -1095,7 +1095,8 @@
       masterSchedules: {},
       services: [],
       selectedBooking: null,
-      selectedColor: 'green'
+      selectedColor: 'green',
+      isDraggingCard: false // Flag to prevent re-render during drag
     };
 
     function ymd(d) {
@@ -1389,6 +1390,7 @@
                 isResizing = true;
                 isDragging = false;
                 hasMoved = false;
+                state.isDraggingCard = true;
                 startY = e.clientY;
                 startHeight = card.offsetHeight;
                 card.classList.add('resizing');
@@ -1398,10 +1400,12 @@
                 isDragging = true;
                 isResizing = false;
                 hasMoved = false;
+                state.isDraggingCard = true;
                 startY = e.clientY;
                 startX = e.clientX;
                 startTop = card.offsetTop;
                 startLeft = card.offsetLeft;
+                startHeight = card.offsetHeight;
                 startColumn = card.parentElement;
                 card.classList.add('dragging');
                 e.preventDefault();
@@ -1459,9 +1463,8 @@
                   const startHour = 9 + Math.floor(newTop / slotHeight);
                   const startMin = Math.round((newTop % slotHeight) / slotHeight * 60);
                   
-                  // Calculate new end time
-                  const newHeight = parseInt(card.style.height);
-                  const duration = Math.round((newHeight / slotHeight) * 60);
+                  // Calculate new end time - use original height to preserve duration
+                  const duration = Math.round((startHeight / slotHeight) * 60);
                   const endHour = startHour + Math.floor((startMin + duration) / 60);
                   const endMin = (startMin + duration) % 60;
                   
@@ -1495,7 +1498,18 @@
                     
                     if (response.ok) {
                       console.log('Booking updated successfully');
-                      // Keep card in new position - don't reload
+                      // Update local booking data to prevent visual lag
+                      const bookingIndex = state.bookings.findIndex(b => b.id === parseInt(bookingId));
+                      if (bookingIndex !== -1) {
+                        state.bookings[bookingIndex].startsAt = newStartsAt;
+                        state.bookings[bookingIndex].endsAt = newEndsAt;
+                      }
+                      // If moved to different column, move the card DOM element
+                      if (targetColumn && targetColumn !== startColumn) {
+                        targetColumn.appendChild(card);
+                      }
+                      // Update card to new position visually
+                      card.style.height = `${startHeight}px`;
                       card.style.left = '';
                       card.style.position = '';
                       card.style.zIndex = '';
@@ -1530,6 +1544,7 @@
                 isDragging = false;
                 isResizing = false;
                 hasMoved = false;
+                state.isDraggingCard = false;
                 card.classList.remove('dragging', 'resizing');
                 card.style.left = '';
                 card.style.position = '';
@@ -1727,6 +1742,7 @@
                 isResizing = true;
                 isDragging = false;
                 hasMoved = false;
+                state.isDraggingCard = true;
                 startY = e.clientY;
                 startHeight = card.offsetHeight;
                 card.classList.add('resizing');
@@ -1736,6 +1752,7 @@
                 isDragging = true;
                 isResizing = false;
                 hasMoved = false;
+                state.isDraggingCard = true;
                 startY = e.clientY;
                 startTop = card.offsetTop;
                 startHeight = card.offsetHeight;
@@ -1779,9 +1796,8 @@
                   const startHour = 9 + Math.floor(newTop / slotHeight);
                   const startMin = Math.round((newTop % slotHeight) / slotHeight * 60);
                   
-                  // Calculate new end time
-                  const newHeight = parseInt(card.style.height);
-                  const duration = Math.round((newHeight / slotHeight) * 60);
+                  // Calculate new end time - use original height to preserve duration
+                  const duration = Math.round((startHeight / slotHeight) * 60);
                   const endHour = startHour + Math.floor((startMin + duration) / 60);
                   const endMin = (startMin + duration) % 60;
                   
@@ -1815,7 +1831,14 @@
                     
                     if (response.ok) {
                       console.log('Booking updated successfully');
-                      // Keep card in new position - don't reload
+                      // Update local booking data to prevent visual lag
+                      const bookingIndex = state.bookings.findIndex(b => b.id === parseInt(bookingId));
+                      if (bookingIndex !== -1) {
+                        state.bookings[bookingIndex].startsAt = newStartsAt;
+                        state.bookings[bookingIndex].endsAt = newEndsAt;
+                      }
+                      // Update card to new position visually
+                      card.style.height = `${startHeight}px`;
                     } else {
                       const errorText = await response.text();
                       console.error('Failed to update booking:', errorText);
@@ -1838,6 +1861,7 @@
                 isDragging = false;
                 isResizing = false;
                 hasMoved = false;
+                state.isDraggingCard = false;
                 card.classList.remove('dragging', 'resizing');
               }
             });
@@ -2041,6 +2065,10 @@
     }
 
     async function loadBookings() {
+      // Don't reload if a card is being dragged
+      if (state.isDraggingCard) {
+        return;
+      }
       try {
         const weekStart = state.view === 'week' ? startOfWeek(state.currentDate) : startOfDay(state.currentDate);
         const weekEnd = addDays(weekStart, state.view === 'week' ? 7 : 1);
