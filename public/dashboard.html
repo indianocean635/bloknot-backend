@@ -355,14 +355,7 @@
 
    (function initBookingLink() {
     console.log('[BOOKING LINK] Initializing booking link...');
-    fetch('/api/business/slug')
-      .then(r => {
-        console.log('[BOOKING LINK] Response status:', r.status);
-        if (!r.ok) {
-          throw new Error(`HTTP ${r.status}`);
-        }
-        return r.json();
-      })
+    Bloknot.api('/api/business/slug')
       .then(data => {
         console.log('[BOOKING LINK] Response data:', data);
         const slug = data.slug;
