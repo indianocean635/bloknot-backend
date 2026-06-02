@@ -115,6 +115,14 @@
       </div>
       
       <div class="branding-item">
+        <h3>Название компании</h3>
+        <div class="company-info">
+          <input type="text" id="companyNameInput" placeholder="Введите название компании">
+          <button class="btn" id="saveCompanyNameBtn">Сохранить</button>
+        </div>
+      </div>
+      
+      <div class="branding-item">
         <h3>Филиалы</h3>
         <div class="branches-info">
           <button class="btn" id="addBranchBtn">+ Добавить филиал</button>
@@ -2472,10 +2480,6 @@ async function openBranchModal(branchId = null) {
       </div>
       <div class="modal-body">
         <div style="margin-bottom: 12px;">
-          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Название *</label>
-          <input type="text" id="branchName" value="${branch?.name || ''}" placeholder="Название филиала" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-        </div>
-        <div style="margin-bottom: 12px;">
           <label style="display: block; margin-bottom: 4px; font-weight: 500;">Город</label>
           <input type="text" id="branchCity" value="${branch?.city || ''}" placeholder="Город" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
         </div>
@@ -2503,22 +2507,15 @@ async function openBranchModal(branchId = null) {
 
 async function saveBranch(branchId = null) {
   try {
-    const name = document.getElementById('branchName')?.value;
     const city = document.getElementById('branchCity')?.value;
     const address = document.getElementById('branchAddress')?.value;
     const directions = document.getElementById('branchDirections')?.value;
     const schedule = document.getElementById('branchSchedule')?.value;
 
-    if (!name || name.trim() === '') {
-      alert('Введите название филиала');
-      return;
-    }
-
     if (branchId) {
       await Bloknot.api(`/api/settings/branches/${branchId}`, {
         method: 'PATCH',
         body: JSON.stringify({
-          name: name.trim(),
           city: city?.trim() || '',
           address: address?.trim() || '',
           directions: directions?.trim() || '',
@@ -2529,7 +2526,6 @@ async function saveBranch(branchId = null) {
       await Bloknot.api('/api/settings/branches', {
         method: 'POST',
         body: JSON.stringify({
-          name: name.trim(),
           city: city?.trim() || '',
           address: address?.trim() || '',
           directions: directions?.trim() || '',
