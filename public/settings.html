@@ -84,7 +84,7 @@
         </div>
         <div class="modal-body">
           <p style="margin: 0 0 16px 0; color: #374151; font-size: 14px;">
-            Для редактирования настроек необходимо сначала выбрать тариф и добавить карту.
+            Для редактирования настроек необходимо сначала выбрать тариф.
           </p>
         </div>
         <div class="modal-footer">
@@ -1118,6 +1118,9 @@ async function processPayment() {
     
     // Update specialist forms immediately
     updateSpecialistForms(specialistLimit);
+    
+    // Reload business data to update subscription info
+    await loadBusinessData();
     
     alert('Оплата успешна! Теперь вы можете добавлять специалистов.');
   } catch (error) {
