@@ -1423,6 +1423,8 @@
                 card.style.left = `${newLeft}px`;
                 card.style.position = 'absolute';
                 card.style.zIndex = '1000';
+                // Keep original height during drag
+                card.style.height = `${startHeight}px`;
               } else if (isResizing) {
                 hasMoved = true;
                 const deltaY = e.clientY - startY;
@@ -1493,8 +1495,10 @@
                     
                     if (response.ok) {
                       console.log('Booking updated successfully');
-                      // Reload bookings to reflect changes
-                      loadBookings();
+                      // Keep card in new position - don't reload
+                      card.style.left = '';
+                      card.style.position = '';
+                      card.style.zIndex = '';
                     } else {
                       const errorText = await response.text();
                       console.error('Failed to update booking:', errorText);
@@ -1734,6 +1738,7 @@
                 hasMoved = false;
                 startY = e.clientY;
                 startTop = card.offsetTop;
+                startHeight = card.offsetHeight;
                 card.classList.add('dragging');
                 e.preventDefault();
               }
@@ -1749,6 +1754,8 @@
                 // Snap to 15-minute intervals (15px = 15 minutes)
                 const snappedTop = Math.round(newTop / 15) * 15;
                 card.style.top = `${snappedTop}px`;
+                // Keep original height during drag
+                card.style.height = `${startHeight}px`;
               } else if (isResizing) {
                 hasMoved = true;
                 const deltaY = e.clientY - startY;
@@ -1808,8 +1815,7 @@
                     
                     if (response.ok) {
                       console.log('Booking updated successfully');
-                      // Reload bookings to reflect changes
-                      loadBookings();
+                      // Keep card in new position - don't reload
                     } else {
                       const errorText = await response.text();
                       console.error('Failed to update booking:', errorText);
