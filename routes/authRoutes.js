@@ -119,7 +119,7 @@ router.post('/register', async (req, res) => {
 
       business = await prisma.business.create({
         data: {
-          name: `${email}'s Business`,
+          name: '',
           slug: slug,
           createdAt: new Date(),
           updatedAt: new Date(),

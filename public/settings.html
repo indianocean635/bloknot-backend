@@ -75,6 +75,24 @@
       </div>
     </div>
     
+    <!-- Tariff Required Modal -->
+    <div id="tariffRequiredModal" class="modal" style="display: none;">
+      <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+          <h3>Необходимо выбрать тариф</h3>
+          <button class="modal-close" onclick="closeTariffRequiredModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="margin: 0 0 16px 0; color: #374151; font-size: 14px;">
+            Для редактирования настроек необходимо сначала выбрать тариф и добавить карту.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn primary" onclick="closeTariffRequiredModal()">Понятно</button>
+        </div>
+      </div>
+    </div>
+    
     <div class="items-grid" id="mastersGrid">
     </div>
   </section>
@@ -88,7 +106,7 @@
     <div class="branding-container">
       <div class="branding-item">
         <h3>Logo</h3>
-        <div class="logo-upload" onclick="document.getElementById('logoInput').click()">
+        <div class="logo-upload" onclick="handleLogoClick()">
           <div class="logo-circle">
             <div class="logo-plus">+</div>
           </div>
@@ -862,7 +880,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Remove any existing listeners to prevent duplicates
     const newBtn = addWorkBtn.cloneNode(true);
     addWorkBtn.parentNode.replaceChild(newBtn, addWorkBtn);
-    newBtn.addEventListener('click', handleAddWork);
+    newBtn.addEventListener('click', () => {
+      if (!hasTariffAndCard()) {
+        showTariffRequiredModal();
+        return;
+      }
+      handleAddWork();
+    });
   }
 
   // Add event listener for company name save button
@@ -870,7 +894,13 @@ document.addEventListener('DOMContentLoaded', function() {
   if (saveCompanyNameBtn) {
     const newSaveBtn = saveCompanyNameBtn.cloneNode(true);
     saveCompanyNameBtn.parentNode.replaceChild(newSaveBtn, saveCompanyNameBtn);
-    newSaveBtn.addEventListener('click', saveCompanyName);
+    newSaveBtn.addEventListener('click', () => {
+      if (!hasTariffAndCard()) {
+        showTariffRequiredModal();
+        return;
+      }
+      saveCompanyName();
+    });
   }
 
   // Add event listener for add branch button
@@ -878,7 +908,13 @@ document.addEventListener('DOMContentLoaded', function() {
   if (addBranchBtn) {
     const newAddBtn = addBranchBtn.cloneNode(true);
     addBranchBtn.parentNode.replaceChild(newAddBtn, addBranchBtn);
-    newAddBtn.addEventListener('click', () => openBranchModal());
+    newAddBtn.addEventListener('click', () => {
+      if (!hasTariffAndCard()) {
+        showTariffRequiredModal();
+        return;
+      }
+      openBranchModal();
+    });
   }
 
   // Add event listener for add category button
@@ -886,7 +922,13 @@ document.addEventListener('DOMContentLoaded', function() {
   if (addCategoryBtn) {
     const newCatBtn = addCategoryBtn.cloneNode(true);
     addCategoryBtn.parentNode.replaceChild(newCatBtn, addCategoryBtn);
-    newCatBtn.addEventListener('click', () => openCategoryModal());
+    newCatBtn.addEventListener('click', () => {
+      if (!hasTariffAndCard()) {
+        showTariffRequiredModal();
+        return;
+      }
+      openCategoryModal();
+    });
   }
 
   // Add event listener for add service button
@@ -894,7 +936,13 @@ document.addEventListener('DOMContentLoaded', function() {
   if (addServiceBtn) {
     const newSvcBtn = addServiceBtn.cloneNode(true);
     addServiceBtn.parentNode.replaceChild(newSvcBtn, addServiceBtn);
-    newSvcBtn.addEventListener('click', () => openServiceModal());
+    newSvcBtn.addEventListener('click', () => {
+      if (!hasTariffAndCard()) {
+        showTariffRequiredModal();
+        return;
+      }
+      openServiceModal();
+    });
   }
 
   // Load initial data
@@ -994,6 +1042,39 @@ function selectTariff(plan, price) {
 
 function closePaymentModal() {
   document.getElementById('paymentModal').style.display = 'none';
+}
+
+function closeTariffRequiredModal() {
+  document.getElementById('tariffRequiredModal').style.display = 'none';
+}
+
+// Check if user has selected tariff and added card
+function hasTariffAndCard() {
+  const business = window.currentBusiness;
+  if (!business) return false;
+  
+  const subscription = business.subscription;
+  if (!subscription || !subscription.plan || subscription.plan === 'FREE' || subscription.plan === 'free') {
+    return false;
+  }
+  
+  // Check if card is added (we can check if subscription has card info or if payment was processed)
+  // For now, we'll assume if plan is not FREE, card is added
+  return true;
+}
+
+// Show tariff required modal
+function showTariffRequiredModal() {
+  document.getElementById('tariffRequiredModal').style.display = 'block';
+}
+
+// Handle logo click - check tariff before allowing upload
+function handleLogoClick() {
+  if (!hasTariffAndCard()) {
+    showTariffRequiredModal();
+    return;
+  }
+  document.getElementById('logoInput').click();
 }
 
 async function processPayment() {
