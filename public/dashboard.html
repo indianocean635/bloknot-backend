@@ -354,16 +354,33 @@
    }
 
    (function initBookingLink() {
-     fetch('/api/business/slug')
-       .then(r => r.json())
-       .then(data => {
-         const slug = data.slug;
-         const link = String(location.origin || "").replace(/\/$/, "") + "/booking-new.html?slug=" + encodeURIComponent(slug);
-         const input = Bloknot.qs("#bookingLink");
-         const isSubscribed = true; // Always allow access to booking link
+    console.log('[BOOKING LINK] Initializing booking link...');
+    fetch('/api/business/slug')
+      .then(r => {
+        console.log('[BOOKING LINK] Response status:', r.status);
+        if (!r.ok) {
+          throw new Error(`HTTP ${r.status}`);
+        }
+        return r.json();
+      })
+      .then(data => {
+        console.log('[BOOKING LINK] Response data:', data);
+        const slug = data.slug;
+        console.log('[BOOKING LINK] Slug:', slug);
+        
+        if (!slug || slug === 'undefined') {
+          console.error('[BOOKING LINK] Invalid slug received:', slug);
+          return;
+        }
+        
+        const link = String(location.origin || "").replace(/\/$/, "") + "/booking-new.html?slug=" + encodeURIComponent(slug);
+        console.log('[BOOKING LINK] Generated link:', link);
+        
+        const input = Bloknot.qs("#bookingLink");
+        const isSubscribed = true; // Always allow access to booking link
 
-         const open = document.querySelector("#openBookingLink");
-         if (open) open.href = link;
+        const open = document.querySelector("#openBookingLink");
+        if (open) open.href = link;
 
          function applyGate() {
           const ok = isSubscribed;
@@ -405,7 +422,7 @@
          }
        })
        .catch(err => {
-         console.error('Error getting slug:', err);
+         console.error('[BOOKING LINK] Error getting slug:', err);
          showNotice("Ошибка загрузки ссылки записи");
        });
    })();
