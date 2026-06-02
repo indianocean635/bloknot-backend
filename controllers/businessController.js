@@ -14,9 +14,21 @@ function generateShortSlug() {
 async function getBusinessBySlug(req, res) {
   const { slug } = req.params;
 
+  console.log('[PUBLIC API] getBusinessBySlug called with slug:', slug);
+
   const business = await prisma.business.findUnique({
     where: { slug }
   });
+
+  console.log('[PUBLIC API] Business found:', business ? 'YES' : 'NO');
+  if (business) {
+    console.log('[PUBLIC API] Business details:', {
+      id: business.id,
+      name: business.name,
+      slug: business.slug,
+      ownerId: business.ownerId
+    });
+  }
 
   if (!business) return res.status(404).json({ error: "Business not found" });
 
@@ -28,13 +40,14 @@ async function getBusinessBySlug(req, res) {
     }
   });
 
-  console.log('Services loaded for business', business.id, ':', services);
-  console.log('Services count:', services.length);
+  console.log('[PUBLIC API] Services loaded:', services.length);
 
   // Get categories
   const categories = await prisma.category.findMany({
     where: { businessId: business.id }
   });
+
+  console.log('[PUBLIC API] Categories loaded:', categories.length);
 
   // Get masters with schedules, categoryIds, and serviceIds
   // Filter by branch if branchId is provided in query
@@ -62,19 +75,14 @@ async function getBusinessBySlug(req, res) {
     }
   });
 
-  console.log('Masters loaded for public API:', masters.length);
-  masters.forEach(master => {
-    console.log(`Master ${master.id} (${master.name}):`, {
-      hasSchedule: !!master.schedule,
-      scheduleKeys: master.schedule ? Object.keys(master.schedule) : [],
-      scheduleSample: master.schedule ? JSON.stringify(master.schedule).substring(0, 100) : 'null'
-    });
-  });
+  console.log('[PUBLIC API] Masters loaded:', masters.length);
 
   // Get branches
   const branches = await prisma.branch.findMany({
     where: { businessId: business.id }
   });
+
+  console.log('[PUBLIC API] Branches loaded:', branches.length);
 
   // Get logo
   const logoPhoto = await prisma.workPhoto.findFirst({
@@ -95,6 +103,8 @@ async function getBusinessBySlug(req, res) {
     }
   });
 
+  console.log('[PUBLIC API] Work photos loaded:', workPhotos.length);
+
   const result = {
     business: {
       id: business.id,
@@ -110,7 +120,14 @@ async function getBusinessBySlug(req, res) {
     workPhotos: workPhotos
   };
 
-  console.log('Business data for booking:', result);
+  console.log('[PUBLIC API] Final result structure:', {
+    hasBusiness: !!result.business,
+    hasServices: result.services.length > 0,
+    hasCategories: result.categories.length > 0,
+    hasMasters: result.masters.length > 0,
+    hasBranches: result.branches.length > 0
+  });
+  
   res.json(result);
 }
 
