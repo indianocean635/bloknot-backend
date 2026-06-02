@@ -191,13 +191,25 @@ router.post("/branches", requireAuth, async (req, res) => {
 
     const { name, city, address, directions, schedule } = req.body;
 
-    if (!name || name.trim() === "") {
-      return res.status(400).json({ error: "Branch name is required" });
+    // Generate default name if not provided
+    let branchName = name?.trim();
+    if (!branchName) {
+      if (city?.trim()) {
+        branchName = city.trim();
+      } else if (address?.trim()) {
+        branchName = address.trim();
+      } else {
+        // Count existing branches to generate a default name
+        const existingBranches = await prisma.branch.count({
+          where: { businessId: req.user.businessId }
+        });
+        branchName = `Филиал ${existingBranches + 1}`;
+      }
     }
 
     const branch = await prisma.branch.create({
       data: {
-        name: name.trim(),
+        name: branchName,
         city: city?.trim() || "",
         address: address?.trim() || "",
         directions: directions?.trim() || "",
@@ -236,10 +248,23 @@ router.patch("/branches/:id", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Branch not found" });
     }
 
+    // Generate new name if provided, otherwise keep existing
+    let newName = name?.trim();
+    if (newName) {
+      // Use the provided name
+    } else if (city?.trim()) {
+      newName = city.trim();
+    } else if (address?.trim()) {
+      newName = address.trim();
+    } else {
+      // Keep existing name
+      newName = branch.name;
+    }
+
     const updatedBranch = await prisma.branch.update({
       where: { id: parseInt(id) },
       data: {
-        name: name?.trim() || branch.name,
+        name: newName,
         city: city?.trim() || branch.city,
         address: address?.trim() || branch.address,
         directions: directions?.trim() || branch.directions,
