@@ -324,7 +324,7 @@ async function createPublicAppointment(req, res) {
     if (customerPhone && req.body.whatsappNotifications) {
       console.log('[STEP 7.5] Sending WhatsApp confirmation...');
       try {
-        const { sendWhatsAppMessage } = require('../services/whatsappService');
+        const { sendWhatsAppTemplateMessage } = require('../services/whatsappService');
 
         // Get full booking details for confirmation
         const fullBooking = await prisma.appointment.findUnique({
@@ -342,23 +342,18 @@ async function createPublicAppointment(req, res) {
           const dateStr = timeToUse.replace(/(\d{4})-(\d{2})-(\d{2})T.*/, '$3.$2.$1');
           const timeStr = timeToUse.replace(/.*T(\d{2}):(\d{2}).*/, '$1:$2');
 
-          const message = `Здравствуйте, ${customerName}!
+          // Prepare template variables
+          const templateVariables = {
+            customer_name: customerName,
+            date: dateStr,
+            time: timeStr,
+            specialist: fullBooking.master?.name,
+            service: fullBooking.service?.name
+          };
 
-Вы записаны:
-📅 Дата: ${dateStr}
-⏰ Время: ${timeStr}
-✂️ Услуга: ${fullBooking.service?.name}
-👤 Специалист: ${fullBooking.master?.name}
-
-Для управления записью нажмите кнопку ниже.`;
-
-          // Send WhatsApp with interactive buttons (fire and forget) to not block response
-          const buttons = [
-            { id: `cancel_booking:${appointment.id}`, title: 'Отменить' },
-            { id: `reschedule_booking:${appointment.id}`, title: 'Перенести' }
-          ];
-          sendWhatsAppMessage(customerPhone, message, buttons)
-            .then(() => console.log('[STEP 7.5] [WHATSAPP BUTTON] Auto-confirmation sent for booking:', appointment.id))
+          // Send WhatsApp template message (fire and forget) to not block response
+          sendWhatsAppTemplateMessage(customerPhone, 'booking_confirmation', 'ru', templateVariables)
+            .then(() => console.log('[STEP 7.5] [WHATSAPP TEMPLATE] Auto-confirmation sent for booking:', appointment.id))
             .catch((error) => console.error('[STEP 7.5] Error sending WhatsApp confirmation:', error));
         }
       } catch (error) {

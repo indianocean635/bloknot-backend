@@ -181,7 +181,115 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
   }
 }
 
+/**
+ * Send WhatsApp template message using WhatsApp Cloud API
+ * @param {string} phone - Phone number to send message to
+ * @param {string} templateName - Template name (e.g., 'booking_confirmation')
+ * @param {string} language - Template language code (e.g., 'ru')
+ * @param {Object} variables - Template variables object
+ * @returns {Promise<void>}
+ */
+async function sendWhatsAppTemplateMessage(phone, templateName, language, variables = {}) {
+  console.log('[WHATSAPP TEMPLATE] START SEND - Phone:', phone, 'Template:', templateName, 'Language:', language);
+  
+  // Check if WhatsApp is enabled
+  if (process.env.WHATSAPP_ENABLED !== 'true') {
+    console.log('[WHATSAPP TEMPLATE] SKIPPED - WhatsApp notifications are disabled (WHATSAPP_ENABLED !== true)');
+    return;
+  }
+
+  const token = process.env.WHATSAPP_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+  console.log('[WHATSAPP TEMPLATE] WHATSAPP_TOKEN set:', !!token);
+  console.log('[WHATSAPP TEMPLATE] WHATSAPP_PHONE_NUMBER_ID:', phoneNumberId);
+
+  if (!token || !phoneNumberId) {
+    console.warn('[WHATSAPP TEMPLATE] SKIPPED - WHATSAPP_TOKEN or WHATSAPP_PHONE_NUMBER_ID not set in environment variables');
+    return;
+  }
+
+  // Normalize phone number
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) {
+    console.warn('[WHATSAPP TEMPLATE] SKIPPED - Invalid phone number provided');
+    return;
+  }
+
+  try {
+    const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+    console.log('[WHATSAPP TEMPLATE] Sending to URL:', url);
+    
+    // Build template message body
+    const messageBody = {
+      messaging_product: 'whatsapp',
+      to: String(normalizedPhone),
+      type: 'template',
+      template: {
+        name: templateName,
+        language: {
+          code: language
+        },
+        components: []
+      }
+    };
+
+    // Add variables as parameters
+    if (variables && Object.keys(variables).length > 0) {
+      const params = Object.entries(variables).map(([key, value]) => ({
+        type: 'text',
+        text: String(value)
+      }));
+      
+      messageBody.template.components.push({
+        type: 'body',
+        parameters: params
+      });
+    }
+    
+    console.log('[WHATSAPP TEMPLATE] Full request payload:', JSON.stringify(messageBody, null, 2));
+    console.log('[WHATSAPP TEMPLATE] Phone number type:', typeof messageBody.to);
+    console.log('[WHATSAPP TEMPLATE] Phone number value:', messageBody.to);
+    console.log('[WHATSAPP TEMPLATE] Sending via dedicated proxy');
+    
+    const axiosConfig = {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 30000
+    };
+    
+    if (whatsappProxyConfig) {
+      axiosConfig.proxy = whatsappProxyConfig;
+    }
+    
+    const response = await axios.post(url, messageBody, axiosConfig);
+
+    console.log('[WHATSAPP TEMPLATE] Template message sent successfully to:', normalizedPhone);
+    console.log('[WHATSAPP TEMPLATE] Response status:', response.status);
+    console.log('[WHATSAPP TEMPLATE] Response headers:', response.headers);
+    console.log('[WHATSAPP TEMPLATE] Response data:', JSON.stringify(response.data, null, 2));
+    console.log('[WHATSAPP TEMPLATE] END SEND - Success');
+  } catch (error) {
+    console.error('[WHATSAPP TEMPLATE] END SEND - Error');
+    console.error('[WHATSAPP TEMPLATE] Error status:', error.response?.status);
+    console.error('[WHATSAPP TEMPLATE] Error status text:', error.response?.statusText);
+    console.error('[WHATSAPP TEMPLATE] Error headers:', error.response?.headers);
+    console.error('[WHATSAPP TEMPLATE] Error data (raw):', error.response?.data);
+    console.error('[WHATSAPP TEMPLATE] Error data (stringified):', JSON.stringify(error.response?.data, null, 2));
+    console.error('[WHATSAPP TEMPLATE] Error message:', error.message);
+    console.error('[WHATSAPP TEMPLATE] Error config:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      headers: error.config?.headers
+    });
+    // Don't throw - let the calling function handle the error gracefully
+  }
+}
+
 module.exports = {
   sendWhatsAppMessage,
+  sendWhatsAppTemplateMessage,
   normalizePhone
 };
