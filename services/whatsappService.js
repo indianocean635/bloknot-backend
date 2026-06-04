@@ -272,19 +272,22 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
 
     const response = await axios.post(url, body, axiosConfig);
 
+    console.log(
+      '[WHATSAPP TEMPLATE RESPONSE]',
+      JSON.stringify(response.data, null, 2)
+    );
+
     console.log('[WHATSAPP TEMPLATE] Template message sent successfully to:', normalizedPhone);
     console.log('[WHATSAPP TEMPLATE] Response status:', response.status);
     console.log('[WHATSAPP TEMPLATE] Response headers:', response.headers);
     console.log('[WHATSAPP TEMPLATE] Response data:', JSON.stringify(response.data, null, 2));
     console.log('[WHATSAPP TEMPLATE] END SEND - Success');
   } catch (err) {
-    console.log(
-      '[WHATSAPP FULL ERROR]',
+    console.error(
+      '[WHATSAPP TEMPLATE ERROR]',
       JSON.stringify({
         status: err.response?.status,
         data: err.response?.data,
-        requestBody: body,
-        responseHeaders: err.response?.headers,
         message: err.message,
         stack: err.stack
       }, null, 2)
