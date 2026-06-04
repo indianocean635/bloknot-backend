@@ -1,30 +1,5 @@
 const axios = require('axios');
 
-// Proxy disabled for WhatsApp API requests
-// let whatsappProxyConfig = undefined;
-
-// if (process.env.WHATSAPP_PROXY) {
-//   try {
-//     const proxyUrl = new URL(process.env.WHATSAPP_PROXY);
-//     whatsappProxyConfig = {
-//       host: proxyUrl.hostname,
-//       port: parseInt(proxyUrl.port) || 8080,
-//       auth: {
-//         username: proxyUrl.username,
-//         password: proxyUrl.password
-//       },
-//       protocol: 'http'
-//     };
-//     console.log('[WHATSAPP] Dedicated proxy host:', proxyUrl.hostname);
-//     console.log('[WHATSAPP] Dedicated proxy port:', proxyUrl.port);
-//     console.log('[WHATSAPP] Dedicated proxy user:', proxyUrl.username);
-//   } catch (error) {
-//     console.error('[WHATSAPP] Error parsing proxy URL:', error.message);
-//   }
-// }
-
-// console.log('[WHATSAPP] Dedicated proxy enabled:', !!whatsappProxyConfig);
-
 /**
  * Normalize phone number to international format
  * - Remove + prefix
@@ -120,12 +95,15 @@ async function sendWhatsAppMessage(phone, text) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      timeout: 30000
+      timeout: 30000,
+      proxy: false,
+      httpAgent: undefined,
+      httpsAgent: undefined
     };
 
-    console.log('[WHATSAPP] PROXY OFF');
-    console.log({
+    console.log('[WHATSAPP] AXIOS CONFIG', {
       proxy: axiosConfig.proxy,
+      httpAgent: !!axiosConfig.httpAgent,
       httpsAgent: !!axiosConfig.httpsAgent
     });
 
@@ -265,12 +243,15 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      timeout: 30000
+      timeout: 30000,
+      proxy: false,
+      httpAgent: undefined,
+      httpsAgent: undefined
     };
 
-    console.log('[WHATSAPP TEMPLATE] PROXY OFF');
-    console.log({
+    console.log('[WHATSAPP TEMPLATE] AXIOS CONFIG', {
       proxy: axiosConfig.proxy,
+      httpAgent: !!axiosConfig.httpAgent,
       httpsAgent: !!axiosConfig.httpsAgent
     });
 
