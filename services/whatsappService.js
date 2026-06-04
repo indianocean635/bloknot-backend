@@ -211,11 +211,13 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
       template: {
         name: templateName,
         language: {
-          code: language
+          code: templateName === 'booking_confirmation' ? 'ru_RU' : language
         },
         components: []
       }
     };
+
+    console.log('[WHATSAPP TEMPLATE] LANGUAGE CODE:', body.template.language.code);
 
     // Build body parameters
     const bodyParams = Object.values(variables || {})
