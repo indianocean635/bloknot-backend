@@ -187,10 +187,11 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
  * @param {string} templateName - Template name (e.g., 'booking_confirmation')
  * @param {string} language - Template language code (e.g., 'ru')
  * @param {Object} variables - Template variables object
+ * @param {Array} buttons - Array of button objects with sub_type and payload
  * @returns {Promise<void>}
  */
-async function sendWhatsAppTemplateMessage(phone, templateName, language, variables = {}) {
-  console.log('[WHATSAPP TEMPLATE] START SEND - Phone:', phone, 'Template:', templateName, 'Language:', language);
+async function sendWhatsAppTemplateMessage(phone, templateName, language, variables = {}, buttons = []) {
+  console.log('[WHATSAPP TEMPLATE] START SEND - Phone:', phone, 'Template:', templateName, 'Language:', language, 'Buttons:', buttons);
   
   // Check if WhatsApp is enabled
   if (process.env.WHATSAPP_ENABLED !== 'true') {
@@ -219,7 +220,17 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
   try {
     const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
     console.log('[WHATSAPP TEMPLATE] Sending to URL:', url);
-    
+
+    console.log(
+      '[WHATSAPP INPUT]',
+      JSON.stringify({
+        phone,
+        templateName,
+        language,
+        variables
+      }, null, 2)
+    );
+
     // Build template message body
     const messageBody = {
       messaging_product: 'whatsapp',
@@ -234,24 +245,48 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
       }
     };
 
-    // Add variables as parameters
-    if (variables && Object.keys(variables).length > 0) {
-      const params = Object.entries(variables).map(([key, value]) => ({
+    // Build body parameters
+    const bodyParams = Object.values(variables || {})
+      .filter(v => v !== undefined && v !== null && String(v).trim() !== '')
+      .map(v => ({
         type: 'text',
-        text: String(value)
+        text: String(v)
       }));
-      
-      messageBody.template.components.push({
-        type: 'body',
-        parameters: params
-      });
-    }
-    
-    console.log('[WHATSAPP TEMPLATE] Full request payload:', JSON.stringify(messageBody, null, 2));
+
+    // Add body component
+    messageBody.template.components.push({
+      type: 'body',
+      parameters: bodyParams
+    });
+
+    console.log(
+      '[WHATSAPP TEMPLATE] Final components:',
+      JSON.stringify(messageBody.template.components, null, 2)
+    );
+
+    console.log(
+      '[WHATSAPP TEMPLATE PAYLOAD FULL]',
+      JSON.stringify(messageBody, null, 2)
+    );
+
+    console.log(
+      '[WHATSAPP TEMPLATE VARIABLES]',
+      JSON.stringify(variables, null, 2)
+    );
+
+    console.log(
+      '[WHATSAPP TEMPLATE META]',
+      JSON.stringify({
+        templateName,
+        language,
+        phone: normalizedPhone
+      }, null, 2)
+    );
+
     console.log('[WHATSAPP TEMPLATE] Phone number type:', typeof messageBody.to);
     console.log('[WHATSAPP TEMPLATE] Phone number value:', messageBody.to);
     console.log('[WHATSAPP TEMPLATE] Sending via dedicated proxy');
-    
+
     const axiosConfig = {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -259,11 +294,11 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
       },
       timeout: 30000
     };
-    
+
     if (whatsappProxyConfig) {
       axiosConfig.proxy = whatsappProxyConfig;
     }
-    
+
     const response = await axios.post(url, messageBody, axiosConfig);
 
     console.log('[WHATSAPP TEMPLATE] Template message sent successfully to:', normalizedPhone);
@@ -271,20 +306,20 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
     console.log('[WHATSAPP TEMPLATE] Response headers:', response.headers);
     console.log('[WHATSAPP TEMPLATE] Response data:', JSON.stringify(response.data, null, 2));
     console.log('[WHATSAPP TEMPLATE] END SEND - Success');
-  } catch (error) {
-    console.error('[WHATSAPP TEMPLATE] END SEND - Error');
-    console.error('[WHATSAPP TEMPLATE] Error status:', error.response?.status);
-    console.error('[WHATSAPP TEMPLATE] Error status text:', error.response?.statusText);
-    console.error('[WHATSAPP TEMPLATE] Error headers:', error.response?.headers);
-    console.error('[WHATSAPP TEMPLATE] Error data (raw):', error.response?.data);
-    console.error('[WHATSAPP TEMPLATE] Error data (stringified):', JSON.stringify(error.response?.data, null, 2));
-    console.error('[WHATSAPP TEMPLATE] Error message:', error.message);
-    console.error('[WHATSAPP TEMPLATE] Error config:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      headers: error.config?.headers
-    });
-    // Don't throw - let the calling function handle the error gracefully
+  } catch (err) {
+    console.log(
+      '[WHATSAPP FULL ERROR]',
+      JSON.stringify({
+        status: err.response?.status,
+        data: err.response?.data,
+        requestBody: messageBody,
+        responseHeaders: err.response?.headers,
+        message: err.message,
+        stack: err.stack
+      }, null, 2)
+    );
+
+    throw err;
   }
 }
 
