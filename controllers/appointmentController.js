@@ -342,19 +342,26 @@ async function createPublicAppointment(req, res) {
           const dateStr = timeToUse.replace(/(\d{4})-(\d{2})-(\d{2})T.*/, '$3.$2.$1');
           const timeStr = timeToUse.replace(/.*T(\d{2}):(\d{2}).*/, '$1:$2');
 
+          // Generate booking link from business slug
+          const domain = process.env.DOMAIN || process.env.FRONTEND_URL || 'https://bloknotservis.ru';
+          const bookingLink = `${domain}/book/${fullBooking.business?.slug}`;
+
+          console.log('[WHATSAPP TEMPLATE] BOOKING LINK:', bookingLink);
+
           // Prepare template variables
           const templateVariables = {
             customer_name: customerName,
             date: dateStr,
             time: timeStr,
             specialist: fullBooking.master?.name,
-            service: fullBooking.service?.name
+            service: fullBooking.service?.name,
+            booking_link: bookingLink
           };
 
           // Send WhatsApp template message (fire and forget) to not block response
           sendWhatsAppTemplateMessage(
             customerPhone,
-            'booking_confirmation',
+            'booking_confirmation_simple',
             'ru',
             templateVariables,
             [

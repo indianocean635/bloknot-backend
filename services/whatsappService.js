@@ -140,7 +140,7 @@ async function sendWhatsAppMessage(phone, text) {
 /**
  * Send WhatsApp template message using WhatsApp Cloud API
  * @param {string} phone - Phone number to send message to
- * @param {string} templateName - Template name (e.g., 'booking_confirmation')
+ * @param {string} templateName - Template name (e.g., 'booking_confirmation_simple')
  * @param {string} language - Template language code (e.g., 'ru')
  * @param {Object} variables - Template variables object
  * @param {Array} buttons - Array of button objects with sub_type and payload
