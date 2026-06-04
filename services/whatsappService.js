@@ -203,7 +203,7 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
     );
 
     // Build template message body
-    const messageBody = {
+    const body = {
       messaging_product: 'whatsapp',
       to: String(normalizedPhone),
       type: 'template',
@@ -225,19 +225,19 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
       }));
 
     // Add body component
-    messageBody.template.components.push({
+    body.template.components.push({
       type: 'body',
       parameters: bodyParams
     });
 
     console.log(
       '[WHATSAPP TEMPLATE] Final components:',
-      JSON.stringify(messageBody.template.components, null, 2)
+      JSON.stringify(body.template.components, null, 2)
     );
 
     console.log(
       '[WHATSAPP TEMPLATE PAYLOAD FULL]',
-      JSON.stringify(messageBody, null, 2)
+      JSON.stringify(body, null, 2)
     );
 
     console.log(
@@ -254,8 +254,8 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
       }, null, 2)
     );
 
-    console.log('[WHATSAPP TEMPLATE] Phone number type:', typeof messageBody.to);
-    console.log('[WHATSAPP TEMPLATE] Phone number value:', messageBody.to);
+    console.log('[WHATSAPP TEMPLATE] Phone number type:', typeof body.to);
+    console.log('[WHATSAPP TEMPLATE] Phone number value:', body.to);
     console.log('[WHATSAPP TEMPLATE] Sending via dedicated proxy');
 
     const axiosConfig = {
@@ -270,7 +270,7 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
       axiosConfig.proxy = whatsappProxyConfig;
     }
 
-    const response = await axios.post(url, messageBody, axiosConfig);
+    const response = await axios.post(url, body, axiosConfig);
 
     console.log('[WHATSAPP TEMPLATE] Template message sent successfully to:', normalizedPhone);
     console.log('[WHATSAPP TEMPLATE] Response status:', response.status);
@@ -283,7 +283,7 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
       JSON.stringify({
         status: err.response?.status,
         data: err.response?.data,
-        requestBody: messageBody,
+        requestBody: body,
         responseHeaders: err.response?.headers,
         message: err.message,
         stack: err.stack
