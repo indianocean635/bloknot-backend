@@ -352,7 +352,22 @@ async function createPublicAppointment(req, res) {
           };
 
           // Send WhatsApp template message (fire and forget) to not block response
-          sendWhatsAppTemplateMessage(customerPhone, 'booking_confirmation', 'ru', templateVariables)
+          sendWhatsAppTemplateMessage(
+            customerPhone,
+            'booking_confirmation',
+            'ru',
+            templateVariables,
+            [
+              {
+                sub_type: 'quick_reply',
+                payload: `cancel_${appointment.id}`
+              },
+              {
+                sub_type: 'quick_reply',
+                payload: `reschedule_${appointment.id}`
+              }
+            ]
+          )
             .then(() => console.log('[STEP 7.5] [WHATSAPP TEMPLATE] Auto-confirmation sent for booking:', appointment.id))
             .catch((error) => console.error('[STEP 7.5] Error sending WhatsApp confirmation:', error));
         }
