@@ -1,4 +1,10 @@
 const axios = require('axios');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+
+// Create proxy agent from WHATSAPP_PROXY environment variable
+const proxyAgent = process.env.WHATSAPP_PROXY
+  ? new HttpsProxyAgent(process.env.WHATSAPP_PROXY)
+  : undefined;
 
 /**
  * Normalize phone number to international format
@@ -91,20 +97,20 @@ async function sendWhatsAppMessage(phone, text) {
     console.log('[WHATSAPP] Phone number value:', messageBody.to);
 
     const axiosConfig = {
+      timeout: 30000,
+      proxy: false,
+      httpAgent: proxyAgent,
+      httpsAgent: proxyAgent,
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
-      },
-      timeout: 30000,
-      proxy: false,
-      httpAgent: undefined,
-      httpsAgent: undefined
+      }
     };
 
     console.log('[WHATSAPP] AXIOS CONFIG', {
       proxy: axiosConfig.proxy,
-      httpAgent: !!axiosConfig.httpAgent,
-      httpsAgent: !!axiosConfig.httpsAgent
+      hasHttpAgent: !!axiosConfig.httpAgent,
+      hasHttpsAgent: !!axiosConfig.httpsAgent
     });
 
     const response = await axios.post(url, messageBody, axiosConfig);
@@ -239,20 +245,20 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
     console.log('[WHATSAPP TEMPLATE] Phone number value:', body.to);
 
     const axiosConfig = {
+      timeout: 30000,
+      proxy: false,
+      httpAgent: proxyAgent,
+      httpsAgent: proxyAgent,
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
-      },
-      timeout: 30000,
-      proxy: false,
-      httpAgent: undefined,
-      httpsAgent: undefined
+      }
     };
 
     console.log('[WHATSAPP TEMPLATE] AXIOS CONFIG', {
       proxy: axiosConfig.proxy,
-      httpAgent: !!axiosConfig.httpAgent,
-      httpsAgent: !!axiosConfig.httpsAgent
+      hasHttpAgent: !!axiosConfig.httpAgent,
+      hasHttpsAgent: !!axiosConfig.httpsAgent
     });
 
     const response = await axios.post(url, body, axiosConfig);
