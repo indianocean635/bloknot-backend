@@ -65,15 +65,14 @@ function normalizePhone(phone) {
 }
 
 /**
- * Send WhatsApp message with interactive buttons using WhatsApp Cloud API
+ * Send WhatsApp message using WhatsApp Cloud API
  * @param {string} phone - Phone number to send message to
  * @param {string} text - Message text
- * @param {Array} buttons - Array of button objects [{id, title}]
  * @returns {Promise<void>}
  */
-async function sendWhatsAppMessage(phone, text, buttons = null) {
+async function sendWhatsAppMessage(phone, text) {
   console.log('[WHATSAPP] START SEND - Phone:', phone);
-  
+
   // Check if WhatsApp is enabled
   if (process.env.WHATSAPP_ENABLED !== 'true') {
     console.log('[WHATSAPP] SKIPPED - WhatsApp notifications are disabled (WHATSAPP_ENABLED !== true)');
@@ -101,50 +100,22 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
   try {
     const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
     console.log('[WHATSAPP] Sending to URL:', url);
-    
-    let messageBody;
-    
-    if (buttons && buttons.length > 0) {
-      // Send message with interactive buttons
-      messageBody = {
-        messaging_product: 'whatsapp',
-        to: String(normalizedPhone),
-        type: 'interactive',
-        interactive: {
-          type: 'button',
-          body: {
-            text: text
-          },
-          action: {
-            buttons: buttons.map(btn => ({
-              type: 'reply',
-              reply: {
-                id: btn.id,
-                title: btn.title
-              }
-            }))
-          }
-        }
-      };
-      console.log('[WHATSAPP] Sending interactive message with buttons:', buttons.map(b => b.title));
-    } else {
-      // Send simple text message
-      messageBody = {
-        messaging_product: 'whatsapp',
-        to: String(normalizedPhone),
-        type: 'text',
-        text: {
-          body: text
-        }
-      };
-      console.log('[WHATSAPP] Sending simple text message');
-    }
-    
+
+    const messageBody = {
+      messaging_product: 'whatsapp',
+      to: String(normalizedPhone),
+      type: 'text',
+      text: {
+        body: text
+      }
+    };
+
+    console.log('[WHATSAPP] Sending simple text message');
     console.log('[WHATSAPP] Full request payload:', JSON.stringify(messageBody, null, 2));
     console.log('[WHATSAPP] Phone number type:', typeof messageBody.to);
     console.log('[WHATSAPP] Phone number value:', messageBody.to);
     console.log('[WHATSAPP] Sending via dedicated proxy');
-    
+
     const axiosConfig = {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -152,11 +123,11 @@ async function sendWhatsAppMessage(phone, text, buttons = null) {
       },
       timeout: 30000
     };
-    
+
     if (whatsappProxyConfig) {
       axiosConfig.proxy = whatsappProxyConfig;
     }
-    
+
     const response = await axios.post(url, messageBody, axiosConfig);
 
     console.log('[WHATSAPP] Message sent successfully to:', normalizedPhone);
