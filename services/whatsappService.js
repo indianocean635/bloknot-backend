@@ -123,10 +123,10 @@ async function sendWhatsAppMessage(phone, text) {
       timeout: 30000
     };
 
-    console.log('[WHATSAPP] PROXY DISABLED');
-    console.log('[WHATSAPP] FINAL AXIOS CONFIG', {
+    console.log('[WHATSAPP] PROXY OFF');
+    console.log({
       proxy: axiosConfig.proxy,
-      hasHttpsAgent: !!axiosConfig.httpsAgent
+      httpsAgent: !!axiosConfig.httpsAgent
     });
 
     const response = await axios.post(url, messageBody, axiosConfig);
@@ -266,10 +266,10 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
       timeout: 30000
     };
 
-    console.log('[WHATSAPP TEMPLATE] PROXY DISABLED');
-    console.log('[WHATSAPP TEMPLATE] FINAL AXIOS CONFIG', {
+    console.log('[WHATSAPP TEMPLATE] PROXY OFF');
+    console.log({
       proxy: axiosConfig.proxy,
-      hasHttpsAgent: !!axiosConfig.httpsAgent
+      httpsAgent: !!axiosConfig.httpsAgent
     });
 
     const response = await axios.post(url, body, axiosConfig);
