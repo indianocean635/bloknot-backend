@@ -1,29 +1,29 @@
 const axios = require('axios');
 
-// Parse proxy URL for WhatsApp API requests
-let whatsappProxyConfig = undefined;
+// Proxy disabled for WhatsApp API requests
+// let whatsappProxyConfig = undefined;
 
-if (process.env.WHATSAPP_PROXY) {
-  try {
-    const proxyUrl = new URL(process.env.WHATSAPP_PROXY);
-    whatsappProxyConfig = {
-      host: proxyUrl.hostname,
-      port: parseInt(proxyUrl.port) || 8080,
-      auth: {
-        username: proxyUrl.username,
-        password: proxyUrl.password
-      },
-      protocol: 'http'
-    };
-    console.log('[WHATSAPP] Dedicated proxy host:', proxyUrl.hostname);
-    console.log('[WHATSAPP] Dedicated proxy port:', proxyUrl.port);
-    console.log('[WHATSAPP] Dedicated proxy user:', proxyUrl.username);
-  } catch (error) {
-    console.error('[WHATSAPP] Error parsing proxy URL:', error.message);
-  }
-}
+// if (process.env.WHATSAPP_PROXY) {
+//   try {
+//     const proxyUrl = new URL(process.env.WHATSAPP_PROXY);
+//     whatsappProxyConfig = {
+//       host: proxyUrl.hostname,
+//       port: parseInt(proxyUrl.port) || 8080,
+//       auth: {
+//         username: proxyUrl.username,
+//         password: proxyUrl.password
+//       },
+//       protocol: 'http'
+//     };
+//     console.log('[WHATSAPP] Dedicated proxy host:', proxyUrl.hostname);
+//     console.log('[WHATSAPP] Dedicated proxy port:', proxyUrl.port);
+//     console.log('[WHATSAPP] Dedicated proxy user:', proxyUrl.username);
+//   } catch (error) {
+//     console.error('[WHATSAPP] Error parsing proxy URL:', error.message);
+//   }
+// }
 
-console.log('[WHATSAPP] Dedicated proxy enabled:', !!whatsappProxyConfig);
+// console.log('[WHATSAPP] Dedicated proxy enabled:', !!whatsappProxyConfig);
 
 /**
  * Normalize phone number to international format
@@ -114,7 +114,6 @@ async function sendWhatsAppMessage(phone, text) {
     console.log('[WHATSAPP] Full request payload:', JSON.stringify(messageBody, null, 2));
     console.log('[WHATSAPP] Phone number type:', typeof messageBody.to);
     console.log('[WHATSAPP] Phone number value:', messageBody.to);
-    console.log('[WHATSAPP] Sending via dedicated proxy');
 
     const axiosConfig = {
       headers: {
@@ -124,9 +123,11 @@ async function sendWhatsAppMessage(phone, text) {
       timeout: 30000
     };
 
-    if (whatsappProxyConfig) {
-      axiosConfig.proxy = whatsappProxyConfig;
-    }
+    console.log('[WHATSAPP] PROXY DISABLED');
+    console.log('[WHATSAPP] FINAL AXIOS CONFIG', {
+      proxy: axiosConfig.proxy,
+      hasHttpsAgent: !!axiosConfig.httpsAgent
+    });
 
     const response = await axios.post(url, messageBody, axiosConfig);
 
@@ -256,7 +257,6 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
 
     console.log('[WHATSAPP TEMPLATE] Phone number type:', typeof body.to);
     console.log('[WHATSAPP TEMPLATE] Phone number value:', body.to);
-    console.log('[WHATSAPP TEMPLATE] Sending via dedicated proxy');
 
     const axiosConfig = {
       headers: {
@@ -266,9 +266,11 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
       timeout: 30000
     };
 
-    if (whatsappProxyConfig) {
-      axiosConfig.proxy = whatsappProxyConfig;
-    }
+    console.log('[WHATSAPP TEMPLATE] PROXY DISABLED');
+    console.log('[WHATSAPP TEMPLATE] FINAL AXIOS CONFIG', {
+      proxy: axiosConfig.proxy,
+      hasHttpsAgent: !!axiosConfig.httpsAgent
+    });
 
     const response = await axios.post(url, body, axiosConfig);
 
