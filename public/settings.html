@@ -1167,7 +1167,7 @@ function updateSpecialistForms(limit) {
 
     existingData[index] = {
       name: nameInput?.value || '',
-      email: emailInput?.value || '',
+      email: emailInput?.value || null,
       specialistId: nameInput?.dataset.specialistId || '',
       avatarId: avatarInput?.dataset.avatarId || '',
       avatarUrl: avatarCircle?.style.backgroundImage || '',
@@ -1206,7 +1206,7 @@ function updateSpecialistForms(limit) {
             nameInput.dataset.specialistId = data.specialistId;
           }
         }
-        if (emailInput) {
+        if (emailInput && data.email) {
           emailInput.value = data.email;
         }
         if (avatarInput && data.avatarId) {
@@ -1260,7 +1260,7 @@ function updateSpecialistForms(limit) {
             nameInput.dataset.specialistId = data.specialistId;
           }
         }
-        if (emailInput) {
+        if (emailInput && data.email) {
           emailInput.value = data.email;
         }
         if (avatarInput && data.avatarId) {
@@ -1318,8 +1318,12 @@ function createSpecialistForm(index, limit) {
   const form = document.createElement('div');
   form.className = 'specialist-form';
   const isSoloPlan = limit === 1;
-  const emailStyle = isSoloPlan ? 'background-color: #f3f4f6; cursor: not-allowed;' : '';
-  const emailDisabled = isSoloPlan ? 'disabled' : '';
+  const emailFieldHtml = isSoloPlan ? '' : `
+        <div class="field">
+          <label>Email:</label>
+          <input type="email" id="specialistEmail${index}" placeholder="Введите email адрес" onchange="saveSpecialistData(${index})" oninput="saveSpecialistData(${index})">
+        </div>`;
+  const inviteButtonHtml = isSoloPlan ? '' : `<button class="btn secondary" onclick="inviteSpecialist(${index})" style="margin-right: 8px; font-size: 11px; padding: 4px 8px;">Пригласить</button>`;
   form.innerHTML = `
     <div class="card">
       <div class="card-body">
@@ -1327,10 +1331,7 @@ function createSpecialistForm(index, limit) {
           <label>Имя:</label>
           <input type="text" id="specialistName${index}" placeholder="Введите имя специалиста" onchange="saveSpecialistData(${index})" oninput="saveSpecialistData(${index})">
         </div>
-        <div class="field">
-          <label>Email:</label>
-          <input type="email" id="specialistEmail${index}" placeholder="Введите email адрес" onchange="saveSpecialistData(${index})" oninput="saveSpecialistData(${index})" style="${emailStyle}" ${emailDisabled}>
-        </div>
+        ${emailFieldHtml}
         <div class="field">
           <label>Avatar:</label>
           <div class="avatar-upload" onclick="document.getElementById('specialistAvatar${index}').click()">
@@ -1345,7 +1346,7 @@ function createSpecialistForm(index, limit) {
           </div>
         </div>
         <div class="action-buttons" style="margin-top: 8px;">
-          <button class="btn secondary" onclick="inviteSpecialist(${index})" style="margin-right: 8px; font-size: 11px; padding: 4px 8px;">Пригласить</button>
+          ${inviteButtonHtml}
 <button class="btn secondary" onclick="deleteSpecialist(${index})" style="font-size: 11px; padding: 4px 8px;">Удалить</button>
         </div>
       </div>
@@ -1489,9 +1490,10 @@ async function loadSpecialistData(index) {
 }
 
 async function saveSpecialist(index) {
+  const emailInput = document.getElementById(`specialistEmail${index}`);
   const specialistData = {
     name: document.getElementById(`specialistName${index}`).value,
-    email: document.getElementById(`specialistEmail${index}`).value,
+    email: emailInput ? emailInput.value : null,
     avatar: document.getElementById(`specialistAvatar${index}`).files[0],
     schedule: '' // Remove localStorage usage
   };
@@ -1517,7 +1519,7 @@ function openScheduleSettings(index) {
   const nameInput = document.getElementById(`specialistName${index}`);
   const emailInput = document.getElementById(`specialistEmail${index}`);
   const specialistName = nameInput?.value || 'Специалист';
-  const specialistEmail = emailInput?.value || '';
+  const specialistEmail = emailInput?.value || null;
 
   // Open specialist settings modal
   const modal = document.createElement('div');
@@ -2246,7 +2248,12 @@ async function handleAddWork() {
 }
 
 async function inviteSpecialist(index) {
-  const email = document.getElementById(`specialistEmail${index}`).value;
+  const emailInput = document.getElementById(`specialistEmail${index}`);
+  if (!emailInput) {
+    alert('Email поле недоступно для этого тарифа');
+    return;
+  }
+  const email = emailInput.value;
   const name = document.getElementById(`specialistName${index}`).value;
 
   if (!email) {
