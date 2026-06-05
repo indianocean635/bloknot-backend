@@ -1377,9 +1377,11 @@ function saveSpecialistData(index) {
   // Debounce save to avoid too many API calls (reduced to 300ms for faster response)
   saveDebounceTimers[index] = setTimeout(async () => {
     try {
+      // For SOLO plan (1 specialist), email is not required
+      const isSoloPlan = window.maxSpecialistLimit === 1;
       const specialistData = {
         name,
-        email
+        email: isSoloPlan ? null : email
       };
 
       if (specialistId) {
@@ -1389,7 +1391,7 @@ function saveSpecialistData(index) {
           body: JSON.stringify(specialistData)
         });
         console.log(`Updated specialist ${index} (ID: ${specialistId}):`, specialistData);
-      } else if (name && email) {
+      } else if (name && (isSoloPlan || email)) {
         // Create new specialist only if we have required fields
         const newSpecialist = await Bloknot.api('/api/specialists', {
           method: 'POST',
@@ -2034,15 +2036,21 @@ async function handleAvatarSelect(index, input) {
       const name = nameInput?.value?.trim();
       const email = emailInput?.value?.trim();
 
-      if (!name || !email) {
-        alert('Сначала введите имя и email специалиста');
+      // For SOLO plan (1 specialist), email is not required
+      const isSoloPlan = window.maxSpecialistLimit === 1;
+      if (!name || (!isSoloPlan && !email)) {
+        if (isSoloPlan) {
+          alert('Сначала введите имя специалиста');
+        } else {
+          alert('Сначала введите имя и email специалиста');
+        }
         return;
       }
 
       try {
         const specialistData = {
           name,
-          email,
+          email: isSoloPlan ? null : email,
           businessId: businessData?.id
         };
 
