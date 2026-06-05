@@ -1128,16 +1128,10 @@ async function processPayment() {
   const period = 'monthly'; // Settings only supports monthly recurring
   
   try {
-    const response = await fetch('/api/payments/create', {
+    const data = await Bloknot.api('/api/payments/create', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
       body: JSON.stringify({ plan, period })
     });
-
-    const data = await response.json();
 
     if (data.success) {
       // Test mode: CloudPayments credentials not configured
