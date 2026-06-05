@@ -46,7 +46,7 @@ jobs:
             done
 
             npm ci
-            npx prisma db push
+            npx prisma migrate deploy
             npx prisma generate
             cp -r public/* /var/www/html/
             pm2 reload ecosystem.config.js --only bloknot --update-env
