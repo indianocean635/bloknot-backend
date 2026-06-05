@@ -66,7 +66,7 @@ model Subscription {
   nextPaymentDate           DateTime?
   billingPeriod             String?  // MONTHLY, YEARLY
   lastPaymentAt             DateTime?
-  usersLimit                Int      // Same as maxUsers for compatibility
+  usersLimit                Int      @default(1) // Same as maxUsers for compatibility
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
