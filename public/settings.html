@@ -2087,7 +2087,7 @@ async function handleAvatarSelect(index, input) {
         const specialistData = {
           name,
           email: isSoloPlan ? null : email,
-          businessId: businessData?.id
+          businessId: window.currentBusiness?.id
         };
 
         const response = await Bloknot.api('/api/specialists', {

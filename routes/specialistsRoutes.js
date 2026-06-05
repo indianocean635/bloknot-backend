@@ -80,39 +80,53 @@ router.post('/', requireAuth, async (req, res) => {
   try {
     console.log("USER ID:", req.user.id);
     console.log("BUSINESS ID:", req.user.businessId);
-    
+
     // If no businessId, return error
     if (!req.user.businessId) {
       console.log("No businessId - cannot create specialist");
       return res.status(400).json({ error: 'No business associated with user' });
     }
-    
+
     const { name, email, schedule } = req.body;
-    
-    if (!name || !email) {
-      return res.status(400).json({ error: 'Name and email are required' });
+
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
     }
-    
-    // Check if specialist already exists for this business
-    const existingSpecialist = await prisma.master.findFirst({
-      where: {
-        email,
-        businessId: req.user.businessId
-      }
+
+    // Email is only required for STUDIO and PRO plans (not SOLO)
+    // Check subscription to determine if email is required
+    const subscription = await prisma.subscription.findUnique({
+      where: { businessId: req.user.businessId }
     });
-    
-    if (existingSpecialist) {
-      return res.status(400).json({ error: 'Specialist with this email already exists' });
+
+    const isSoloPlan = subscription && subscription.plan === 'SOLO';
+
+    if (!isSoloPlan && !email) {
+      return res.status(400).json({ error: 'Email is required for this plan' });
     }
-    
+
+    // Check if specialist already exists for this business (only if email is provided)
+    if (email) {
+      const existingSpecialist = await prisma.master.findFirst({
+        where: {
+          email,
+          businessId: req.user.businessId
+        }
+      });
+
+      if (existingSpecialist) {
+        return res.status(400).json({ error: 'Specialist with this email already exists' });
+      }
+    }
+
     const specialist = await prisma.master.create({
       data: {
         name,
-        email,
+        email: email || null, // Allow null email for SOLO plan
         businessId: req.user.businessId
       }
     });
-    
+
     res.status(201).json(specialist);
   } catch (error) {
     console.error('Error creating specialist:', error);
