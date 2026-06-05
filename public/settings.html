@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Настройки - Bloknot</title>
   <link rel="stylesheet" href="/styles.css?v=3.2&t=202604081231" />
+  <!-- CloudPayments Widget -->
+  <script src="https://widget.cloudpayments.ru/bundles/cloudpayments"></script>
 </head>
 <body>
 
@@ -1101,15 +1103,6 @@ function handleLogoClick() {
 }
 
 async function processPayment() {
-  const cardNumber = document.getElementById('cardNumber').value;
-  const cardExpiry = document.getElementById('cardExpiry').value;
-  const cardCVV = document.getElementById('cardCVV').value;
-  
-  if (!cardNumber || !cardExpiry || !cardCVV) {
-    document.getElementById('paymentError').textContent = 'Пожалуйста, заполните все данные карты';
-    return;
-  }
-  
   const planName = document.getElementById('selectedPlanName').textContent;
   console.log('Selected plan name:', planName);
   
@@ -1124,31 +1117,72 @@ async function processPayment() {
   }
   console.log('Mapped plan ID:', planId);
   
+  // Map to CloudPayments plan IDs
+  const planMap = {
+    'SOLO': 'solo',
+    'STUDIO': 'studio',
+    'PRO': 'pro'
+  };
+  
+  const plan = planMap[planId];
+  const period = 'monthly'; // Settings only supports monthly recurring
+  
   try {
-    // Call subscription API to save the subscription
-    await Bloknot.api('/api/subscription/subscription', {
+    const response = await fetch('/api/payments/create', {
       method: 'POST',
-      body: JSON.stringify({ plan: planId })
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({ plan, period })
     });
     
-    console.log(`Subscription created/updated: ${planId}`);
+    const data = await response.json();
     
-    closePaymentModal();
-    
-    // Calculate specialist limit directly from planId
-    const specialistLimit = getSpecialistLimitFromPlan(planId);
-    console.log(`Specialist limit from plan ${planId}:`, specialistLimit);
-    
-    // Update specialist forms immediately
-    updateSpecialistForms(specialistLimit);
-    
-    // Reload business data to update subscription info
-    await loadBusinessData();
-    
-    alert('Оплата успешна! Теперь вы можете добавлять специалистов.');
+    if (data.success && data.cloudPayments) {
+      // CloudPayments widget integration
+      const widget = new cp.CloudPayments();
+      
+      const chargeOptions = {
+        publicId: data.cloudPayments.PublicId,
+        description: data.cloudPayments.Description,
+        amount: data.cloudPayments.Amount,
+        currency: data.cloudPayments.Currency,
+        invoiceId: data.cloudPayments.InvoiceId,
+        accountId: data.cloudPayments.AccountId,
+        email: data.cloudPayments.Email,
+        requireConfirmation: data.cloudPayments.RequireConfirmation,
+        trialPeriod: data.cloudPayments.TrialPeriod,
+        recurring: data.cloudPayments.Recurring
+      };
+      
+      widget.charge(chargeOptions, function(options) {
+        // Success
+        console.log('Payment successful', options);
+        closePaymentModal();
+        
+        // Calculate specialist limit directly from planId
+        const specialistLimit = getSpecialistLimitFromPlan(planId);
+        console.log(`Specialist limit from plan ${planId}:`, specialistLimit);
+        
+        // Update specialist forms immediately
+        updateSpecialistForms(specialistLimit);
+        
+        // Reload business data to update subscription info
+        loadBusinessData();
+        
+        alert('Оплата успешна! Теперь вы можете добавлять специалистов.');
+      }, function(reason, options) {
+        // Fail
+        console.error('Payment failed', reason, options);
+        document.getElementById('paymentError').textContent = 'Ошибка оплаты: ' + reason;
+      });
+    } else {
+      document.getElementById('paymentError').textContent = 'Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка');
+    }
   } catch (error) {
-    console.error('Error processing payment:', error);
-    document.getElementById('paymentError').textContent = 'Ошибка при сохранении подписки: ' + error.message;
+    console.error('Payment error:', error);
+    document.getElementById('paymentError').textContent = 'Ошибка при обработке платежа';
   }
 }
 

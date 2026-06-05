@@ -54,13 +54,21 @@ model Business {
 }
 
 model Subscription {
-  id         String   @id @default(uuid())
-  businessId String   @unique
-  plan       String   // SOLO, STUDIO, PRO
-  maxUsers   Int      // 1, 5, 15
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                        String   @id @default(uuid())
+  businessId                String   @unique
+  plan                      String   // SOLO, STUDIO, PRO
+  maxUsers                  Int      // 1, 5, 15
+  isActive                  Boolean  @default(true)
+  subscriptionStatus         String   @default("TRIAL") // TRIAL, ACTIVE, CANCELLED, EXPIRED
+  trialEndsAt               DateTime?
+  subscriptionEndsAt        DateTime?
+  cloudpaymentsSubscriptionId String? @unique
+  nextPaymentDate           DateTime?
+  billingPeriod             String?  // MONTHLY, YEARLY
+  lastPaymentAt             DateTime?
+  usersLimit                Int      // Same as maxUsers for compatibility
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   business Business @relation(fields: [businessId], references: [id])
 }

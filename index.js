@@ -16,6 +16,7 @@ const magicLinkRoutes = require('./routes/magicLinkRoutes');
 const specialistsRoutes = require('./routes/specialistsRoutes');
 const telegramRoutes = require('./routes/telegramRoutes');
 const notificationsRoutes = require('./routes/notificationsRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 const { requireMagicAuth, getBusinessFromUser, adminAuth, optionalAuth } = require('./middleware/magicAuthMiddleware');
 const app = express();
 const PORT = 3001;
@@ -54,6 +55,7 @@ app.use('/api/masters', settingsRoutes); // Masters endpoints are in settingsRou
 app.use('/api/telegram', telegramRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api', appointmentRoutes);
+app.use('/api', paymentRoutes);
 
 console.log('Business routes loaded:', typeof businessRoutes);
 console.log('Business routes methods:', Object.getOwnPropertyNames(businessRoutes));

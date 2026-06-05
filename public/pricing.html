@@ -14,6 +14,9 @@
   <!-- FAVICON -->
   <link rel="icon" href="/favicon.png?v=2" type="image/png">
 
+  <!-- CloudPayments Widget -->
+  <script src="https://widget.cloudpayments.ru/bundles/cloudpayments"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -803,14 +806,68 @@
       document.getElementById('paymentModal').classList.remove('active');
     }
 
-    function processCardPayment() {
+    async function processCardPayment() {
       const modal = document.getElementById('paymentModal');
       const tariff = modal.getAttribute('data-tariff');
-      const price = currentPeriod === 1 ? modal.getAttribute('data-monthly-price') : modal.getAttribute('data-yearly-price');
-      const periodText = currentPeriod === 1 ? 'мес' : 'год';
+      const period = currentPeriod === 1 ? 'monthly' : 'yearly';
       
-      alert(`Переход к оплате тарифа "${tariff}" (${price}₽/${periodText}) картой...\n\nВ реальном приложении здесь будет форма оплаты.`);
-      closePaymentModal();
+      // Map tariff names to plan IDs
+      const planMap = {
+        'Solo': 'solo',
+        'Studio': 'studio',
+        'Pro': 'pro'
+      };
+      
+      const plan = planMap[tariff];
+      
+      try {
+        const response = await fetch('/api/payments/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ plan, period })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.cloudPayments) {
+          // CloudPayments widget integration
+          const widget = new cp.CloudPayments();
+          
+          const chargeOptions = {
+            publicId: data.cloudPayments.PublicId,
+            description: data.cloudPayments.Description,
+            amount: data.cloudPayments.Amount,
+            currency: data.cloudPayments.Currency,
+            invoiceId: data.cloudPayments.InvoiceId,
+            accountId: data.cloudPayments.AccountId,
+            email: data.cloudPayments.Email,
+            requireConfirmation: data.cloudPayments.RequireConfirmation,
+            trialPeriod: data.cloudPayments.TrialPeriod,
+            recurring: data.cloudPayments.Recurring
+          };
+          
+          widget.charge(chargeOptions, function(options) {
+            // Success
+            console.log('Payment successful', options);
+            alert('Оплата успешно выполнена!');
+            closePaymentModal();
+            // Redirect to dashboard or reload
+            window.location.href = '/dashboard.html';
+          }, function(reason, options) {
+            // Fail
+            console.error('Payment failed', reason, options);
+            alert('Ошибка оплаты: ' + reason);
+          });
+        } else {
+          alert('Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка'));
+        }
+      } catch (error) {
+        console.error('Payment error:', error);
+        alert('Ошибка при обработке платежа');
+      }
     }
 
     function processInvoicePayment() {
