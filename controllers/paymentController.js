@@ -77,6 +77,104 @@ async function createPayment(req, res) {
 
     console.log('[CLOUDPAYMENTS REQUEST]', cloudPaymentsData);
 
+    // Check if CloudPayments credentials are configured
+    const publicId = process.env.CLOUDPAYMENTS_PUBLIC_ID;
+    const apiSecret = process.env.CLOUDPAYMENTS_API_SECRET;
+
+    if (!publicId || !apiSecret || publicId === 'your-cloudpayments-public-id' || apiSecret === 'your-cloudpayments-api-secret') {
+      console.log('[CLOUDPAYMENTS] Credentials not configured, using test mode');
+
+      // Test mode: create subscription without actual payment
+      if (period === 'monthly') {
+        const trialEndsAt = new Date();
+        trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
+
+        const subscription = await prisma.subscription.upsert({
+          where: { businessId: user.businessId },
+          update: {
+            plan: planConfig.name,
+            maxUsers: planConfig.maxUsers,
+            usersLimit: planConfig.maxUsers,
+            subscriptionStatus: 'TRIAL',
+            trialEndsAt,
+            billingPeriod: 'MONTHLY',
+            cloudpaymentsSubscriptionId: null,
+            nextPaymentDate: trialEndsAt,
+            isActive: true
+          },
+          create: {
+            businessId: user.businessId,
+            plan: planConfig.name,
+            maxUsers: planConfig.maxUsers,
+            usersLimit: planConfig.maxUsers,
+            subscriptionStatus: 'TRIAL',
+            trialEndsAt,
+            billingPeriod: 'MONTHLY',
+            cloudpaymentsSubscriptionId: null,
+            nextPaymentDate: trialEndsAt,
+            isActive: true
+          }
+        });
+
+        console.log('[TEST MODE] Trial started', {
+          businessId: user.businessId,
+          plan: planConfig.name,
+          trialEndsAt
+        });
+
+        return res.json({
+          success: true,
+          subscription,
+          testMode: true,
+          message: 'Test mode: CloudPayments credentials not configured'
+        });
+      }
+
+      // For yearly plans in test mode
+      const subscriptionEndsAt = new Date();
+      subscriptionEndsAt.setFullYear(subscriptionEndsAt.getFullYear() + 1);
+
+      const subscription = await prisma.subscription.upsert({
+        where: { businessId: user.businessId },
+        update: {
+          plan: planConfig.name,
+          maxUsers: planConfig.maxUsers,
+          usersLimit: planConfig.maxUsers,
+          subscriptionStatus: 'ACTIVE',
+          subscriptionEndsAt,
+          billingPeriod: 'YEARLY',
+          cloudpaymentsSubscriptionId: null,
+          nextPaymentDate: null,
+          isActive: true
+        },
+        create: {
+          businessId: user.businessId,
+          plan: planConfig.name,
+          maxUsers: planConfig.maxUsers,
+          usersLimit: planConfig.maxUsers,
+          subscriptionStatus: 'ACTIVE',
+          subscriptionEndsAt,
+          billingPeriod: 'YEARLY',
+          cloudpaymentsSubscriptionId: null,
+          nextPaymentDate: null,
+          isActive: true
+        }
+      });
+
+      console.log('[TEST MODE] Yearly subscription activated', {
+        businessId: user.businessId,
+        plan: planConfig.name,
+        subscriptionEndsAt
+      });
+
+      return res.json({
+        success: true,
+        subscription,
+        testMode: true,
+        message: 'Test mode: CloudPayments credentials not configured'
+      });
+    }
+
     // Create payment with CloudPayments API
     const cloudpaymentsResponse = await createCloudPaymentsPayment(cloudPaymentsData);
 

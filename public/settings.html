@@ -1136,47 +1136,77 @@ async function processPayment() {
       credentials: 'include',
       body: JSON.stringify({ plan, period })
     });
-    
+
     const data = await response.json();
-    
-    if (data.success && data.cloudPayments) {
-      // CloudPayments widget integration
-      const widget = new cp.CloudPayments();
-      
-      const chargeOptions = {
-        publicId: data.cloudPayments.PublicId,
-        description: data.cloudPayments.Description,
-        amount: data.cloudPayments.Amount,
-        currency: data.cloudPayments.Currency,
-        invoiceId: data.cloudPayments.InvoiceId,
-        accountId: data.cloudPayments.AccountId,
-        email: data.cloudPayments.Email,
-        requireConfirmation: data.cloudPayments.RequireConfirmation,
-        trialPeriod: data.cloudPayments.TrialPeriod,
-        recurring: data.cloudPayments.Recurring
-      };
-      
-      widget.charge(chargeOptions, function(options) {
-        // Success
-        console.log('Payment successful', options);
+
+    if (data.success) {
+      // Test mode: CloudPayments credentials not configured
+      if (data.testMode) {
+        console.log('[TEST MODE] Payment successful:', data.message);
         closePaymentModal();
-        
+
         // Calculate specialist limit directly from planId
         const specialistLimit = getSpecialistLimitFromPlan(planId);
         console.log(`Specialist limit from plan ${planId}:`, specialistLimit);
-        
+
         // Update specialist forms immediately
         updateSpecialistForms(specialistLimit);
-        
+
         // Reload business data to update subscription info
         loadBusinessData();
-        
-        alert('Оплата успешна! Теперь вы можете добавлять специалистов.');
-      }, function(reason, options) {
-        // Fail
-        console.error('Payment failed', reason, options);
-        document.getElementById('paymentError').textContent = 'Ошибка оплаты: ' + reason;
-      });
+
+        alert('Тестовый режим: Подписка активирована (CloudPayments не настроен)');
+        return;
+      }
+
+      // Production mode: use CloudPayments widget
+      if (data.cloudPayments) {
+        const widget = new cp.CloudPayments();
+
+        const chargeOptions = {
+          publicId: data.cloudPayments.PublicId,
+          description: data.cloudPayments.Description,
+          amount: data.cloudPayments.Amount,
+          currency: data.cloudPayments.Currency,
+          invoiceId: data.cloudPayments.InvoiceId,
+          accountId: data.cloudPayments.AccountId,
+          email: data.cloudPayments.Email,
+          requireConfirmation: data.cloudPayments.RequireConfirmation,
+          trialPeriod: data.cloudPayments.TrialPeriod,
+          recurring: data.cloudPayments.Recurring
+        };
+
+        widget.charge(chargeOptions, function(options) {
+          // Success
+          console.log('Payment successful', options);
+          closePaymentModal();
+
+          // Calculate specialist limit directly from planId
+          const specialistLimit = getSpecialistLimitFromPlan(planId);
+          console.log(`Specialist limit from plan ${planId}:`, specialistLimit);
+
+          // Update specialist forms immediately
+          updateSpecialistForms(specialistLimit);
+
+          // Reload business data to update subscription info
+          loadBusinessData();
+
+          alert('Оплата успешна! Теперь вы можете добавлять специалистов.');
+        }, function(reason, options) {
+          // Fail
+          console.error('Payment failed', reason, options);
+          document.getElementById('paymentError').textContent = 'Ошибка оплаты: ' + reason;
+        });
+      } else {
+        // Success without CloudPayments (subscription already created)
+        closePaymentModal();
+
+        const specialistLimit = getSpecialistLimitFromPlan(planId);
+        updateSpecialistForms(specialistLimit);
+        loadBusinessData();
+
+        alert('Подписка активирована!');
+      }
     } else {
       document.getElementById('paymentError').textContent = 'Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка');
     }
