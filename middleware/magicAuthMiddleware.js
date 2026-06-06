@@ -4,7 +4,7 @@ const { prisma } = require("../services/prismaService");
 function requireMagicAuth(req, res, next) {
   const jwt = require('jsonwebtoken');
 
-  const token = req.cookies?.auth || req.cookies?.token || req.headers?.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.auth_token || req.cookies?.auth || req.cookies?.token || req.headers?.authorization?.replace('Bearer ', '');
 
   if (!token) {
     return res.status(401).json({ error: 'No token' });

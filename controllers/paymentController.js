@@ -32,6 +32,7 @@ async function createPayment(req, res) {
     console.log('[PAYMENT CREATED]', {
       userId: req.user?.id,
       businessId: req.user?.businessId,
+      userEmail: req.user?.email,
       body: req.body
     });
 

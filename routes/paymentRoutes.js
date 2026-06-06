@@ -12,7 +12,7 @@ const router = express.Router();
 // JWT authentication middleware
 const requireAuth = async (req, res, next) => {
   try {
-    const token = req.cookies?.auth || req.headers?.authorization?.replace('Bearer ', '');
+    const token = req.cookies?.auth_token || req.cookies?.auth || req.headers?.authorization?.replace('Bearer ', '');
     
     if (!token) {
       return res.status(401).json({ error: 'No authentication token' });

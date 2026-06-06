@@ -10,7 +10,7 @@ const requireAuth = async (req, res, next) => {
   
   try {
     // Check both cookie and Authorization header
-    const token = req.cookies?.auth || req.headers?.authorization?.replace('Bearer ', '');
+    const token = req.cookies?.auth_token || req.cookies?.auth || req.headers?.authorization?.replace('Bearer ', '');
     
     if (!token) {
       return res.status(401).json({ error: 'No authentication token' });
@@ -78,18 +78,20 @@ router.get('/', requireAuth, async (req, res) => {
 // POST /api/specialists - Create a new specialist
 router.post('/', requireAuth, async (req, res) => {
   try {
-    console.log("USER ID:", req.user.id);
-    console.log("BUSINESS ID:", req.user.businessId);
+    console.log("[SPECIALIST CREATE] USER ID:", req.user.id);
+    console.log("[SPECIALIST CREATE] BUSINESS ID:", req.user.businessId);
+    console.log("[SPECIALIST CREATE] REQUEST BODY:", req.body);
 
     // If no businessId, return error
     if (!req.user.businessId) {
-      console.log("No businessId - cannot create specialist");
+      console.log("[SPECIALIST CREATE] No businessId - cannot create specialist");
       return res.status(400).json({ error: 'No business associated with user' });
     }
 
     const { name, email, schedule } = req.body;
 
     if (!name) {
+      console.log("[SPECIALIST CREATE] Name is required");
       return res.status(400).json({ error: 'Name is required' });
     }
 
@@ -99,9 +101,16 @@ router.post('/', requireAuth, async (req, res) => {
       where: { businessId: req.user.businessId }
     });
 
-    const isSoloPlan = subscription && subscription.plan === 'SOLO';
+    console.log("[SPECIALIST CREATE] SUBSCRIPTION:", subscription);
+    
+    // If no subscription or SOLO plan, email is not required
+    const isSoloPlan = !subscription || subscription.plan === 'SOLO';
+    
+    console.log("[SPECIALIST CREATE] IS SOLO PLAN:", isSoloPlan);
+    console.log("[SPECIALIST CREATE] EMAIL PROVIDED:", email);
 
     if (!isSoloPlan && !email) {
+      console.log("[SPECIALIST CREATE] Email is required for this plan");
       return res.status(400).json({ error: 'Email is required for this plan' });
     }
 
