@@ -358,6 +358,27 @@ async function createPublicAppointment(req, res) {
             booking_link: bookingLink
           };
 
+          console.log('[WHATSAPP TEMPLATE NAME]', 'booking_confirmation_simple');
+          console.log('[WHATSAPP BOOKING LINK]', bookingLink);
+          console.log('[WHATSAPP VARIABLES]', JSON.stringify(templateVariables, null, 2));
+          console.log('[WHATSAPP VARIABLES COUNT]', Object.keys(templateVariables).length);
+          
+          // Проверка что все 6 переменных на месте
+          const expectedVars = ['customer_name', 'date', 'time', 'specialist', 'service', 'booking_link'];
+          const actualVars = Object.keys(templateVariables);
+          const missingVars = expectedVars.filter(v => !actualVars.includes(v));
+          
+          if (missingVars.length > 0) {
+            console.error('[WHATSAPP TEMPLATE] MISSING VARIABLES:', missingVars);
+          } else {
+            console.log('[WHATSAPP TEMPLATE] ALL 6 VARIABLES PRESENT ✅');
+          }
+          
+          // Проверка значений
+          expectedVars.forEach(varName => {
+            console.log(`[WHATSAPP TEMPLATE] ${varName}:`, templateVariables[varName]);
+          });
+
           // Send WhatsApp template message (fire and forget) to not block response
           sendWhatsAppTemplateMessage(
             customerPhone,

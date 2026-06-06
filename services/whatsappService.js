@@ -211,6 +211,9 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
         text: String(v)
       }));
 
+    console.log('[WHATSAPP TEMPLATE] BODY PARAMETERS COUNT:', bodyParams.length);
+    console.log('[WHATSAPP TEMPLATE] BODY PARAMETERS:', JSON.stringify(bodyParams, null, 2));
+
     // Add body component
     body.template.components.push({
       type: 'body',
@@ -221,6 +224,24 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
       '[WHATSAPP TEMPLATE] Final components:',
       JSON.stringify(body.template.components, null, 2)
     );
+
+    console.log(
+      '[WHATSAPP TEMPLATE] TEMPLATE NAME IN PAYLOAD:',
+      body.template.name
+    );
+
+    // Проверка что payload содержит правильную структуру
+    if (body.template.name !== 'booking_confirmation_simple') {
+      console.error('[WHATSAPP TEMPLATE] WRONG TEMPLATE NAME IN PAYLOAD:', body.template.name);
+    } else {
+      console.log('[WHATSAPP TEMPLATE] CORRECT TEMPLATE NAME IN PAYLOAD ✅:', body.template.name);
+    }
+
+    if (body.template.language.code !== 'ru') {
+      console.error('[WHATSAPP TEMPLATE] WRONG LANGUAGE CODE:', body.template.language.code);
+    } else {
+      console.log('[WHATSAPP TEMPLATE] CORRECT LANGUAGE CODE ✅:', body.template.language.code);
+    }
 
     console.log(
       '[WHATSAPP TEMPLATE PAYLOAD FULL]',
