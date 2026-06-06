@@ -128,12 +128,18 @@ router.post('/', requireAuth, async (req, res) => {
       }
     }
 
+    const specialistData = {
+      name,
+      businessId: req.user.businessId
+    };
+
+    // Only add email if it's provided (not null and not empty)
+    if (email && email.trim()) {
+      specialistData.email = email;
+    }
+
     const specialist = await prisma.master.create({
-      data: {
-        name,
-        email: email || null, // Allow null email for SOLO plan
-        businessId: req.user.businessId
-      }
+      data: specialistData
     });
 
     res.status(201).json(specialist);

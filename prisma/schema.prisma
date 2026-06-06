@@ -132,7 +132,7 @@ model Category {
 model Master {
   id         Int      @id @default(autoincrement())
   name       String
-  email      String   @unique
+  email      String?  @unique
   active     Boolean  @default(true)
   businessId String
   specializations String?
