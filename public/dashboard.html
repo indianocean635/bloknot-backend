@@ -285,17 +285,22 @@
      }
 
      const mastersR = await safeCount("masters", () => Bloknot.api("/api/specialists"));
-     if (mastersR.ok) Bloknot.qs("#mastersCount").textContent = mastersR.items.length + " шт";
+     if (mastersR.ok) {
+      const mastersEl = Bloknot.qs("#mastersCount");
+      if (mastersEl) mastersEl.textContent = mastersR.items.length + " шт";
+    }
 
      const now = new Date();
      const { from, to } = dayBoundsIso(now);
 
      try {
        const today = await Bloknot.api("/api/appointments?" + new URLSearchParams({ from, to }).toString());
-       Bloknot.qs("#todayCount").textContent = today.length + " шт";
+       const todayEl = Bloknot.qs("#todayCount");
+      if (todayEl) todayEl.textContent = today.length + " шт";
        
        const uniqueClients = new Set(today.map(a => a.customerName).filter(name => name));
-       Bloknot.qs("#clientsCount").textContent = uniqueClients.size + " чел";
+       const clientsEl = Bloknot.qs("#clientsCount");
+      if (clientsEl) clientsEl.textContent = uniqueClients.size + " чел";
      } catch (e) {
        Bloknot.qs("#todayCount").textContent = "—";
        Bloknot.qs("#clientsCount").textContent = "—";
@@ -304,7 +309,8 @@
      try {
        const allAppointments = await Bloknot.api("/api/appointments");
        const allUniqueClients = new Set(allAppointments.map(a => a.customerName).filter(name => name));
-       Bloknot.qs("#clientsCount").textContent = allUniqueClients.size + " чел";
+       const clientsEl = Bloknot.qs("#clientsCount");
+      if (clientsEl) clientsEl.textContent = allUniqueClients.size + " чел";
      } catch (e) {
        // Keep today's count if all appointments fail
      }
