@@ -74,10 +74,9 @@
 
   function registerServiceWorker() {
     try {
-      if (!('serviceWorker' in navigator)) return;
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js").catch(() => {});
-      });
+      // Service Worker отключен - блокирует мобильные
+      console.log('[APP] Service Worker disabled for mobile');
+      return;
     } catch (e) {}
   }
 
