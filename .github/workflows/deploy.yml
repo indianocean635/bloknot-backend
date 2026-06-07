@@ -20,30 +20,12 @@ jobs:
             set -e
             cd /var/www/bloknot-backend
 
-            # Clean untracked files to avoid merge conflicts
+            # Force update to handle divergent branches from force push
             git clean -fd
-            git reset --hard HEAD
-
-            # Retry logic for git operations
-            MAX_RETRIES=3
-            RETRY_COUNT=0
-
-            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              echo "Git pull attempt $((RETRY_COUNT + 1))/$MAX_RETRIES"
-              if git pull origin main; then
-                echo "Git pull successful"
-                break
-              else
-                RETRY_COUNT=$((RETRY_COUNT + 1))
-                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                  echo "Git pull failed, retrying in 10 seconds..."
-                  sleep 10
-                else
-                  echo "Git pull failed after $MAX_RETRIES attempts"
-                  exit 1
-                fi
-              fi
-            done
+            git fetch origin main
+            git reset --hard origin/main
+            
+            echo "Git reset to origin/main successful"
 
             npm ci
             npx prisma migrate deploy
