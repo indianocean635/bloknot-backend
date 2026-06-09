@@ -227,8 +227,13 @@
     }
     // Save to cookie as fallback for iOS Safari
     try {
-      document.cookie = `auth=${token}; path=/; max-age=7776000; SameSite=Lax; Secure`;
-      console.log('[SAVE TOKEN] Saved to cookie');
+      // For iOS PWA, use simpler cookie without Secure flag
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const cookieOptions = isIOS
+        ? `auth=${token}; path=/; max-age=7776000; SameSite=Lax`
+        : `auth=${token}; path=/; max-age=7776000; SameSite=Lax; Secure`;
+      document.cookie = cookieOptions;
+      console.log('[SAVE TOKEN] Saved to cookie (iOS mode:', isIOS, ')');
     } catch (e) {
       console.log('[SAVE TOKEN] Cookie save failed:', e);
     }

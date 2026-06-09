@@ -864,14 +864,55 @@
     // Проверяем статус авторизации
     async function checkAuthStatus() {
       try {
-        // Disabled auto-redirect to prevent infinite loops on mobile
-        // User must manually click "Мой кабинет" to access dashboard
-        console.log('[INDEX] Auth check disabled - manual navigation required');
-        return;
+        // Check for token in multiple storage locations
+        let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+
+        // If not in storage, try IndexedDB
+        if (!token) {
+          try {
+            const db = await indexedDB.open('bloknot-auth', 1);
+            const tx = db.transaction('auth', 'readonly');
+            const store = tx.objectStore('auth');
+            const result = await store.get('token');
+            if (result) {
+              token = result.value;
+              localStorage.setItem('auth_token', token);
+              sessionStorage.setItem('auth_token', token);
+            }
+            db.close();
+          } catch (e) {
+            console.log('IndexedDB not available:', e);
+          }
+        }
+
+        // If still no token, try cookie
+        if (!token) {
+          const cookies = document.cookie.split(';').map(c => c.trim());
+          const authCookie = cookies.find(c => c.startsWith('auth='));
+          if (authCookie) {
+            token = decodeURIComponent(authCookie.substring(5));
+            localStorage.setItem('auth_token', token);
+            sessionStorage.setItem('auth_token', token);
+          }
+        }
+
+        // If token exists, redirect to dashboard
+        if (token) {
+          console.log('[INDEX] User authenticated, redirecting to dashboard');
+          window.location.href = '/dashboard.html';
+          return true;
+        }
+
+        console.log('[INDEX] No token found, showing login');
+        return false;
       } catch (e) {
         console.log('[INDEX] Auth check error:', e);
+        return false;
       }
     }
+
+    // Check auth status on page load
+    checkAuthStatus();
 
     // No valid auth, show login/registration
     const isLoggedIn = false;
