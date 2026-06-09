@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    .success {
+      color: green;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .info {
+      margin: 20px 0;
+      padding: 10px;
+      background: #f0f0f0;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="success">✅ Mobile Test Page Loaded!</div>
+  
+  <div class="info">
+    <p>Time: <span id="time"></span></p>
+    <p>User Agent: <span id="ua"></span></p>
+    <p>Screen: <span id="screen"></span></p>
+  </div>
+
+  <script>
+    document.getElementById('time').textContent = new Date().toISOString();
+    document.getElementById('ua').textContent = navigator.userAgent;
+    document.getElementById('screen').textContent = window.innerWidth + 'x' + window.innerHeight;
+    
+    console.log('Mobile test page loaded successfully');
+  </script>
+</body>
+</html>
