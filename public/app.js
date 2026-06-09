@@ -198,9 +198,19 @@
   async function saveAuthToken(token) {
     console.log('[SAVE TOKEN] Saving token to all storage locations');
     // Save to localStorage
-    localStorage.setItem('auth_token', token);
+    try {
+      localStorage.setItem('auth_token', token);
+      console.log('[SAVE TOKEN] Saved to localStorage');
+    } catch (e) {
+      console.log('[SAVE TOKEN] localStorage save failed:', e);
+    }
     // Save to sessionStorage (for current session)
-    sessionStorage.setItem('auth_token', token);
+    try {
+      sessionStorage.setItem('auth_token', token);
+      console.log('[SAVE TOKEN] Saved to sessionStorage');
+    } catch (e) {
+      console.log('[SAVE TOKEN] sessionStorage save failed:', e);
+    }
     // Save to IndexedDB (for iOS PWA)
     try {
       const db = await indexedDB.open('bloknot-auth', 1);
@@ -214,6 +224,13 @@
       console.log('[SAVE TOKEN] Saved to IndexedDB');
     } catch (e) {
       console.log('[SAVE TOKEN] IndexedDB save failed:', e);
+    }
+    // Save to cookie as fallback for iOS Safari
+    try {
+      document.cookie = `auth=${token}; path=/; max-age=7776000; SameSite=Lax; Secure`;
+      console.log('[SAVE TOKEN] Saved to cookie');
+    } catch (e) {
+      console.log('[SAVE TOKEN] Cookie save failed:', e);
     }
     console.log('[SAVE TOKEN] Token saved successfully');
   }
@@ -232,6 +249,13 @@
       console.log('[CLEAR TOKEN] Cleared from IndexedDB');
     } catch (e) {
       console.log('[CLEAR TOKEN] IndexedDB clear failed:', e);
+    }
+    // Clear cookie
+    try {
+      document.cookie = 'auth=; path=/; max-age=0; SameSite=Lax; Secure';
+      console.log('[CLEAR TOKEN] Cleared cookie');
+    } catch (e) {
+      console.log('[CLEAR TOKEN] Cookie clear failed:', e);
     }
     console.log('[CLEAR TOKEN] Token cleared successfully');
   }
