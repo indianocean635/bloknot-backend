@@ -220,14 +220,18 @@
     console.log('DASHBOARD: Bloknot object available:', typeof Bloknot);
     console.log('DASHBOARD: Bloknot.api function available:', typeof Bloknot.api);
 
-    // Load user profile information
+    // Load user profile information with timeout
+    let user = null;
     try {
        console.log('DASHBOARD: Calling /api/auth/me API');
-       const response = await Bloknot.api("/api/auth/me");
+       const response = await Promise.race([
+         Bloknot.api("/api/auth/me"),
+         new Promise((_, reject) => setTimeout(() => reject(new Error('API timeout')), 10000))
+       ]);
        console.log('DASHBOARD: API response received:', response);
 
        // Handle both response formats (direct user object or wrapped in user property)
-       const user = response.user || response;
+       user = response.user || response;
        console.log('Extracted user data:', user);
        console.log('User email:', user.email);
        console.log('User name:', user.name);
@@ -255,7 +259,7 @@
          document.getElementById("modalUserEmail").textContent = "No email";
          console.log('No email found in user data');
        }
-       
+
        if (user.phone) {
          document.getElementById("userPhone").textContent = user.phone;
          console.log('Displaying phone:', user.phone);
@@ -263,7 +267,7 @@
          document.getElementById("userPhone").textContent = "No phone";
          console.log('No phone found in user data');
        }
-       
+
        if (user.name) {
          document.getElementById("userName").textContent = user.name;
          console.log('Displaying name:', user.name);
@@ -271,11 +275,13 @@
          document.getElementById("userName").textContent = "No name";
          console.log('No name found in user data');
        }
-     } catch (e) {
-       console.error("Failed to load user profile:", e);
-     }
+    } catch (e) {
+       console.error('DASHBOARD: API call failed:', e);
+       showNotice('Ошибка загрузки данных: ' + e.message);
+       // Don't return - continue with default values
+    }
 
-     async function safeCount(label, fn) {
+    async function safeCount(label, fn) {
        try {
          const items = await fn();
          return { ok: true, items };
