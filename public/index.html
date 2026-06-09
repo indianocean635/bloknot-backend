@@ -1332,24 +1332,42 @@
       });
     }
 
-// Функция копирования email из подвала
+// Функция копирования email из подвала - работает на всех устройствах
 function copyEmail() {
   const email = 'info@bloknotservis.ru';
-  navigator.clipboard.writeText(email).then(() => {
-    // Меняем текст на "Скопировано!"
-    const emailElement = document.querySelector('.footer-email');
-    const originalText = emailElement.textContent;
-    emailElement.textContent = '📧 Скопировано!';
-    emailElement.style.color = '#4c6fff';
+  
+  try {
+    // Старый метод который работает везде
+    const textArea = document.createElement('textarea');
+    textArea.value = email;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
     
-    // Возвращаем исходный текст через 2 секунды
-    setTimeout(() => {
-      emailElement.textContent = originalText;
-      emailElement.style.color = '#6b7280';
-    }, 2000);
-  }).catch(err => {
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    if (successful) {
+      // Меняем текст на "Скопировано!"
+      const emailElement = document.querySelector('.footer-email');
+      const originalText = emailElement.textContent;
+      emailElement.textContent = '📧 Скопировано!';
+      emailElement.style.color = '#4c6fff';
+      
+      // Возвращаем исходный текст через 2 секунды
+      setTimeout(() => {
+        emailElement.textContent = originalText;
+        emailElement.style.color = '#6b7280';
+      }, 2000);
+    }
+  } catch (err) {
     console.error('Не удалось скопировать email:', err);
-  });
+    // Показываем email для ручного копирования
+    alert('Email: ' + email);
+  }
 }
   </script>
 
