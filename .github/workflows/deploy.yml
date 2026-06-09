@@ -27,7 +27,8 @@ jobs:
             
             echo "Git reset to origin/main successful"
 
-            npm ci
+            npm ci --prefer-offline --no-audit
+            npm cache clean --force
             npx prisma migrate deploy
             npx prisma generate
             cp -r public/* /var/www/html/
