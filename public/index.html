@@ -515,7 +515,8 @@
 
     <!-- VIDEO -->
     <div class="video-block">
-      <iframe src="https://vkvideo.ru/video_ext.php?oid=-238506692&id=456239043&hash=cd7e992b804473d9&hd=3" 
+      <iframe id="vkVideo" 
+              src="https://vkvideo.ru/video_ext.php?oid=-238506692&id=456239043&hash=cd7e992b804473d9&hd=3" 
               width="100%" 
               height="250" 
               style="max-width: 600px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);"
@@ -524,6 +525,32 @@
               allowfullscreen>
       </iframe>
     </div>
+
+    <style>
+      /* Для мобильных - как сейчас */
+      @media (max-width: 768px) {
+        #vkVideo {
+          height: 250px !important;
+          max-width: 100% !important;
+        }
+      }
+      
+      /* Для планшетов - средний размер */
+      @media (min-width: 769px) and (max-width: 1024px) {
+        #vkVideo {
+          height: 350px !important;
+          max-width: 800px !important;
+        }
+      }
+      
+      /* Для десктопов - большой размер */
+      @media (min-width: 1025px) {
+        #vkVideo {
+          height: 450px !important;
+          max-width: 900px !important;
+        }
+      }
+    </style>
 
     <!-- HERO -->
     <main>
