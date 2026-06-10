@@ -87,12 +87,42 @@ async function cancelBooking(req, res) {
       data: { status: 'CANCELLED' },
       include: {
         master: true,
-        business: true
+        business: true,
+        service: true
       }
     });
 
     console.log('[TELEGRAM] Booking cancelled successfully:', bookingId);
     console.log('[TELEGRAM] Booking status after cancellation:', updated.status);
+
+    // Send VK cancellation notification if VK user ID is present
+    if (updated.customerVkId) {
+      try {
+        const { sendCancellation } = require('../services/vkNotificationService');
+        
+        const timeToUse = updated.startsAtLocal || updated.startsAt;
+        const dateStr = timeToUse.replace(/(\d{4})-(\d{2})-(\d{2})T.*/, '$3.$2.$1');
+        const timeStr = timeToUse.replace(/.*T(\d{2}):(\d{2}).*/, '$1:$2');
+
+        const domain = process.env.DOMAIN || process.env.FRONTEND_URL || 'https://bloknotservis.ru';
+        const bookingLink = `${domain}/book/${updated.business?.slug}`;
+
+        const templateVariables = {
+          customer_name: updated.customerName,
+          date: dateStr,
+          time: timeStr,
+          specialist: updated.master?.name || 'Специалист',
+          service: updated.service?.name || 'Услуга',
+          booking_link: bookingLink
+        };
+
+        sendCancellation(updated.customerVkId, templateVariables)
+          .then(() => console.log('[TELEGRAM] VK cancellation sent for booking:', bookingId))
+          .catch((error) => console.error('[TELEGRAM] Error sending VK cancellation:', error));
+      } catch (error) {
+        console.error('[TELEGRAM] Error sending VK cancellation notification:', error);
+      }
+    }
 
     res.json({ success: true, booking: updated });
   } catch (error) {

@@ -194,6 +194,7 @@ model Appointment {
   customerPhone      String?
   customerTelegram   String?
   telegramChatId     String?
+  customerVkId       String?
   customerComment    String?
   startsAt           DateTime
   endsAt             DateTime
@@ -207,6 +208,8 @@ model Appointment {
   bookingToken       String?  @unique
   reminderSent24h    Boolean  @default(false)
   reminderSent1h     Boolean  @default(false)
+  vkReminderSent24h  Boolean  @default(false)
+  vkReminderSent1h   Boolean  @default(false)
   createdAt          DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)

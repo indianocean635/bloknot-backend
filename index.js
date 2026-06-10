@@ -17,6 +17,7 @@ const specialistsRoutes = require('./routes/specialistsRoutes');
 const telegramRoutes = require('./routes/telegramRoutes');
 const notificationsRoutes = require('./routes/notificationsRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const vkRoutes = require('./routes/vkRoutes');
 const { requireMagicAuth, getBusinessFromUser, adminAuth, optionalAuth } = require('./middleware/magicAuthMiddleware');
 const app = express();
 const PORT = 3001;
@@ -67,6 +68,7 @@ app.use('/api/telegram', telegramRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api', appointmentRoutes);
 app.use('/api', paymentRoutes);
+app.use('/api/vk', vkRoutes);
 
 console.log('Business routes loaded:', typeof businessRoutes);
 console.log('Business routes methods:', Object.getOwnPropertyNames(businessRoutes));
@@ -234,6 +236,23 @@ if (process.env.WHATSAPP_ENABLED === 'true') {
     console.log('[SCHEDULER] Running initial WhatsApp reminder check...');
     checkAndSendReminders();
   }, 5000); // 5 seconds after startup
+}
+
+// VK reminder scheduler
+if (process.env.VK_NOTIFICATIONS_ENABLED === 'true') {
+  const { checkAndSendVKReminders } = require('./services/vkReminderService');
+  
+  // Check for VK reminders every hour
+  setInterval(() => {
+    console.log('[SCHEDULER] Running VK reminder check...');
+    checkAndSendVKReminders();
+  }, 60 * 60 * 1000); // Every hour
+  
+  // Run once on startup
+  setTimeout(() => {
+    console.log('[SCHEDULER] Running initial VK reminder check...');
+    checkAndSendVKReminders();
+  }, 10000); // 10 seconds after startup
 }
 
 // 404 fallback (в самом конце!)

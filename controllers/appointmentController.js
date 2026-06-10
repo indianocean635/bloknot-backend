@@ -413,6 +413,72 @@ async function createPublicAppointment(req, res) {
       console.log('[STEP 7.5] Skipping WhatsApp - no phone or notifications disabled');
     }
 
+    // Send VK confirmation if VK user ID is provided
+    if (req.body.vkUserId) {
+      console.log('[STEP 7.6] Sending VK confirmation...');
+      try {
+        const { sendBookingConfirmation } = require('../services/vkNotificationService');
+
+        // Get full booking details for confirmation
+        const fullBooking = await prisma.appointment.findUnique({
+          where: { id: appointment.id },
+          include: {
+            service: true,
+            master: true,
+            business: true
+          }
+        });
+
+        if (fullBooking) {
+          // Format date and time
+          const timeToUse = fullBooking.startsAtLocal || fullBooking.startsAt;
+          const dateStr = timeToUse.replace(/(\d{4})-(\d{2})-(\d{2})T.*/, '$3.$2.$1');
+          const timeStr = timeToUse.replace(/.*T(\d{2}):(\d{2}).*/, '$1:$2');
+
+          // Generate booking link from business slug
+          const domain = process.env.DOMAIN || process.env.FRONTEND_URL || 'https://bloknotservis.ru';
+          const bookingLink = `${domain}/book/${fullBooking.business?.slug}`;
+
+          console.log('[VK NOTIFICATION] BOOKING LINK:', bookingLink);
+
+          const templateVariables = {
+            customer_name: fullBooking.customerName,
+            date: dateStr,
+            time: timeStr,
+            specialist: fullBooking.master?.name || 'Специалист',
+            service: fullBooking.service?.name || 'Услуга',
+            booking_link: bookingLink
+          };
+
+          console.log('[VK NOTIFICATION] TEMPLATE VARIABLES:', JSON.stringify(templateVariables, null, 2));
+
+          // Send VK confirmation message (fire and forget) to not block response
+          sendBookingConfirmation(req.body.vkUserId, templateVariables)
+            .then(() => console.log('[STEP 7.6] [VK NOTIFICATION] Auto-confirmation sent for booking:', appointment.id))
+            .catch((error) => {
+              console.error('[STEP 7.6] Error sending VK confirmation:', error);
+              console.error('[STEP 7.6] VK Error Status:', error.response?.status);
+              console.error('[STEP 7.6] VK Error Data:', JSON.stringify(error.response?.data, null, 2));
+              if (error.response?.data?.error) {
+                console.error('[STEP 7.6] VK API Error Code:', error.response.data.error.error_code);
+                console.error('[STEP 7.6] VK API Error Message:', error.response.data.error.error_msg);
+              }
+            });
+        }
+      } catch (error) {
+        console.error('[STEP 7.6] Error sending VK confirmation:', error);
+        console.error('[STEP 7.6] VK Error Status:', error.response?.status);
+        console.error('[STEP 7.6] VK Error Data:', JSON.stringify(error.response?.data, null, 2));
+        if (error.response?.data?.error) {
+          console.error('[STEP 7.6] VK API Error Code:', error.response.data.error.error_code);
+          console.error('[STEP 7.6] VK API Error Message:', error.response.data.error.error_msg);
+        }
+        // Continue even if VK fails
+      }
+    } else {
+      console.log('[STEP 7.6] Skipping VK - no VK user ID');
+    }
+
     console.log('[STEP 8] Sending response to client');
     res.json(appointment);
     console.log('[STEP 8] ✅ Response sent successfully');
@@ -608,8 +674,42 @@ async function updateAppointment(req, res) {
         customerTelegram: customerTelegram !== undefined ? customerTelegram : undefined,
         customerComment: customerComment !== undefined ? customerComment : undefined,
         status
+      },
+      include: {
+        service: true,
+        master: true,
+        business: true
       }
     });
+
+    // Send VK reschedule notification if VK user ID is present and time/date changed
+    if (appointment.customerVkId && (startsAt || endsAt)) {
+      try {
+        const { sendReschedule } = require('../services/vkNotificationService');
+        
+        const timeToUse = appointment.startsAtLocal || appointment.startsAt;
+        const dateStr = timeToUse.replace(/(\d{4})-(\d{2})-(\d{2})T.*/, '$3.$2.$1');
+        const timeStr = timeToUse.replace(/.*T(\d{2}):(\d{2}).*/, '$1:$2');
+
+        const domain = process.env.DOMAIN || process.env.FRONTEND_URL || 'https://bloknotservis.ru';
+        const bookingLink = `${domain}/book/${appointment.business?.slug}`;
+
+        const templateVariables = {
+          customer_name: appointment.customerName,
+          date: dateStr,
+          time: timeStr,
+          specialist: appointment.master?.name || 'Специалист',
+          service: appointment.service?.name || 'Услуга',
+          booking_link: bookingLink
+        };
+
+        sendReschedule(appointment.customerVkId, templateVariables)
+          .then(() => console.log('[APPOINTMENT] VK reschedule sent for appointment:', id))
+          .catch((error) => console.error('[APPOINTMENT] Error sending VK reschedule:', error));
+      } catch (error) {
+        console.error('[APPOINTMENT] Error sending VK reschedule notification:', error);
+      }
+    }
 
     // Fetch with relations for the response
     const appointmentWithRelations = await prisma.appointment.findUnique({
