@@ -295,15 +295,26 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
     console.log('[WHATSAPP TEMPLATE] Response data:', JSON.stringify(response.data, null, 2));
     console.log('[WHATSAPP TEMPLATE] END SEND - Success');
   } catch (err) {
-    console.error(
-      '[WHATSAPP TEMPLATE ERROR]',
-      JSON.stringify({
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message,
-        stack: err.stack
-      }, null, 2)
-    );
+    console.error('[WHATSAPP TEMPLATE ERROR] Status:', err.response?.status);
+    console.error('[WHATSAPP TEMPLATE ERROR] Status Text:', err.response?.statusText);
+    console.error('[WHATSAPP TEMPLATE ERROR] Error Data:', JSON.stringify(err.response?.data, null, 2));
+    console.error('[WHATSAPP TEMPLATE ERROR] Error Message:', err.message);
+    console.error('[WHATSAPP TEMPLATE ERROR] Full Error:', JSON.stringify({
+      status: err.response?.status,
+      data: err.response?.data,
+      message: err.message,
+      stack: err.stack
+    }, null, 2));
+
+    // Log specific error details from Meta API
+    if (err.response?.data?.error) {
+      console.error('[WHATSAPP TEMPLATE ERROR] Meta API Error Code:', err.response.data.error.code);
+      console.error('[WHATSAPP TEMPLATE ERROR] Meta API Error Type:', err.response.data.error.type);
+      console.error('[WHATSAPP TEMPLATE ERROR] Meta API Error Message:', err.response.data.error.message);
+      if (err.response.data.error.error_data) {
+        console.error('[WHATSAPP TEMPLATE ERROR] Meta API Error Data:', JSON.stringify(err.response.data.error.error_data, null, 2));
+      }
+    }
 
     throw err;
   }
