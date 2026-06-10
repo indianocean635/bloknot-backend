@@ -220,6 +220,22 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
       parameters: bodyParams
     });
 
+    // Add buttons if provided
+    if (buttons && buttons.length > 0) {
+      console.log('[WHATSAPP TEMPLATE] Adding buttons:', buttons);
+      const buttonComponent = {
+        type: 'button',
+        sub_type: 'quick_reply',
+        parameters: buttons.map((button, index) => ({
+          type: 'payload',
+          payload: button.payload,
+          index: index
+        }))
+      };
+      body.template.components.push(buttonComponent);
+      console.log('[WHATSAPP TEMPLATE] Button component added:', JSON.stringify(buttonComponent, null, 2));
+    }
+
     console.log(
       '[WHATSAPP TEMPLATE] Final components:',
       JSON.stringify(body.template.components, null, 2)
