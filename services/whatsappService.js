@@ -196,8 +196,7 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
         name: templateName,
         language: {
           code: language
-        },
-        components: []
+        }
       }
     };
 
@@ -214,15 +213,20 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
     console.log('[WHATSAPP TEMPLATE] BODY PARAMETERS COUNT:', bodyParams.length);
     console.log('[WHATSAPP TEMPLATE] BODY PARAMETERS:', JSON.stringify(bodyParams, null, 2));
 
-    // Add body component
-    body.template.components.push({
-      type: 'body',
-      parameters: bodyParams
-    });
+    // Add body component only if there are parameters
+    if (bodyParams.length > 0) {
+      body.template.components = [{
+        type: 'body',
+        parameters: bodyParams
+      }];
+    }
 
     // Add buttons if provided
     if (buttons && buttons.length > 0) {
       console.log('[WHATSAPP TEMPLATE] Adding buttons:', buttons);
+      if (!body.template.components) {
+        body.template.components = [];
+      }
       const buttonComponent = {
         type: 'button',
         sub_type: 'quick_reply',
