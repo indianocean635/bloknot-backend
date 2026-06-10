@@ -1729,12 +1729,30 @@
         });
 
         // Add event listener to connect VK button
-        document.getElementById('connect-vk-btn').addEventListener('click', () => {
-          // Open VK authorization page
-          const vkAppId = process.env.VK_APP_ID || '';
-          const redirectUri = encodeURIComponent(window.location.origin + '/auth/vk/callback');
-          const state = bookingToken;
-          window.open(`https://id.vk.com/auth?app_id=${vkAppId}&redirect_uri=${redirectUri}&state=${state}&response_type=code`, '_blank');
+        document.getElementById('connect-vk-btn').addEventListener('click', async () => {
+          try {
+            // Get VK config from server
+            const response = await fetch('/api/vk/config');
+            const config = await response.json();
+            
+            if (!config.enabled) {
+              alert('VK уведомления временно недоступны');
+              return;
+            }
+            
+            if (!config.appId) {
+              alert('VK App ID не настроен. Обратитесь к администратору.');
+              return;
+            }
+            
+            // Open VK authorization page
+            const redirectUri = encodeURIComponent(window.location.origin + '/api/vk/callback');
+            const state = bookingToken;
+            window.open(`https://id.vk.com/auth?app_id=${config.appId}&redirect_uri=${redirectUri}&state=${state}&response_type=code`, '_blank');
+          } catch (error) {
+            console.error('Error connecting VK:', error);
+            alert('Ошибка при подключении VK. Попробуйте позже.');
+          }
         });
       } catch (error) {
         console.error('Error creating booking:', error);

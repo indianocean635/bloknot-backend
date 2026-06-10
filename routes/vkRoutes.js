@@ -9,6 +9,14 @@ const {
 const { sendBookingConfirmation } = require('../services/vkNotificationService');
 const { requireMagicAuth } = require('../middleware/magicAuthMiddleware');
 
+// Get VK config (public endpoint)
+router.get('/config', (req, res) => {
+  res.json({
+    appId: process.env.VK_APP_ID || '',
+    enabled: process.env.VK_NOTIFICATIONS_ENABLED === 'true'
+  });
+});
+
 // VK Auth callback (no auth required - this is the OAuth callback)
 router.get('/callback', vkAuthCallback);
 
