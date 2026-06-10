@@ -3091,17 +3091,70 @@ function openAsClient() {
 
 // Open Video Instruction Function
 function openVideoInstruction() {
-  // VK video ID - replace with actual video ID when available
-  const vkVideoId = ''; // Add VK video ID here later
-  
-  if (!vkVideoId) {
-    alert('Видео инструкция скоро появится. Добавьте ссылку на видео в код.');
-    return;
-  }
-  
-  // Open VK video in new window
-  const videoUrl = `https://vk.com/video_ext.php?oid=${vkVideoId}`;
-  window.open(videoUrl, '_blank');
+  // Show video modal
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+  `;
+
+  const content = document.createElement('div');
+  content.style.cssText = `
+    position: relative;
+    width: 90%;
+    max-width: 1280px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+  `;
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 18px;
+    z-index: 1;
+  `;
+  closeBtn.onclick = () => document.body.removeChild(modal);
+
+  const iframe = document.createElement('iframe');
+  iframe.src = 'https://vkvideo.ru/video_ext.php?oid=-238506692&id=456239044&hash=aa9084882d307f8a&hd=3';
+  iframe.width = '100%';
+  iframe.height = '720';
+  iframe.style.cssText = `
+    border: none;
+    border-radius: 8px;
+  `;
+  iframe.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;');
+  iframe.setAttribute('allowfullscreen', '');
+
+  content.appendChild(closeBtn);
+  content.appendChild(iframe);
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+
+  // Close on background click
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      document.body.removeChild(modal);
+    }
+  };
 }
 </script>
 
