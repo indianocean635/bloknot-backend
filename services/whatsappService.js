@@ -203,12 +203,12 @@ async function sendWhatsAppTemplateMessage(phone, templateName, language, variab
 
     console.log('[WHATSAPP TEMPLATE] FINAL LANGUAGE:', body.template.language.code);
 
-    // Build body parameters
-    const bodyParams = Object.values(variables || {})
-      .filter(v => v !== undefined && v !== null && String(v).trim() !== '')
-      .map(v => ({
+    // Build body parameters with proper structure
+    const bodyParams = Object.entries(variables || {})
+      .filter(([key, value]) => value !== undefined && value !== null && String(value).trim() !== '')
+      .map(([key, value]) => ({
         type: 'text',
-        text: String(v)
+        text: String(value)
       }));
 
     console.log('[WHATSAPP TEMPLATE] BODY PARAMETERS COUNT:', bodyParams.length);
