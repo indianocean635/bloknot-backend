@@ -397,10 +397,26 @@ async function createPublicAppointment(req, res) {
             ]
           )
             .then(() => console.log('[STEP 7.5] [WHATSAPP TEMPLATE] Auto-confirmation sent for booking:', appointment.id))
-            .catch((error) => console.error('[STEP 7.5] Error sending WhatsApp confirmation:', error));
+            .catch((error) => {
+              console.error('[STEP 7.5] Error sending WhatsApp confirmation:', error);
+              console.error('[STEP 7.5] WhatsApp Error Status:', error.response?.status);
+              console.error('[STEP 7.5] WhatsApp Error Data:', JSON.stringify(error.response?.data, null, 2));
+              if (error.response?.data?.error) {
+                console.error('[STEP 7.5] Meta API Error Code:', error.response.data.error.code);
+                console.error('[STEP 7.5] Meta API Error Type:', error.response.data.error.type);
+                console.error('[STEP 7.5] Meta API Error Message:', error.response.data.error.message);
+              }
+            });
         }
       } catch (error) {
         console.error('[STEP 7.5] Error sending WhatsApp confirmation:', error);
+        console.error('[STEP 7.5] WhatsApp Error Status:', error.response?.status);
+        console.error('[STEP 7.5] WhatsApp Error Data:', JSON.stringify(error.response?.data, null, 2));
+        if (error.response?.data?.error) {
+          console.error('[STEP 7.5] Meta API Error Code:', error.response.data.error.code);
+          console.error('[STEP 7.5] Meta API Error Type:', error.response.data.error.type);
+          console.error('[STEP 7.5] Meta API Error Message:', error.response.data.error.message);
+        }
         // Continue even if WhatsApp fails
       }
     } else {
