@@ -195,6 +195,7 @@ model Appointment {
   customerTelegram   String?
   telegramChatId     String?
   customerVkId       String?
+  vkConnectedAt      DateTime?
   customerComment    String?
   startsAt           DateTime
   endsAt             DateTime

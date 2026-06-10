@@ -8,6 +8,7 @@ This document describes how to set up VK (Vkontakte) integration for user authen
 - VK notifications for booking confirmations
 - VK reminders (24h and 1h before appointment)
 - VK notifications for cancellations and reschedules
+- Messages sent via VK Community API
 
 ## Prerequisites
 - VK Developer Account
@@ -16,41 +17,29 @@ This document describes how to set up VK (Vkontakte) integration for user authen
 
 ## Setup Instructions
 
-### 1. Create VK Application
-
-1. Go to [VK Developer Portal](https://vk.com/dev)
-2. Create a new application:
-   - Platform: Web site
-   - Site address: `https://bloknotservis.ru` (or your domain)
-   - Callback URL: `https://bloknotservis.ru/auth/vk/callback`
-   - Settings: Enable "Open API" and "VK ID"
-3. Note down:
-   - **App ID** (Client ID)
-   - **Client Secret** (Secure key)
-
-### 2. Create VK Community
+### 1. Create VK Community
 
 1. Create a VK Community (Group) if you don't have one
 2. Go to Community Settings → API Usage
 3. Create API Key:
-   - Note down the **Community Token** (Access Token)
+   - Note down the **Group ID** (e.g., 238506692)
+   - Note down the **Access Token** (Community Token)
    - This token will be used to send messages to users
 
-### 3. Configure Environment Variables
+### 2. Configure Environment Variables
 
 Add the following variables to your `.env` file:
 
 ```env
 # VK Integration Settings
-VK_APP_ID=your_vk_app_id
-VK_CLIENT_SECRET=your_vk_client_secret
-VK_COMMUNITY_TOKEN=your_vk_community_token
+VK_GROUP_ID=238506692
+VK_ACCESS_TOKEN=your_vk_access_token
 VK_API_VERSION=5.199
 VK_NOTIFICATIONS_ENABLED=true
 FRONTEND_URL=https://bloknotservis.ru
 ```
 
-### 4. Database Migration
+### 3. Database Migration
 
 Run the migration to add VK fields to the database:
 
@@ -62,10 +51,11 @@ npx prisma migrate dev --name add_vk_fields
 
 This will add:
 - `customerVkId` field to Appointment model
+- `vkConnectedAt` field to Appointment model
 - `vkReminderSent24h` field to Appointment model
 - `vkReminderSent1h` field to Appointment model
 
-### 5. Restart the Application
+### 4. Restart the Application
 
 ```bash
 pm2 restart bloknot
@@ -106,30 +96,19 @@ GET /api/vk/status
 Authorization: Bearer {session_token}
 ```
 - Returns VK connection status
-- Response: `{ "isVkConnected": true/false, "vkUserId": "123456" }`
+- Response: `{ "isVkConnected": true/false, "vkUserId": "12345" }`
+
+#### Test VK Message
+```
+POST /api/vk/test-message
+Authorization: Bearer {session_token}
+Body: { "vkUserId": "123456789" }
+```
+- Sends a test message to the specified VK user
+- Requires authentication
+- Response: `{ "success": true, "message": "Test message sent successfully" }`
 
 ## Usage
-
-### Client-Side Integration
-
-To add VK login button to your frontend:
-
-```html
-<script src="https://unpkg.com/@vkid/sdk/dist/vkid-sdk.min.js"></script>
-<script>
-  VKID.Widget.create({
-    app_id: YOUR_VK_APP_ID,
-    redirect_url: 'https://bloknotservis.ru/auth/vk/callback',
-    state: 'random_string',
-    code_auth: true,
-    onAuth: (data) => {
-      // Handle successful authentication
-      console.log('VK Auth successful:', data);
-    }
-  }).mount('#vk-login-button');
-</script>
-<div id="vk-login-button"></div>
-```
 
 ### Sending VK Notifications
 
@@ -177,8 +156,6 @@ The system automatically sends:
 
 ### Booking Confirmation
 ```
-Здравствуйте, {customer_name}!
-
 Ваша запись подтверждена ✅
 
 📅 Дата: {date}
@@ -188,6 +165,8 @@ The system automatically sends:
 
 🔄 Перезаписаться:
 {booking_link}
+
+Ждём вас ❤️
 ```
 
 ### 24h Reminder
@@ -264,18 +243,12 @@ The system automatically sends:
    pm2 logs bloknot --lines 50
    ```
 
-3. Verify VK Community Token is valid:
+3. Verify VK Access Token is valid:
    - Token should have "messages" permission
    - Token should not be expired
 
 4. Check VK API status:
    - Visit [VK API Status](https://vk.com/dev/health)
-
-### VK Authentication Fails
-
-1. Verify App ID and Client Secret are correct
-2. Check Callback URL matches VK App settings
-3. Ensure Redirect URI is properly configured
 
 ### User Not Receiving Messages
 
@@ -288,7 +261,7 @@ The system automatically sends:
 
 - Never commit VK secrets to version control
 - Use environment variables for all sensitive data
-- Rotate VK Community Tokens periodically
+- Rotate VK Access Tokens periodically
 - Monitor VK API usage for abuse
 
 ## Support

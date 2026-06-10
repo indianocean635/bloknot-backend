@@ -1708,6 +1708,9 @@
                 <button id="connect-whatsapp-btn" style="padding: 10px 20px; background: #25D366; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; min-width: 200px;">
                   Уведомления в WhatsApp
                 </button>
+                <button id="connect-vk-btn" style="padding: 10px 20px; background: #0077FF; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; min-width: 200px;">
+                  Подключить ВКонтакте
+                </button>
               </div>
             </div>
           </div>
@@ -1723,6 +1726,15 @@
         document.getElementById('connect-whatsapp-btn').addEventListener('click', () => {
           // Show info message about WhatsApp notifications
           alert('WhatsApp уведомления отправлены автоматически на указанный номер телефона.');
+        });
+
+        // Add event listener to connect VK button
+        document.getElementById('connect-vk-btn').addEventListener('click', () => {
+          // Open VK authorization page
+          const vkAppId = process.env.VK_APP_ID || '';
+          const redirectUri = encodeURIComponent(window.location.origin + '/auth/vk/callback');
+          const state = bookingToken;
+          window.open(`https://id.vk.com/auth?app_id=${vkAppId}&redirect_uri=${redirectUri}&state=${state}&response_type=code`, '_blank');
         });
       } catch (error) {
         console.error('Error creating booking:', error);
