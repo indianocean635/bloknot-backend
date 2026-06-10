@@ -384,17 +384,7 @@ async function createPublicAppointment(req, res) {
             customerPhone,
             'booking_confirmation_simple',
             'ru',
-            templateVariables,
-            [
-              {
-                sub_type: 'quick_reply',
-                payload: `cancel_${appointment.id}`
-              },
-              {
-                sub_type: 'quick_reply',
-                payload: `reschedule_${appointment.id}`
-              }
-            ]
+            templateVariables
           )
             .then(() => console.log('[STEP 7.5] [WHATSAPP TEMPLATE] Auto-confirmation sent for booking:', appointment.id))
             .catch((error) => {
