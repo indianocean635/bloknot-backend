@@ -51,6 +51,14 @@ async function exchangeCodeForToken(code, redirectUri) {
   });
 
   try {
+    console.log('[VK TOKEN REQUEST]', {
+      client_id: params.client_id,
+      redirect_uri: params.redirect_uri,
+      code: params.code,
+      device_id: params.device_id,
+      code_verifier: params.code_verifier,
+      grant_type: params.grant_type
+    });
     const response = await axios.post(tokenUrl, null, { params });
     
     console.log('[VK TOKEN RESPONSE]', response?.data);
@@ -69,6 +77,11 @@ async function exchangeCodeForToken(code, redirectUri) {
 
     return response.data;
   } catch (error) {
+    console.error('[VK TOKEN ERROR]', {
+      status: error.response?.status,
+      data: error.response?.data,
+      headers: error.response?.headers
+    });
     console.error('[VK TOKEN ERROR STATUS]', error.response?.status);
     console.error('[VK TOKEN ERROR DATA]', error.response?.data);
     console.error('[VK TOKEN ERROR MESSAGE]', error.message);
@@ -136,6 +149,14 @@ async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier, dev
   });
 
   try {
+    console.log('[VK TOKEN REQUEST]', {
+      client_id: params.client_id,
+      redirect_uri: params.redirect_uri,
+      code: params.code,
+      device_id: params.device_id,
+      code_verifier: params.code_verifier,
+      grant_type: params.grant_type
+    });
     const response = await axios.post(tokenUrl, null, { params });
     
     console.log('[VK TOKEN EXCHANGE PKCE] Response status:', response.status);
@@ -154,6 +175,11 @@ async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier, dev
 
     return response.data;
   } catch (error) {
+    console.error('[VK TOKEN ERROR]', {
+      status: error.response?.status,
+      data: error.response?.data,
+      headers: error.response?.headers
+    });
     console.error('[VK TOKEN ERROR STATUS]', error.response?.status);
     console.error('[VK TOKEN ERROR DATA]', error.response?.data);
     console.error('[VK TOKEN ERROR RESPONSE]', {
