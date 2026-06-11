@@ -155,7 +155,7 @@
         log(`   Code Challenge Method: S256`, 'info');
         log(`   Origin: ${window.location.origin}`, 'info');
         
-        const authUrl = `https://id.vk.com/authorize?client_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&scope=${encodeURIComponent(scope)}&code_challenge=${codeChallenge}&code_challenge_method=S256&response_type=code&prompt=login`;
+        const authUrl = `https://id.vk.com/authorize?client_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&scope=${encodeURIComponent(scope)}&code_challenge=${codeChallenge}&code_challenge_method=S256&response_type=code&prompt=login&lang=ru`;
         
         // Store codeVerifier in sessionStorage
         sessionStorage.setItem('vk_code_verifier', codeVerifier);

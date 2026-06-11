@@ -45,6 +45,7 @@ async function exchangeCodeForToken(code, redirectUri) {
   try {
     const response = await axios.post(tokenUrl, null, { params });
     
+    console.log('[VK TOKEN RESPONSE]', response?.data);
     console.log('[VK TOKEN EXCHANGE] Response status:', response.status);
     console.log('[VK TOKEN EXCHANGE] Response data:', {
       access_token: response.data.access_token ? 'present' : 'missing',
@@ -60,6 +61,9 @@ async function exchangeCodeForToken(code, redirectUri) {
 
     return response.data;
   } catch (error) {
+    console.error('[VK TOKEN ERROR STATUS]', error.response?.status);
+    console.error('[VK TOKEN ERROR DATA]', error.response?.data);
+    console.error('[VK TOKEN ERROR MESSAGE]', error.message);
     console.error('[VK TOKEN EXCHANGE] Request failed:', error.message);
     if (error.response) {
       console.error('[VK TOKEN EXCHANGE] Error response:', {
@@ -171,6 +175,7 @@ async function getVKUserInfo(accessToken, userId) {
  */
 async function vkAuthCallback(req, res) {
   try {
+    console.log('[VK CALLBACK QUERY]', req.query);
     console.log('[VK CALLBACK REQUEST] Full request query:', req.query);
     console.log('[VK CALLBACK REQUEST] Headers:', req.headers);
     
@@ -199,6 +204,10 @@ async function vkAuthCallback(req, res) {
     console.log('[VK CALLBACK] Using redirect URI for token exchange:', redirectUri);
 
     // Exchange code for access token
+    console.log('[VK TOKEN REQUEST]', {
+      client_id: process.env.VK_APP_ID,
+      redirect_uri: redirectUri
+    });
     console.log('[VK CALLBACK] Exchanging code for access token...');
     const tokenData = await exchangeCodeForToken(code, redirectUri);
     

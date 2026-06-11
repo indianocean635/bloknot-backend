@@ -39,7 +39,7 @@ router.get('/debug/auth-url', (req, res) => {
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = codeVerifier.substring(0, 43); // Simplified for debug
   
-  const authUrl = `https://id.vk.com/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}&code_challenge=${codeChallenge}&code_challenge_method=${codeChallengeMethod}&response_type=${responseType}&prompt=login`;
+  const authUrl = `https://id.vk.com/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}&code_challenge=${codeChallenge}&code_challenge_method=${codeChallengeMethod}&response_type=${responseType}&prompt=login&lang=ru`;
   
   res.json({
     appId,
