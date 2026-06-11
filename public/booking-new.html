@@ -1792,7 +1792,7 @@
             }
             
             // Open VK authorization page
-            const redirectUri = window.location.origin + '/auth/vk/callback';
+            const redirectUri = window.location.origin + '/api/vk/callback';
             const encodedRedirectUri = encodeURIComponent(redirectUri);
             const state = bookingToken;
             const scope = 'openid email'; // VK ID required scopes - openid + email
@@ -1807,6 +1807,8 @@
             console.log('[VK AUTH] window.location.origin:', window.location.origin);
             
             const authUrl = `https://id.vk.com/authorize?client_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&scope=${encodeURIComponent(scope)}&code_challenge=${codeChallenge}&code_challenge_method=S256&response_type=code&prompt=login`;
+            
+            console.log('[VK AUTH URL]', authUrl);
             
             // Store codeVerifier in sessionStorage AND in state parameter for callback access
             sessionStorage.setItem('vk_code_verifier', codeVerifier);
