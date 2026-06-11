@@ -75,7 +75,7 @@ async function exchangeCodeForToken(code, redirectUri) {
   }
 }
 
-async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier) {
+async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier, deviceId = null) {
   const clientId = process.env.VK_APP_ID;
   const clientSecret = process.env.VK_CLIENT_SECRET;
 
@@ -103,10 +103,13 @@ async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier) {
     client_secret: clientSecret,
     redirect_uri: redirectUri,
     code: code,
-    code_verifier: codeVerifier  // PKCE parameter
+    code_verifier: codeVerifier,  // PKCE parameter
+    device_id: deviceId,          // VK ID device parameter
+    grant_type: 'authorization_code'  // OAuth grant type
   };
 
   console.log('[VK TOKEN EXCHANGE PKCE] Request URL:', tokenUrl);
+  console.log('[VK TOKEN REQUEST PARAMS]', params);
   console.log('[VK TOKEN EXCHANGE PKCE] Request params:', {
     client_id: params.client_id,
     client_secret: params.client_secret ? '***hidden***' : 'missing',
@@ -203,12 +206,12 @@ async function vkAuthCallback(req, res) {
     const redirectUri = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}/api/vk/callback`;
     console.log('[VK CALLBACK] Using redirect URI for token exchange:', redirectUri);
 
-    // Exchange code for access token
+    // Exchange code for access token with PKCE (legacy GET callback doesn't have code_verifier)
     console.log('[VK TOKEN REQUEST]', {
       client_id: process.env.VK_APP_ID,
       redirect_uri: redirectUri
     });
-    console.log('[VK CALLBACK] Exchanging code for access token...');
+    console.log('[VK CALLBACK] Exchanging code for access token (legacy without PKCE)...');
     const tokenData = await exchangeCodeForToken(code, redirectUri);
     
     console.log('[VK AUTH] Token data received:', {

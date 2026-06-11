@@ -66,7 +66,7 @@
     <p>Произошла ошибка при подключении аккаунта VK.</p>
     
     <div class="error-message" id="errorMessage">
-      Ошибка авторизации. Попробуйте еще раз.
+      Не удалось подключить ВКонтакте. Попробуйте еще раз.
     </div>
     
     <a href="/" class="btn">Перейти на главную</a>
@@ -92,7 +92,12 @@
     console.log('  - code:', code);
 
     if (errorMessage) {
-      document.getElementById('errorMessage').textContent = decodeURIComponent(errorMessage);
+      // Если ошибка в формате JSON, показываем красивое сообщение
+      if (errorMessage.includes('Not found') || errorMessage.includes('{"error"')) {
+        document.getElementById('errorMessage').textContent = 'Не удалось подключить ВКонтакте. Попробуйте еще раз.';
+      } else {
+        document.getElementById('errorMessage').textContent = decodeURIComponent(errorMessage);
+      }
       console.log('[VK ERROR CALLBACK] Backend error message:', errorMessage);
     }
     

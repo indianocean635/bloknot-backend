@@ -86,7 +86,7 @@ router.post('/callback', async (req, res) => {
     // Exchange code for access token with PKCE
     console.log('[VK CALLBACK POST] Exchanging code for access token with PKCE...');
     const { exchangeCodeForTokenWithPKCE } = require('../controllers/vkAuthController');
-    const tokenData = await exchangeCodeForTokenWithPKCE(code, redirectUri, code_verifier);
+    const tokenData = await exchangeCodeForTokenWithPKCE(code, redirectUri, code_verifier, device_id);
     
     console.log('[VK CALLBACK POST] Token data received:', {
       user_id: tokenData.user_id,
