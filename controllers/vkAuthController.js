@@ -28,7 +28,7 @@ async function exchangeCodeForToken(code, redirectUri) {
     throw new Error('VK_APP_ID or VK_CLIENT_SECRET not configured');
   }
 
-  const tokenUrl = 'https://oauth.vk.com/access_token';
+  const tokenUrl = 'https://id.vk.com/oauth2/auth_code';
   const params = {
     client_id: clientId,
     client_secret: clientSecret,
@@ -97,7 +97,7 @@ async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier) {
     throw new Error('Code verifier is required for PKCE');
   }
 
-  const tokenUrl = 'https://oauth.vk.com/access_token';
+  const tokenUrl = 'https://id.vk.com/oauth2/auth_code';
   const params = {
     client_id: clientId,
     client_secret: clientSecret,
