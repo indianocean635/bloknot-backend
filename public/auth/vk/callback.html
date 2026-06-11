@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VK OAuth Callback</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 400px;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .loading {
+      font-size: 24px;
+      color: #007bff;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 15px;
+    }
+    p {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="loading" id="loading">⏳</div>
+    <h1 id="title">Обработка авторизации VK...</h1>
+    <p id="message">Пожалуйста, подождите</p>
+    <div id="error" class="error" style="display: none;"></div>
+  </div>
+
+  <script>
+    console.log('[VK FRONTEND CALLBACK] Page loaded');
+    console.log('[VK FRONTEND CALLBACK] Full URL:', window.location.href);
+    
+    // Получаем параметры из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    const error = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+    const deviceId = urlParams.get('device_id');
+    
+    console.log('[VK FRONTEND CALLBACK] URL Parameters:');
+    console.log('  - code:', code ? 'present' : 'missing');
+    console.log('  - state:', state);
+    console.log('  - error:', error);
+    console.log('  - error_description:', errorDescription);
+    console.log('  - device_id:', deviceId);
+    
+    // Если есть ошибка от VK
+    if (error) {
+      console.error('[VK FRONTEND CALLBACK] VK returned error:', error, errorDescription);
+      document.getElementById('loading').textContent = '❌';
+      document.getElementById('title').textContent = 'Ошибка авторизации VK';
+      document.getElementById('message').style.display = 'none';
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('error').innerHTML = `
+        <strong>Ошибка:</strong> ${error}<br>
+        <strong>Описание:</strong> ${errorDescription || 'Нет описания'}<br>
+        <strong>State:</strong> ${state || 'Нет'}
+      `;
+      return;
+    }
+    
+    // Если нет кода авторизации
+    if (!code) {
+      console.error('[VK FRONTEND CALLBACK] No authorization code received');
+      document.getElementById('loading').textContent = '❌';
+      document.getElementById('title').textContent = 'Ошибка авторизации';
+      document.getElementById('message').textContent = 'Код авторизации не получен';
+      return;
+    }
+    
+    // Отправляем код на backend для обмена на токен
+    console.log('[VK FRONTEND CALLBACK] Sending code to backend...');
+    
+    fetch('/api/vk/callback', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        code: code,
+        state: state,
+        device_id: deviceId
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('[VK FRONTEND CALLBACK] Backend response:', data);
+      
+      if (data.success) {
+        document.getElementById('loading').textContent = '✅';
+        document.getElementById('title').textContent = 'Авторизация успешна!';
+        document.getElementById('message').textContent = 'Ваш аккаунт VK успешно подключен';
+        
+        // Сохраняем токен
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
+          console.log('[VK FRONTEND CALLBACK] Token saved');
+        }
+        
+        // Отправляем сообщение в родительское окно
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'VK_AUTH_SUCCESS',
+            token: data.token,
+            vkUserId: data.vk_user_id,
+            state: state
+          }, '*');
+        }
+        
+        // Закрываем окно через 2 секунды
+        setTimeout(() => {
+          window.close();
+        }, 2000);
+        
+      } else {
+        throw new Error(data.error || 'Unknown error');
+      }
+    })
+    .catch(error => {
+      console.error('[VK FRONTEND CALLBACK] Backend error:', error);
+      document.getElementById('loading').textContent = '❌';
+      document.getElementById('title').textContent = 'Ошибка авторизации';
+      document.getElementById('message').style.display = 'none';
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('error').textContent = error.message;
+    });
+  </script>
+</body>
+</html>

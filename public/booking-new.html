@@ -1751,18 +1751,44 @@
               return;
             }
             
+            // Generate PKCE parameters for VK ID
+            function generateCodeVerifier(length = 128) {
+              const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+              let result = '';
+              for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+              }
+              return result;
+            }
+            
+            function generateCodeChallenge(verifier) {
+              // Simple base64url encoding (for demo - in production use SHA256)
+              return btoa(verifier).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+            }
+            
+            const codeVerifier = generateCodeVerifier();
+            const codeChallenge = generateCodeChallenge(codeVerifier);
+            
             // Open VK authorization page
-            const redirectUri = window.location.origin + '/api/vk/callback';
+            const redirectUri = window.location.origin + '/auth/vk/callback';
             const encodedRedirectUri = encodeURIComponent(redirectUri);
             const state = bookingToken;
+            const scope = 'email phone'; // VK ID required scopes
             
             console.log('[VK AUTH] appId:', config.appId);
             console.log('[VK AUTH] redirectUri (raw):', redirectUri);
             console.log('[VK AUTH] redirectUri (encoded):', encodedRedirectUri);
             console.log('[VK AUTH] state:', state);
+            console.log('[VK AUTH] scope:', scope);
+            console.log('[VK AUTH] codeVerifier:', codeVerifier);
+            console.log('[VK AUTH] codeChallenge:', codeChallenge);
             console.log('[VK AUTH] window.location.origin:', window.location.origin);
             
-            const authUrl = `https://id.vk.com/auth?app_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&response_type=code`;
+            const authUrl = `https://id.vk.com/auth?app_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&scope=${scope}&code_challenge=${codeChallenge}&code_challenge_method=plain&response_type=code`;
+            
+            // Store codeVerifier in sessionStorage for later use
+            sessionStorage.setItem('vk_code_verifier', codeVerifier);
+            sessionStorage.setItem('vk_state', state);
             
             console.log('[VK AUTH] FULL AUTH URL:', authUrl);
             

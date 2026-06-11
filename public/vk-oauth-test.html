@@ -118,7 +118,7 @@
         }
         
         // Build auth URL
-        const redirectUri = window.location.origin + '/api/vk/callback';
+        const redirectUri = window.location.origin + '/auth/vk/callback';
         const encodedRedirectUri = encodeURIComponent(redirectUri);
         const state = 'test-state-' + Date.now();
         

@@ -17,8 +17,68 @@ router.get('/config', (req, res) => {
   });
 });
 
-// VK Auth callback (no auth required - this is the OAuth callback)
+// VK Auth callback GET (direct from VK - for legacy support)
 router.get('/callback', vkAuthCallback);
+
+// VK Auth callback POST (from frontend callback page)
+router.post('/callback', async (req, res) => {
+  try {
+    console.log('[VK CALLBACK POST] Request from frontend callback');
+    console.log('[VK CALLBACK POST] Request body:', req.body);
+    
+    const { code, state, device_id } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Authorization code is required' 
+      });
+    }
+    
+    const redirectUri = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}/auth/vk/callback`;
+    console.log('[VK CALLBACK POST] Using redirect URI for token exchange:', redirectUri);
+    
+    // Exchange code for access token
+    console.log('[VK CALLBACK POST] Exchanging code for access token...');
+    const { exchangeCodeForToken } = require('../controllers/vkAuthController');
+    const tokenData = await exchangeCodeForToken(code, redirectUri);
+    
+    console.log('[VK CALLBACK POST] Token data received:', {
+      user_id: tokenData.user_id,
+      access_token: !!tokenData.access_token
+    });
+    
+    // Get user info
+    const { getVKUserInfo, createOrUpdateVKUser } = require('../controllers/vkAuthController');
+    const userInfo = await getVKUserInfo(tokenData.access_token, tokenData.user_id);
+    
+    console.log('[VK CALLBACK POST] User info received:', {
+      user_id: userInfo.id,
+      first_name: userInfo.first_name,
+      last_name: userInfo.last_name
+    });
+    
+    // Create or update user and get session token
+    const sessionToken = await createOrUpdateVKUser(tokenData.user_id, userInfo, state);
+    
+    console.log('[VK CALLBACK POST] Session token created');
+    
+    // Return success to frontend
+    res.json({
+      success: true,
+      token: sessionToken,
+      vk_user_id: tokenData.user_id,
+      user_info: userInfo
+    });
+    
+  } catch (error) {
+    console.error('[VK CALLBACK POST] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 // Link VK account to existing user (requires auth)
 router.post('/link', requireMagicAuth, linkVKAccount);
