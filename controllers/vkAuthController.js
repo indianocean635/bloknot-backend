@@ -129,6 +129,9 @@ async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier) {
 
     return response.data;
   } catch (error) {
+    console.error('[VK TOKEN EXCHANGE PKCE ERROR]', error.response?.data);
+    console.error('[VK TOKEN EXCHANGE PKCE ERROR]', error.response?.status);
+    console.error('[VK TOKEN EXCHANGE PKCE ERROR]', error.message);
     console.error('[VK TOKEN EXCHANGE PKCE] Request failed:', error.message);
     if (error.response) {
       console.error('[VK TOKEN EXCHANGE PKCE] Error response:', {

@@ -66,11 +66,12 @@
     const deviceId = urlParams.get('device_id');
     
     console.log('[VK FRONTEND CALLBACK] URL Parameters:');
-    console.log('  - code:', code ? 'present' : 'missing');
+    console.log('  - code:', code);
     console.log('  - state:', state);
     console.log('  - error:', error);
     console.log('  - error_description:', errorDescription);
     console.log('  - device_id:', deviceId);
+    console.log('[VK FRONTEND CALLBACK] Full query params:', Object.fromEntries(urlParams));
     
     // Get PKCE verifier from multiple sources
     let codeVerifier = null;
@@ -157,6 +158,7 @@
     };
     
     console.log('[PKCE] Request body includes code_verifier:', !!requestBody.code_verifier);
+    console.log('[VK FRONTEND CALLBACK] Request to backend:', requestBody);
     
     fetch('/api/vk/callback', {
       method: 'POST',
@@ -165,9 +167,12 @@
       },
       body: JSON.stringify(requestBody)
     })
-    .then(response => response.json())
+    .then(response => {
+      console.log('[VK FRONTEND CALLBACK] Backend response status:', response.status);
+      return response.json();
+    })
     .then(data => {
-      console.log('[VK FRONTEND CALLBACK] Backend response:', data);
+      console.log('[VK FRONTEND CALLBACK] Backend response data:', data);
       
       if (data.success) {
         document.getElementById('loading').textContent = '✅';
@@ -200,7 +205,10 @@
       }
     })
     .catch(error => {
-      console.error('[VK FRONTEND CALLBACK] Backend error:', error);
+      console.error('[VK FRONTEND CALLBACK ERROR]', error);
+      console.error('[VK FRONTEND CALLBACK ERROR]', error.message);
+      console.error('[VK FRONTEND CALLBACK ERROR]', error.response?.data);
+      console.error('[VK FRONTEND CALLBACK ERROR]', error.response?.status);
       document.getElementById('loading').textContent = '❌';
       document.getElementById('title').textContent = 'Ошибка авторизации';
       document.getElementById('message').style.display = 'none';

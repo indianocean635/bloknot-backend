@@ -117,6 +117,9 @@ router.post('/callback', async (req, res) => {
     });
     
   } catch (error) {
+    console.error('[VK CALLBACK ERROR]', error.response?.data);
+    console.error('[VK CALLBACK ERROR]', error.response?.status);
+    console.error('[VK CALLBACK ERROR]', error.message);
     console.error('[VK CALLBACK POST] Error:', error);
     res.status(500).json({
       success: false,
