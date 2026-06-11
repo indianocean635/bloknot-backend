@@ -37,6 +37,14 @@ async function exchangeCodeForToken(code, redirectUri) {
   };
 
   console.log('[VK TOKEN EXCHANGE] Request URL:', tokenUrl);
+  console.log('[VK TOKEN REQUEST]', {
+    client_id: params.client_id,
+    redirect_uri: params.redirect_uri,
+    code: params.code ? 'present' : 'missing',
+    device_id: params.device_id || 'missing',
+    code_verifier: params.code_verifier || 'missing',
+    grant_type: params.grant_type || 'missing'
+  });
   console.log('[VK TOKEN EXCHANGE] Request params:', {
     ...params,
     client_secret: clientSecret ? '***hidden***' : 'missing'
@@ -110,18 +118,29 @@ async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier, dev
 
   console.log('[VK TOKEN EXCHANGE PKCE] Request URL:', tokenUrl);
   console.log('[VK TOKEN REQUEST PARAMS]', params);
+  console.log('[VK TOKEN REQUEST]', {
+    client_id: params.client_id,
+    redirect_uri: params.redirect_uri,
+    code: params.code ? 'present' : 'missing',
+    device_id: params.device_id || 'missing',
+    code_verifier: params.code_verifier ? 'present' : 'missing',
+    grant_type: params.grant_type
+  });
   console.log('[VK TOKEN EXCHANGE PKCE] Request params:', {
     client_id: params.client_id,
     client_secret: params.client_secret ? '***hidden***' : 'missing',
     redirect_uri: params.redirect_uri,
     code: params.code ? 'present' : 'missing',
-    code_verifier: params.code_verifier ? 'present' : 'missing'
+    code_verifier: params.code_verifier ? 'present' : 'missing',
+    device_id: params.device_id || 'missing',
+    grant_type: params.grant_type
   });
 
   try {
     const response = await axios.post(tokenUrl, null, { params });
     
     console.log('[VK TOKEN EXCHANGE PKCE] Response status:', response.status);
+    console.log('[VK TOKEN RESPONSE]', response?.data);
     console.log('[VK TOKEN EXCHANGE PKCE] Response data:', {
       access_token: response.data.access_token ? 'present' : 'missing',
       expires_in: response.data.expires_in,
@@ -136,6 +155,8 @@ async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier, dev
 
     return response.data;
   } catch (error) {
+    console.error('[VK TOKEN ERROR STATUS]', error.response?.status);
+    console.error('[VK TOKEN ERROR DATA]', error.response?.data);
     console.error('[VK TOKEN EXCHANGE PKCE ERROR]', error.response?.data);
     console.error('[VK TOKEN EXCHANGE PKCE ERROR]', error.response?.status);
     console.error('[VK TOKEN EXCHANGE PKCE ERROR]', error.message);
