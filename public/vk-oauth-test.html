@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VK OAuth Test - Bloknot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f8f9fa;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .btn {
+      background: #007bff;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+    .log {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 10px 0;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .error { color: #dc3545; }
+    .success { color: #28a745; }
+    .info { color: #17a2b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 VK OAuth Diagnostic Tool</h1>
+    
+    <div>
+      <button class="btn" onclick="testVKConfig()">1. Test VK Config</button>
+      <button class="btn" onclick="testVKAuth()">2. Test VK Auth Flow</button>
+      <button class="btn" onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div id="log" class="log">Click buttons to test VK OAuth flow...</div>
+  </div>
+
+  <script>
+    function log(message, type = 'info') {
+      const logElement = document.getElementById('log');
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type;
+      logElement.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+      logElement.scrollTop = logElement.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('log').innerHTML = '';
+    }
+
+    async function testVKConfig() {
+      log('🔍 Testing VK API config...', 'info');
+      
+      try {
+        const response = await fetch('/api/vk/config');
+        const config = await response.json();
+        
+        log('✅ VK Config Response:', 'success');
+        log(JSON.stringify(config, null, 2), 'info');
+        
+        if (!config.enabled) {
+          log('❌ VK notifications disabled', 'error');
+          return;
+        }
+        
+        if (!config.appId) {
+          log('❌ VK App ID is missing', 'error');
+          return;
+        }
+        
+        log(`✅ VK App ID: ${config.appId}`, 'success');
+        log(`✅ VK Enabled: ${config.enabled}`, 'success');
+        
+      } catch (error) {
+        log(`❌ Error fetching VK config: ${error.message}`, 'error');
+      }
+    }
+
+    async function testVKAuth() {
+      log('🚀 Starting VK OAuth test...', 'info');
+      
+      try {
+        // Get VK config
+        const response = await fetch('/api/vk/config');
+        const config = await response.json();
+        
+        log('📋 VK Config received:', 'info');
+        log(JSON.stringify(config, null, 2), 'info');
+        
+        if (!config.appId) {
+          log('❌ Cannot proceed without App ID', 'error');
+          return;
+        }
+        
+        // Build auth URL
+        const redirectUri = window.location.origin + '/api/vk/callback';
+        const encodedRedirectUri = encodeURIComponent(redirectUri);
+        const state = 'test-state-' + Date.now();
+        
+        log('🔗 Building auth URL...', 'info');
+        log(`   App ID: ${config.appId}`, 'info');
+        log(`   Redirect URI (raw): ${redirectUri}`, 'info');
+        log(`   Redirect URI (encoded): ${encodedRedirectUri}`, 'info');
+        log(`   State: ${state}`, 'info');
+        log(`   Origin: ${window.location.origin}`, 'info');
+        
+        const authUrl = `https://id.vk.com/auth?app_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&response_type=code`;
+        
+        log('🌐 Full Auth URL:', 'info');
+        log(authUrl, 'info');
+        
+        // Test URL validity
+        try {
+          const url = new URL(authUrl);
+          log('✅ Auth URL is valid', 'success');
+          log(`   Domain: ${url.hostname}`, 'info');
+          log(`   Path: ${url.pathname}`, 'info');
+        } catch (urlError) {
+          log(`❌ Invalid auth URL: ${urlError.message}`, 'error');
+          return;
+        }
+        
+        // Open in popup
+        log('🪟 Opening authorization popup...', 'info');
+        const popup = window.open(authUrl, 'vk-oauth-test', 'width=600,height=600');
+        
+        if (!popup) {
+          log('❌ Popup blocked - please allow popups', 'error');
+          return;
+        }
+        
+        log('✅ Popup opened successfully', 'success');
+        
+        // Monitor popup
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed);
+            log('🪟 Popup closed', 'info');
+          }
+        }, 1000);
+        
+        // Listen for messages
+        const messageHandler = (event) => {
+          log('📨 Message received from popup:', 'info');
+          log(JSON.stringify(event.data, null, 2), 'info');
+          
+          if (event.data.type === 'VK_AUTH_SUCCESS') {
+            log('🎉 VK Authorization Successful!', 'success');
+            clearInterval(checkClosed);
+            window.removeEventListener('message', messageHandler);
+          } else if (event.data.type === 'VK_AUTH_ERROR') {
+            log(`❌ VK Authorization Failed: ${event.data.error}`, 'error');
+            clearInterval(checkClosed);
+            window.removeEventListener('message', messageHandler);
+          }
+        };
+        
+        window.addEventListener('message', messageHandler);
+        
+      } catch (error) {
+        log(`❌ VK Auth test failed: ${error.message}`, 'error');
+      }
+    }
+
+    // Log page load
+    log('📄 VK OAuth Test page loaded', 'info');
+    log(`   Origin: ${window.location.origin}`, 'info');
+    log(`   URL: ${window.location.href}`, 'info');
+  </script>
+</body>
+</html>

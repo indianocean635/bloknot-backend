@@ -17,20 +17,58 @@ async function exchangeCodeForToken(code, redirectUri) {
   const clientId = process.env.VK_APP_ID;
   const clientSecret = process.env.VK_CLIENT_SECRET;
 
+  console.log('[VK TOKEN EXCHANGE] Starting token exchange...');
+  console.log('[VK TOKEN EXCHANGE] client_id:', clientId);
+  console.log('[VK TOKEN EXCHANGE] client_secret:', clientSecret ? 'present' : 'missing');
+  console.log('[VK TOKEN EXCHANGE] redirect_uri:', redirectUri);
+  console.log('[VK TOKEN EXCHANGE] code:', code ? 'present' : 'missing');
+
   if (!clientId || !clientSecret) {
+    console.error('[VK TOKEN EXCHANGE] Missing VK_APP_ID or VK_CLIENT_SECRET');
     throw new Error('VK_APP_ID or VK_CLIENT_SECRET not configured');
   }
 
-  const response = await axios.post('https://oauth.vk.com/access_token', null, {
-    params: {
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: redirectUri,
-      code: code
-    }
+  const tokenUrl = 'https://oauth.vk.com/access_token';
+  const params = {
+    client_id: clientId,
+    client_secret: clientSecret,
+    redirect_uri: redirectUri,
+    code: code
+  };
+
+  console.log('[VK TOKEN EXCHANGE] Request URL:', tokenUrl);
+  console.log('[VK TOKEN EXCHANGE] Request params:', {
+    ...params,
+    client_secret: clientSecret ? '***hidden***' : 'missing'
   });
 
-  return response.data;
+  try {
+    const response = await axios.post(tokenUrl, null, { params });
+    
+    console.log('[VK TOKEN EXCHANGE] Response status:', response.status);
+    console.log('[VK TOKEN EXCHANGE] Response data:', {
+      access_token: response.data.access_token ? 'present' : 'missing',
+      expires_in: response.data.expires_in,
+      user_id: response.data.user_id,
+      email: response.data.email
+    });
+
+    if (response.data.error) {
+      console.error('[VK TOKEN EXCHANGE] VK API error:', response.data.error, response.data.error_description);
+      throw new Error(`VK API Error: ${response.data.error} - ${response.data.error_description}`);
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('[VK TOKEN EXCHANGE] Request failed:', error.message);
+    if (error.response) {
+      console.error('[VK TOKEN EXCHANGE] Error response:', {
+        status: error.response.status,
+        data: error.response.data
+      });
+    }
+    throw error;
+  }
 }
 
 /**
@@ -61,15 +99,35 @@ async function getVKUserInfo(accessToken, userId) {
  */
 async function vkAuthCallback(req, res) {
   try {
-    const { code, device_id, state } = req.query;
+    console.log('[VK CALLBACK REQUEST] Full request query:', req.query);
+    console.log('[VK CALLBACK REQUEST] Headers:', req.headers);
+    
+    const { code, device_id, state, error, error_description } = req.query;
+
+    console.log('[VK CALLBACK] Parameters:');
+    console.log('  - code:', code ? 'present' : 'missing');
+    console.log('  - device_id:', device_id);
+    console.log('  - state:', state);
+    console.log('  - error:', error);
+    console.log('  - error_description:', error_description);
+
+    // Check for OAuth errors from VK
+    if (error) {
+      console.error('[VK CALLBACK] VK returned OAuth error:', error, error_description);
+      const frontendUrl = process.env.FRONTEND_URL || 'https://bloknotservis.ru';
+      return res.redirect(`${frontendUrl}/auth/vk/error?error=${encodeURIComponent(error)}&error_description=${encodeURIComponent(error_description || '')}&state=${state || ''}`);
+    }
 
     if (!code) {
+      console.error('[VK CALLBACK] No authorization code received');
       return res.status(400).json({ error: 'Authorization code is required' });
     }
 
     const redirectUri = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}/api/vk/callback`;
+    console.log('[VK CALLBACK] Using redirect URI for token exchange:', redirectUri);
 
     // Exchange code for access token
+    console.log('[VK CALLBACK] Exchanging code for access token...');
     const tokenData = await exchangeCodeForToken(code, redirectUri);
     
     console.log('[VK AUTH] Token data received:', {

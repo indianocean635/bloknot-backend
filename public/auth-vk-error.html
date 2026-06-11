@@ -73,22 +73,52 @@
   </div>
 
   <script>
-    // Получаем сообщение об ошибке из URL
+    console.log('[VK ERROR CALLBACK] Page loaded');
+    console.log('[VK ERROR CALLBACK] Full URL:', window.location.href);
+    
+    // Получаем параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
     const errorMessage = urlParams.get('message');
+    const error = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+    const state = urlParams.get('state');
+    const code = urlParams.get('code');
+    
+    console.log('[VK ERROR CALLBACK] URL Parameters:');
+    console.log('  - message:', errorMessage);
+    console.log('  - error:', error);
+    console.log('  - error_description:', errorDescription);
+    console.log('  - state:', state);
+    console.log('  - code:', code);
 
     if (errorMessage) {
       document.getElementById('errorMessage').textContent = decodeURIComponent(errorMessage);
-      console.log('VK Auth error:', errorMessage);
+      console.log('[VK ERROR CALLBACK] Backend error message:', errorMessage);
+    }
+    
+    if (error) {
+      console.error('[VK ERROR CALLBACK] VK OAuth error:', error, errorDescription);
+      document.getElementById('errorMessage').innerHTML = `
+        <strong>OAuth Error:</strong> ${error}<br>
+        <strong>Description:</strong> ${errorDescription || 'Нет описания'}<br>
+        <strong>Backend Error:</strong> ${errorMessage || 'Нет'}
+      `;
     }
     
     // Если это было в окне бронирования, закрываем окно
     if (window.opener) {
+      console.log('[VK ERROR CALLBACK] Sending error message to opener window');
       window.opener.postMessage({
         type: 'VK_AUTH_ERROR',
-        error: errorMessage || 'Unknown error'
+        error: errorMessage || error || 'Unknown error',
+        errorDescription: errorDescription,
+        state: state
       }, '*');
-      setTimeout(() => window.close(), 3000);
+      
+      setTimeout(() => {
+        console.log('[VK ERROR CALLBACK] Closing popup window');
+        window.close();
+      }, 3000);
     }
   </script>
 </body>

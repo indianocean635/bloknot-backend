@@ -1731,26 +1731,83 @@
         // Add event listener to connect VK button
         document.getElementById('connect-vk-btn').addEventListener('click', async () => {
           try {
+            console.log('[VK AUTH] Starting VK authorization...');
+            
             // Get VK config from server
             const response = await fetch('/api/vk/config');
             const config = await response.json();
             
+            console.log('[VK AUTH] Server config:', config);
+            
             if (!config.enabled) {
+              console.log('[VK AUTH] VK notifications disabled');
               alert('VK уведомления временно недоступны');
               return;
             }
             
             if (!config.appId) {
+              console.log('[VK AUTH] VK App ID is missing');
               alert('VK App ID не настроен. Обратитесь к администратору.');
               return;
             }
             
             // Open VK authorization page
-            const redirectUri = encodeURIComponent(window.location.origin + '/api/vk/callback');
+            const redirectUri = window.location.origin + '/api/vk/callback';
+            const encodedRedirectUri = encodeURIComponent(redirectUri);
             const state = bookingToken;
-            window.open(`https://id.vk.com/auth?app_id=${config.appId}&redirect_uri=${redirectUri}&state=${state}&response_type=code`, '_blank');
+            
+            console.log('[VK AUTH] appId:', config.appId);
+            console.log('[VK AUTH] redirectUri (raw):', redirectUri);
+            console.log('[VK AUTH] redirectUri (encoded):', encodedRedirectUri);
+            console.log('[VK AUTH] state:', state);
+            console.log('[VK AUTH] window.location.origin:', window.location.origin);
+            
+            const authUrl = `https://id.vk.com/auth?app_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&response_type=code`;
+            
+            console.log('[VK AUTH] FULL AUTH URL:', authUrl);
+            
+            // Open in new window
+            const popup = window.open(authUrl, '_blank', 'width=600,height=600');
+            
+            // Monitor popup for closure and messages
+            const checkClosed = setInterval(() => {
+              if (popup.closed) {
+                clearInterval(checkClosed);
+                console.log('[VK AUTH] Popup closed by user');
+              }
+            }, 1000);
+            
+            // Listen for messages from popup
+            window.addEventListener('message', (event) => {
+              console.log('[VK AUTH] Message received from popup:', event.data);
+              
+              if (event.data.type === 'VK_AUTH_SUCCESS') {
+                console.log('[VK AUTH] VK authorization successful!');
+                console.log('[VK AUTH] Token received:', event.data.token ? 'present' : 'missing');
+                console.log('[VK AUTH] VK User ID:', event.data.vk_user_id);
+                console.log('[VK AUTH] State:', event.data.state);
+                
+                // Update UI to show VK connected
+                const vkBtn = document.getElementById('connect-vk-btn');
+                if (vkBtn) {
+                  vkBtn.textContent = '✅ VK подключен';
+                  vkBtn.style.backgroundColor = '#28a745';
+                  vkBtn.disabled = true;
+                }
+                
+                clearInterval(checkClosed);
+              } else if (event.data.type === 'VK_AUTH_ERROR') {
+                console.error('[VK AUTH] VK authorization failed:', event.data.error);
+                console.error('[VK AUTH] Error description:', event.data.errorDescription);
+                console.error('[VK AUTH] State:', event.data.state);
+                
+                alert(`Ошибка VK авторизации: ${event.data.error}`);
+                clearInterval(checkClosed);
+              }
+            });
+            
           } catch (error) {
-            console.error('Error connecting VK:', error);
+            console.error('[VK AUTH] Error connecting VK:', error);
             alert('Ошибка при подключении VK. Попробуйте позже.');
           }
         });
