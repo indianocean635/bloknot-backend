@@ -192,7 +192,7 @@ async function vkAuthCallback(req, res) {
     if (error) {
       console.error('[VK CALLBACK] VK returned OAuth error:', error, error_description);
       const frontendUrl = process.env.FRONTEND_URL || 'https://bloknotservis.ru';
-      return res.redirect(`${frontendUrl}/auth/vk/error?error=${encodeURIComponent(error)}&error_description=${encodeURIComponent(error_description || '')}&state=${state || ''}`);
+      return res.redirect(`${frontendUrl}/auth-vk-error.html?error=${encodeURIComponent(error)}&error_description=${encodeURIComponent(error_description || '')}&state=${state || ''}`);
     }
 
     if (!code) {
@@ -257,11 +257,11 @@ async function vkAuthCallback(req, res) {
 
     // Redirect to frontend with token
     const frontendUrl = process.env.FRONTEND_URL || 'https://bloknotservis.ru';
-    res.redirect(`${frontendUrl}/auth/vk/success?token=${sessionToken}&vk_user_id=${tokenData.user_id}`);
+    res.redirect(`${frontendUrl}/auth-vk-success.html?token=${sessionToken}&vk_user_id=${tokenData.user_id}`);
   } catch (error) {
     console.error('[VK AUTH] Error:', error);
     const frontendUrl = process.env.FRONTEND_URL || 'https://bloknotservis.ru';
-    res.redirect(`${frontendUrl}/auth/vk/error?message=${encodeURIComponent(error.message)}`);
+    res.redirect(`${frontendUrl}/auth-vk-error.html?message=${encodeURIComponent(error.message)}`);
   }
 }
 
