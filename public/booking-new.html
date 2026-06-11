@@ -1774,9 +1774,17 @@
             const codeVerifier = generateCodeVerifier();
             let codeChallenge;
             
+            console.log('[PKCE] Starting PKCE generation...');
+            console.log('[PKCE] verifier length target: 128');
+            console.log('[PKCE] verifier generated:', codeVerifier);
+            console.log('[PKCE] verifier length:', codeVerifier.length);
+            
             // Generate code challenge asynchronously
             try {
               codeChallenge = await generateCodeChallenge(codeVerifier);
+              console.log('[PKCE] challenge generated:', codeChallenge);
+              console.log('[PKCE] challenge length:', codeChallenge.length);
+              console.log('[PKCE] challenge method: S256');
             } catch (error) {
               console.error('[VK AUTH] Error generating code challenge:', error);
               alert('Ошибка генерации параметров безопасности VK');
@@ -1800,9 +1808,17 @@
             
             const authUrl = `https://id.vk.com/auth?app_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&scope=${scope}&code_challenge=${codeChallenge}&code_challenge_method=S256&response_type=code`;
             
-            // Store codeVerifier in sessionStorage for later use
+            // Store codeVerifier in sessionStorage AND in state parameter for callback access
             sessionStorage.setItem('vk_code_verifier', codeVerifier);
             sessionStorage.setItem('vk_state', state);
+            
+            // Also store verifier in parent window for popup access
+            window.vkCodeVerifier = codeVerifier;
+            window.vkState = state;
+            
+            console.log('[PKCE] verifier saved to sessionStorage');
+            console.log('[PKCE] verifier saved to window object for popup');
+            console.log('[VK AUTH] FULL AUTH URL:', authUrl);
             
             console.log('[VK AUTH] FULL AUTH URL:', authUrl);
             

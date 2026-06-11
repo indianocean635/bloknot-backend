@@ -72,6 +72,54 @@
     console.log('  - error_description:', errorDescription);
     console.log('  - device_id:', deviceId);
     
+    // Get PKCE verifier from multiple sources
+    let codeVerifier = null;
+    
+    // Try to get from sessionStorage first
+    try {
+      codeVerifier = sessionStorage.getItem('vk_code_verifier');
+      if (codeVerifier) {
+        console.log('[PKCE] verifier loaded from sessionStorage:', codeVerifier);
+        console.log('[PKCE] verifier length:', codeVerifier.length);
+      }
+    } catch (e) {
+      console.log('[PKCE] sessionStorage not accessible:', e.message);
+    }
+    
+    // Try to get from parent window (popup scenario)
+    if (!codeVerifier && window.opener) {
+      try {
+        codeVerifier = window.opener.vkCodeVerifier;
+        if (codeVerifier) {
+          console.log('[PKCE] verifier loaded from parent window:', codeVerifier);
+          console.log('[PKCE] verifier length:', codeVerifier.length);
+        }
+      } catch (e) {
+        console.log('[PKCE] Parent window not accessible:', e.message);
+      }
+    }
+    
+    // Try to get from localStorage (fallback)
+    if (!codeVerifier) {
+      try {
+        codeVerifier = localStorage.getItem('vk_code_verifier');
+        if (codeVerifier) {
+          console.log('[PKCE] verifier loaded from localStorage:', codeVerifier);
+          console.log('[PKCE] verifier length:', codeVerifier.length);
+        }
+      } catch (e) {
+        console.log('[PKCE] localStorage not accessible:', e.message);
+      }
+    }
+    
+    if (!codeVerifier) {
+      console.error('[PKCE] CRITICAL: No code verifier found!');
+      console.error('[PKCE] This will cause VK token exchange to fail');
+    }
+    
+    console.log('[PKCE] Final verifier status:', codeVerifier ? 'FOUND' : 'MISSING');
+    console.log('[PKCE] callback code:', code ? 'PRESENT' : 'MISSING');
+    
     // Если есть ошибка от VK
     if (error) {
       console.error('[VK FRONTEND CALLBACK] VK returned error:', error, errorDescription);
@@ -98,17 +146,24 @@
     
     // Отправляем код на backend для обмена на токен
     console.log('[VK FRONTEND CALLBACK] Sending code to backend...');
+    console.log('[PKCE] token exchange started');
+    console.log('[PKCE] verifier being sent:', codeVerifier ? 'YES' : 'NO');
+    
+    const requestBody = {
+      code: code,
+      state: state,
+      device_id: deviceId,
+      code_verifier: codeVerifier  // Добавляем verifier в запрос
+    };
+    
+    console.log('[PKCE] Request body includes code_verifier:', !!requestBody.code_verifier);
     
     fetch('/api/vk/callback', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        code: code,
-        state: state,
-        device_id: deviceId
-      })
+      body: JSON.stringify(requestBody)
     })
     .then(response => response.json())
     .then(data => {

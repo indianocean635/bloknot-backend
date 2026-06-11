@@ -26,7 +26,10 @@ router.post('/callback', async (req, res) => {
     console.log('[VK CALLBACK POST] Request from frontend callback');
     console.log('[VK CALLBACK POST] Request body:', req.body);
     
-    const { code, state, device_id } = req.body;
+    const { code, state, device_id, code_verifier } = req.body;
+    
+    console.log('[PKCE] Backend received code_verifier:', code_verifier ? 'PRESENT' : 'MISSING');
+    console.log('[PKCE] Backend code_verifier length:', code_verifier ? code_verifier.length : 0);
     
     if (!code) {
       return res.status(400).json({ 
@@ -35,13 +38,20 @@ router.post('/callback', async (req, res) => {
       });
     }
     
+    if (!code_verifier) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Code verifier is required for PKCE' 
+      });
+    }
+    
     const redirectUri = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}/auth/vk/callback`;
     console.log('[VK CALLBACK POST] Using redirect URI for token exchange:', redirectUri);
     
-    // Exchange code for access token
-    console.log('[VK CALLBACK POST] Exchanging code for access token...');
-    const { exchangeCodeForToken } = require('../controllers/vkAuthController');
-    const tokenData = await exchangeCodeForToken(code, redirectUri);
+    // Exchange code for access token with PKCE
+    console.log('[VK CALLBACK POST] Exchanging code for access token with PKCE...');
+    const { exchangeCodeForTokenWithPKCE } = require('../controllers/vkAuthController');
+    const tokenData = await exchangeCodeForTokenWithPKCE(code, redirectUri, code_verifier);
     
     console.log('[VK CALLBACK POST] Token data received:', {
       user_id: tokenData.user_id,

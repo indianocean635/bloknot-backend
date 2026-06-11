@@ -71,6 +71,75 @@ async function exchangeCodeForToken(code, redirectUri) {
   }
 }
 
+async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier) {
+  const clientId = process.env.VK_APP_ID;
+  const clientSecret = process.env.VK_CLIENT_SECRET;
+
+  console.log('[VK TOKEN EXCHANGE PKCE] Starting PKCE token exchange...');
+  console.log('[VK TOKEN EXCHANGE PKCE] client_id:', clientId);
+  console.log('[VK TOKEN EXCHANGE PKCE] client_secret:', clientSecret ? 'present' : 'missing');
+  console.log('[VK TOKEN EXCHANGE PKCE] redirect_uri:', redirectUri);
+  console.log('[VK TOKEN EXCHANGE PKCE] code:', code ? 'present' : 'missing');
+  console.log('[VK TOKEN EXCHANGE PKCE] code_verifier:', codeVerifier ? 'present' : 'missing');
+  console.log('[VK TOKEN EXCHANGE PKCE] code_verifier length:', codeVerifier ? codeVerifier.length : 0);
+
+  if (!clientId || !clientSecret) {
+    console.error('[VK TOKEN EXCHANGE PKCE] Missing VK_APP_ID or VK_CLIENT_SECRET');
+    throw new Error('VK_APP_ID or VK_CLIENT_SECRET not configured');
+  }
+
+  if (!codeVerifier) {
+    console.error('[VK TOKEN EXCHANGE PKCE] Missing code verifier');
+    throw new Error('Code verifier is required for PKCE');
+  }
+
+  const tokenUrl = 'https://oauth.vk.com/access_token';
+  const params = {
+    client_id: clientId,
+    client_secret: clientSecret,
+    redirect_uri: redirectUri,
+    code: code,
+    code_verifier: codeVerifier  // PKCE parameter
+  };
+
+  console.log('[VK TOKEN EXCHANGE PKCE] Request URL:', tokenUrl);
+  console.log('[VK TOKEN EXCHANGE PKCE] Request params:', {
+    client_id: params.client_id,
+    client_secret: params.client_secret ? '***hidden***' : 'missing',
+    redirect_uri: params.redirect_uri,
+    code: params.code ? 'present' : 'missing',
+    code_verifier: params.code_verifier ? 'present' : 'missing'
+  });
+
+  try {
+    const response = await axios.post(tokenUrl, null, { params });
+    
+    console.log('[VK TOKEN EXCHANGE PKCE] Response status:', response.status);
+    console.log('[VK TOKEN EXCHANGE PKCE] Response data:', {
+      access_token: response.data.access_token ? 'present' : 'missing',
+      expires_in: response.data.expires_in,
+      user_id: response.data.user_id,
+      email: response.data.email
+    });
+
+    if (response.data.error) {
+      console.error('[VK TOKEN EXCHANGE PKCE] VK API error:', response.data.error, response.data.error_description);
+      throw new Error(`VK API Error: ${response.data.error} - ${response.data.error_description}`);
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('[VK TOKEN EXCHANGE PKCE] Request failed:', error.message);
+    if (error.response) {
+      console.error('[VK TOKEN EXCHANGE PKCE] Error response:', {
+        status: error.response.status,
+        data: error.response.data
+      });
+    }
+    throw error;
+  }
+}
+
 /**
  * Get VK user info
  * @param {string} accessToken - VK access token
@@ -289,5 +358,7 @@ module.exports = {
   vkAuthCallback,
   linkVKAccount,
   unlinkVKAccount,
-  getVKStatus
+  getVKStatus,
+  exchangeCodeForToken,
+  exchangeCodeForTokenWithPKCE
 };
