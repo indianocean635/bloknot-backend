@@ -67,7 +67,7 @@ async function vkAuthCallback(req, res) {
       return res.status(400).json({ error: 'Authorization code is required' });
     }
 
-    const redirectUri = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}/auth/vk/callback`;
+    const redirectUri = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}/api/vk/callback`;
 
     // Exchange code for access token
     const tokenData = await exchangeCodeForToken(code, redirectUri);
@@ -138,7 +138,7 @@ async function linkVKAccount(req, res) {
       return res.status(400).json({ error: 'Authorization code is required' });
     }
 
-    const redirectUri = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}/auth/vk/callback`;
+    const redirectUri = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}/api/vk/callback`;
 
     // Exchange code for access token
     const tokenData = await exchangeCodeForToken(code, redirectUri);
