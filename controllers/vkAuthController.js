@@ -119,12 +119,11 @@ async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier, dev
   console.log('[VK TOKEN EXCHANGE PKCE] Request URL:', tokenUrl);
   console.log('[VK TOKEN REQUEST PARAMS]', params);
   console.log('[VK TOKEN REQUEST]', {
-    client_id: params.client_id,
-    redirect_uri: params.redirect_uri,
-    code: params.code ? 'present' : 'missing',
-    device_id: params.device_id || 'missing',
-    code_verifier: params.code_verifier ? 'present' : 'missing',
-    grant_type: params.grant_type
+    code: code,
+    device_id: deviceId,
+    code_verifier: codeVerifier,
+    redirect_uri: redirectUri,
+    client_id: clientId
   });
   console.log('[VK TOKEN EXCHANGE PKCE] Request params:', {
     client_id: params.client_id,
@@ -157,6 +156,11 @@ async function exchangeCodeForTokenWithPKCE(code, redirectUri, codeVerifier, dev
   } catch (error) {
     console.error('[VK TOKEN ERROR STATUS]', error.response?.status);
     console.error('[VK TOKEN ERROR DATA]', error.response?.data);
+    console.error('[VK TOKEN ERROR RESPONSE]', {
+      status: error.response?.status,
+      data: error.response?.data,
+      headers: error.response?.headers
+    });
     console.error('[VK TOKEN EXCHANGE PKCE ERROR]', error.response?.data);
     console.error('[VK TOKEN EXCHANGE PKCE ERROR]', error.response?.status);
     console.error('[VK TOKEN EXCHANGE PKCE ERROR]', error.message);
