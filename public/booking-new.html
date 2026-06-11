@@ -1751,7 +1751,7 @@
               return;
             }
             
-            // Generate PKCE parameters for VK ID
+            // Generate PKCE parameters for VK ID (RFC 7636 compliant)
             function generateCodeVerifier(length = 128) {
               const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
               let result = '';
@@ -1761,13 +1761,27 @@
               return result;
             }
             
-            function generateCodeChallenge(verifier) {
-              // Simple base64url encoding (for demo - in production use SHA256)
-              return btoa(verifier).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+            async function generateCodeChallenge(verifier) {
+              // SHA256 hash then base64url encoding (VK ID requirement)
+              const encoder = new TextEncoder();
+              const data = encoder.encode(verifier);
+              const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+              const hashArray = Array.from(new Uint8Array(hashBuffer));
+              const base64String = btoa(String.fromCharCode(...hashArray));
+              return base64String.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
             }
             
             const codeVerifier = generateCodeVerifier();
-            const codeChallenge = generateCodeChallenge(codeVerifier);
+            let codeChallenge;
+            
+            // Generate code challenge asynchronously
+            try {
+              codeChallenge = await generateCodeChallenge(codeVerifier);
+            } catch (error) {
+              console.error('[VK AUTH] Error generating code challenge:', error);
+              alert('Ошибка генерации параметров безопасности VK');
+              return;
+            }
             
             // Open VK authorization page
             const redirectUri = window.location.origin + '/auth/vk/callback';
@@ -1784,7 +1798,7 @@
             console.log('[VK AUTH] codeChallenge:', codeChallenge);
             console.log('[VK AUTH] window.location.origin:', window.location.origin);
             
-            const authUrl = `https://id.vk.com/auth?app_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&scope=${scope}&code_challenge=${codeChallenge}&code_challenge_method=plain&response_type=code`;
+            const authUrl = `https://id.vk.com/auth?app_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&scope=${scope}&code_challenge=${codeChallenge}&code_challenge_method=S256&response_type=code`;
             
             // Store codeVerifier in sessionStorage for later use
             sessionStorage.setItem('vk_code_verifier', codeVerifier);
