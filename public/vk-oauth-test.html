@@ -142,7 +142,7 @@
         const redirectUri = window.location.origin + '/auth/vk/callback';
         const encodedRedirectUri = encodeURIComponent(redirectUri);
         const state = 'test-state-' + Date.now();
-        const scope = 'email phone'; // VK ID required scopes
+        const scope = 'email'; // VK ID required scope - попробуем сначала только email
         
         log('🔗 Building auth URL...', 'info');
         log(`   App ID: ${config.appId}`, 'info');
@@ -155,7 +155,7 @@
         log(`   Code Challenge Method: S256`, 'info');
         log(`   Origin: ${window.location.origin}`, 'info');
         
-        const authUrl = `https://id.vk.com/auth?app_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&scope=${scope}&code_challenge=${codeChallenge}&code_challenge_method=S256&response_type=code`;
+        const authUrl = `https://id.vk.com/auth?client_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&scope=${encodeURIComponent(scope)}&code_challenge=${codeChallenge}&code_challenge_method=S256&response_type=code`;
         
         // Store codeVerifier in sessionStorage
         sessionStorage.setItem('vk_code_verifier', codeVerifier);
