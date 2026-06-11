@@ -17,6 +17,41 @@ router.get('/config', (req, res) => {
   });
 });
 
+// Debug auth URL endpoint
+router.get('/debug/auth-url', (req, res) => {
+  const appId = process.env.VK_APP_ID || '';
+  const redirectUri = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}/auth/vk/callback`;
+  const scope = 'openid email';
+  const responseType = 'code';
+  const state = 'debug-state-' + Date.now();
+  const codeChallengeMethod = 'S256';
+  
+  // Generate sample PKCE
+  function generateCodeVerifier(length = 128) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+  
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = codeVerifier.substring(0, 43); // Simplified for debug
+  
+  const authUrl = `https://id.vk.com/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scope)}&code_challenge=${codeChallenge}&code_challenge_method=${codeChallengeMethod}&response_type=${responseType}&prompt=login`;
+  
+  res.json({
+    appId,
+    redirectUri,
+    scope,
+    responseType,
+    state,
+    codeChallengeMethod,
+    authUrl
+  });
+});
+
 // VK Auth callback GET (direct from VK - for legacy support)
 router.get('/callback', vkAuthCallback);
 
