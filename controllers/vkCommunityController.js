@@ -120,18 +120,18 @@ async function linkVKByCode(code, vkUserId) {
  */
 async function sendVKMessage(businessId, vkUserId, messageText, messageType) {
     try {
-        console.log('[VK SEND MESSAGE] Sending message to user:', vkUserId);
+        console.log('[VK SEND MESSAGE] Sending message to user:', vkUserId, 'type:', messageType);
         
-        // Получаем настройки бизнеса
-        const settings = await prisma.vKBusinessSettings.findFirst({
-            where: {
-                businessId: businessId,
-                isActive: true
-            }
-        });
+        // Временно используем environment variables вместо таблицы настроек
+        const accessToken = process.env.VK_ACCESS_TOKEN;
+        const groupId = process.env.VK_GROUP_ID;
         
-        if (!settings) {
-            throw new Error('VK settings not configured for business');
+        if (!accessToken) {
+            throw new Error('VK_ACCESS_TOKEN not configured');
+        }
+        
+        if (!groupId) {
+            throw new Error('VK_GROUP_ID not configured');
         }
         
         // Отправляем сообщение через VK API
@@ -142,13 +142,16 @@ async function sendVKMessage(businessId, vkUserId, messageText, messageType) {
             user_id: vkUserId,
             message: messageText,
             random_id: Math.floor(Math.random() * 1000000),
-            access_token: settings.vkGroupToken,
-            v: '5.199'
+            access_token: accessToken,
+            v: process.env.VK_API_VERSION || '5.199'
         };
+        
+        console.log('[VK SEND MESSAGE] API params:', { user_id: vkUserId, message_length: messageText.length });
         
         const response = await axios.post(messageUrl, null, { params });
         
         if (response.data.error) {
+            console.error('[VK SEND MESSAGE] VK API Error:', response.data.error);
             throw new Error(`VK API Error: ${response.data.error.error_msg}`);
         }
         

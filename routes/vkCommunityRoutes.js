@@ -293,30 +293,38 @@ router.post('/callback', async (req, res) => {
                         customerName: appointment.customerName
                     });
 
-                    // Отправляем подтверждение
-                    await sendVKMessage(
-                        businessId,
-                        fromId,
-                        `✅ ВКонтакте успешно подключён!\n\nНапоминания о записях будут приходить сюда.`,
-                        'link_success'
-                    );
-
-                    if (appointment) {
-                        const appointmentDate = new Date(appointment.startsAt);
+                    // Отправляем подтверждение с try/catch
+                    try {
                         await sendVKMessage(
                             businessId,
                             fromId,
-                            `✅ Запись подтверждена\n\n` +
-                            `📋 Услуга: ${appointment.service.name}\n` +
-                            `👨‍💼 Специалист: ${appointment.master.name}\n` +
-                            `📅 Дата: ${appointmentDate.toLocaleDateString('ru-RU')}\n` +
-                            `⏰ Время: ${appointmentDate.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}\n` +
-                            `💰 Стоимость: ${appointment.service.price} руб.`,
-                            'appointment_info'
+                            `✅ ВКонтакте успешно подключен к вашей записи.\n\nТеперь вы будете получать уведомления и напоминания.`,
+                            'link_success'
                         );
+                    } catch (msgError) {
+                        console.error('[VK SEND ERROR] Failed to send confirmation:', msgError);
                     }
 
-                    console.log('[VK NOTIFICATION SENT] Appointment details sent to user');
+                    // Отправляем информацию о записи с try/catch
+                    if (appointment) {
+                        try {
+                            const appointmentDate = new Date(appointment.startsAt);
+                            await sendVKMessage(
+                                businessId,
+                                fromId,
+                                `✅ Запись подтверждена\n\n` +
+                                `📋 Услуга: ${appointment.service.name}\n` +
+                                `👨‍💼 Специалист: ${appointment.master.name}\n` +
+                                `📅 Дата: ${appointmentDate.toLocaleDateString('ru-RU')}\n` +
+                                `⏰ Время: ${appointmentDate.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}\n` +
+                                `💰 Стоимость: ${appointment.service.price} руб.`,
+                                'appointment_info'
+                            );
+                            console.log('[VK NOTIFICATION SENT] Appointment details sent to user');
+                        } catch (msgError) {
+                            console.error('[VK SEND ERROR] Failed to send appointment info:', msgError);
+                        }
+                    }
 
                 } catch (error) {
                     console.error('[VK CODE ERROR] Error processing VK code:', error);
