@@ -262,12 +262,6 @@ async function handleVKCallback(body, businessId) {
         const { type, object } = body;
         
         switch (type) {
-            case 'confirmation':
-                // Возвращаем код подтверждения
-                const settings = await prisma.vKBusinessSettings.findUnique({
-                    where: { businessId: businessId }
-                });
-                return settings?.vkConfirmationCode || null;
                 
             case 'message_new':
                 // Обработка нового сообщения

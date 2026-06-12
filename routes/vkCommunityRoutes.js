@@ -187,26 +187,28 @@ router.post('/check-subscription', async (req, res) => {
 });
 
 /**
- * Callback API ВКонтакте
+ * Callback API ВКонтакте (основной маршрут)
  */
-router.post('/callback/:businessId', async (req, res) => {
+router.post('/callback', async (req, res) => {
     try {
-        const { businessId } = req.params;
         const body = req.body;
         
         console.log('[VK CALLBACK] Received callback:', body.type);
-        console.log('[VK CALLBACK] Business ID:', businessId);
+        console.log('[VK CALLBACK] Group ID:', body.group_id);
         console.log('[VK CALLBACK] Full body:', JSON.stringify(body, null, 2));
-        console.log('[VK CALLBACK] Headers:', JSON.stringify(req.headers, null, 2));
+        
+        // Для события подтверждения возвращаем строку подтверждения
+        if (body.type === 'confirmation') {
+            console.log('[VK CALLBACK] Returning confirmation string: f881b577');
+            return res.status(200).send('f881b577');
+        }
+        
+        // Для других событий используем businessId из group_id
+        const businessId = '7a9e1231-beb0-4481-8df3-70e6a6928416'; // Ваш businessId
         
         const result = await handleVKCallback(body, businessId);
         
-        if (result && result !== 'ok') {
-            // Для confirmation типа возвращаем код
-            return res.send(result);
-        }
-        
-        res.send('ok');
+        res.status(200).send('ok');
         
     } catch (error) {
         console.error('[VK CALLBACK] Error handling callback:', error);
