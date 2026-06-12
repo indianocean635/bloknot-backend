@@ -1731,7 +1731,9 @@
         // Add event listener to connect VK button
         document.getElementById('connect-vk-btn').addEventListener('click', async () => {
           try {
+            console.log('[VK MOBILE] button clicked');
             console.log('[VK AUTH] Starting VK authorization...');
+            console.log('[VK MOBILE] starting auth');
             
             // Get VK config from server
             const response = await fetch('/api/vk/config');
@@ -1809,6 +1811,7 @@
             const authUrl = `https://id.vk.com/authorize?client_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&scope=${encodeURIComponent(scope)}&code_challenge=${codeChallenge}&code_challenge_method=S256&response_type=code&prompt=login&lang=ru`;
             
             console.log('[VK AUTH URL]', authUrl);
+            console.log('[VK MOBILE] auth url', authUrl);
             
             // Store codeVerifier in sessionStorage AND in state parameter for callback access
             sessionStorage.setItem('vk_code_verifier', codeVerifier);
@@ -1825,19 +1828,40 @@
             console.log('[VK AUTH] FULL AUTH URL:', authUrl);
             console.log('[VK DEBUG] authUrl:', authUrl);
             
-            // Open in new window
-            const popup = window.open(authUrl, '_blank', 'width=600,height=600');
+            // Check if mobile device and use fallback
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
-            // Monitor popup for closure and messages
-            const checkClosed = setInterval(() => {
-              if (popup.closed) {
-                clearInterval(checkClosed);
-                console.log('[VK AUTH] Popup closed by user');
+            console.log('[VK MOBILE] is mobile device:', isMobile);
+            console.log('[VK MOBILE] user agent:', navigator.userAgent);
+            
+            if (isMobile) {
+              console.log('[VK MOBILE] using mobile fallback - direct redirect');
+              window.location.href = authUrl;
+            } else {
+              console.log('[VK MOBILE] using desktop popup');
+              // Open in new window
+              const popup = window.open(authUrl, '_blank', 'width=600,height=600');
+              
+              if (!popup) {
+                console.log('[VK MOBILE] popup blocked, falling back to direct redirect');
+                window.location.href = authUrl;
+                return;
               }
-            }, 1000);
+              
+              console.log('[VK MOBILE] popup opened successfully');
+              
+              // Monitor popup for closure and messages
+              const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                  clearInterval(checkClosed);
+                  console.log('[VK AUTH] Popup closed by user');
+                }
+              }, 1000);
+            }
             
-            // Listen for messages from popup
-            window.addEventListener('message', (event) => {
+            // Listen for messages from popup (desktop only)
+            if (!isMobile) {
+              window.addEventListener('message', (event) => {
               console.log('[VK AUTH] Message received from popup:', event.data);
               
               if (event.data.type === 'VK_AUTH_SUCCESS') {
@@ -1864,6 +1888,7 @@
                 clearInterval(checkClosed);
               }
             });
+            }
             
           } catch (error) {
             console.error('[VK AUTH] Error connecting VK:', error);
