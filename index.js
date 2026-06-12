@@ -262,11 +262,16 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not found', path: req.originalUrl });
 });
 
+// Start VK polling service
+const vkPollingService = require('./services/vkPollingService');
+vkPollingService.start();
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 MINIMAL SERVER running on port ${PORT}`);
   console.log(`📊 Health: http://localhost:${PORT}/health`);
   console.log(`🔐 Auth: http://localhost:${PORT}/api/auth/magic-link`);
+  console.log(`📱 VK Polling Service started (alternative to Callback API)`);
   console.log(`🔐 Send: http://localhost:${PORT}/api/auth/send-link`);
   console.log(`🔐 Verify: http://localhost:${PORT}/auth/verify?token=TOKEN`);
   console.log(`🔐 Magic: http://localhost:${PORT}/auth/magic-link?token=TOKEN`);
