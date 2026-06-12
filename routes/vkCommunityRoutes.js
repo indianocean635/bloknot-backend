@@ -253,10 +253,21 @@ router.post('/callback', async (req, res) => {
                 console.log('[VK CODE RECEIVED] Processing VK code:', text);
                 
                 try {
-                    // Используем linkVKByCode для обработки кода
-                    const result = await linkVKByCode(text, fromId);
+                    // Временно ищем запись по bookingToken
+                    const bookingToken = text.replace('VK-', 'vk'); // VK-XXXXXX -> vkXXXXXX
+                    const appointment = await prisma.appointment.findFirst({
+                        where: {
+                            bookingToken,
+                            status: 'PENDING'
+                        },
+                        include: {
+                            service: true,
+                            master: true,
+                            business: true
+                        }
+                    });
 
-                    if (!result.success) {
+                    if (!appointment) {
                         console.log('[VK CODE NOT FOUND] Code not found or used:', text);
                         await sendVKMessage(
                             businessId,
@@ -267,9 +278,19 @@ router.post('/callback', async (req, res) => {
                         return;
                     }
 
+                    // Обновляем запись с VK User ID
+                    await prisma.appointment.update({
+                        where: { id: appointment.id },
+                        data: {
+                            vkUserId: fromId,
+                            vkConnectedAt: new Date()
+                        }
+                    });
+
                     console.log('[VK USER LINKED] VK user linked to appointment:', {
                         vkUserId: fromId,
-                        customerName: result.customerName
+                        appointmentId: appointment.id,
+                        customerName: appointment.customerName
                     });
 
                     // Отправляем подтверждение
@@ -279,20 +300,6 @@ router.post('/callback', async (req, res) => {
                         `✅ ВКонтакте успешно подключён!\n\nНапоминания о записях будут приходить сюда.`,
                         'link_success'
                     );
-
-                    // Получаем информацию о записи из linkCode
-                    const linkCode = await getVKLinkCode(text);
-                    let appointment = null;
-                    
-                    if (linkCode) {
-                        appointment = await prisma.appointment.findUnique({
-                            where: { id: linkCode.appointmentId },
-                            include: {
-                                service: true,
-                                master: true
-                            }
-                        });
-                    }
 
                     if (appointment) {
                         const appointmentDate = new Date(appointment.startsAt);

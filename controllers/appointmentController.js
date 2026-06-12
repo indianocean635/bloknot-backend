@@ -881,17 +881,23 @@ async function createVKLinkCode(req, res) {
       });
     }
     
-    // Создаем VK код привязки через новый контроллер
-    const { createVKLinkCode } = require('./vkCommunityController');
-    const linkCode = await createVKLinkCode(
-      appointment.businessId,
-      appointment.id,
-      appointment.customerName,
-      appointment.customerPhone
-    );
+    // Временно создаем VK код без отдельной таблицы
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'VK-';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
     
-    const code = linkCode.code;
-    const expiresAt = linkCode.expiresAt;
+    // Сохраняем код в bookingToken для поиска
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { 
+        bookingToken: code.replace('VK-', 'vk'), // vkXXXXXX
+        vkCodeGenerated: true
+      }
+    });
+    
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 часа
     
     res.json({
       success: true,
@@ -933,17 +939,23 @@ async function createVKLinkCodeByToken(req, res) {
       });
     }
     
-    // Создаем VK код привязки через новый контроллер
-    const { createVKLinkCode } = require('./vkCommunityController');
-    const linkCode = await createVKLinkCode(
-      appointment.businessId,
-      appointment.id,
-      appointment.customerName,
-      appointment.customerPhone
-    );
+    // Временно создаем VK код без отдельной таблицы
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'VK-';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
     
-    const code = linkCode.code;
-    const expiresAt = linkCode.expiresAt;
+    // Сохраняем код в bookingToken для поиска
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { 
+        bookingToken: code.replace('VK-', 'vk'), // vkXXXXXX
+        vkCodeGenerated: true
+      }
+    });
+    
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 часа
     
     res.json({
       success: true,
