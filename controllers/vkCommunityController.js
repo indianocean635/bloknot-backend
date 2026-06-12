@@ -258,19 +258,16 @@ async function hasVKSubscriber(businessId, customerPhone) {
  * Обработка Callback API ВКонтакте
  */
 async function handleVKCallback(body, businessId) {
-    const connection = await pool.getConnection();
-    
     try {
         const { type, object } = body;
         
         switch (type) {
             case 'confirmation':
                 // Возвращаем код подтверждения
-                const [settings] = await connection.execute(
-                    'SELECT vkConfirmationCode FROM vk_business_settings WHERE businessId = ?',
-                    [businessId]
-                );
-                return settings.length > 0 ? settings[0].vkConfirmationCode : null;
+                const settings = await prisma.vKBusinessSettings.findUnique({
+                    where: { businessId: businessId }
+                });
+                return settings?.vkConfirmationCode || null;
                 
             case 'message_new':
                 // Обработка нового сообщения
@@ -308,8 +305,9 @@ async function handleVKCallback(body, businessId) {
                 return 'ok';
         }
         
-    } finally {
-        connection.release();
+    } catch (error) {
+        console.error('[VK CALLBACK] Error:', error);
+        return 'ok';
     }
 }
 
