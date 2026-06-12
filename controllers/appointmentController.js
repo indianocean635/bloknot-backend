@@ -827,7 +827,12 @@ async function getPublicAppointmentByToken(req, res) {
       return res.status(410).json({ error: "Appointment already cancelled" });
     }
 
-    res.json(appointment);
+    res.json({
+      success: true,
+      data: {
+        appointment: appointment
+      }
+    });
   } catch (error) {
     console.error('❌ getPublicAppointmentByToken error:', error);
     res.status(500).json({ error: 'Server error' });
