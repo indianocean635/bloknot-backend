@@ -16,81 +16,52 @@ function generateLinkCode() {
  * Создание кода привязки ВКонтакте
  */
 async function createVKLinkCode(businessId, appointmentId, customerName, customerPhone) {
-    const connection = await pool.getConnection();
-    
     try {
-        // Проверяем существующий код
-        const [existing] = await connection.execute(
-            'SELECT id FROM vk_link_codes WHERE appointmentId = ? AND isUsed = FALSE AND expiresAt > NOW()',
-            [appointmentId]
-        );
-        
-        if (existing.length > 0) {
-            // Получаем существующий код
-            const [codeRow] = await connection.execute(
-                'SELECT code, expiresAt FROM vk_link_codes WHERE appointmentId = ? AND isUsed = FALSE',
-                [appointmentId]
-            );
-            return codeRow[0];
-        }
-        
-        // Генерируем новый код
+        // Генерируем уникальный код
         let code;
         let attempts = 0;
-        const maxAttempts = 10;
-        
         do {
             code = generateLinkCode();
-            const [check] = await connection.execute(
-                'SELECT id FROM vk_link_codes WHERE code = ?',
-                [code]
-            );
-            if (check.length === 0) break;
             attempts++;
-        } while (attempts < maxAttempts);
+            if (attempts > 10) {
+                throw new Error('Failed to generate unique code');
+            }
+        } while (await prisma.vKLinkCode.findUnique({ where: { code } }));
         
-        if (attempts >= maxAttempts) {
-            throw new Error('Failed to generate unique code');
-        }
+        // Создаем запись в базе
+        const linkCode = await prisma.vKLinkCode.create({
+            data: {
+                code,
+                businessId,
+                appointmentId,
+                customerName,
+                customerPhone,
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 часа
+            }
+        });
         
-        // Срок действия - 24 часа
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        return linkCode;
         
-        // Сохраняем код
-        const [result] = await connection.execute(
-            `INSERT INTO vk_link_codes 
-             (businessId, appointmentId, customerName, customerPhone, code, expiresAt) 
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [businessId, appointmentId, customerName, customerPhone, code, expiresAt]
-        );
-        
-        return {
-            id: result.insertId,
-            code,
-            expiresAt
-        };
-        
-    } finally {
-        connection.release();
+    } catch (error) {
+        console.error('[VK CREATE CODE] Error:', error);
+        throw error;
     }
 }
 
 /**
- * Получение кода привязки по appointmentId
+ * Получение кода привязки
  */
-async function getVKLinkCode(appointmentId) {
-    const connection = await pool.getConnection();
-    
+async function getVKLinkCode(code) {
     try {
-        const [rows] = await connection.execute(
-            'SELECT * FROM vk_link_codes WHERE appointmentId = ? AND isUsed = FALSE AND expiresAt > NOW()',
-            [appointmentId]
-        );
+        const linkCode = await prisma.vKLinkCode.findUnique({
+            where: { code }
+        });
         
-        return rows.length > 0 ? rows[0] : null;
+        return linkCode;
         
-    } finally {
-        connection.release();
+    } catch (error) {
+        console.error('[VK GET CODE] Error:', error);
+        throw error;
     }
 }
 
@@ -98,46 +69,47 @@ async function getVKLinkCode(appointmentId) {
  * Привязка ВКонтакте по коду
  */
 async function linkVKByCode(code, vkUserId) {
-    const connection = await pool.getConnection();
-    
     try {
-        await connection.beginTransaction();
+        console.log('[VK LINK CODE] Processing code:', code, 'for user:', vkUserId);
         
-        // Ищем код
-        const [codeRows] = await connection.execute(
-            'SELECT * FROM vk_link_codes WHERE code = ? AND isUsed = FALSE AND expiresAt > NOW()',
-            [code]
-        );
+        // Ищем код в таблице VKLinkCode
+        const linkCode = await prisma.vKLinkCode.findFirst({
+            where: {
+                code: code,
+                isUsed: false,
+                expiresAt: {
+                    gt: new Date()
+                }
+            }
+        });
         
-        if (codeRows.length === 0) {
+        if (!linkCode) {
+            console.log('[VK LINK CODE] Code not found or expired:', code);
             throw new Error('Invalid or expired code');
         }
         
-        const linkCode = codeRows[0];
+        console.log('[VK LINK CODE] Found code:', linkCode);
         
-        // Проверяем, не привязан ли уже этот VK
-        const [existingSub] = await connection.execute(
-            'SELECT id FROM vk_subscribers WHERE businessId = ? AND vkUserId = ?',
-            [linkCode.businessId, vkUserId]
-        );
-        
-        if (existingSub.length === 0) {
-            // Создаем новую подписку
-            await connection.execute(
-                `INSERT INTO vk_subscribers 
-                 (businessId, appointmentId, vkUserId, customerName, customerPhone) 
-                 VALUES (?, ?, ?, ?, ?)`,
-                [linkCode.businessId, linkCode.appointmentId, vkUserId, linkCode.customerName, linkCode.customerPhone]
-            );
-        }
+        // Обновляем запись с VK User ID
+        await prisma.appointment.update({
+            where: { id: linkCode.appointmentId },
+            data: {
+                vkUserId: vkUserId,
+                vkConnectedAt: new Date()
+            }
+        });
         
         // Помечаем код как использованный
-        await connection.execute(
-            'UPDATE vk_link_codes SET isUsed = TRUE, vkUserId = ? WHERE id = ?',
-            [vkUserId, linkCode.id]
-        );
+        await prisma.vKLinkCode.update({
+            where: { id: linkCode.id },
+            data: {
+                isUsed: true,
+                vkUserId: vkUserId,
+                usedAt: new Date()
+            }
+        });
         
-        await connection.commit();
+        console.log('[VK LINK CODE] Successfully linked user to appointment');
         
         return {
             success: true,
@@ -146,10 +118,8 @@ async function linkVKByCode(code, vkUserId) {
         };
         
     } catch (error) {
-        await connection.rollback();
+        console.error('[VK LINK CODE] Error:', error);
         throw error;
-    } finally {
-        connection.release();
     }
 }
 
@@ -157,20 +127,20 @@ async function linkVKByCode(code, vkUserId) {
  * Отправка сообщения ВКонтакте
  */
 async function sendVKMessage(businessId, vkUserId, messageText, messageType) {
-    const connection = await pool.getConnection();
-    
     try {
-        // Получаем настройки бизнеса
-        const [settings] = await connection.execute(
-            'SELECT * FROM vk_business_settings WHERE businessId = ? AND isActive = TRUE',
-            [businessId]
-        );
+        console.log('[VK SEND MESSAGE] Sending message to user:', vkUserId);
         
-        if (settings.length === 0) {
+        // Получаем настройки бизнеса
+        const settings = await prisma.vKBusinessSettings.findFirst({
+            where: {
+                businessId: businessId,
+                isActive: true
+            }
+        });
+        
+        if (!settings) {
             throw new Error('VK settings not configured for business');
         }
-        
-        const setting = settings[0];
         
         // Отправляем сообщение через VK API
         const axios = require('axios');
@@ -180,7 +150,7 @@ async function sendVKMessage(businessId, vkUserId, messageText, messageType) {
             user_id: vkUserId,
             message: messageText,
             random_id: Math.floor(Math.random() * 1000000),
-            access_token: setting.vkGroupToken,
+            access_token: settings.vkGroupToken,
             v: '5.199'
         };
         
@@ -190,67 +160,65 @@ async function sendVKMessage(businessId, vkUserId, messageText, messageType) {
             throw new Error(`VK API Error: ${response.data.error.error_msg}`);
         }
         
-        // Логируем отправку
-        await connection.execute(
-            `INSERT INTO vk_message_logs 
-             (businessId, vkUserId, messageType, messageText, messageId, status) 
-             VALUES (?, ?, ?, ?, ?, 'sent')`,
-            [businessId, vkUserId, messageType, messageText, response.data.response]
-        );
+        console.log('[VK SEND MESSAGE] Message sent successfully:', response.data.response);
         
         return response.data.response;
         
     } catch (error) {
-        // Логируем ошибку
-        if (connection) {
-            await connection.execute(
-                `INSERT INTO vk_message_logs 
-                 (businessId, vkUserId, messageType, messageText, status, errorMessage) 
-                 VALUES (?, ?, ?, ?, 'error', ?)`,
-                [businessId, vkUserId, messageType, messageText, error.message]
-            );
-        }
+        console.error('[VK SEND MESSAGE] Error:', error);
         throw error;
-    } finally {
-        if (connection) connection.release();
     }
 }
 
 /**
- * Получение подписчиков бизнеса
+ * Получение подписчиков ВКонтакте
  */
 async function getVKSubscribers(businessId) {
-    const connection = await pool.getConnection();
-    
     try {
-        const [rows] = await connection.execute(
-            'SELECT * FROM vk_subscribers WHERE businessId = ? ORDER BY createdAt DESC',
-            [businessId]
-        );
+        const subscribers = await prisma.appointment.findMany({
+            where: {
+                businessId: businessId,
+                vkUserId: {
+                    not: null
+                }
+            },
+            select: {
+                id: true,
+                customerName: true,
+                customerPhone: true,
+                vkUserId: true,
+                vkConnectedAt: true
+            }
+        });
         
-        return rows;
+        return subscribers;
         
-    } finally {
-        connection.release();
+    } catch (error) {
+        console.error('[VK GET SUBSCRIBERS] Error:', error);
+        throw error;
     }
 }
 
 /**
- * Проверка есть ли у клиента привязка VK
+ * Проверка наличия подписчика
  */
 async function hasVKSubscriber(businessId, customerPhone) {
-    const connection = await pool.getConnection();
-    
     try {
-        const [rows] = await connection.execute(
-            'SELECT vkUserId FROM vk_subscribers WHERE businessId = ? AND customerPhone = ?',
-            [businessId, customerPhone]
-        );
+        const subscriber = await prisma.appointment.findFirst({
+            where: {
+                businessId: businessId,
+                customerPhone: customerPhone,
+                vkUserId: {
+                    not: null
+                }
+            }
+        });
         
-        return rows.length > 0 ? rows[0].vkUserId : null;
+        return subscriber ? subscriber.vkUserId : null;
         
-    } finally {
-        connection.release();
+    } catch (error) {
+        console.error('[VK HAS SUBSCRIBER] Error:', error);
+        throw error;
     }
 }
 
@@ -262,7 +230,6 @@ async function handleVKCallback(body, businessId) {
         const { type, object } = body;
         
         switch (type) {
-                
             case 'message_new':
                 // Обработка нового сообщения
                 const message = object.message;
@@ -272,8 +239,8 @@ async function handleVKCallback(body, businessId) {
                 console.log('[VK CALLBACK] Message_new received:', { text, fromId });
                 
                 // Проверяем является ли текст кодом привязки
-                if (text && text.startsWith('BK-')) {
-                    console.log('[VK CALLBACK] Processing BK code:', text);
+                if (text && text.startsWith('VK-')) {
+                    console.log('[VK CALLBACK] Processing VK code:', text);
                     try {
                         const result = await linkVKByCode(text, fromId);
                         
@@ -285,7 +252,6 @@ async function handleVKCallback(body, businessId) {
                             'link_success'
                         );
                         
-                        return 'ok';
                     } catch (error) {
                         // Отправляем сообщение об ошибке
                         await sendVKMessage(
@@ -296,6 +262,7 @@ async function handleVKCallback(body, businessId) {
                         );
                     }
                 }
+                
                 return 'ok';
                 
             default:
@@ -315,6 +282,5 @@ module.exports = {
     sendVKMessage,
     getVKSubscribers,
     hasVKSubscriber,
-    handleVKCallback,
-    generateLinkCode
+    handleVKCallback
 };

@@ -881,20 +881,17 @@ async function createVKLinkCode(req, res) {
       });
     }
     
-    // Генерируем VK код привязки (временно - без отдельной таблицы)
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = 'VK-';
-    for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    // Создаем VK код привязки через новый контроллер
+    const { createVKLinkCode } = require('./vkCommunityController');
+    const linkCode = await createVKLinkCode(
+      appointment.businessId,
+      appointment.id,
+      appointment.customerName,
+      appointment.customerPhone
+    );
     
-    // Временно сохраняем код в bookingToken для простоты
-    await prisma.appointment.update({
-      where: { id: appointment.id },
-      data: { bookingToken: code.replace('VK-', 'vk') } // Сохраняем как vkXXXXXX для поиска
-    });
-    
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 часа
+    const code = linkCode.code;
+    const expiresAt = linkCode.expiresAt;
     
     res.json({
       success: true,
@@ -936,20 +933,17 @@ async function createVKLinkCodeByToken(req, res) {
       });
     }
     
-    // Генерируем VK код привязки (временно - без отдельной таблицы)
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = 'VK-';
-    for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    // Создаем VK код привязки через новый контроллер
+    const { createVKLinkCode } = require('./vkCommunityController');
+    const linkCode = await createVKLinkCode(
+      appointment.businessId,
+      appointment.id,
+      appointment.customerName,
+      appointment.customerPhone
+    );
     
-    // Временно сохраняем код в bookingToken для простоты
-    await prisma.appointment.update({
-      where: { id: appointment.id },
-      data: { bookingToken: code.replace('VK-', 'vk') } // Сохраняем как vkXXXXXX для поиска
-    });
-    
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 часа
+    const code = linkCode.code;
+    const expiresAt = linkCode.expiresAt;
     
     res.json({
       success: true,
