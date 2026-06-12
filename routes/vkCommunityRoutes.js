@@ -195,6 +195,9 @@ router.post('/callback/:businessId', async (req, res) => {
         const body = req.body;
         
         console.log('[VK CALLBACK] Received callback:', body.type);
+        console.log('[VK CALLBACK] Business ID:', businessId);
+        console.log('[VK CALLBACK] Full body:', JSON.stringify(body, null, 2));
+        console.log('[VK CALLBACK] Headers:', JSON.stringify(req.headers, null, 2));
         
         const result = await handleVKCallback(body, businessId);
         
