@@ -1654,6 +1654,18 @@
       };
 
       console.log('Booking data:', formData);
+      console.log('Required fields check:', {
+        businessId: formData.businessId,
+        serviceId: formData.serviceId,
+        masterId: formData.masterId,
+        branchId: formData.branchId,
+        startsAt: formData.startsAt,
+        endsAt: formData.endsAt,
+        customerName: formData.customerName,
+        customerPhone: formData.customerPhone
+      });
+      console.log('selectedBranch:', selectedBranch);
+      console.log('businessData:', businessData);
 
       try {
         // If in reschedule mode, delete old booking first
