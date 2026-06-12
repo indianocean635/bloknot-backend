@@ -8,7 +8,8 @@ const {
   getPublicAppointments,
   createPublicAppointment,
   getPublicAppointmentByToken,
-  createVKLinkCode
+  createVKLinkCode,
+  createVKLinkCodeByToken
 } = require("../controllers/appointmentController");
 const { getBusinessBySlug } = require("../controllers/businessController");
 const { requireMagicAuth, getBusinessFromUser } = require("../middleware/magicAuthMiddleware");
@@ -28,5 +29,6 @@ router.get("/public/appointment/:token", getPublicAppointmentByToken);
 router.post("/public/appointments", createPublicAppointment);
 router.delete("/public/appointments/:id", deletePublicAppointment);
 router.post("/appointments/:id/vk-request", createVKLinkCode);
+router.post("/public/appointment/:token/vk-request", createVKLinkCodeByToken);
 
 module.exports = router;

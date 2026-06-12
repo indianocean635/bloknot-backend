@@ -1734,7 +1734,7 @@
             console.log('[VK COMMUNITY] button clicked');
             
             // Получаем данные записи
-            const appointmentData = await fetch(`/api/appointments/${bookingToken}`).then(r => r.json());
+            const appointmentData = await fetch(`/api/public/appointment/${bookingToken}`).then(r => r.json());
             
             if (!appointmentData.success) {
               alert('Ошибка получения данных записи');
@@ -1744,7 +1744,7 @@
             const { appointment } = appointmentData.data;
             
             // Создаем код привязки
-            const response = await fetch(`/api/appointments/${appointment.id}/vk-request`, {
+            const response = await fetch(`/api/public/appointment/${bookingToken}/vk-request`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' }
             });
