@@ -96,7 +96,7 @@ async function linkVKByCode(code, vkUserId) {
         await prisma.appointment.update({
             where: { id: appointment.id },
             data: {
-                vkUserId: vkUserId,
+                customerVkId: vkUserId.toString(), // Сохраняем как строку
                 vkConnectedAt: new Date()
             }
         });

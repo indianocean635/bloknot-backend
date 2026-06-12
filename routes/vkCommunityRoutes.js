@@ -282,7 +282,7 @@ router.post('/callback', async (req, res) => {
                     await prisma.appointment.update({
                         where: { id: appointment.id },
                         data: {
-                            vkUserId: fromId,
+                            customerVkId: fromId.toString(), // Сохраняем как строку
                             vkConnectedAt: new Date()
                         }
                     });
