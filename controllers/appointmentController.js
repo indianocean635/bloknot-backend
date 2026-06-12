@@ -919,8 +919,8 @@ async function createVKLinkCodeByToken(req, res) {
     // Получаем данные записи по токену
     const appointment = await prisma.appointment.findFirst({
       where: { 
-        token: token,
-        status: 'CONFIRMED'
+        bookingToken: token,
+        status: 'PENDING'
       }
     });
     

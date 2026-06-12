@@ -1771,15 +1771,19 @@
             const { appointment } = appointmentData.data;
             
             // Создаем код привязки
+            console.log('[VK COMMUNITY] Creating VK code...');
             const vkResponse = await fetch(`/api/public/appointment/${bookingToken}/vk-request`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' }
             });
             
+            console.log('[VK COMMUNITY] VK Response status:', vkResponse.status);
             const result = await vkResponse.json();
+            console.log('[VK COMMUNITY] VK Response data:', result);
             
             if (!result.success) {
-              alert('Ошибка создания кода привязки');
+              console.error('[VK COMMUNITY] VK API Error:', result);
+              alert('Ошибка создания кода привязки: ' + (result.error || 'Unknown error'));
               return;
             }
             
