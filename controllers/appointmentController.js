@@ -881,17 +881,20 @@ async function createVKLinkCode(req, res) {
       });
     }
     
-    // Создаем VK код привязки через сервис
-    const VKLinkCodeService = require('../services/vkLinkCodeService');
-    const linkCode = await VKLinkCodeService.createLinkCode(
-      appointment.businessId,
-      appointment.id,
-      appointment.customerName,
-      appointment.customerPhone
-    );
+    // Генерируем VK код привязки (временно - без отдельной таблицы)
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'VK-';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
     
-    const code = linkCode.code;
-    const expiresAt = linkCode.expiresAt;
+    // Временно сохраняем код в bookingToken для простоты
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { bookingToken: code.replace('VK-', 'vk') } // Сохраняем как vkXXXXXX для поиска
+    });
+    
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 часа
     
     res.json({
       success: true,
@@ -933,17 +936,20 @@ async function createVKLinkCodeByToken(req, res) {
       });
     }
     
-    // Создаем VK код привязки через сервис
-    const VKLinkCodeService = require('../services/vkLinkCodeService');
-    const linkCode = await VKLinkCodeService.createLinkCode(
-      appointment.businessId,
-      appointment.id,
-      appointment.customerName,
-      appointment.customerPhone
-    );
+    // Генерируем VK код привязки (временно - без отдельной таблицы)
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'VK-';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
     
-    const code = linkCode.code;
-    const expiresAt = linkCode.expiresAt;
+    // Временно сохраняем код в bookingToken для простоты
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { bookingToken: code.replace('VK-', 'vk') } // Сохраняем как vkXXXXXX для поиска
+    });
+    
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 часа
     
     res.json({
       success: true,

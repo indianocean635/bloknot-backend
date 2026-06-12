@@ -253,10 +253,21 @@ router.post('/callback', async (req, res) => {
                 console.log('[VK CODE RECEIVED] Processing VK code:', text);
                 
                 try {
-                    // Ищем и используем код через VKLinkCodeService
-                    const linkCode = await VKLinkCodeService.useCode(text, fromId);
+                    // Временно ищем запись по bookingToken
+                    const bookingToken = text.replace('VK-', 'vk'); // VK-XXXXXX -> vkXXXXXX
+                    const appointment = await prisma.appointment.findFirst({
+                        where: {
+                            bookingToken,
+                            status: 'PENDING'
+                        },
+                        include: {
+                            service: true,
+                            master: true,
+                            business: true
+                        }
+                    });
 
-                    if (!linkCode) {
+                    if (!appointment) {
                         console.log('[VK CODE NOT FOUND] Code not found or used:', text);
                         await sendVKMessage(
                             businessId,
@@ -267,12 +278,10 @@ router.post('/callback', async (req, res) => {
                         return;
                     }
 
-                    const appointment = linkCode.appointment;
-
                     console.log('[VK USER LINKED] VK user linked to appointment:', {
                         vkUserId: fromId,
                         appointmentId: appointment.id,
-                        customerName: linkCode.customerName
+                        customerName: appointment.customerName
                     });
 
                     // Отправляем подтверждение
