@@ -1744,15 +1744,9 @@
             const { appointment } = appointmentData.data;
             
             // Создаем код привязки
-            const response = await fetch('/api/vk-community/link-code', {
+            const response = await fetch(`/api/appointments/${appointment.id}/vk-request`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                businessId: appointment.businessId,
-                appointmentId: appointment.id,
-                customerName: appointment.customerName,
-                customerPhone: appointment.customerPhone
-              })
+              headers: { 'Content-Type': 'application/json' }
             });
             
             const result = await response.json();

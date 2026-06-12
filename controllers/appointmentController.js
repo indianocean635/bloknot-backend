@@ -859,6 +859,53 @@ async function getAppointmentById(req, res) {
   }
 }
 
+// Создание кода привязки VK
+async function createVKLinkCode(req, res) {
+  try {
+    const { id } = req.params;
+    
+    // Получаем данные записи
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: parseInt(id) }
+    });
+    
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        error: 'Запись не найдена'
+      });
+    }
+    
+    // Генерируем код привязки
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'BK-';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    // Сохраняем в базу (временно - позже перенесем в VK таблицы)
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 часа
+    
+    res.json({
+      success: true,
+      data: {
+        code,
+        expiresAt,
+        appointmentId: appointment.id,
+        customerName: appointment.customerName,
+        customerPhone: appointment.customerPhone
+      }
+    });
+    
+  } catch (error) {
+    console.error('[VK REQUEST] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Ошибка создания кода привязки'
+    });
+  }
+}
+
 module.exports = {
   getAppointments,
   getPublicAppointments,
@@ -868,5 +915,6 @@ module.exports = {
   deleteAppointment,
   deletePublicAppointment,
   getAppointmentById,
-  getPublicAppointmentByToken
+  getPublicAppointmentByToken,
+  createVKLinkCode
 };

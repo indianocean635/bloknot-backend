@@ -1,4 +1,4 @@
-const { pool } = require('../config/database');
+const { prisma } = require('../services/prismaService');
 
 /**
  * Генерация уникального кода привязки
