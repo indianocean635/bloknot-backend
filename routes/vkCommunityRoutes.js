@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { prisma } = require('../services/prismaService');
 const {
     createVKLinkCode,
     getVKLinkCode,
@@ -199,8 +200,18 @@ router.post('/callback', async (req, res) => {
         
         // Для события подтверждения возвращаем строку подтверждения
         if (body.type === 'confirmation') {
-            console.log('[VK CALLBACK] Returning confirmation string: f881b577');
-            return res.status(200).send('f881b577');
+            try {
+                const settings = await prisma.vKBusinessSettings.findFirst({
+                    where: { groupId: body.group_id.toString() }
+                });
+                
+                const confirmationString = settings?.confirmationCode || 'a25e9791';
+                console.log('[VK CALLBACK] Returning confirmation string:', confirmationString);
+                return res.status(200).send(confirmationString);
+            } catch (error) {
+                console.log('[VK CALLBACK] Error getting confirmation code, using fallback:', error);
+                return res.status(200).send('a25e9791');
+            }
         }
         
         // Для других событий используем businessId из group_id
