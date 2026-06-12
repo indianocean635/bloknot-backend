@@ -892,8 +892,7 @@ async function createVKLinkCode(req, res) {
     await prisma.appointment.update({
       where: { id: appointment.id },
       data: { 
-        bookingToken: code.replace('VK-', 'vk'), // vkXXXXXX
-        vkCodeGenerated: true
+        bookingToken: code.replace('VK-', 'vk') // vkXXXXXX
       }
     });
     
@@ -950,8 +949,7 @@ async function createVKLinkCodeByToken(req, res) {
     await prisma.appointment.update({
       where: { id: appointment.id },
       data: { 
-        bookingToken: code.replace('VK-', 'vk'), // vkXXXXXX
-        vkCodeGenerated: true
+        bookingToken: code.replace('VK-', 'vk') // vkXXXXXX
       }
     });
     
