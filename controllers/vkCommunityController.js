@@ -18,29 +18,18 @@ function generateLinkCode() {
 async function createVKLinkCode(businessId, appointmentId, customerName, customerPhone) {
     try {
         // Генерируем уникальный код
-        let code;
-        let attempts = 0;
-        do {
-            code = generateLinkCode();
-            attempts++;
-            if (attempts > 10) {
-                throw new Error('Failed to generate unique code');
-            }
-        } while (await prisma.vKLinkCode.findUnique({ where: { code } }));
+        const code = generateLinkCode();
         
-        // Создаем запись в базе
-        const linkCode = await prisma.vKLinkCode.create({
-            data: {
-                code,
-                businessId,
-                appointmentId,
-                customerName,
-                customerPhone,
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 часа
-            }
-        });
-        
-        return linkCode;
+        // Временно возвращаем объект как будто это VKLinkCode
+        return {
+            id: appointmentId, // Временно используем appointmentId
+            code,
+            businessId,
+            appointmentId,
+            customerName,
+            customerPhone,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 часа
+        };
         
     } catch (error) {
         console.error('[VK CREATE CODE] Error:', error);
@@ -53,11 +42,26 @@ async function createVKLinkCode(businessId, appointmentId, customerName, custome
  */
 async function getVKLinkCode(code) {
     try {
-        const linkCode = await prisma.vKLinkCode.findUnique({
-            where: { code }
+        // Временно ищем запись по bookingToken
+        const bookingToken = code.replace('VK-', 'vk'); // VK-XXXXXX -> vkXXXXXX
+        const appointment = await prisma.appointment.findFirst({
+            where: { bookingToken }
         });
         
-        return linkCode;
+        if (!appointment) {
+            return null;
+        }
+        
+        // Возвращаем объект как будто это VKLinkCode
+        return {
+            id: appointment.id,
+            code,
+            businessId: appointment.businessId,
+            appointmentId: appointment.id,
+            customerName: appointment.customerName,
+            customerPhone: appointment.customerPhone || '',
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        };
         
     } catch (error) {
         console.error('[VK GET CODE] Error:', error);
@@ -72,40 +76,28 @@ async function linkVKByCode(code, vkUserId) {
     try {
         console.log('[VK LINK CODE] Processing code:', code, 'for user:', vkUserId);
         
-        // Ищем код в таблице VKLinkCode
-        const linkCode = await prisma.vKLinkCode.findFirst({
+        // Временно ищем запись по bookingToken
+        const bookingToken = code.replace('VK-', 'vk'); // VK-XXXXXX -> vkXXXXXX
+        const appointment = await prisma.appointment.findFirst({
             where: {
-                code: code,
-                isUsed: false,
-                expiresAt: {
-                    gt: new Date()
-                }
+                bookingToken,
+                status: 'PENDING'
             }
         });
         
-        if (!linkCode) {
+        if (!appointment) {
             console.log('[VK LINK CODE] Code not found or expired:', code);
             throw new Error('Invalid or expired code');
         }
         
-        console.log('[VK LINK CODE] Found code:', linkCode);
+        console.log('[VK LINK CODE] Found appointment:', appointment);
         
         // Обновляем запись с VK User ID
         await prisma.appointment.update({
-            where: { id: linkCode.appointmentId },
+            where: { id: appointment.id },
             data: {
                 vkUserId: vkUserId,
                 vkConnectedAt: new Date()
-            }
-        });
-        
-        // Помечаем код как использованный
-        await prisma.vKLinkCode.update({
-            where: { id: linkCode.id },
-            data: {
-                isUsed: true,
-                vkUserId: vkUserId,
-                usedAt: new Date()
             }
         });
         
@@ -113,8 +105,8 @@ async function linkVKByCode(code, vkUserId) {
         
         return {
             success: true,
-            customerName: linkCode.customerName,
-            businessId: linkCode.businessId
+            customerName: appointment.customerName,
+            businessId: appointment.businessId
         };
         
     } catch (error) {

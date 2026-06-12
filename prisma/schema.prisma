@@ -211,6 +211,7 @@ model Appointment {
   reminderSent1h     Boolean  @default(false)
   vkReminderSent24h  Boolean  @default(false)
   vkReminderSent1h   Boolean  @default(false)
+  vkUserId           BigInt?  // VK User ID after linking
   createdAt          DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
