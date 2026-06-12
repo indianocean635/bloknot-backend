@@ -1741,22 +1741,30 @@
             }
             
             // Получаем данные записи
-            const appointmentData = await fetch(`/api/public/appointment/${bookingToken}`).then(r => r.json());
+            const apiUrl = `/api/public/appointment/${bookingToken}`;
+            console.log('[VK COMMUNITY] Fetching from:', apiUrl);
+            
+            const appointmentResponse = await fetch(apiUrl);
+            console.log('[VK COMMUNITY] Response status:', appointmentResponse.status);
+            
+            const appointmentData = await appointmentResponse.json();
+            console.log('[VK COMMUNITY] Response data:', appointmentData);
             
             if (!appointmentData.success) {
-              alert('Ошибка получения данных записи');
+              console.error('[VK COMMUNITY] API Error:', appointmentData);
+              alert('Ошибка получения данных записи: ' + (appointmentData.error || 'Unknown error'));
               return;
             }
             
             const { appointment } = appointmentData.data;
             
             // Создаем код привязки
-            const response = await fetch(`/api/public/appointment/${bookingToken}/vk-request`, {
+            const vkResponse = await fetch(`/api/public/appointment/${bookingToken}/vk-request`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' }
             });
             
-            const result = await response.json();
+            const result = await vkResponse.json();
             
             if (!result.success) {
               alert('Ошибка создания кода привязки');
