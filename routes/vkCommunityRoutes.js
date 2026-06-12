@@ -200,6 +200,14 @@ router.get('/test', (req, res) => {
 });
 
 /**
+ * Callback API ВКонтакте (GET для тестирования)
+ */
+router.get('/callback', (req, res) => {
+    console.log('[VK CALLBACK] GET request received');
+    res.status(200).send('VK Callback API is ready');
+});
+
+/**
  * Callback API ВКонтакте (основной маршрут)
  */
 router.post('/callback', async (req, res) => {
