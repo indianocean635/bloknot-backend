@@ -217,8 +217,28 @@ model Appointment {
   service  Service  @relation(fields: [serviceId], references: [id])
   master   Master   @relation(fields: [masterId], references: [id])
   branch   Branch?  @relation(fields: [branchId], references: [id])
+  vkLinkCodes VKLinkCode[]
 
   @@index([businessId, startsAt])
+}
+
+model VKLinkCode {
+  id           Int      @id @default(autoincrement())
+  code         String   @unique @db.VarChar(10) // VK-XXXXXX
+  businessId   String
+  appointmentId Int
+  customerName String
+  customerPhone String
+  vkUserId     BigInt?
+  isUsed       Boolean  @default(false)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  usedAt       DateTime?
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([isUsed, expiresAt])
 }
 
 model SalesStaffAssignment {

@@ -881,15 +881,17 @@ async function createVKLinkCode(req, res) {
       });
     }
     
-    // Генерируем код привязки
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = 'BK-';
-    for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    // Создаем VK код привязки через сервис
+    const VKLinkCodeService = require('../services/vkLinkCodeService');
+    const linkCode = await VKLinkCodeService.createLinkCode(
+      appointment.businessId,
+      appointment.id,
+      appointment.customerName,
+      appointment.customerPhone
+    );
     
-    // Сохраняем в базу (временно - позже перенесем в VK таблицы)
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 часа
+    const code = linkCode.code;
+    const expiresAt = linkCode.expiresAt;
     
     res.json({
       success: true,
@@ -931,15 +933,17 @@ async function createVKLinkCodeByToken(req, res) {
       });
     }
     
-    // Генерируем код привязки
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = 'BK-';
-    for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    // Создаем VK код привязки через сервис
+    const VKLinkCodeService = require('../services/vkLinkCodeService');
+    const linkCode = await VKLinkCodeService.createLinkCode(
+      appointment.businessId,
+      appointment.id,
+      appointment.customerName,
+      appointment.customerPhone
+    );
     
-    // Сохраняем в базу (временно - позже перенесем в VK таблицы)
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 часа
+    const code = linkCode.code;
+    const expiresAt = linkCode.expiresAt;
     
     res.json({
       success: true,

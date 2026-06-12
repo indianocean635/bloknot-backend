@@ -27,7 +27,7 @@ async function checkAndSendVKReminders() {
           gte: new Date(now.getTime() + 23 * 60 * 60 * 1000),
           lte: new Date(now.getTime() + 25 * 60 * 60 * 1000)
         },
-        customerVkId: {
+        vkUserId: {
           not: null
         },
         vkReminderSent24h: false
@@ -59,7 +59,7 @@ async function checkAndSendVKReminders() {
           booking_link: bookingLink
         };
 
-        await sendReminder24h(appointment.customerVkId, templateVariables);
+        await sendReminder24h(appointment.vkUserId, templateVariables);
         
         // Mark reminder as sent
         await prisma.appointment.update({
@@ -81,7 +81,7 @@ async function checkAndSendVKReminders() {
           gte: new Date(now.getTime() + 50 * 60 * 1000),
           lte: new Date(now.getTime() + 70 * 60 * 1000)
         },
-        customerVkId: {
+        vkUserId: {
           not: null
         },
         vkReminderSent1h: false
@@ -113,7 +113,7 @@ async function checkAndSendVKReminders() {
           booking_link: bookingLink
         };
 
-        await sendReminder1h(appointment.customerVkId, templateVariables);
+        await sendReminder1h(appointment.vkUserId, templateVariables);
         
         // Mark reminder as sent
         await prisma.appointment.update({
