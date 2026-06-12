@@ -188,6 +188,18 @@ router.post('/check-subscription', async (req, res) => {
 });
 
 /**
+ * Тестовый эндпоинт для проверки доступности
+ */
+router.get('/test', (req, res) => {
+    console.log('[VK TEST] Endpoint accessed');
+    res.status(200).json({
+        success: true,
+        message: 'VK Community API is working',
+        timestamp: new Date().toISOString()
+    });
+});
+
+/**
  * Callback API ВКонтакте (основной маршрут)
  */
 router.post('/callback', async (req, res) => {
