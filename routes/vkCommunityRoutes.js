@@ -230,6 +230,34 @@ router.post('/callback', async (req, res) => {
         const businessId = '7a9e1231-beb0-4481-8df3-70e6a6928416'; // Ваш businessId
         
         console.log('[VK CALLBACK] Processing event type:', body.type);
+        console.log('[VK CALLBACK] Full event data:', JSON.stringify(body, null, 2));
+        
+        // Для message_new сразу отправляем ответ для теста
+        if (body.type === 'message_new') {
+            const message = body.object?.message;
+            const text = message?.text?.trim();
+            const fromId = message?.from_id;
+            
+            console.log('[VK CALLBACK] Message_new received:', { text, fromId });
+            
+            if (text && text.startsWith('BK-')) {
+                console.log('[VK CALLBACK] BK code detected, sending test response');
+                
+                // Отправляем тестовый ответ
+                try {
+                    await sendVKMessage(
+                        businessId,
+                        fromId,
+                        `🔔 Тест: Ваш код ${text} получен! Сервер работает.`,
+                        'test'
+                    );
+                    console.log('[VK CALLBACK] Test message sent successfully');
+                } catch (error) {
+                    console.error('[VK CALLBACK] Error sending test message:', error);
+                }
+            }
+        }
+        
         const result = await handleVKCallback(body, businessId);
         console.log('[VK CALLBACK] Handler result:', result);
         
