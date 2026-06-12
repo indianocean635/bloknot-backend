@@ -1818,7 +1818,7 @@
                   Код действителен до ${new Date(expiresAt).toLocaleString('ru-RU')}
                 </p>
                 <button id="open-vk-group" style="background: #0077FF; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin: 0 8px;">
-                  Открыть сообщество ВКонтакте
+                  Перейти к диалогу в ВКонтакте
                 </button>
                 <button id="close-modal" style="background: #6c757d; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin: 0 8px;">
                   Закрыть
@@ -1830,8 +1830,10 @@
             
             // Обработчики кнопок
             document.getElementById('open-vk-group').addEventListener('click', () => {
-              // TODO: Получать URL группы из настроек бизнеса
-              window.open('https://vk.com/bloknot_servis', '_blank');
+              // Открываем диалог с сообществом
+              // TODO: Получать ID группы из настроек бизнеса
+              const groupId = '213425495'; // Временный ID группы
+              window.open(`https://vk.com/im?sel=-${groupId}`, '_blank');
             });
             
             document.getElementById('close-modal').addEventListener('click', () => {
