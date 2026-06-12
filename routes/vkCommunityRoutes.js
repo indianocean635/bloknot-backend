@@ -217,7 +217,9 @@ router.post('/callback', async (req, res) => {
         // Для других событий используем businessId из group_id
         const businessId = '7a9e1231-beb0-4481-8df3-70e6a6928416'; // Ваш businessId
         
+        console.log('[VK CALLBACK] Processing event type:', body.type);
         const result = await handleVKCallback(body, businessId);
+        console.log('[VK CALLBACK] Handler result:', result);
         
         res.status(200).send('ok');
         

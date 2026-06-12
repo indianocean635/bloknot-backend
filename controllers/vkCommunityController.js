@@ -269,8 +269,11 @@ async function handleVKCallback(body, businessId) {
                 const text = message.text?.trim();
                 const fromId = message.from_id;
                 
+                console.log('[VK CALLBACK] Message_new received:', { text, fromId });
+                
                 // Проверяем является ли текст кодом привязки
                 if (text && text.startsWith('BK-')) {
+                    console.log('[VK CALLBACK] Processing BK code:', text);
                     try {
                         const result = await linkVKByCode(text, fromId);
                         
