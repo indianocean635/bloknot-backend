@@ -711,6 +711,7 @@
     let selectedDate = null;
     let selectedTime = null;
     let selectedOption = null; // 'specialist', 'service', or 'datetime'
+    let bookingToken = null; // Global booking token
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
 
@@ -1686,7 +1687,7 @@
         }
 
         const appointment = await response.json();
-        const bookingToken = appointment.bookingToken;
+        bookingToken = appointment.bookingToken; // Global variable
         const appointmentId = appointment.id;
 
         // Show success message
@@ -1732,6 +1733,12 @@
         document.getElementById('connect-vk-community-btn').addEventListener('click', async () => {
           try {
             console.log('[VK COMMUNITY] button clicked');
+            console.log('[VK COMMUNITY] bookingToken:', bookingToken);
+            
+            if (!bookingToken) {
+              alert('Сначала создайте запись');
+              return;
+            }
             
             // Получаем данные записи
             const appointmentData = await fetch(`/api/public/appointment/${bookingToken}`).then(r => r.json());
