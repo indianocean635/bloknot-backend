@@ -141,8 +141,19 @@ async function getBusinessBySlug(req, res) {
 
 // Получить филиалы
 async function getBranches(req, res) {
+  const { slug } = req.params;
+  
+  // Для публичного доступа ищем бизнес по slug
+  const business = await prisma.business.findUnique({
+    where: { slug }
+  });
+  
+  if (!business) {
+    return res.status(404).json({ error: "Business not found" });
+  }
+  
   const branches = await prisma.branch.findMany({
-    where: { businessId: req.user.businessId },
+    where: { businessId: business.id },
     orderBy: { id: "asc" }
   });
   
@@ -157,8 +168,19 @@ async function getBranches(req, res) {
 
 // Получить услуги
 async function getServices(req, res) {
+  const { slug } = req.params;
+  
+  // Для публичного доступа ищем бизнес по slug
+  const business = await prisma.business.findUnique({
+    where: { slug }
+  });
+  
+  if (!business) {
+    return res.status(404).json({ error: "Business not found" });
+  }
+  
   const services = await prisma.service.findMany({
-    where: { businessId: req.user.businessId },
+    where: { businessId: business.id },
     orderBy: { id: "asc" },
     include: { category: true },
   });
@@ -168,8 +190,19 @@ async function getServices(req, res) {
 
 // Получить мастеров
 async function getMasters(req, res) {
+  const { slug } = req.params;
+  
+  // Для публичного доступа ищем бизнес по slug
+  const business = await prisma.business.findUnique({
+    where: { slug }
+  });
+  
+  if (!business) {
+    return res.status(404).json({ error: "Business not found" });
+  }
+  
   const masters = await prisma.master.findMany({
-    where: { businessId: req.user.businessId },
+    where: { businessId: business.id },
     orderBy: { id: "asc" }
   });
   
@@ -178,8 +211,19 @@ async function getMasters(req, res) {
 
 // Получить работы (фото)
 async function getWorks(req, res) {
+  const { slug } = req.params;
+  
+  // Для публичного доступа ищем бизнес по slug
+  const business = await prisma.business.findUnique({
+    where: { slug }
+  });
+  
+  if (!business) {
+    return res.status(404).json({ error: "Business not found" });
+  }
+  
   const works = await prisma.workPhoto.findMany({
-    where: { businessId: req.user.businessId },
+    where: { businessId: business.id },
     orderBy: { id: "desc" }
   });
   

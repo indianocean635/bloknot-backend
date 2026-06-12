@@ -6,9 +6,9 @@ const router = express.Router();
 
 // Публичные эндпоинты
 router.get("/business/:slug", getBusinessBySlug);
-router.get("/branches/:slug", businessMiddleware, getBranches);
-router.get("/services/:slug", businessMiddleware, getServices);
-router.get("/masters/:slug", businessMiddleware, getMasters);
-router.get("/works/:slug", businessMiddleware, getWorks);
+router.get("/branches/:slug", getBranches);
+router.get("/services/:slug", getServices);
+router.get("/masters/:slug", getMasters);
+router.get("/works/:slug", getWorks);
 
 module.exports = router;
