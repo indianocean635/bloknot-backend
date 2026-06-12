@@ -146,21 +146,61 @@ async function sendVKMessage(businessId, vkUserId, messageText, messageType) {
             v: process.env.VK_API_VERSION || '5.199'
         };
         
-        console.log('[VK SEND MESSAGE] API params:', { user_id: vkUserId, message_length: messageText.length });
+        // Проверка прокси переменных
+        console.log('HTTP_PROXY=', process.env.HTTP_PROXY);
+        console.log('HTTPS_PROXY=', process.env.HTTPS_PROXY);
+        console.log('ALL_PROXY=', process.env.ALL_PROXY);
         
-        const response = await axios.post(messageUrl, null, { params });
+        // Подробные логи для отладки
+        console.log('VK URL:', messageUrl);
+        console.log('VK PARAMS:', params);
+        console.log('[VK SEND MESSAGE] Full params:', {
+            user_id: params.user_id,
+            message: params.message.substring(0, 50) + '...',
+            random_id: params.random_id,
+            access_token: params.access_token ? 'SET' : 'MISSING',
+            v: params.v
+        });
+        
+        // Используем axios.post с отключенным прокси для VK API
+        const response = await axios.post(messageUrl, null, {
+            params,
+            proxy: false  // Отключаем прокси для VK API
+        });
+        
+        console.log('[VK SEND MESSAGE] VK API Response:', response.data);
         
         if (response.data.error) {
             console.error('[VK SEND MESSAGE] VK API Error:', response.data.error);
             throw new Error(`VK API Error: ${response.data.error.error_msg}`);
         }
         
-        console.log('[VK SEND MESSAGE] Message sent successfully:', response.data.response);
+        console.log('[VK SEND MESSAGE] Message sent successfully, message_id:', response.data.response);
         
         return response.data.response;
         
     } catch (error) {
-        console.error('[VK SEND MESSAGE] Error:', error);
+        console.error('[VK SEND MESSAGE] Full error details:', {
+            message: error.message,
+            stack: error.stack,
+            axiosError: error.response?.data,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            headers: error.response?.headers,
+            config: {
+                url: error.config?.url,
+                method: error.config?.method,
+                proxy: error.config?.proxy
+            }
+        });
+        
+        // Дополнительные логи для диагностики прокси
+        if (error.response) {
+            console.log('VK RESPONSE DATA:', error.response.data);
+            console.log('VK RESPONSE STATUS:', error.response.status);
+            console.log('VK RESPONSE HEADERS:', error.response.headers);
+        }
+        
         throw error;
     }
 }
