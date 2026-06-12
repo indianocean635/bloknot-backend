@@ -1,0 +1,298 @@
+const express = require('express');
+const router = express.Router();
+const {
+    createVKLinkCode,
+    getVKLinkCode,
+    linkVKByCode,
+    sendVKMessage,
+    getVKSubscribers,
+    hasVKSubscriber,
+    handleVKCallback
+} = require('../controllers/vkCommunityController');
+
+/**
+ * Создание кода привязки для записи
+ */
+router.post('/link-code', async (req, res) => {
+    try {
+        const { businessId, appointmentId, customerName, customerPhone } = req.body;
+        
+        if (!businessId || !appointmentId || !customerName || !customerPhone) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields'
+            });
+        }
+        
+        const linkCode = await createVKLinkCode(businessId, appointmentId, customerName, customerPhone);
+        
+        res.json({
+            success: true,
+            data: linkCode
+        });
+        
+    } catch (error) {
+        console.error('[VK COMMUNITY] Error creating link code:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Получение кода привязки по appointmentId
+ */
+router.get('/link-code/:appointmentId', async (req, res) => {
+    try {
+        const { appointmentId } = req.params;
+        
+        const linkCode = await getVKLinkCode(appointmentId);
+        
+        if (!linkCode) {
+            return res.status(404).json({
+                success: false,
+                error: 'Link code not found or expired'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: linkCode
+        });
+        
+    } catch (error) {
+        console.error('[VK COMMUNITY] Error getting link code:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Привязка ВКонтакте по коду (для тестирования)
+ */
+router.post('/link', async (req, res) => {
+    try {
+        const { code, vkUserId } = req.body;
+        
+        if (!code || !vkUserId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Code and vkUserId are required'
+            });
+        }
+        
+        const result = await linkVKByCode(code, vkUserId);
+        
+        res.json({
+            success: true,
+            data: result
+        });
+        
+    } catch (error) {
+        console.error('[VK COMMUNITY] Error linking VK:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Отправка сообщения ВКонтакте
+ */
+router.post('/send-message', async (req, res) => {
+    try {
+        const { businessId, vkUserId, messageText, messageType } = req.body;
+        
+        if (!businessId || !vkUserId || !messageText || !messageType) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields'
+            });
+        }
+        
+        const messageId = await sendVKMessage(businessId, vkUserId, messageText, messageType);
+        
+        res.json({
+            success: true,
+            data: { messageId }
+        });
+        
+    } catch (error) {
+        console.error('[VK COMMUNITY] Error sending message:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Получение подписчиков бизнеса
+ */
+router.get('/subscribers/:businessId', async (req, res) => {
+    try {
+        const { businessId } = req.params;
+        
+        const subscribers = await getVKSubscribers(businessId);
+        
+        res.json({
+            success: true,
+            data: subscribers
+        });
+        
+    } catch (error) {
+        console.error('[VK COMMUNITY] Error getting subscribers:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Проверка привязки VK по телефону
+ */
+router.post('/check-subscription', async (req, res) => {
+    try {
+        const { businessId, customerPhone } = req.body;
+        
+        if (!businessId || !customerPhone) {
+            return res.status(400).json({
+                success: false,
+                error: 'Business ID and customer phone are required'
+            });
+        }
+        
+        const vkUserId = await hasVKSubscriber(businessId, customerPhone);
+        
+        res.json({
+            success: true,
+            data: {
+                hasVK: !!vkUserId,
+                vkUserId
+            }
+        });
+        
+    } catch (error) {
+        console.error('[VK COMMUNITY] Error checking subscription:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Callback API ВКонтакте
+ */
+router.post('/callback/:businessId', async (req, res) => {
+    try {
+        const { businessId } = req.params;
+        const body = req.body;
+        
+        console.log('[VK CALLBACK] Received callback:', body.type);
+        
+        const result = await handleVKCallback(body, businessId);
+        
+        if (result && result !== 'ok') {
+            // Для confirmation типа возвращаем код
+            return res.send(result);
+        }
+        
+        res.send('ok');
+        
+    } catch (error) {
+        console.error('[VK CALLBACK] Error handling callback:', error);
+        res.send('ok'); // Всегда отвечаем 'ok' чтобы VK не повторял запросы
+    }
+});
+
+/**
+ * Тестовая отправка сообщения
+ */
+router.post('/test-message', async (req, res) => {
+    try {
+        const { businessId, vkUserId } = req.body;
+        
+        if (!businessId || !vkUserId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Business ID and VK User ID are required'
+            });
+        }
+        
+        const testMessage = `🧪 Тестовое сообщение от системы записи\n\nВремя: ${new Date().toLocaleString('ru-RU')}`;
+        
+        const messageId = await sendVKMessage(businessId, vkUserId, testMessage, 'test');
+        
+        res.json({
+            success: true,
+            data: { 
+                messageId,
+                message: 'Тестовое сообщение отправлено'
+            }
+        });
+        
+    } catch (error) {
+        console.error('[VK COMMUNITY] Error sending test message:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Получение настроек ВКонтакте бизнеса
+ */
+router.get('/settings/:businessId', async (req, res) => {
+    try {
+        const { businessId } = req.params;
+        const connection = require('../config/database').pool;
+        
+        const [settings] = await connection.execute(
+            'SELECT vkGroupId, isActive, createdAt FROM vk_business_settings WHERE businessId = ?',
+            [businessId]
+        );
+        
+        if (settings.length === 0) {
+            return res.json({
+                success: true,
+                data: {
+                    configured: false,
+                    isActive: false
+                }
+            });
+        }
+        
+        const setting = settings[0];
+        const [subscribers] = await connection.execute(
+            'SELECT COUNT(*) as count FROM vk_subscribers WHERE businessId = ?',
+            [businessId]
+        );
+        
+        res.json({
+            success: true,
+            data: {
+                configured: true,
+                isActive: setting.isActive,
+                vkGroupId: setting.vkGroupId,
+                subscribersCount: subscribers[0].count,
+                createdAt: setting.createdAt
+            }
+        });
+        
+    } catch (error) {
+        console.error('[VK COMMUNITY] Error getting settings:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+module.exports = router;

@@ -17,7 +17,7 @@ const specialistsRoutes = require('./routes/specialistsRoutes');
 const telegramRoutes = require('./routes/telegramRoutes');
 const notificationsRoutes = require('./routes/notificationsRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
-const vkRoutes = require('./routes/vkRoutes');
+const vkCommunityRoutes = require('./routes/vkCommunityRoutes');
 const { requireMagicAuth, getBusinessFromUser, adminAuth, optionalAuth } = require('./middleware/magicAuthMiddleware');
 const app = express();
 const PORT = 3001;
@@ -68,7 +68,7 @@ app.use('/api/telegram', telegramRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api', appointmentRoutes);
 app.use('/api', paymentRoutes);
-app.use('/api/vk', vkRoutes);
+app.use('/api/vk-community', vkCommunityRoutes);
 
 console.log('Business routes loaded:', typeof businessRoutes);
 console.log('Business routes methods:', Object.getOwnPropertyNames(businessRoutes));
