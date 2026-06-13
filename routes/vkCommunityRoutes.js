@@ -293,18 +293,6 @@ router.post('/callback', async (req, res) => {
                         customerName: appointment.customerName
                     });
 
-                    // Отправляем подтверждение с try/catch
-                    try {
-                        await sendVKMessage(
-                            businessId,
-                            fromId,
-                            `✅ ВКонтакте успешно подключен к вашей записи.\n\nТеперь вы будете получать уведомления и напоминания.`,
-                            'link_success'
-                        );
-                    } catch (msgError) {
-                        console.error('[VK SEND ERROR] Failed to send confirmation:', msgError);
-                    }
-
                     // Отправляем информацию о записи с try/catch
                     if (appointment) {
                         try {
