@@ -4,7 +4,7 @@ const { getSubscriptionInfo } = require('../middleware/subscriptionMiddleware');
 /**
  * Получение информации о подписке
  */
-async function getSubscriptionInfo(req, res) {
+async function getCloudSubscriptionInfo(req, res) {
     try {
         console.log('[SUBSCRIPTION] Getting subscription info for user:', req.user?.id);
 
@@ -287,7 +287,7 @@ async function getPaymentHistory(req, res) {
 }
 
 module.exports = {
-    getSubscriptionInfo,
+    getCloudSubscriptionInfo,
     createSubscription,
     cancelSubscription,
     getSubscriptionPlans,

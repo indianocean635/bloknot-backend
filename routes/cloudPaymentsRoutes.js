@@ -2,7 +2,7 @@ const express = require('express');
 const { requireAuth } = require('../middleware/authMiddleware');
 const { checkSubscriptionStatus } = require('../middleware/subscriptionMiddleware');
 const {
-    getSubscriptionInfo,
+    getCloudSubscriptionInfo,
     createSubscription,
     cancelSubscription,
     getSubscriptionPlans,
@@ -21,7 +21,7 @@ router.use(requireAuth);
 /**
  * Получение информации о текущей подписке
  */
-router.get('/subscription', checkSubscriptionStatus, getSubscriptionInfo);
+router.get('/subscription', checkSubscriptionStatus, getCloudSubscriptionInfo);
 
 /**
  * Получение доступных тарифов
