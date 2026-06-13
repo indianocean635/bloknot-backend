@@ -1,0 +1,154 @@
+================================================================================
+                        ПОЛНЫЙ БЭКАП ПРОЕКТА BLOKNOT-BACKEND
+================================================================================
+
+Дата создания бэкапа: 13.06.2026 13:29
+Файл бэкапа: bloknot-backend-backup-2026-06-13-13-29.zip
+Размер архива: 1.8 MB
+
+================================================================================
+                            ИНФОРМАЦИЯ О РЕПОЗИТОРИИ
+================================================================================
+
+Репозиторий: https://github.com/indianocean635/bloknot-backend.git
+Текущая ветка: main
+Статус: Up to date with origin/main
+
+Последний коммит: 454cac45e560192cb6a48dcafad411ac822277a1
+Автор: Bloknot <you@bloknotservis.ru>
+Дата: Sat Jun 13 13:22:05 2026 +0300
+Сообщение: FIXED: Updated VK modal text to be more direct
+
+Тег: v1.0-backup-complete-186-g454cac4
+Всего коммитов: 186
+
+================================================================================
+                        ПОСЛЕДНИЕ ИЗМЕНЕНИЯ (20 коммитов)
+================================================================================
+
+454cac4 - Bloknot, 8 minutes ago : FIXED: Updated VK modal text to be direct
+be8bdb0 - Bloknot, 13 minutes ago : FIXED: Removed VK confirmation text & replay link
+84fd3fb - Bloknot, 22 minutes ago : IMPROVED: VK copy button & removed confirmation
+99da4ba - Bloknot, 26 minutes ago : IMPROVED: VK modal window design & functionality
+0c6ee4b - Bloknot, 34 minutes ago : FIXED: Removed 10 minute time step option
+14e5238 - Bloknot, 2 hours ago : FIXED: Removed WhatsApp auto-notification text
+9c10c62 - Bloknot, 3 hours ago : FEATURE: Automatic WhatsApp notifications after booking
+8d12a24 - Bloknot, 18 hours ago : FIXED: Public API routes for business data loading
+17da1c5 - Bloknot, 19 hours ago : FIXED: VK API proxy issues and detailed debugging
+c52efae - Bloknot, 19 hours ago : FIXED: VK message sending with proper error handling
+5c0ba1b - Bloknot, 19 hours ago : FIXED: Remove vkUserId field and use customerVkId
+2a015af - Bloknot, 19 hours ago : FIXED: Complete VK integration with proper Prisma schema
+6fb1c3d - Bloknot, 19 hours ago : FIXED: Remove vkCodeGenerated field that doesn't exist
+70522bd - Bloknot, 19 hours ago : FIXED: VK code generation without VKLinkCode table
+230acd2 - Bloknot, 20 hours ago : FIXED: Complete VK Community API Integration
+7f6c6ac - Bloknot, 20 hours ago : FIXED: Temporary VK code implementation without new table
+7e9f121 - Bloknot, 20 hours ago : FEATURE: Complete VK Community Notifications Implementation
+0003fcd - Bloknot, 20 hours ago : FEATURE: Added VK Polling Service as alternative to Callback API
+c4d1033 - Bloknot, 21 hours ago : DEBUG: Added GET callback endpoint for VK testing
+d44d7fc - Bloknot, 21 hours ago : DEBUG: Added direct message_new handling for VK testing
+
+================================================================================
+                            СТАТУС ПРИЛОЖЕНИЯ
+================================================================================
+
+PM2 Process Status:
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ bloknot            │ fork     │ 18   │ online    │ 0%       │ 40.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+
+Приложение работает в режиме ONLINE
+Перезапусков: 18
+Потребление памяти: 40.3 MB
+
+================================================================================
+                            ОСНОВНЫЕ ФУНКЦИИ ПРОЕКТА
+================================================================================
+
+✅ VK Community Notifications (полностью реализовано)
+   - Автоматическая отправка уведомлений в VK
+   - Привязка VK пользователей к записям
+   - Отправка напоминаний о записях
+   - Улучшенный модальный интерфейс
+
+✅ WhatsApp Notifications (автоматические)
+   - Автоматическая отправка после записи
+   - Шаблонные сообщения подтверждения
+   - Интеграция с Meta WhatsApp API
+
+✅ Telegram Notifications
+   - Привязка по токену
+   - Отправка уведомлений и напоминаний
+
+✅ Онлайн-запись
+   - Публичная страница записи
+   - Выбор услуг, мастеров, времени
+   - Автоматическая отправка уведомлений
+
+✅ Административная панель
+   - Управление услугами, мастерами
+   - Настройка расписания
+   - Управление записями
+
+================================================================================
+                            ТЕХНИЧЕСКИЕ ДЕТАЛИ
+================================================================================
+
+База данных: PostgreSQL с Prisma ORM
+Сервер: Node.js + Express
+Фронтенд: HTML/CSS/JavaScript (без фреймворков)
+Аутентификация: JWT токены
+Файловое хранилище: S3 совместимое
+
+Порты:
+- Backend: 3001
+- Database: 5432 (PostgreSQL)
+- PM2: Мониторинг процессов
+
+================================================================================
+                            ВАЖНЫЕ ФАЙЛЫ КОНФИГУРАЦИИ
+================================================================================
+
+- .env - переменные окружения
+- package.json - зависимости проекта
+- prisma/schema.prisma - схема базы данных
+- index.js - основной файл сервера
+- pm2.config.js - конфигурация PM2
+
+================================================================================
+                            ИНФОРМАЦИЯ О ДЕПЛОЕ
+================================================================================
+
+Последний деплой: Автоматический через git push
+Репозиторий: GitHub (origin/main)
+Ветка: main
+Коммит деплоя: 454cac4
+
+Сервер: Работает на PM2 process manager
+Статус: ✅ ONLINE и работает корректно
+
+================================================================================
+                            ПРИМЕЧАНИЯ
+================================================================================
+
+1. Все изменения автоматически синхронизированы с GitHub
+2. Проект находится в рабочем состоянии
+3. VK интеграция полностью функциональна
+4. WhatsApp уведомления работают автоматически
+5. Онлайн-запись доступна публично
+
+================================================================================
+                            ВОССТАНОВЛЕНИЕ
+================================================================================
+
+Для восстановления проекта:
+1. Распаковать архив bloknot-backend-backup-2026-06-13-13-29.zip
+2. Установить зависимости: npm install
+3. Настроить переменные окружения в .env
+4. Запустить миграции базы данных: npx prisma migrate dev
+5. Запустить проект: pm2 start index.js --name bloknot
+
+================================================================================
+                        БЭКАП УСПЕШНО СОЗДАН ✅
+================================================================================
