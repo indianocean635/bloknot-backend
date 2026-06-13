@@ -17,87 +17,62 @@ const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN, {
 // Handle /start command with payload (deep-link)
 bot.start(async (ctx) => {
   const payload = ctx.startPayload;
-  
-  console.log('[TELEGRAM BOT] Start command received with payload:', payload);
-  
-  if (payload) {
-    // Handle deep-link payload (e.g., magic link token)
-    try {
-      // Here you can handle the payload for authentication
-      await ctx.reply('🔗 Получена ссылка для авторизации. Обработка...');
-      
-      // You can add logic to handle the payload
-      // For example, validate token and authenticate user
-      
-    } catch (error) {
-      console.error('[TELEGRAM BOT] Error handling payload:', error);
-      await ctx.reply('❌ Ошибка обработки ссылки. Попробуйте позже.');
-    }
-  } else {
-    await ctx.reply('👋 Добро пожаловать в Bloknot Bot!\n\nИспользуйте /help для просмотра команд.');
+
+  console.log('[TELEGRAM BOT] START payload:', payload);
+
+  if (!payload) {
+    await ctx.reply('Бот подключен ✅\n\nДля получения уведомлений о записях, используйте ссылку из формы записи.');
+    return;
   }
-});
 
-// Handle /help command
-bot.help(async (ctx) => {
-  await ctx.reply(`
-📋 *Доступные команды:*
-
-/start - Запустить бота
-/help - Показать это сообщение
-/status - Проверить статус подписки
-
-🔗 *Для авторизации:*
-Используйте magic-ссылку из личного кабинета
-  `);
-});
-
-// Handle /status command
-bot.command('status', async (ctx) => {
   try {
-    // Here you can check user's subscription status
-    await ctx.reply('📊 Функция проверки статуса в разработке...');
+    // Send connection data to backend
+    const response = await fetch('https://bloknotservis.ru/api/telegram/connect', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        token: payload,
+        chatId: ctx.chat.id,
+        username: ctx.from.username
+      })
+    });
+
+    if (response.ok) {
+      await ctx.reply('Telegram успешно подключен ✅\n\nТеперь вы будете получать уведомления о записях.');
+    } else {
+      await ctx.reply('Ошибка подключения. Недействительный токен.');
+    }
   } catch (error) {
-    console.error('[TELEGRAM BOT] Error checking status:', error);
-    await ctx.reply('❌ Ошибка проверки статуса.');
+    console.error('[TELEGRAM BOT] Error connecting:', error);
+    await ctx.reply('Ошибка подключения. Попробуйте позже.');
   }
 });
 
-// Handle text messages
-bot.on('text', async (ctx) => {
-  console.log('[TELEGRAM BOT] Text message received:', ctx.message.text);
-  
-  // Echo for now, can be extended
-  await ctx.reply('📨 Сообщение получено. Используйте /help для просмотра команд.');
+// Handle other commands
+bot.on('message', (ctx) => {
+  console.log('[TELEGRAM BOT] Message received:', ctx.message.text);
 });
 
-// Handle errors
-bot.catch((err, ctx) => {
-  console.error('[TELEGRAM BOT] Error:', err);
-  ctx.reply('❌ Произошла ошибка. Попробуйте позже.');
-});
-
-// Start bot
-console.log('🚀 Starting Telegram Bot...');
-console.log('📡 Mode: Polling');
-console.log('🔗 Backend URL:', process.env.BASE_URL);
-
-bot.launch()
-  .then(() => {
-    console.log('✅ Telegram Bot started successfully!');
-  })
-  .catch((error) => {
-    console.error('❌ Failed to start Telegram Bot:', error);
-    process.exit(1);
-  });
+// Use webhook if WEBHOOK_URL is set
+if (process.env.TELEGRAM_WEBHOOK_URL) {
+  bot.telegram.setWebhook(process.env.TELEGRAM_WEBHOOK_URL);
+  console.log('[TELEGRAM BOT] Using webhook:', process.env.TELEGRAM_WEBHOOK_URL);
+} else {
+  // Use polling
+  bot.launch()
+    .then(() => {
+      console.log('[TELEGRAM BOT] Bot started successfully with polling');
+    })
+    .catch((error) => {
+      console.error('[TELEGRAM BOT] Error starting bot:', error);
+      process.exit(1);
+    });
+}
 
 // Graceful shutdown
-process.once('SIGINT', () => {
-  console.log('[TELEGRAM BOT] Received SIGINT, stopping bot...');
-  bot.stop('SIGINT');
-});
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
-process.once('SIGTERM', () => {
-  console.log('[TELEGRAM BOT] Received SIGTERM, stopping bot...');
-  bot.stop('SIGTERM');
-});
+module.exports = { bot };
