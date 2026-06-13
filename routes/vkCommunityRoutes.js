@@ -297,6 +297,9 @@ router.post('/callback', async (req, res) => {
                     if (appointment) {
                         try {
                             const appointmentDate = new Date(appointment.startsAt);
+                            const domain = process.env.DOMAIN || process.env.FRONTEND_URL || 'https://bloknotservis.ru';
+                            const bookingLink = `${domain}/booking-new.html?slug=${appointment.business.slug}`;
+                            
                             await sendVKMessage(
                                 businessId,
                                 fromId,
@@ -305,7 +308,8 @@ router.post('/callback', async (req, res) => {
                                 `👨‍💼 Специалист: ${appointment.master.name}\n` +
                                 `📅 Дата: ${appointmentDate.toLocaleDateString('ru-RU')}\n` +
                                 `⏰ Время: ${appointmentDate.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}\n` +
-                                `💰 Стоимость: ${appointment.service.price} руб.`,
+                                `💰 Стоимость: ${appointment.service.price} руб.\n\n` +
+                                `🔄 Перезаписаться: ${bookingLink}`,
                                 'appointment_info'
                             );
                             console.log('[VK NOTIFICATION SENT] Appointment details sent to user');

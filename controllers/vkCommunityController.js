@@ -279,13 +279,8 @@ async function handleVKCallback(body, businessId) {
                     try {
                         const result = await linkVKByCode(text, fromId);
                         
-                        // Отправляем подтверждение
-                        await sendVKMessage(
-                            businessId,
-                            fromId,
-                            `✅ ВКонтакте успешно подключён!\n\nТеперь вы будете получать уведомления о записи, ${result.customerName}.`,
-                            'link_success'
-                        );
+                        // Подтверждение не отправляем - только логируем
+                        console.log('[VK USER LINKED] Successfully linked VK user:', fromId);
                         
                     } catch (error) {
                         // Отправляем сообщение об ошибке
