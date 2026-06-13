@@ -37,16 +37,7 @@
     </div>
   </div>
 
-  <!-- Payment History -->
-  <div class="card" style="margin-top:12px;">
-    <div class="item-title">История платежей</div>
-    <div class="item-meta">Просмотр истории всех платежей по подписке</div>
-    
-    <div id="paymentHistory" style="margin-top:12px;">
-      <p style="color: #6b7280; font-size: 14px;">Загрузка истории платежей...</p>
-    </div>
-  </div>
-</main>
+  </main>
 
 <!-- Subscription Plans Modal -->
 <div id="subscriptionPlansModal" class="modal" style="display: none;">
@@ -90,7 +81,6 @@
   document.addEventListener('DOMContentLoaded', function() {
     loadCurrentUser();
     loadSubscriptionInfo();
-    loadPaymentHistory();
     setupSubscriptionEventListeners();
   });
 
@@ -134,26 +124,7 @@
     }
   }
 
-  // Load payment history
-  async function loadPaymentHistory() {
-    try {
-      console.log('[SUBSCRIPTION] Loading payment history...');
-      
-      const response = await fetch('/api/cloudpayments/payment-history');
-      const result = await response.json();
-
-      if (result.success) {
-        displayPaymentHistory(result.data);
-      } else {
-        console.error('[SUBSCRIPTION] Failed to load payment history:', result.error);
-        displayPaymentHistoryError('Не удалось загрузить историю платежей');
-      }
-    } catch (error) {
-      console.error('[SUBSCRIPTION] Error loading payment history:', error);
-      displayPaymentHistoryError('Ошибка загрузки истории платежей');
-    }
-  }
-
+  
   // Display subscription information
   function displaySubscriptionInfo(data) {
     const detailsDiv = document.getElementById('subscriptionDetails');
@@ -237,73 +208,7 @@
     `;
   }
 
-  // Display payment history
-  function displayPaymentHistory(data) {
-    const historyDiv = document.getElementById('paymentHistory');
-    
-    if (!data.history || data.history.length === 0) {
-      historyDiv.innerHTML = `
-        <p style="color: #6b7280; font-size: 14px; text-align: center;">
-          История платежей пуста
-        </p>
-      `;
-      return;
-    }
-
-    let html = `
-      <div style="margin-bottom: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-weight: 500; color: #374151;">Общая сумма платежей:</span>
-          <span style="color: #1f2937; font-weight: bold;">${data.totalPaid} ₽</span>
-        </div>
-      </div>
-      <div style="border-top: 1px solid #e5e7eb; padding-top: 12px;">
-    `;
-
-    data.history.forEach(payment => {
-      const paymentDate = new Date(payment.date);
-      const statusColors = {
-        completed: '#10b981',
-        active: '#3b82f6',
-        trial: '#f59e0b',
-        summary: '#6b7280'
-      };
-
-      const statusTexts = {
-        completed: 'Завершен',
-        active: 'Активен',
-        trial: 'Пробный',
-        summary: 'Итого'
-      };
-
-      html += `
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
-          <div>
-            <div style="font-weight: 500; color: #1f2937;">${payment.description}</div>
-            <div style="font-size: 12px; color: #6b7280;">${paymentDate.toLocaleDateString('ru-RU')}</div>
-          </div>
-          <div style="text-align: right;">
-            <div style="font-weight: bold; color: #1f2937;">${payment.amount} ₽</div>
-            <div style="font-size: 12px; color: ${statusColors[payment.status]};">${statusTexts[payment.status]}</div>
-          </div>
-        </div>
-      `;
-    });
-
-    html += '</div>';
-    historyDiv.innerHTML = html;
-  }
-
-  // Display payment history error
-  function displayPaymentHistoryError(message) {
-    const historyDiv = document.getElementById('paymentHistory');
-    historyDiv.innerHTML = `
-      <div style="color: #ef4444; font-size: 14px; text-align: center;">
-        ${message}
-      </div>
-    `;
-  }
-
+  
   // Get plan name in Russian
   function getPlanName(type) {
     const planNames = {
@@ -460,7 +365,6 @@
         alert('Подписка успешно оформлена!');
         document.getElementById('cloudPaymentsModal').style.display = 'none';
         loadSubscriptionInfo(); // Reload subscription info
-        loadPaymentHistory(); // Reload payment history
       } else {
         alert('Ошибка оформления подписки: ' + result.error);
       }
@@ -524,6 +428,12 @@
       event.target.style.display = 'none';
     }
   });
+</script>
+
+<script src="/app.js?v=20260425-data-isolation&t=1713633600"></script>
+<script>
+  // Initialize header with active tab
+  renderHeader('dashboard');
 </script>
 
 </body>
