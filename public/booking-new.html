@@ -1642,7 +1642,6 @@
         customerName: document.getElementById('client-name').value,
         customerPhone: document.getElementById('client-phone').value,
         customerComment: document.getElementById('client-comment').value,
-        whatsappNotifications: true,
         // Include all selected services
         services: selectedServices.map(s => ({
           id: s.id,
@@ -1714,13 +1713,12 @@
             <p style="margin-top: 16px;">Спасибо, что выбрали ${businessData.business?.name || businessData.name}!</p>
             <div style="margin-top: 24px; padding: 16px; background: #f8fafc; border-radius: 8px;">
               <p style="margin-bottom: 12px; font-weight: 500;">Где удобно получить напоминание?</p>
+              <p style="margin-bottom: 8px; font-size: 14px; color: #6b7280;">✅ WhatsApp уведомления отправлены автоматически на ваш номер</p>
               <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
                 <button id="connect-telegram-btn" style="padding: 10px 20px; background: #229ED9; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; min-width: 200px;">
                   Подключить Telegram
                 </button>
-                <button id="connect-whatsapp-btn" style="padding: 10px 20px; background: #25D366; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; min-width: 200px;">
-                  Уведомления в WhatsApp
-                </button>
+                <!-- WhatsApp кнопка скрыта - уведомления отправляются автоматически -->
                 <button id="connect-vk-community-btn" style="padding: 10px 20px; background: #0077FF; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; min-width: 200px;">
                   Подключить ВКонтакте
                 </button>
@@ -1735,11 +1733,7 @@
           window.open(`https://t.me/bloknot_booking_bot?start=${bookingToken}`, '_blank');
         });
 
-        // Add event listener to connect WhatsApp button
-        document.getElementById('connect-whatsapp-btn').addEventListener('click', () => {
-          // Show info message about WhatsApp notifications
-          alert('WhatsApp уведомления отправлены автоматически на указанный номер телефона.');
-        });
+        // WhatsApp уведомления отправляются автоматически - обработчик не нужен
 
         // Add event listener to connect VK Community button
         document.getElementById('connect-vk-community-btn').addEventListener('click', async () => {

@@ -320,9 +320,9 @@ async function createPublicAppointment(req, res) {
       console.log('[STEP 7] Skipping Telegram - no chatId');
     }
 
-    // Send WhatsApp confirmation if phone is provided and WhatsApp notifications enabled
-    if (customerPhone && req.body.whatsappNotifications) {
-      console.log('[STEP 7.5] Sending WhatsApp confirmation...');
+    // Send WhatsApp confirmation automatically if phone is provided
+    if (customerPhone) {
+      console.log('[STEP 7.5] Sending WhatsApp confirmation automatically...');
       try {
         const { sendWhatsAppTemplateMessage } = require('../services/whatsappService');
 
@@ -410,7 +410,7 @@ async function createPublicAppointment(req, res) {
         // Continue even if WhatsApp fails
       }
     } else {
-      console.log('[STEP 7.5] Skipping WhatsApp - no phone or notifications disabled');
+      console.log('[STEP 7.5] Skipping WhatsApp - no phone provided');
     }
 
     // Send VK confirmation if VK user ID is provided
