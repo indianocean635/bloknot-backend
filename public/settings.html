@@ -1669,7 +1669,6 @@ async function loadSpecialistSettings(index) {
             <div style="margin-bottom: 12px;">
               <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">Шаг времени (мин):</label>
               <select id="timeStep" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                <option value="10">10 минут</option>
                 <option value="15">15 минут</option>
                 <option value="30">30 минут</option>
               </select>
@@ -1850,7 +1849,7 @@ function renderCalendar(date, scheduleData) {
           // Load time step and breaks from schedule data
           const dateKey = selectedDays[0].dataset.date;
           if (window.specialistScheduleData[dateKey]) {
-            document.getElementById('timeStep').value = window.specialistScheduleData[dateKey].timeStep || 10;
+            document.getElementById('timeStep').value = window.specialistScheduleData[dateKey].timeStep || 15;
             
             // Load breaks
             const breaksList = document.getElementById('breaksList');
@@ -2031,7 +2030,7 @@ async function saveSpecialistSettings(index) {
           enabled: true,
           startTime: start || '09:00',
           endTime: end || '18:00',
-          timeStep: window.specialistScheduleData[dateKey]?.timeStep || 10,
+          timeStep: window.specialistScheduleData[dateKey]?.timeStep || 15,
           breaks: window.specialistScheduleData[dateKey]?.breaks || []
         };
       }
