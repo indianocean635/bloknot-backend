@@ -264,9 +264,10 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not found', path: req.originalUrl });
 });
 
-// Start VK polling service
-const vkPollingService = require('./services/vkPollingService');
-vkPollingService.start();
+// Start VK polling service - temporarily disabled due to missing VKLinkCode table
+// const vkPollingService = require('./services/vkPollingService');
+// vkPollingService.start();
+console.log('🔇 VK Polling Service temporarily disabled');
 
 // Start server
 app.listen(PORT, () => {
