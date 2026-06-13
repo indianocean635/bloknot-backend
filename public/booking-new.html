@@ -1799,23 +1799,24 @@
             
             modal.innerHTML = `
               <div style="background: white; padding: 24px; border-radius: 12px; max-width: 400px; margin: 20px; text-align: center;">
-                <h3 style="margin: 0 0 16px 0; color: #333;">📱 Подключите ВКонтакте</h3>
-                <p style="margin: 0 0 20px 0; color: #666; line-height: 1.5;">
+                                <p style="margin: 0 0 20px 0; color: #666; line-height: 1.5;">
                   Получайте уведомления ВКонтакте.<br>
                   Отправьте этот код в сообщения сообщества:
                 </p>
-                <div style="background: #f0f7ff; border: 2px solid #0077FF; padding: 16px; border-radius: 8px; margin: 0 0 20px 0;">
+                <div style="background: #f0f7ff; border: 2px solid #0077FF; padding: 16px; border-radius: 8px; margin: 0 0 20px 0; position: relative;">
                   <div style="font-size: 24px; font-weight: bold; color: #0077FF; letter-spacing: 2px;">${code}</div>
+                  <button id="copy-code" style="position: absolute; top: 8px; right: 8px; background: #0077FF; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                    📋 Копировать
+                  </button>
                 </div>
-                <p style="margin: 0 0 20px 0; color: #999; font-size: 14px;">
-                  Код действителен до ${new Date(expiresAt).toLocaleString('ru-RU')}
-                </p>
                 <button id="open-vk-group" style="background: #0077FF; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin: 0 8px;">
                   Перейти к диалогу в ВКонтакте
                 </button>
-                <button id="close-modal" style="background: #6c757d; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin: 0 8px;">
-                  Закрыть
-                </button>
+                <div style="margin-top: 16px;">
+                  <button id="close-modal" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                    Закрыть
+                  </button>
+                </div>
               </div>
             `;
             
@@ -1827,6 +1828,19 @@
               // TODO: Получать ID группы из настроек бизнеса
               const groupId = '238506692'; // ID группы из VK_GROUP_ID
               window.open(`https://vk.com/im?sel=-${groupId}`, '_blank');
+            });
+            
+            document.getElementById('copy-code').addEventListener('click', () => {
+              navigator.clipboard.writeText(code).then(() => {
+                const btn = document.getElementById('copy-code');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Скопировано!';
+                btn.style.background = '#28a745';
+                setTimeout(() => {
+                  btn.textContent = originalText;
+                  btn.style.background = '#0077FF';
+                }, 2000);
+              });
             });
             
             document.getElementById('close-modal').addEventListener('click', () => {
