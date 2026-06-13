@@ -786,6 +786,22 @@
         }
 
         if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          
+          // Check if it's a subscription error
+          if (errorData.code === 'SUBSCRIPTION_EXPIRED') {
+            console.log('[SUBSCRIPTION] Business subscription expired - showing message');
+            document.getElementById('booking-form-section').innerHTML = `
+              <div style="text-align: center; padding: 60px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;">🔒</div>
+                <h2 style="color: #374151; margin-bottom: 8px;">Онлайн-запись временно недоступна</h2>
+                <p style="color: #6b7280; margin-bottom: 24px;">Владелец аккаунта не продлил подписку.</p>
+                <p style="color: #9ca3af; font-size: 14px;">Попробуйте обратиться к владельцу бизнеса для возобновления услуги.</p>
+              </div>
+            `;
+            return; // Don't throw error, just stop loading
+          }
+          
           throw new Error('Не удалось загрузить данные бизнеса');
         }
 
@@ -1690,6 +1706,12 @@
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
+          
+          // Check for subscription errors
+          if (errorData.code === 'SUBSCRIPTION_EXPIRED') {
+            throw new Error('Онлайн-запись временно недоступна. Владелец аккаунта не продлил подписку.');
+          }
+          
           if (response.status === 409) {
             // Time slot conflict - show specific error
             throw new Error(errorData.error || 'Это время уже занято. Пожалуйста, выберите другое время.');

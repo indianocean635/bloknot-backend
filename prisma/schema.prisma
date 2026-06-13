@@ -20,6 +20,15 @@ model User {
   isPaying      Boolean   @default(false)
   totalPaid     Int       @default(0)
   nextBillingAt DateTime?
+  
+  // Subscription fields
+  subscriptionStatus        String    @default("trial") // trial, active, cancelled, expired
+  subscriptionType           String?                  // monthly, yearly
+  trialEndsAt               DateTime?
+  subscriptionEndsAt        DateTime?
+  cloudPaymentsSubscriptionId String?
+  cloudPaymentsCardToken     String?
+  nextPaymentDate           DateTime?
 
   business Business? @relation("BusinessUsers", fields: [businessId], references: [id])
   ownedBusiness Business? @relation("BusinessOwner")

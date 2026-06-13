@@ -142,6 +142,50 @@ async function createPublicAppointment(req, res) {
   try {
     console.log('[PUBLIC APPOINTMENT REQUEST]', req.body);
 
+    // Проверяем подписку владельца бизнеса
+    const { prisma } = require('../services/prismaService');
+    const { updateSubscriptionStatusIfNeeded } = require('../middleware/subscriptionMiddleware');
+    
+    // Получаем бизнес для проверки подписки владельца
+    const business = await prisma.business.findUnique({
+      where: { id: req.body.businessId },
+      include: { owner: true }
+    });
+
+    if (!business) {
+      return res.status(404).json({ error: 'Business not found' });
+    }
+
+    console.log('[SUBSCRIPTION] Checking business owner subscription:', {
+      businessId: req.body.businessId,
+      ownerId: business.ownerId,
+      currentStatus: business.owner.subscriptionStatus
+    });
+
+    // Обновляем статус подписки если необходимо
+    const updatedSubscription = await updateSubscriptionStatusIfNeeded(business.owner);
+
+    // Проверяем активность подписки
+    if (!updatedSubscription.isActive) {
+      console.log('[SUBSCRIPTION] Public appointment blocked - subscription expired:', {
+        businessId: req.body.businessId,
+        ownerId: business.ownerId,
+        status: updatedSubscription.status
+      });
+
+      return res.status(403).json({
+        error: 'Онлайн-запись временно недоступна. Владелец аккаунта не продлил подписку.',
+        code: 'SUBSCRIPTION_EXPIRED',
+        subscriptionStatus: updatedSubscription.status
+      });
+    }
+
+    console.log('[SUBSCRIPTION] Public appointment allowed - subscription active:', {
+      businessId: req.body.businessId,
+      ownerId: business.ownerId,
+      status: updatedSubscription.status
+    });
+
     const {
       businessId,
       serviceId,
@@ -504,6 +548,39 @@ async function createAppointment(req, res) {
       console.warn('[SECURITY] Missing businessId', { userId: user?.id });
       return res.status(403).json({ error: "Forbidden" });
     }
+
+    // Проверяем подписку пользователя
+    const { updateSubscriptionStatusIfNeeded } = require('../middleware/subscriptionMiddleware');
+    
+    console.log('[SUBSCRIPTION] Checking user subscription for appointment creation:', {
+      userId: user.id,
+      businessId: user.businessId,
+      currentStatus: user.subscriptionStatus
+    });
+
+    // Обновляем статус подписки если необходимо
+    const updatedSubscription = await updateSubscriptionStatusIfNeeded(user);
+
+    // Проверяем активность подписки
+    if (!updatedSubscription.isActive) {
+      console.log('[SUBSCRIPTION] Appointment creation blocked - subscription expired:', {
+        userId: user.id,
+        businessId: user.businessId,
+        status: updatedSubscription.status
+      });
+
+      return res.status(403).json({
+        error: 'Создание записей временно недоступно. Продлите подписку для продолжения работы.',
+        code: 'SUBSCRIPTION_EXPIRED',
+        subscriptionStatus: updatedSubscription.status
+      });
+    }
+
+    console.log('[SUBSCRIPTION] Appointment creation allowed - subscription active:', {
+      userId: user.id,
+      businessId: user.businessId,
+      status: updatedSubscription.status
+    });
 
     const {
       serviceId,
