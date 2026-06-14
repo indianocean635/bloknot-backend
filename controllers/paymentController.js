@@ -206,7 +206,7 @@ async function createPayment(req, res) {
           subscriptionStatus: 'TRIAL',
           trialEndsAt,
           billingPeriod: 'MONTHLY',
-          cloudpaymentsSubscriptionId: cloudpaymentsResponse.Model?.SubscriptionId || null,
+          cloudpaymentsSubscriptionId: null,
           nextPaymentDate: trialEndsAt,
           isActive: true
         },
@@ -218,7 +218,7 @@ async function createPayment(req, res) {
           subscriptionStatus: 'TRIAL',
           trialEndsAt,
           billingPeriod: 'MONTHLY',
-          cloudpaymentsSubscriptionId: cloudpaymentsResponse.Model?.SubscriptionId || null,
+          cloudpaymentsSubscriptionId: null,
           nextPaymentDate: trialEndsAt,
           isActive: true
         }
