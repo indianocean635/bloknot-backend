@@ -288,15 +288,32 @@
       <button class="btn" id="addMasterBtn">+ Добавить специалиста</button>
     </div>
     
+    <!-- Tariff Selection -->
+    <div id="tariffSelection" style="margin-bottom: 16px;">
+      <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px;">
+        <strong>Выберите тариф: 1, 5 или более специалистов?</strong>
+      </p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn secondary ios-tariff-btn" onclick="openTariffModal('SOLO', '690', '6624', '1 специалист')">1 специалист</button>
+        <button class="btn secondary ios-tariff-btn" onclick="openTariffModal('STUDIO', '990', '9504', '5 специалистов')">5 специалистов</button>
+        <button class="btn secondary ios-tariff-btn" onclick="openTariffModal('PRO', '1490', '14304', 'Более 5 специалистов')">Более 5 специалистов</button>
+      </div>
+    </div>
+    
+    <!-- Tariff Selection Modal -->
+<div class="modal" id="tariffModal">
+  <div class="modal-content" style="max-width: 900px; padding: 32px;">
+    <h3 class="modal-title">Выберите тариф и период оплаты</h3>
+    
     <!-- Billing Period Toggle -->
     <div class="billing-period-section">
       <div class="billing-period-toggle">
         <span class="period-label">Выберите период оплаты:</span>
         <div class="period-buttons">
-          <button class="period-btn active" id="period-1" onclick="selectPeriod(1)">
+          <button class="period-btn active" id="tariff-period-1" onclick="selectTariffPeriod(1)">
             1 месяц
           </button>
-          <button class="period-btn" id="period-12" onclick="selectPeriod(12)">
+          <button class="period-btn" id="tariff-period-12" onclick="selectTariffPeriod(12)">
             12 месяцев
             <span class="discount-badge">-20%</span>
           </button>
@@ -430,8 +447,10 @@
         </ul>
       </div>
     </section>
-    
-    <!-- Payment Modal (exact copy from pricing.html) -->
+  </div>
+</div>
+
+<!-- Payment Modal (exact copy from pricing.html) -->
 <div class="modal" id="paymentModal">
   <div class="modal-content">
     <h3 class="modal-title">Подтверждение оплаты</h3>
@@ -1411,24 +1430,24 @@ function updateSpecialistsUI(specialists) {
   console.log('Updating specialists UI with:', specialists);
 }
 
-// Period selection function (from pricing.html)
-let currentPeriod = 1;
+// Period selection for tariff modal
+let currentTariffPeriod = 1;
 
-function selectPeriod(period) {
-  currentPeriod = period;
+function selectTariffPeriod(period) {
+  currentTariffPeriod = period;
   
-  document.querySelectorAll('.period-btn').forEach(btn => {
+  document.querySelectorAll('#tariffModal .period-btn').forEach(btn => {
     btn.classList.remove('active');
   });
-  document.getElementById(`period-${period}`).classList.add('active');
+  document.getElementById(`tariff-period-${period}`).classList.add('active');
   
-  updatePrices();
+  updateTariffPrices();
 }
 
-// Update prices based on selected period (from pricing.html)
-function updatePrices() {
-  const priceElements = document.querySelectorAll('.price-monthly');
-  const periodElements = document.querySelectorAll('.price-period');
+// Update prices in tariff modal
+function updateTariffPrices() {
+  const priceElements = document.querySelectorAll('#tariffModal .price-monthly');
+  const periodElements = document.querySelectorAll('#tariffModal .price-period');
   
   priceElements.forEach(element => {
     const monthlyPrice = element.getAttribute('data-monthly');
@@ -1438,7 +1457,7 @@ function updatePrices() {
       return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     };
     
-    if (currentPeriod === 1) {
+    if (currentTariffPeriod === 1) {
       element.textContent = `${formatNumber(monthlyPrice)}₽`;
     } else {
       element.textContent = `${formatNumber(yearlyPrice)}₽`;
@@ -1449,12 +1468,26 @@ function updatePrices() {
     const monthlyText = element.getAttribute('data-monthly-text');
     const yearlyText = element.getAttribute('data-yearly-text');
     
-    if (currentPeriod === 1) {
+    if (currentTariffPeriod === 1) {
       element.textContent = monthlyText;
     } else {
       element.textContent = yearlyText;
     }
   });
+}
+
+// Open tariff selection modal
+function openTariffModal(plan, monthlyPrice, yearlyPrice, description) {
+  const modal = document.getElementById('tariffModal');
+  modal.classList.add('active');
+  
+  // Initialize prices
+  updateTariffPrices();
+}
+
+// Close tariff modal
+function closeTariffModal() {
+  document.getElementById('tariffModal').classList.remove('active');
 }
 
 // Open payment modal (exact copy from pricing.html)
@@ -1464,12 +1497,12 @@ function openPaymentModal(tariff, monthlyPrice, yearlyPrice) {
   const modalSubtitle = document.getElementById('modalSubtitle');
   const modalButtons = document.getElementById('modalButtons');
   
-  const price = currentPeriod === 1 ? monthlyPrice : yearlyPrice;
-  const periodText = currentPeriod === 1 ? '/мес' : '/год';
+  const price = currentTariffPeriod === 1 ? monthlyPrice : yearlyPrice;
+  const periodText = currentTariffPeriod === 1 ? '/мес' : '/год';
   
   modalPrice.textContent = `${price}₽${periodText}`;
   
-  if (currentPeriod === 1) {
+  if (currentTariffPeriod === 1) {
     modalSubtitle.textContent = 'Выберите способ оплаты для привязки карты и автоматического списания';
     modalButtons.innerHTML = `
       <button class="btn-primary" onclick="processCardPayment()">
@@ -3600,7 +3633,7 @@ function openVideoInstruction() {
 async function processCardPayment() {
   const modal = document.getElementById('paymentModal');
   const tariff = modal.getAttribute('data-tariff');
-  const period = currentPeriod === 1 ? 'monthly' : 'yearly';
+  const period = currentTariffPeriod === 1 ? 'monthly' : 'yearly';
   
   // Map tariff names to plan IDs
   const planMap = {
@@ -3688,9 +3721,16 @@ document.getElementById('paymentModal').addEventListener('click', function(e) {
   }
 });
 
+document.getElementById('tariffModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeTariffModal();
+  }
+});
+
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closePaymentModal();
+    closeTariffModal();
   }
 });
 </script>
