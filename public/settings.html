@@ -294,16 +294,16 @@
         <strong>Выберите тариф: 1, 5 или более специалистов?</strong>
       </p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button class="btn secondary ios-tariff-btn" onclick="openTariffModal('SOLO', '690', '6624', '1 специалист')">1 специалист</button>
-        <button class="btn secondary ios-tariff-btn" onclick="openTariffModal('STUDIO', '990', '9504', '5 специалистов')">5 специалистов</button>
-        <button class="btn secondary ios-tariff-btn" onclick="openTariffModal('PRO', '1490', '14304', 'Более 5 специалистов')">Более 5 специалистов</button>
+        <button class="btn secondary ios-tariff-btn" onclick="openSingleTariffModal('Solo', '690', '6624', '1 специалист')">1 специалист</button>
+        <button class="btn secondary ios-tariff-btn" onclick="openSingleTariffModal('Studio', '990', '9504', '5 специалистов')">5 специалистов</button>
+        <button class="btn secondary ios-tariff-btn" onclick="openSingleTariffModal('Pro', '1490', '14304', 'Более 5 специалистов')">Более 5 специалистов</button>
       </div>
     </div>
     
-    <!-- Tariff Selection Modal -->
+    <!-- Single Tariff Modal -->
 <div class="modal" id="tariffModal">
-  <div class="modal-content" style="max-width: 900px; padding: 32px;">
-    <h3 class="modal-title">Выберите тариф и период оплаты</h3>
+  <div class="modal-content" style="max-width: 500px; padding: 32px;">
+    <h3 class="modal-title" id="tariffModalTitle">Выберите период оплаты</h3>
     
     <!-- Billing Period Toggle -->
     <div class="billing-period-section">
@@ -321,129 +321,27 @@
       </div>
     </div>
 
-    <!-- Pricing Grid -->
+    <!-- Single Pricing Card -->
     <section class="pricing-grid" style="padding: 24px 0;">
-      <div class="pricing-card">
+      <div class="pricing-card" id="singleTariffCard">
         <div class="pricing-header">
-          <h3 class="pricing-name">Solo</h3>
-          <p class="pricing-users">1 специалист</p>
+          <h3 class="pricing-name" id="tariffName">Solo</h3>
+          <p class="pricing-users" id="tariffUsers">1 специалист</p>
         </div>
         
         <div class="pricing-price">
-          <div class="price-monthly" data-monthly="690" data-yearly="6624">690₽</div>
+          <div class="price-monthly" id="tariffPrice" data-monthly="690" data-yearly="6624">690₽</div>
           <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
         </div>
         
         <div class="pricing-buttons">
-          <button class="btn-primary" onclick="openPaymentModal('Solo', '690', '6624')">
+          <button class="btn-primary" id="tariffPayButton" onclick="openPaymentModal('Solo', '690', '6624')">
             💳 Оплатить
           </button>
         </div>
         
-        <ul class="pricing-features">
-          <li>
-            <div class="feature-icon"></div>
-            <span>Неограниченное количество записей</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Онлайн-запись клиентов</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Управление услугами</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Базовая аналитика</span>
-          </li>
-        </ul>
-      </div>
-
-      <div class="pricing-card featured">
-        <div class="popular-badge">Популярное</div>
-        <div class="pricing-header">
-          <h3 class="pricing-name">Studio</h3>
-          <p class="pricing-users">До 5 специалистов</p>
-        </div>
-        
-        <div class="pricing-price">
-          <div class="price-monthly" data-monthly="990" data-yearly="9504">990₽</div>
-          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
-        </div>
-        
-        <div class="pricing-buttons">
-          <button class="btn-primary" onclick="openPaymentModal('Studio', '990', '9504')">
-            💳 Оплатить
-          </button>
-        </div>
-        
-        <ul class="pricing-features">
-          <li>
-            <div class="feature-icon"></div>
-            <span>Неограниченное количество записей</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Онлайн-запись клиентов</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Управление услугами</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Продвинутая аналитика</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Напоминания в Telegram</span>
-          </li>
-        </ul>
-      </div>
-
-      <div class="pricing-card">
-        <div class="pricing-header">
-          <h3 class="pricing-name">Pro</h3>
-          <p class="pricing-users">Более 5 специалистов</p>
-        </div>
-        
-        <div class="pricing-price">
-          <div class="price-monthly" data-monthly="1490" data-yearly="14304">1 490₽</div>
-          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
-        </div>
-        
-        <div class="pricing-buttons">
-          <button class="btn-primary" onclick="openPaymentModal('Pro', '1490', '14304')">
-            💳 Оплатить
-          </button>
-        </div>
-        
-        <ul class="pricing-features">
-          <li>
-            <div class="feature-icon"></div>
-            <span>Неограниченное количество записей</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Онлайн-запись клиентов</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Управление услугами</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Продвинутая аналитика</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Персональный менеджер</span>
-          </li>
-          <li>
-            <div class="feature-icon"></div>
-            <span>Кастомизация бренда</span>
-          </li>
+        <ul class="pricing-features" id="tariffFeatures">
+          <!-- Features will be populated dynamically -->
         </ul>
       </div>
     </section>
@@ -1446,43 +1344,107 @@ function selectTariffPeriod(period) {
 
 // Update prices in tariff modal
 function updateTariffPrices() {
-  const priceElements = document.querySelectorAll('#tariffModal .price-monthly');
-  const periodElements = document.querySelectorAll('#tariffModal .price-period');
+  const priceElement = document.getElementById('tariffPrice');
+  const periodElement = document.querySelector('#tariffModal .price-period');
   
-  priceElements.forEach(element => {
-    const monthlyPrice = element.getAttribute('data-monthly');
-    const yearlyPrice = element.getAttribute('data-yearly');
-    
-    const formatNumber = (num) => {
-      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    };
-    
-    if (currentTariffPeriod === 1) {
-      element.textContent = `${formatNumber(monthlyPrice)}₽`;
-    } else {
-      element.textContent = `${formatNumber(yearlyPrice)}₽`;
-    }
-  });
+  const monthlyPrice = priceElement.getAttribute('data-monthly');
+  const yearlyPrice = priceElement.getAttribute('data-yearly');
   
-  periodElements.forEach(element => {
-    const monthlyText = element.getAttribute('data-monthly-text');
-    const yearlyText = element.getAttribute('data-yearly-text');
-    
-    if (currentTariffPeriod === 1) {
-      element.textContent = monthlyText;
-    } else {
-      element.textContent = yearlyText;
-    }
-  });
+  const formatNumber = (num) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  };
+  
+  if (currentTariffPeriod === 1) {
+    priceElement.textContent = `${formatNumber(monthlyPrice)}₽`;
+    periodElement.textContent = 'в месяц';
+  } else {
+    priceElement.textContent = `${formatNumber(yearlyPrice)}₽`;
+    periodElement.textContent = 'в год';
+  }
 }
 
-// Open tariff selection modal
-function openTariffModal(plan, monthlyPrice, yearlyPrice, description) {
+// Tariff data
+const tariffData = {
+  'Solo': {
+    name: 'Solo',
+    users: '1 специалист',
+    features: [
+      'Неограниченное количество записей',
+      'Онлайн-запись клиентов',
+      'Управление услугами',
+      'Базовая аналитика'
+    ]
+  },
+  'Studio': {
+    name: 'Studio',
+    users: 'До 5 специалистов',
+    featured: true,
+    features: [
+      'Неограниченное количество записей',
+      'Онлайн-запись клиентов',
+      'Управление услугами',
+      'Продвинутая аналитика',
+      'Напоминания в Telegram'
+    ]
+  },
+  'Pro': {
+    name: 'Pro',
+    users: 'Более 5 специалистов',
+    features: [
+      'Неограниченное количество записей',
+      'Онлайн-запись клиентов',
+      'Управление услугами',
+      'Продвинутая аналитика',
+      'Персональный менеджер',
+      'Кастомизация бренда'
+    ]
+  }
+};
+
+// Open single tariff modal
+function openSingleTariffModal(tariff, monthlyPrice, yearlyPrice, description) {
   const modal = document.getElementById('tariffModal');
-  modal.classList.add('active');
+  const data = tariffData[tariff];
   
-  // Initialize prices
+  // Update modal title
+  document.getElementById('tariffModalTitle').textContent = `Тариф "${data.name}" - выберите период оплаты`;
+  
+  // Update tariff info
+  document.getElementById('tariffName').textContent = data.name;
+  document.getElementById('tariffUsers').textContent = data.users;
+  
+  // Update price
+  const priceElement = document.getElementById('tariffPrice');
+  priceElement.setAttribute('data-monthly', monthlyPrice);
+  priceElement.setAttribute('data-yearly', yearlyPrice);
+  
+  // Update pay button
+  const payButton = document.getElementById('tariffPayButton');
+  payButton.setAttribute('onclick', `openPaymentModal('${tariff}', '${monthlyPrice}', '${yearlyPrice}')`);
+  
+  // Update features
+  const featuresContainer = document.getElementById('tariffFeatures');
+  featuresContainer.innerHTML = data.features.map(feature => `
+    <li>
+      <div class="feature-icon"></div>
+      <span>${feature}</span>
+    </li>
+  `).join('');
+  
+  // Update card styling
+  const card = document.getElementById('singleTariffCard');
+  card.classList.remove('featured');
+  if (data.featured) {
+    card.classList.add('featured');
+  }
+  
+  // Reset period and show modal
+  currentTariffPeriod = 1;
+  document.getElementById('tariff-period-1').classList.add('active');
+  document.getElementById('tariff-period-12').classList.remove('active');
+  
   updateTariffPrices();
+  modal.classList.add('active');
 }
 
 // Close tariff modal
