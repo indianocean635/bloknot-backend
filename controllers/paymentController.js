@@ -177,11 +177,24 @@ async function createPayment(req, res) {
     }
 
     // Create payment with CloudPayments API
-    const cloudpaymentsResponse = await createCloudPaymentsPayment(cloudPaymentsData);
+    let cloudpaymentsResponse;
+    try {
+      cloudpaymentsResponse = await createCloudPaymentsPayment(cloudPaymentsData);
+      console.log('[CLOUDPAYMENTS] Success Response:', cloudpaymentsResponse);
+    } catch (error) {
+      console.error('[CLOUDPAYMENTS] API Error:', error);
+      return res.status(500).json({ 
+        error: 'CloudPayments API error',
+        details: error.message 
+      });
+    }
 
     if (!cloudpaymentsResponse.Success) {
       console.error('[CLOUDPAYMENTS ERROR]', cloudpaymentsResponse);
-      return res.status(500).json({ error: 'Payment creation failed' });
+      return res.status(500).json({ 
+        error: 'Payment creation failed',
+        details: cloudpaymentsResponse.Message || 'Unknown error'
+      });
     }
 
     // For monthly plans, start trial immediately
@@ -252,7 +265,13 @@ async function createCloudPaymentsPayment(data) {
     throw new Error('CloudPayments credentials not configured');
   }
 
-  const response = await fetch('https://api.cloudpayments.ru/payments/cards/charge', {
+  console.log('[CLOUDPAYMENTS] API Request:', {
+    url: 'https://api.cloudpayments.ru/payments/cards/auth',
+    publicId: publicId.substring(0, 8) + '...',
+    data: data
+  });
+
+  const response = await fetch('https://api.cloudpayments.ru/payments/cards/auth', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -261,7 +280,27 @@ async function createCloudPaymentsPayment(data) {
     body: JSON.stringify(data)
   });
 
-  return response.json();
+  // Log response status and headers
+  console.log('[CLOUDPAYMENTS] Response Status:', response.status);
+  console.log('[CLOUDPAYMENTS] Response Headers:', Object.fromEntries(response.headers.entries()));
+
+  // Get response text first to debug
+  const responseText = await response.text();
+  console.log('[CLOUDPAYMENTS] Response Text (first 200 chars):', responseText.substring(0, 200));
+
+  // Check if response is HTML (error page)
+  if (responseText.startsWith('<!DOCTYPE') || responseText.startsWith('<html')) {
+    console.error('[CLOUDPAYMENTS] Received HTML instead of JSON - API error or wrong credentials');
+    throw new Error('CloudPayments API returned HTML error page. Check credentials and API access.');
+  }
+
+  // Parse JSON
+  try {
+    return JSON.parse(responseText);
+  } catch (error) {
+    console.error('[CLOUDPAYMENTS] Failed to parse JSON:', error);
+    throw new Error('Invalid JSON response from CloudPayments API');
+  }
 }
 
 // Verify CloudPayments signature
