@@ -16,6 +16,9 @@
 
   <!-- CloudPayments Widget -->
   <script src="https://widget.cloudpayments.ru/bundles/cloudpayments"></script>
+  
+  <!-- App.js for Bloknot API -->
+  <script src="/app.js?v=20260420-1&t=1713633600"></script>
 
   <style>
     * {
@@ -721,224 +724,243 @@
   </div>
 
   <script>
-    let currentPeriod = 1;
-
-    function selectPeriod(period) {
-      currentPeriod = period;
-      
-      document.querySelectorAll('.period-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      document.getElementById(`period-${period}`).classList.add('active');
-      
-      updatePrices();
-    }
-
-    function updatePrices() {
-      const priceElements = document.querySelectorAll('.price-monthly');
-      const periodElements = document.querySelectorAll('.price-period');
-      
-      priceElements.forEach(element => {
-        const monthlyPrice = element.getAttribute('data-monthly');
-        const yearlyPrice = element.getAttribute('data-yearly');
-        
-        const formatNumber = (num) => {
-          return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-        };
-        
-        if (currentPeriod === 1) {
-          element.textContent = `${formatNumber(monthlyPrice)}₽`;
-        } else {
-          element.textContent = `${formatNumber(yearlyPrice)}₽`;
-        }
-      });
-      
-      periodElements.forEach(element => {
-        const monthlyText = element.getAttribute('data-monthly-text');
-        const yearlyText = element.getAttribute('data-yearly-text');
-        
-        if (currentPeriod === 1) {
-          element.textContent = monthlyText;
-        } else {
-          element.textContent = yearlyText;
-        }
-      });
-    }
-
-    function openPaymentModal(tariff, monthlyPrice, yearlyPrice) {
-      const modal = document.getElementById('paymentModal');
-      const modalPrice = document.getElementById('modalPrice');
-      const modalSubtitle = document.getElementById('modalSubtitle');
-      const modalButtons = document.getElementById('modalButtons');
-      
-      const price = currentPeriod === 1 ? monthlyPrice : yearlyPrice;
-      const periodText = currentPeriod === 1 ? '/мес' : '/год';
-      
-      modalPrice.textContent = `${price}₽${periodText}`;
-      
-      if (currentPeriod === 1) {
-        modalSubtitle.textContent = 'Выберите способ оплаты для привязки карты и автоматического списания';
-        modalButtons.innerHTML = `
-          <button class="btn-primary" onclick="processCardPayment()">
-            💳 Оплатить картой
-          </button>
-        `;
-      } else {
-        modalSubtitle.textContent = 'Выберите способ оплаты годовой подписки со скидкой 20%';
-        modalButtons.innerHTML = `
-          <button class="btn-primary" onclick="processCardPayment()">
-            💳 Оплатить картой
-          </button>
-          <button class="btn-secondary" onclick="processInvoicePayment()">
-            📄 Выставить счет
-          </button>
-        `;
-      }
-      
-      modal.setAttribute('data-tariff', tariff);
-      modal.setAttribute('data-monthly-price', monthlyPrice);
-      modal.setAttribute('data-yearly-price', yearlyPrice);
-      
-      modal.classList.add('active');
-    }
-
-    function closePaymentModal() {
-      document.getElementById('paymentModal').classList.remove('active');
-    }
-
-    async function processCardPayment() {
-      const modal = document.getElementById('paymentModal');
-      const tariff = modal.getAttribute('data-tariff');
-      const period = currentPeriod === 1 ? 'monthly' : 'yearly';
-      
-      // Map tariff names to plan IDs
-      const planMap = {
-        'Solo': 'solo',
-        'Studio': 'studio',
-        'Pro': 'pro'
-      };
-      
-      const plan = planMap[tariff];
-      
-      try {
-        const data = await Bloknot.api('/api/payments/create', {
-          method: 'POST',
-          body: JSON.stringify({ plan, period })
-        });
-
-        if (data.success) {
-          // Test mode: CloudPayments credentials not configured
-          if (data.testMode) {
-            console.log('[TEST MODE] Payment successful:', data.message);
-            alert('Тестовый режим: Подписка активирована (CloudPayments не настроен)');
-            closePaymentModal();
-            window.location.href = '/dashboard.html';
-            return;
-          }
-
-          // Production mode: use CloudPayments widget
-          if (data.cloudPayments) {
-            const widget = new cp.CloudPayments();
-
-            const chargeOptions = {
-              publicId: data.cloudPayments.PublicId,
-              description: data.cloudPayments.Description,
-              amount: data.cloudPayments.Amount,
-              currency: data.cloudPayments.Currency,
-              invoiceId: data.cloudPayments.InvoiceId,
-              accountId: data.cloudPayments.AccountId,
-              email: data.cloudPayments.Email,
-              requireConfirmation: data.cloudPayments.RequireConfirmation,
-              trialPeriod: data.cloudPayments.TrialPeriod,
-              recurring: data.cloudPayments.Recurring
-            };
-
-            widget.charge(chargeOptions, function(options) {
-              // Success
-              console.log('Payment successful', options);
-              alert('Оплата успешно выполнена!');
-              closePaymentModal();
-              // Redirect to dashboard or reload
-              window.location.href = '/dashboard.html';
-            }, function(reason, options) {
-              // Fail
-              console.error('Payment failed', reason, options);
-              alert('Ошибка оплаты: ' + reason);
-            });
-          } else {
-            // Success without CloudPayments (subscription already created)
-            alert('Подписка активирована!');
-            closePaymentModal();
-            window.location.href = '/dashboard.html';
-          }
-        } else {
-          alert('Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка'));
-        }
-      } catch (error) {
-        console.error('Payment error:', error);
-        
-        // Check if it's an authorization error
-        if (error.message === 'Unauthorized' || error.message.includes('401')) {
-          alert('Для оплаты необходимо войти в аккаунт или зарегистрироваться');
-          window.location.href = '/login.html';
+    // Wait for DOM and Bloknot to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Wait a bit for app.js to load
+      setTimeout(function() {
+        if (typeof Bloknot === 'undefined') {
+          console.error('Bloknot API not loaded');
           return;
         }
         
-        alert('Ошибка при обработке платежа');
-      }
-    }
-
-    function processInvoicePayment() {
-      const modal = document.getElementById('paymentModal');
-      const tariff = modal.getAttribute('data-tariff');
-      const price = modal.getAttribute('data-yearly-price');
-      
-      alert(`Выставление счета на годовой тариф "${tariff}" (${price}₽/год)...\n\nВ реальном приложении здесь будет форма для выставления счета.`);
-      closePaymentModal();
-    }
-
-    document.getElementById('paymentModal').addEventListener('click', function(e) {
-      if (e.target === this) {
-        closePaymentModal();
-      }
+        initializePricingPage();
+      }, 100);
     });
 
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        closePaymentModal();
-      }
-    });
+    function initializePricingPage() {
+      let currentPeriod = 1;
 
-    function copyEmail() {
-      const email = 'info@bloknotservis.ru';
-      navigator.clipboard.writeText(email).then(function() {
-        const emailElement = document.querySelector('.footer-email');
-        const originalText = emailElement.textContent;
-        emailElement.textContent = '📧 Email скопирован!';
-        emailElement.style.color = '#22c55e';
+      window.selectPeriod = function(period) {
+        currentPeriod = period;
         
-        setTimeout(function() {
-          emailElement.textContent = originalText;
-          emailElement.style.color = '';
-        }, 2000);
-      }).catch(function(err) {
-        const textArea = document.createElement('textarea');
-        textArea.value = email;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
+        document.querySelectorAll('.period-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.getElementById(`period-${period}`).classList.add('active');
         
-        const emailElement = document.querySelector('.footer-email');
-        const originalText = emailElement.textContent;
-        emailElement.textContent = '📧 Email скопирован!';
-        emailElement.style.color = '#22c55e';
+        updatePrices();
+      };
+
+      function updatePrices() {
+        const priceElements = document.querySelectorAll('.price-monthly');
+        const periodElements = document.querySelectorAll('.price-period');
         
-        setTimeout(function() {
-          emailElement.textContent = originalText;
-          emailElement.style.color = '';
-        }, 2000);
+        priceElements.forEach(element => {
+          const monthlyPrice = element.getAttribute('data-monthly');
+          const yearlyPrice = element.getAttribute('data-yearly');
+          
+          const formatNumber = (num) => {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+          };
+          
+          if (currentPeriod === 1) {
+            element.textContent = `${formatNumber(monthlyPrice)}₽`;
+          } else {
+            element.textContent = `${formatNumber(yearlyPrice)}₽`;
+          }
+        });
+        
+        periodElements.forEach(element => {
+          const monthlyText = element.getAttribute('data-monthly-text');
+          const yearlyText = element.getAttribute('data-yearly-text');
+          
+          if (currentPeriod === 1) {
+            element.textContent = monthlyText;
+          } else {
+            element.textContent = yearlyText;
+          }
+        });
+      };
+
+      window.openPaymentModal = function(tariff, monthlyPrice, yearlyPrice) {
+        const modal = document.getElementById('paymentModal');
+        const modalPrice = document.getElementById('modalPrice');
+        const modalSubtitle = document.getElementById('modalSubtitle');
+        const modalButtons = document.getElementById('modalButtons');
+        
+        const price = currentPeriod === 1 ? monthlyPrice : yearlyPrice;
+        const periodText = currentPeriod === 1 ? '/мес' : '/год';
+        
+        modalPrice.textContent = `${price}₽${periodText}`;
+        
+        if (currentPeriod === 1) {
+          modalSubtitle.textContent = 'Выберите способ оплаты для привязки карты и автоматического списания';
+          modalButtons.innerHTML = `
+            <button class="btn-primary" onclick="processCardPayment()">
+              💳 Оплатить картой
+            </button>
+          `;
+        } else {
+          modalSubtitle.textContent = 'Выберите способ оплаты годовой подписки со скидкой 20%';
+          modalButtons.innerHTML = `
+            <button class="btn-primary" onclick="processCardPayment()">
+              💳 Оплатить картой
+            </button>
+            <button class="btn-secondary" onclick="processInvoicePayment()">
+              📄 Выставить счет
+            </button>
+          `;
+        }
+        
+        modal.setAttribute('data-tariff', tariff);
+        modal.setAttribute('data-monthly-price', monthlyPrice);
+        modal.setAttribute('data-yearly-price', yearlyPrice);
+        
+        modal.classList.add('active');
+      };
+
+      window.closePaymentModal = function() {
+        document.getElementById('paymentModal').classList.remove('active');
+      };
+
+      window.processCardPayment = async function() {
+        const modal = document.getElementById('paymentModal');
+        const tariff = modal.getAttribute('data-tariff');
+        const period = currentPeriod === 1 ? 'monthly' : 'yearly';
+        
+        // Map tariff names to plan IDs
+        const planMap = {
+          'Solo': 'solo',
+          'Studio': 'studio',
+          'Pro': 'pro'
+        };
+        
+        const plan = planMap[tariff];
+        
+        try {
+          const data = await Bloknot.api('/api/payments/create', {
+            method: 'POST',
+            body: JSON.stringify({ plan, period })
+          });
+
+          if (data.success) {
+            // Test mode: CloudPayments credentials not configured
+            if (data.testMode) {
+              console.log('[TEST MODE] Payment successful:', data.message);
+              alert('Тестовый режим: Подписка активирована (CloudPayments не настроен)');
+              window.closePaymentModal();
+              window.location.href = '/dashboard.html';
+              return;
+            }
+
+            // Production mode: use CloudPayments widget
+            if (data.cloudPayments) {
+              const widget = new cp.CloudPayments();
+
+              const chargeOptions = {
+                publicId: data.cloudPayments.PublicId,
+                description: data.cloudPayments.Description,
+                amount: data.cloudPayments.Amount,
+                currency: data.cloudPayments.Currency,
+                invoiceId: data.cloudPayments.InvoiceId,
+                accountId: data.cloudPayments.AccountId,
+                email: data.cloudPayments.Email,
+                requireConfirmation: data.cloudPayments.RequireConfirmation,
+                trialPeriod: data.cloudPayments.TrialPeriod,
+                recurring: data.cloudPayments.Recurring
+              };
+
+              widget.charge(chargeOptions, function(options) {
+                // Success
+                console.log('Payment successful', options);
+                alert('Оплата успешно выполнена!');
+                window.closePaymentModal();
+                // Redirect to dashboard or reload
+                window.location.href = '/dashboard.html';
+              }, function(reason, options) {
+                // Fail
+                console.error('Payment failed', reason, options);
+                alert('Ошибка оплаты: ' + reason);
+              });
+            } else {
+              // Success without CloudPayments (subscription already created)
+              alert('Подписка активирована!');
+              window.closePaymentModal();
+              window.location.href = '/dashboard.html';
+            }
+          } else {
+            alert('Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка'));
+          }
+        } catch (error) {
+          console.error('Payment error:', error);
+          
+          // Check if it's an authorization error
+          if (error.message === 'Unauthorized' || error.message.includes('401')) {
+            alert('Для оплаты необходимо войти в аккаунт или зарегистрироваться');
+            window.location.href = '/login.html';
+            return;
+          }
+          
+          alert('Ошибка при обработке платежа');
+        }
+      };
+
+      window.processInvoicePayment = function() {
+        const modal = document.getElementById('paymentModal');
+        const tariff = modal.getAttribute('data-tariff');
+        const price = modal.getAttribute('data-yearly-price');
+        
+        alert(`Выставление счета на годовой тариф "${tariff}" (${price}₽/год)...\n\nВ реальном приложении здесь будет форма для выставления счета.`);
+        window.closePaymentModal();
+      };
+
+      // Event listeners for modal closing
+      document.getElementById('paymentModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          window.closePaymentModal();
+        }
       });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          window.closePaymentModal();
+        }
+      });
+
+      // Copy email function
+      window.copyEmail = function() {
+        const email = 'info@bloknotservis.ru';
+        navigator.clipboard.writeText(email).then(function() {
+          const emailElement = document.querySelector('.footer-email');
+          const originalText = emailElement.textContent;
+          emailElement.textContent = '📧 Email скопирован!';
+          emailElement.style.color = '#22c55e';
+          
+          setTimeout(function() {
+            emailElement.textContent = originalText;
+            emailElement.style.color = '';
+          }, 2000);
+        }).catch(function(err) {
+          const textArea = document.createElement('textarea');
+          textArea.value = email;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          
+          const emailElement = document.querySelector('.footer-email');
+          const originalText = emailElement.textContent;
+          emailElement.textContent = '📧 Email скопирован!';
+          emailElement.style.color = '#22c55e';
+          
+          setTimeout(function() {
+            emailElement.textContent = originalText;
+            emailElement.style.color = '';
+          }, 2000);
+        });
+      };
+
+      console.log('Pricing page initialized');
     }
   </script>
 </body>
