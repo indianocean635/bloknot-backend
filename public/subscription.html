@@ -677,7 +677,7 @@
   }
 
   // Open payment modal (from pricing.html)
-  function openPaymentModal(tariff, monthlyPrice, yearlyPrice) {
+  async function openPaymentModal(tariff, monthlyPrice, yearlyPrice) {
     const modal = document.getElementById('paymentModal');
     const modalPrice = document.getElementById('modalPrice');
     const modalSubtitle = document.getElementById('modalSubtitle');
@@ -941,16 +941,7 @@
     }
   }
 
-  // Get test amount for different tariffs and periods
-  function getTestAmount(tariff, period) {
-    const prices = {
-      'Solo': { monthly: 690, yearly: 6624 },
-      'Studio': { monthly: 990, yearly: 9504 },
-      'Pro': { monthly: 1490, yearly: 14304 }
-    };
-    return prices[tariff] ? prices[tariff][period] : 690;
-  }
-
+  
   // Process card payment (exact copy from pricing.html)
   async function processCardPayment() {
     const modal = document.getElementById('paymentModal');
@@ -973,56 +964,53 @@
       });
 
       if (data.success) {
-        // Always show CloudPayments widget (both test and production mode)
-        const widget = new cp.CloudPayments();
-
-        // Use real CloudPayments data or test data
-        const cloudPaymentsData = data.cloudPayments || {
-          PublicId: 'test_public_id', // Test data
-          Description: `Тестовая подписка ${tariff}`,
-          Amount: getTestAmount(tariff, period),
-          Currency: 'RUB',
-          InvoiceId: `test_${Date.now()}`,
-          AccountId: 'test_account',
-          Email: currentUser?.email || 'test@example.com',
-          RequireConfirmation: period === 'monthly',
-          TrialPeriod: period === 'monthly' ? 5 : null,
-          Recurring: period === 'monthly' ? {
-            Interval: 'Month',
-            Period: 1
-          } : null
-        };
-
-        const chargeOptions = {
-          publicId: cloudPaymentsData.PublicId,
-          description: cloudPaymentsData.Description,
-          amount: cloudPaymentsData.Amount,
-          currency: cloudPaymentsData.Currency,
-          invoiceId: cloudPaymentsData.InvoiceId,
-          accountId: cloudPaymentsData.AccountId,
-          email: cloudPaymentsData.Email,
-          requireConfirmation: cloudPaymentsData.RequireConfirmation,
-          trialPeriod: cloudPaymentsData.TrialPeriod,
-          recurring: cloudPaymentsData.Recurring
-        };
-
-        widget.charge(chargeOptions, function(options) {
-          // Success
-          console.log('Payment successful', options);
-          if (data.testMode) {
-            alert('Тестовый режим: Подписка активирована!');
-          } else {
-            alert('Оплата успешно выполнена!');
-          }
+        // Test mode: CloudPayments credentials not configured
+        if (data.testMode) {
+          console.log('[TEST MODE] Payment successful:', data.message);
+          alert('Тестовый режим: Подписка активирована (CloudPayments не настроен)');
           closePaymentModal();
           closeSubscriptionPlansModal();
-          // Redirect to dashboard or reload
           window.location.href = '/dashboard.html';
-        }, function(reason, options) {
-          // Fail
-          console.error('Payment failed', reason, options);
-          alert('Ошибка оплаты: ' + reason);
-        });
+          return;
+        }
+
+        // Production mode: use CloudPayments widget
+        if (data.cloudPayments) {
+          const widget = new cp.CloudPayments();
+
+          const chargeOptions = {
+            publicId: data.cloudPayments.PublicId,
+            description: data.cloudPayments.Description,
+            amount: data.cloudPayments.Amount,
+            currency: data.cloudPayments.Currency,
+            invoiceId: data.cloudPayments.InvoiceId,
+            accountId: data.cloudPayments.AccountId,
+            email: data.cloudPayments.Email,
+            requireConfirmation: data.cloudPayments.RequireConfirmation,
+            trialPeriod: data.cloudPayments.TrialPeriod,
+            recurring: data.cloudPayments.Recurring
+          };
+
+          widget.charge(chargeOptions, function(options) {
+            // Success
+            console.log('Payment successful', options);
+            alert('Оплата успешно выполнена!');
+            closePaymentModal();
+            closeSubscriptionPlansModal();
+            // Redirect to dashboard or reload
+            window.location.href = '/dashboard.html';
+          }, function(reason, options) {
+            // Fail
+            console.error('Payment failed', reason, options);
+            alert('Ошибка оплаты: ' + reason);
+          });
+        } else {
+          // Success without CloudPayments (subscription already created)
+          alert('Подписка активирована!');
+          closePaymentModal();
+          closeSubscriptionPlansModal();
+          window.location.href = '/dashboard.html';
+        }
       } else {
         alert('Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка'));
       }
