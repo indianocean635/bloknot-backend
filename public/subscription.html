@@ -1030,26 +1030,7 @@
       });
 
       if (data.success) {
-        // Test mode: CloudPayments credentials not configured
-        if (data.testMode) {
-          console.log('[TEST MODE] Payment successful:', data.message);
-          alert('Тестовый режим: Подписка активирована (CloudPayments не настроен)');
-          closePaymentModal();
-          closeSubscriptionPlansModal();
-          window.location.href = '/dashboard.html';
-          return;
-        }
-
-        // For monthly plans, trial is already started - no need to show widget
-        if (period === 'monthly') {
-          alert('Пробный период активирован! Вы можете привязать карту в настройках.');
-          closePaymentModal();
-          closeSubscriptionPlansModal();
-          window.location.href = '/dashboard.html';
-          return;
-        }
-
-        // For yearly plans, use CloudPayments widget
+        // Always use CloudPayments widget for payment processing
         if (data.cloudPayments) {
           const widget = new cp.CloudPayments();
 
@@ -1066,19 +1047,25 @@
             recurring: data.cloudPayments.Recurring
           };
 
-          widget.pay(chargeOptions, function(options) {
-            // Success
-            console.log('Payment successful', options);
-            alert('Оплата успешно выполнена!');
-            closePaymentModal();
-            closeSubscriptionPlansModal();
-            // Redirect to dashboard or reload
-            window.location.href = '/dashboard.html';
-          }, function(reason, options) {
-            // Fail
-            console.error('Payment failed', reason, options);
-            alert('Ошибка оплаты: ' + reason);
-          });
+          const message = period === 'monthly' 
+            ? 'Привяжите карту для активации пробного периода на 5 дней. Первое списание через 5 дней.'
+            : 'Оплатите годовую подписку со скидкой 20%';
+
+          if (confirm(message)) {
+            widget.pay(chargeOptions, function(options) {
+              // Success
+              console.log('Payment successful', options);
+              alert('Оплата успешно выполнена!');
+              closePaymentModal();
+              closeSubscriptionPlansModal();
+              // Redirect to dashboard or reload
+              window.location.href = '/dashboard.html';
+            }, function(reason, options) {
+              // Fail
+              console.error('Payment failed', reason, options);
+              alert('Ошибка оплаты: ' + reason);
+            });
+          }
         } else {
           // Success without CloudPayments (subscription already created)
           alert('Подписка активирована!');

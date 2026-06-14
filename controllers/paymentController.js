@@ -82,97 +82,10 @@ async function createPayment(req, res) {
     const publicId = process.env.CLOUDPAYMENTS_PUBLIC_ID;
     const apiSecret = process.env.CLOUDPAYMENTS_API_SECRET;
 
-    if (!publicId || !apiSecret || publicId === 'your-cloudpayments-public-id' || apiSecret === 'your-cloudpayments-api-secret') {
-      console.log('[CLOUDPAYMENTS] Credentials not configured, using test mode');
-
-      // Test mode: create subscription without actual payment
-      if (period === 'monthly') {
-        const trialEndsAt = new Date();
-        trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
-
-        const subscription = await prisma.subscription.upsert({
-          where: { businessId: user.businessId },
-          update: {
-            plan: planConfig.name,
-            maxUsers: planConfig.maxUsers,
-            usersLimit: planConfig.maxUsers,
-            subscriptionStatus: 'TRIAL',
-            trialEndsAt,
-            billingPeriod: 'MONTHLY',
-            cloudpaymentsSubscriptionId: null,
-            nextPaymentDate: trialEndsAt,
-            isActive: true
-          },
-          create: {
-            businessId: user.businessId,
-            plan: planConfig.name,
-            maxUsers: planConfig.maxUsers,
-            usersLimit: planConfig.maxUsers,
-            subscriptionStatus: 'TRIAL',
-            trialEndsAt,
-            billingPeriod: 'MONTHLY',
-            cloudpaymentsSubscriptionId: null,
-            nextPaymentDate: trialEndsAt,
-            isActive: true
-          }
-        });
-
-        console.log('[TEST MODE] Trial started', {
-          businessId: user.businessId,
-          plan: planConfig.name,
-          trialEndsAt
-        });
-
-        return res.json({
-          success: true,
-          subscription,
-          testMode: true,
-          message: 'Test mode: CloudPayments credentials not configured'
-        });
-      }
-
-      // For yearly plans in test mode
-      const subscriptionEndsAt = new Date();
-      subscriptionEndsAt.setFullYear(subscriptionEndsAt.getFullYear() + 1);
-
-      const subscription = await prisma.subscription.upsert({
-        where: { businessId: user.businessId },
-        update: {
-          plan: planConfig.name,
-          maxUsers: planConfig.maxUsers,
-          usersLimit: planConfig.maxUsers,
-          subscriptionStatus: 'ACTIVE',
-          subscriptionEndsAt,
-          billingPeriod: 'YEARLY',
-          cloudpaymentsSubscriptionId: null,
-          nextPaymentDate: null,
-          isActive: true
-        },
-        create: {
-          businessId: user.businessId,
-          plan: planConfig.name,
-          maxUsers: planConfig.maxUsers,
-          usersLimit: planConfig.maxUsers,
-          subscriptionStatus: 'ACTIVE',
-          subscriptionEndsAt,
-          billingPeriod: 'YEARLY',
-          cloudpaymentsSubscriptionId: null,
-          nextPaymentDate: null,
-          isActive: true
-        }
-      });
-
-      console.log('[TEST MODE] Yearly subscription activated', {
-        businessId: user.businessId,
-        plan: planConfig.name,
-        subscriptionEndsAt
-      });
-
-      return res.json({
-        success: true,
-        subscription,
-        testMode: true,
-        message: 'Test mode: CloudPayments credentials not configured'
+    if (!publicId || !apiSecret) {
+      return res.status(500).json({ 
+        error: 'CloudPayments credentials not configured',
+        details: 'Please set CLOUDPAYMENTS_PUBLIC_ID and CLOUDPAYMENTS_API_SECRET in environment'
       });
     }
 
@@ -192,54 +105,59 @@ async function createPayment(req, res) {
 
     console.log('[CLOUDPAYMENTS] Data prepared for widget:', cloudPaymentsDataForWidget);
 
-    // For monthly plans, start trial immediately
+    // For all plans (monthly and yearly), return widget data for payment processing
+    // Create subscription in TRIAL status for monthly plans or PENDING for yearly
+    let subscriptionData;
     if (period === 'monthly') {
       const trialEndsAt = new Date();
       trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
 
-      const subscription = await prisma.subscription.upsert({
-        where: { businessId: user.businessId },
-        update: {
-          plan: planConfig.name,
-          maxUsers: planConfig.maxUsers,
-          usersLimit: planConfig.maxUsers,
-          subscriptionStatus: 'TRIAL',
-          trialEndsAt,
-          billingPeriod: 'MONTHLY',
-          cloudpaymentsSubscriptionId: null,
-          nextPaymentDate: trialEndsAt,
-          isActive: true
-        },
-        create: {
-          businessId: user.businessId,
-          plan: planConfig.name,
-          maxUsers: planConfig.maxUsers,
-          usersLimit: planConfig.maxUsers,
-          subscriptionStatus: 'TRIAL',
-          trialEndsAt,
-          billingPeriod: 'MONTHLY',
-          cloudpaymentsSubscriptionId: null,
-          nextPaymentDate: trialEndsAt,
-          isActive: true
-        }
-      });
+      subscriptionData = {
+        plan: planConfig.name,
+        maxUsers: planConfig.maxUsers,
+        usersLimit: planConfig.maxUsers,
+        subscriptionStatus: 'TRIAL',
+        trialEndsAt,
+        billingPeriod: 'MONTHLY',
+        cloudpaymentsSubscriptionId: null,
+        nextPaymentDate: trialEndsAt,
+        isActive: true
+      };
 
-      console.log('[TRIAL STARTED]', {
+      console.log('[TRIAL READY]', {
         businessId: user.businessId,
         plan: planConfig.name,
         trialEndsAt
       });
+    } else {
+      subscriptionData = {
+        plan: planConfig.name,
+        maxUsers: planConfig.maxUsers,
+        usersLimit: planConfig.maxUsers,
+        subscriptionStatus: 'PENDING',
+        billingPeriod: 'YEARLY',
+        cloudpaymentsSubscriptionId: null,
+        isActive: false
+      };
 
-      return res.json({
-        success: true,
-        subscription,
-        cloudPayments: cloudPaymentsDataForWidget
+      console.log('[YEARLY PAYMENT READY]', {
+        businessId: user.businessId,
+        plan: planConfig.name
       });
     }
 
-    // For yearly plans, wait for payment confirmation
-    res.json({
+    const subscription = await prisma.subscription.upsert({
+      where: { businessId: user.businessId },
+      update: subscriptionData,
+      create: {
+        businessId: user.businessId,
+        ...subscriptionData
+      }
+    });
+
+    return res.json({
       success: true,
+      subscription,
       cloudPayments: cloudPaymentsDataForWidget,
       plan: planConfig.name,
       period,
