@@ -148,7 +148,7 @@
       <div style="display: grid; gap: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-weight: 500; color: #374151;">Тариф:</span>
-          <span style="color: #1f2937;">${getPlanName(data.type)}</span>
+          <span style="color: #1f2937;">${data.status === 'trial' ? 'Пробный период' : getPlanName(data.type)}</span>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-weight: 500; color: #374151;">Статус:</span>
@@ -168,11 +168,12 @@
 
     if (data.trialEndsAt && data.status === 'trial') {
       const trialEndDate = new Date(data.trialEndsAt);
-      const daysLeft = Math.ceil((trialEndDate - new Date()) / (1000 * 60 * 60 * 24));
+      const daysLeft = Math.floor((trialEndDate - new Date()) / (1000 * 60 * 60 * 24));
+      const dayWord = getDayWord(daysLeft);
       html += `
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-weight: 500; color: #374151;">Окончание пробного периода:</span>
-          <span style="color: #1f2937;">${trialEndDate.toLocaleDateString('ru-RU')} (${daysLeft} дней)</span>
+          <span style="color: #1f2937;">${trialEndDate.toLocaleDateString('ru-RU')} (${daysLeft} ${dayWord})</span>
         </div>
       `;
     }
@@ -213,9 +214,19 @@
   function getPlanName(type) {
     const planNames = {
       monthly: 'Месячный тариф',
-      yearly: 'Годовой тариф'
+      yearly: 'Годовой тариф',
+      trial: 'Пробный период',
+      null: 'Без подписки',
+      undefined: 'Без подписки'
     };
-    return planNames[type] || 'Неизвестный тариф';
+    return planNames[type] || planNames.trial;
+  }
+
+  // Get correct Russian word for days
+  function getDayWord(days) {
+    if (days === 1) return 'день';
+    if (days >= 2 && days <= 4) return 'дня';
+    return 'дней';
   }
 
   // Show subscription plans modal
