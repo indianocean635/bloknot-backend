@@ -872,7 +872,7 @@
                 recurring: paymentData.cloudPayments.Recurring
               };
 
-              widget.auth(chargeOptions, function(options) {
+              widget.pay(chargeOptions, function(options) {
                 // Success - payment completed
                 console.log('Payment successful', options);
                 alert('Оплата успешно выполнена!');
