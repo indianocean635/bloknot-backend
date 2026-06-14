@@ -303,7 +303,7 @@
     <!-- Single Tariff Modal -->
 <div class="modal" id="tariffModal">
   <div class="modal-content" style="max-width: 500px; padding: 32px;">
-    <h3 class="modal-title" id="tariffModalTitle">Выберите период оплаты</h3>
+    <h3 class="modal-title">Выберите период оплаты</h3>
     
     <!-- Billing Period Toggle -->
     <div class="billing-period-section">
@@ -1372,7 +1372,11 @@ const tariffData = {
       'Неограниченное количество записей',
       'Онлайн-запись клиентов',
       'Управление услугами',
-      'Базовая аналитика'
+      'Продвинутая аналитика',
+      'Персональный менеджер',
+      'Экспорт данных',
+      'Кастомизация бренда',
+      'Напоминание о записи в телеграм'
     ]
   },
   'Studio': {
@@ -1384,7 +1388,10 @@ const tariffData = {
       'Онлайн-запись клиентов',
       'Управление услугами',
       'Продвинутая аналитика',
-      'Напоминания в Telegram'
+      'Персональный менеджер',
+      'Экспорт данных',
+      'Кастомизация бренда',
+      'Напоминание о записи в телеграм'
     ]
   },
   'Pro': {
@@ -1396,7 +1403,9 @@ const tariffData = {
       'Управление услугами',
       'Продвинутая аналитика',
       'Персональный менеджер',
-      'Кастомизация бренда'
+      'Экспорт данных',
+      'Кастомизация бренда',
+      'Напоминание о записи в телеграм'
     ]
   }
 };
@@ -1405,9 +1414,6 @@ const tariffData = {
 function openSingleTariffModal(tariff, monthlyPrice, yearlyPrice, description) {
   const modal = document.getElementById('tariffModal');
   const data = tariffData[tariff];
-  
-  // Update modal title
-  document.getElementById('tariffModalTitle').textContent = `Тариф "${data.name}" - выберите период оплаты`;
   
   // Update tariff info
   document.getElementById('tariffName').textContent = data.name;
