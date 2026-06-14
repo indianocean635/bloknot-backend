@@ -3668,6 +3668,14 @@ async function processCardPayment() {
     }
   } catch (error) {
     console.error('Payment error:', error);
+    
+    // Check if it's an authorization error
+    if (error.message === 'Unauthorized' || error.message.includes('401')) {
+      alert('Для оплаты необходимо войти в аккаунт или зарегистрироваться');
+      window.location.href = '/login.html';
+      return;
+    }
+    
     alert('Ошибка при обработке платежа');
   }
 }
