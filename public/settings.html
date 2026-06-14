@@ -5,6 +5,268 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Настройки - Bloknot</title>
   <link rel="stylesheet" href="/styles.css?v=3.2&t=202604081231" />
+  <!-- CloudPayments Widget -->
+  <script src="https://widget.cloudpayments.ru/bundles/cloudpayments"></script>
+  
+  <style>
+    /* Pricing styles from pricing.html */
+    .billing-period-section {
+      margin-bottom: 32px;
+    }
+
+    .billing-period-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .period-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .period-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .period-btn {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: white;
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .period-btn:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+
+    .period-btn.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    .discount-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #22c55e;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 32px;
+      margin-bottom: 60px;
+    }
+
+    .pricing-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 6px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .pricing-card.featured {
+      border-color: #22c55e;
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: -8px;
+      right: 16px;
+      background: #22c55e;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .pricing-header {
+      margin-bottom: 12px;
+    }
+
+    .pricing-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #1f2937;
+    }
+
+    .pricing-users {
+      color: #6b7280;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .pricing-price {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .price-monthly {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+
+    .price-period {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .pricing-buttons {
+      margin-bottom: 24px;
+    }
+
+    .pricing-features {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .pricing-features li {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .feature-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #22c55e;
+      margin-right: 12px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .feature-icon::before {
+      content: '✓';
+      color: white;
+      font-size: 10px;
+      display: block;
+      text-align: center;
+      line-height: 16px;
+    }
+
+    /* Modal styles from pricing.html */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #0b0f14;
+    }
+
+    .modal-price {
+      font-size: 32px;
+      font-weight: 700;
+      color: #22c55e;
+      margin-bottom: 16px;
+    }
+
+    .modal-subtitle {
+      color: #6b7280;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+    }
+  </style>
 </head>
 <body>
 
@@ -26,54 +288,162 @@
       <button class="btn" id="addMasterBtn">+ Добавить специалиста</button>
     </div>
     
-    <!-- Tariff Selection -->
-    <div id="tariffSelection" style="margin-bottom: 16px;">
-      <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px;">
-        <strong>Выберите тариф: 1, 5 или более специалистов?</strong>
-      </p>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button class="btn secondary ios-tariff-btn" onclick="selectTariff('SOLO', '690')">1 специалист</button>
-        <button class="btn secondary ios-tariff-btn" onclick="selectTariff('STUDIO', '990')">5 специалистов</button>
-        <button class="btn secondary ios-tariff-btn" onclick="selectTariff('PRO', '1490')">Более 5 специалистов</button>
+    <!-- Billing Period Toggle -->
+    <div class="billing-period-section">
+      <div class="billing-period-toggle">
+        <span class="period-label">Выберите период оплаты:</span>
+        <div class="period-buttons">
+          <button class="period-btn active" id="period-1" onclick="selectPeriod(1)">
+            1 месяц
+          </button>
+          <button class="period-btn" id="period-12" onclick="selectPeriod(12)">
+            12 месяцев
+            <span class="discount-badge">-20%</span>
+          </button>
+        </div>
       </div>
     </div>
+
+    <!-- Pricing Grid -->
+    <section class="pricing-grid" style="padding: 24px 0;">
+      <div class="pricing-card">
+        <div class="pricing-header">
+          <h3 class="pricing-name">Solo</h3>
+          <p class="pricing-users">1 специалист</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" data-monthly="690" data-yearly="6624">690₽</div>
+          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('Solo', '690', '6624')">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Неограниченное количество записей</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Онлайн-запись клиентов</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Управление услугами</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Базовая аналитика</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pricing-card featured">
+        <div class="popular-badge">Популярное</div>
+        <div class="pricing-header">
+          <h3 class="pricing-name">Studio</h3>
+          <p class="pricing-users">До 5 специалистов</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" data-monthly="990" data-yearly="9504">990₽</div>
+          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('Studio', '990', '9504')">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Неограниченное количество записей</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Онлайн-запись клиентов</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Управление услугами</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Продвинутая аналитика</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Напоминания в Telegram</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pricing-header">
+          <h3 class="pricing-name">Pro</h3>
+          <p class="pricing-users">Более 5 специалистов</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" data-monthly="1490" data-yearly="14304">1 490₽</div>
+          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('Pro', '1490', '14304')">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Неограниченное количество записей</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Онлайн-запись клиентов</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Управление услугами</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Продвинутая аналитика</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Персональный менеджер</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Кастомизация бренда</span>
+          </li>
+        </ul>
+      </div>
+    </section>
     
-    <!-- Payment Modal -->
-    <div id="paymentModal" class="modal" style="display: none;">
-      <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-header">
-          <h3>Подписка на план специалистов</h3>
-          <button class="modal-close" onclick="closePaymentModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div style="margin-bottom: 20px;">
-            <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px;">
-              <strong id="selectedPlanName">Название плана</strong>
-            </p>
-            <p style="margin: 0 0 12px 0; color: #666; font-size: 14px;">
-              Цена: <span id="selectedPlanPrice">0</span> руб/год
-            </p>
-          </div>
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Номер карты:</label>
-            <input type="text" id="cardNumber" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="1234 5678 9012 3456" maxlength="19">
-          </div>
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Срок действия:</label>
-            <input type="text" id="cardExpiry" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="MM/YY" maxlength="5">
-          </div>
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">CVV:</label>
-            <input type="text" id="cardCVV" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="123" maxlength="3">
-          </div>
-          <div id="paymentError" style="color: #e74c3c; margin-bottom: 10px; font-size: 14px;"></div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn secondary" onclick="closePaymentModal()" style="margin-right: 10px;">Отмена</button>
-          <button class="btn primary" onclick="processPayment()">Подписаться</button>
-        </div>
-      </div>
+    <!-- Payment Modal (exact copy from pricing.html) -->
+<div class="modal" id="paymentModal">
+  <div class="modal-content">
+    <h3 class="modal-title">Подтверждение оплаты</h3>
+    <div class="modal-price" id="modalPrice">690₽/мес</div>
+    <p class="modal-subtitle" id="modalSubtitle">Выберите способ оплаты для привязки карты и автоматического списания</p>
+    <div class="modal-buttons" id="modalButtons">
+      <button class="btn-primary" onclick="processCardPayment()">
+        💳 Оплатить картой
+      </button>
     </div>
+  </div>
+</div>
     
     <!-- Tariff Required Modal -->
     <div id="tariffRequiredModal" class="modal" style="display: none;">
@@ -1041,21 +1411,93 @@ function updateSpecialistsUI(specialists) {
   console.log('Updating specialists UI with:', specialists);
 }
 
-// Tariff selection
-function selectTariff(plan, price) {
-  const planNames = {
-    'SOLO': '1 специалист',
-    'STUDIO': '5 специалистов',
-    'PRO': 'Более 5 специалистов'
-  };
+// Period selection function (from pricing.html)
+let currentPeriod = 1;
+
+function selectPeriod(period) {
+  currentPeriod = period;
   
-  document.getElementById('selectedPlanName').textContent = planNames[plan];
-  document.getElementById('selectedPlanPrice').textContent = price;
-  document.getElementById('paymentModal').style.display = 'block';
+  document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.getElementById(`period-${period}`).classList.add('active');
+  
+  updatePrices();
 }
 
+// Update prices based on selected period (from pricing.html)
+function updatePrices() {
+  const priceElements = document.querySelectorAll('.price-monthly');
+  const periodElements = document.querySelectorAll('.price-period');
+  
+  priceElements.forEach(element => {
+    const monthlyPrice = element.getAttribute('data-monthly');
+    const yearlyPrice = element.getAttribute('data-yearly');
+    
+    const formatNumber = (num) => {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    };
+    
+    if (currentPeriod === 1) {
+      element.textContent = `${formatNumber(monthlyPrice)}₽`;
+    } else {
+      element.textContent = `${formatNumber(yearlyPrice)}₽`;
+    }
+  });
+  
+  periodElements.forEach(element => {
+    const monthlyText = element.getAttribute('data-monthly-text');
+    const yearlyText = element.getAttribute('data-yearly-text');
+    
+    if (currentPeriod === 1) {
+      element.textContent = monthlyText;
+    } else {
+      element.textContent = yearlyText;
+    }
+  });
+}
+
+// Open payment modal (exact copy from pricing.html)
+function openPaymentModal(tariff, monthlyPrice, yearlyPrice) {
+  const modal = document.getElementById('paymentModal');
+  const modalPrice = document.getElementById('modalPrice');
+  const modalSubtitle = document.getElementById('modalSubtitle');
+  const modalButtons = document.getElementById('modalButtons');
+  
+  const price = currentPeriod === 1 ? monthlyPrice : yearlyPrice;
+  const periodText = currentPeriod === 1 ? '/мес' : '/год';
+  
+  modalPrice.textContent = `${price}₽${periodText}`;
+  
+  if (currentPeriod === 1) {
+    modalSubtitle.textContent = 'Выберите способ оплаты для привязки карты и автоматического списания';
+    modalButtons.innerHTML = `
+      <button class="btn-primary" onclick="processCardPayment()">
+        💳 Оплатить картой
+      </button>
+    `;
+  } else {
+    modalSubtitle.textContent = 'Выберите способ оплаты годовой подписки со скидкой 20%';
+    modalButtons.innerHTML = `
+      <button class="btn-primary" onclick="processCardPayment()">
+        💳 Оплатить картой
+      </button>
+      <button class="btn-secondary" onclick="processInvoicePayment()">
+        📄 Выставить счет
+      </button>
+    `;
+  }
+  
+  modal.setAttribute('data-tariff', tariff);
+  modal.setAttribute('data-monthly-price', monthlyPrice);
+  modal.setAttribute('data-yearly-price', yearlyPrice);
+  
+  modal.classList.add('active');
+}
+
+// Close payment modal
 function closePaymentModal() {
-  document.getElementById('paymentModal').style.display = 'none';
+  document.getElementById('paymentModal').classList.remove('active');
 }
 
 function closeTariffRequiredModal() {
@@ -3153,6 +3595,104 @@ function openVideoInstruction() {
     }
   };
 }
+
+// Process card payment (exact copy from pricing.html)
+async function processCardPayment() {
+  const modal = document.getElementById('paymentModal');
+  const tariff = modal.getAttribute('data-tariff');
+  const period = currentPeriod === 1 ? 'monthly' : 'yearly';
+  
+  // Map tariff names to plan IDs
+  const planMap = {
+    'Solo': 'solo',
+    'Studio': 'studio',
+    'Pro': 'pro'
+  };
+  
+  const plan = planMap[tariff];
+  
+  try {
+    const data = await Bloknot.api('/api/payments/create', {
+      method: 'POST',
+      body: JSON.stringify({ plan, period })
+    });
+
+    if (data.success) {
+      // Test mode: CloudPayments credentials not configured
+      if (data.testMode) {
+        console.log('[TEST MODE] Payment successful:', data.message);
+        alert('Тестовый режим: Подписка активирована (CloudPayments не настроен)');
+        closePaymentModal();
+        window.location.href = '/dashboard.html';
+        return;
+      }
+
+      // Production mode: use CloudPayments widget
+      if (data.cloudPayments) {
+        const widget = new cp.CloudPayments();
+
+        const chargeOptions = {
+          publicId: data.cloudPayments.PublicId,
+          description: data.cloudPayments.Description,
+          amount: data.cloudPayments.Amount,
+          currency: data.cloudPayments.Currency,
+          invoiceId: data.cloudPayments.InvoiceId,
+          accountId: data.cloudPayments.AccountId,
+          email: data.cloudPayments.Email,
+          requireConfirmation: data.cloudPayments.RequireConfirmation,
+          trialPeriod: data.cloudPayments.TrialPeriod,
+          recurring: data.cloudPayments.Recurring
+        };
+
+        widget.charge(chargeOptions, function(options) {
+          // Success
+          console.log('Payment successful', options);
+          alert('Оплата успешно выполнена!');
+          closePaymentModal();
+          // Redirect to dashboard or reload
+          window.location.href = '/dashboard.html';
+        }, function(reason, options) {
+          // Fail
+          console.error('Payment failed', reason, options);
+          alert('Ошибка оплаты: ' + reason);
+        });
+      } else {
+        // Success without CloudPayments (subscription already created)
+        alert('Подписка активирована!');
+        closePaymentModal();
+        window.location.href = '/dashboard.html';
+      }
+    } else {
+      alert('Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка'));
+    }
+  } catch (error) {
+    console.error('Payment error:', error);
+    alert('Ошибка при обработке платежа');
+  }
+}
+
+// Process invoice payment (exact copy from pricing.html)
+function processInvoicePayment() {
+  const modal = document.getElementById('paymentModal');
+  const tariff = modal.getAttribute('data-tariff');
+  const price = modal.getAttribute('data-yearly-price');
+  
+  alert(`Выставление счета на годовой тариф "${tariff}" (${price}₽/год)...\n\nВ реальном приложении здесь будет форма для выставления счета.`);
+  closePaymentModal();
+}
+
+// Event listeners for modal closing (from pricing.html)
+document.getElementById('paymentModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closePaymentModal();
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closePaymentModal();
+  }
+});
 </script>
 
   <footer class="footer">
