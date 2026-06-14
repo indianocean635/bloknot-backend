@@ -433,7 +433,11 @@
 <script src="/app.js?v=20260425-data-isolation&t=1713633600"></script>
 <script>
   // Initialize header with active tab
-  renderHeader('dashboard');
+  if (typeof Bloknot !== 'undefined') {
+    Bloknot.renderHeader("dashboard");
+  } else {
+    console.error('SUBSCRIPTION: Bloknot is not available!');
+  }
 </script>
 
 </body>
