@@ -1040,7 +1040,16 @@
           return;
         }
 
-        // Production mode: use CloudPayments widget
+        // For monthly plans, trial is already started - no need to show widget
+        if (period === 'monthly') {
+          alert('Пробный период активирован! Вы можете привязать карту в настройках.');
+          closePaymentModal();
+          closeSubscriptionPlansModal();
+          window.location.href = '/dashboard.html';
+          return;
+        }
+
+        // For yearly plans, use CloudPayments widget
         if (data.cloudPayments) {
           const widget = new cp.CloudPayments();
 
@@ -1057,7 +1066,7 @@
             recurring: data.cloudPayments.Recurring
           };
 
-          widget.charge(chargeOptions, function(options) {
+          widget.pay(chargeOptions, function(options) {
             // Success
             console.log('Payment successful', options);
             alert('Оплата успешно выполнена!');

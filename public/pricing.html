@@ -857,7 +857,15 @@
               return;
             }
 
-            // For production mode, use widget to collect card data
+            // For monthly plans, trial is already started - no need to show widget
+            if (period === 'monthly') {
+              alert('Пробный период активирован! Вы можете привязать карту в настройках.');
+              window.closePaymentModal();
+              window.location.href = '/dashboard.html';
+              return;
+            }
+
+            // For yearly plans, use widget to collect card data
             if (paymentData.cloudPayments) {
               const chargeOptions = {
                 publicId: paymentData.cloudPayments.PublicId,
