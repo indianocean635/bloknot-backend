@@ -176,26 +176,21 @@ async function createPayment(req, res) {
       });
     }
 
-    // Create payment with CloudPayments API
-    let cloudpaymentsResponse;
-    try {
-      cloudpaymentsResponse = await createCloudPaymentsPayment(cloudPaymentsData);
-      console.log('[CLOUDPAYMENTS] Success Response:', cloudpaymentsResponse);
-    } catch (error) {
-      console.error('[CLOUDPAYMENTS] API Error:', error);
-      return res.status(500).json({ 
-        error: 'CloudPayments API error',
-        details: error.message 
-      });
-    }
+    // Return payment data for CloudPayments widget (widget will handle the actual payment)
+    const cloudPaymentsDataForWidget = {
+      PublicId: publicId,
+      Description: description,
+      Amount: price,
+      Currency: currency,
+      InvoiceId: cloudPaymentsData.InvoiceId,
+      AccountId: user.businessId,
+      Email: user.email,
+      RequireConfirmation: cloudPaymentsData.RequireConfirmation,
+      TrialPeriod: cloudPaymentsData.TrialPeriod,
+      Recurring: cloudPaymentsData.Recurring
+    };
 
-    if (!cloudpaymentsResponse.Success) {
-      console.error('[CLOUDPAYMENTS ERROR]', cloudpaymentsResponse);
-      return res.status(500).json({ 
-        error: 'Payment creation failed',
-        details: cloudpaymentsResponse.Message || 'Unknown error'
-      });
-    }
+    console.log('[CLOUDPAYMENTS] Data prepared for widget:', cloudPaymentsDataForWidget);
 
     // For monthly plans, start trial immediately
     if (period === 'monthly') {
@@ -238,14 +233,14 @@ async function createPayment(req, res) {
       return res.json({
         success: true,
         subscription,
-        cloudPayments: cloudpaymentsResponse.Model
+        cloudPayments: cloudPaymentsDataForWidget
       });
     }
 
     // For yearly plans, wait for payment confirmation
     res.json({
       success: true,
-      cloudPayments: cloudpaymentsResponse.Model,
+      cloudPayments: cloudPaymentsDataForWidget,
       plan: planConfig.name,
       period,
       price

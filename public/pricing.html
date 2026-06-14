@@ -838,44 +838,45 @@
         const plan = planMap[tariff];
         
         try {
-          const data = await Bloknot.api('/api/payments/create', {
+          // Show CloudPayments widget first to collect card data
+          const widget = new cp.CloudPayments();
+          
+          // Get payment data from backend first
+          const paymentData = await Bloknot.api('/api/payments/create', {
             method: 'POST',
             body: JSON.stringify({ plan, period })
           });
 
-          if (data.success) {
+          if (paymentData.success) {
             // Test mode: CloudPayments credentials not configured
-            if (data.testMode) {
-              console.log('[TEST MODE] Payment successful:', data.message);
+            if (paymentData.testMode) {
+              console.log('[TEST MODE] Payment successful:', paymentData.message);
               alert('Тестовый режим: Подписка активирована (CloudPayments не настроен)');
               window.closePaymentModal();
               window.location.href = '/dashboard.html';
               return;
             }
 
-            // Production mode: use CloudPayments widget
-            if (data.cloudPayments) {
-              const widget = new cp.CloudPayments();
-
+            // For production mode, use widget to collect card data
+            if (paymentData.cloudPayments) {
               const chargeOptions = {
-                publicId: data.cloudPayments.PublicId,
-                description: data.cloudPayments.Description,
-                amount: data.cloudPayments.Amount,
-                currency: data.cloudPayments.Currency,
-                invoiceId: data.cloudPayments.InvoiceId,
-                accountId: data.cloudPayments.AccountId,
-                email: data.cloudPayments.Email,
-                requireConfirmation: data.cloudPayments.RequireConfirmation,
-                trialPeriod: data.cloudPayments.TrialPeriod,
-                recurring: data.cloudPayments.Recurring
+                publicId: paymentData.cloudPayments.PublicId,
+                description: paymentData.cloudPayments.Description,
+                amount: paymentData.cloudPayments.Amount,
+                currency: paymentData.cloudPayments.Currency,
+                invoiceId: paymentData.cloudPayments.InvoiceId,
+                accountId: paymentData.cloudPayments.AccountId,
+                email: paymentData.cloudPayments.Email,
+                requireConfirmation: paymentData.cloudPayments.RequireConfirmation,
+                trialPeriod: paymentData.cloudPayments.TrialPeriod,
+                recurring: paymentData.cloudPayments.Recurring
               };
 
-              widget.charge(chargeOptions, function(options) {
-                // Success
+              widget.auth(chargeOptions, function(options) {
+                // Success - payment completed
                 console.log('Payment successful', options);
                 alert('Оплата успешно выполнена!');
                 window.closePaymentModal();
-                // Redirect to dashboard or reload
                 window.location.href = '/dashboard.html';
               }, function(reason, options) {
                 // Fail
@@ -889,7 +890,7 @@
               window.location.href = '/dashboard.html';
             }
           } else {
-            alert('Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка'));
+            alert('Ошибка создания платежа: ' + (paymentData.error || 'Неизвестная ошибка'));
           }
         } catch (error) {
           console.error('Payment error:', error);
