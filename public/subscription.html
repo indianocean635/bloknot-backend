@@ -941,56 +941,91 @@
     }
   }
 
-  // Process card payment (from pricing.html)
+  // Process card payment (exact copy from pricing.html)
   async function processCardPayment() {
     const modal = document.getElementById('paymentModal');
     const tariff = modal.getAttribute('data-tariff');
     const period = currentPeriod === 1 ? 'monthly' : 'yearly';
     
     // Map tariff names to plan IDs
-    const planMapping = {
-      'Solo': 'solo-monthly',
-      'Studio': 'studio-monthly',
-      'Pro': 'pro-monthly'
+    const planMap = {
+      'Solo': 'solo',
+      'Studio': 'studio',
+      'Pro': 'pro'
     };
     
-    const planId = planMapping[tariff];
-    if (!planId) {
-      alert('Неверный тариф');
-      return;
-    }
+    const plan = planMap[tariff];
     
     try {
-      console.log('[SUBSCRIPTION] Processing card payment:', { tariff, period, planId });
-      
-      // Get plan details for CloudPayments
-      const response = await fetch('/api/cloudpayments/plans');
-      const result = await response.json();
-      
-      if (result.success) {
-        const plan = result.data.find(p => p.id === planId);
-        if (plan) {
+      const data = await Bloknot.api('/api/payments/create', {
+        method: 'POST',
+        body: JSON.stringify({ plan, period })
+      });
+
+      if (data.success) {
+        // Test mode: CloudPayments credentials not configured
+        if (data.testMode) {
+          console.log('[TEST MODE] Payment successful:', data.message);
+          alert('Тестовый режим: Подписка активирована (CloudPayments не настроен)');
           closePaymentModal();
           closeSubscriptionPlansModal();
-          showCloudPaymentsModal(plan);
+          window.location.href = '/dashboard.html';
+          return;
         }
+
+        // Production mode: use CloudPayments widget
+        if (data.cloudPayments) {
+          const widget = new cp.CloudPayments();
+
+          const chargeOptions = {
+            publicId: data.cloudPayments.PublicId,
+            description: data.cloudPayments.Description,
+            amount: data.cloudPayments.Amount,
+            currency: data.cloudPayments.Currency,
+            invoiceId: data.cloudPayments.InvoiceId,
+            accountId: data.cloudPayments.AccountId,
+            email: data.cloudPayments.Email,
+            requireConfirmation: data.cloudPayments.RequireConfirmation,
+            trialPeriod: data.cloudPayments.TrialPeriod,
+            recurring: data.cloudPayments.Recurring
+          };
+
+          widget.charge(chargeOptions, function(options) {
+            // Success
+            console.log('Payment successful', options);
+            alert('Оплата успешно выполнена!');
+            closePaymentModal();
+            closeSubscriptionPlansModal();
+            // Redirect to dashboard or reload
+            window.location.href = '/dashboard.html';
+          }, function(reason, options) {
+            // Fail
+            console.error('Payment failed', reason, options);
+            alert('Ошибка оплаты: ' + reason);
+          });
+        } else {
+          // Success without CloudPayments (subscription already created)
+          alert('Подписка активирована!');
+          closePaymentModal();
+          closeSubscriptionPlansModal();
+          window.location.href = '/dashboard.html';
+        }
+      } else {
+        alert('Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка'));
       }
     } catch (error) {
-      console.error('[SUBSCRIPTION] Error processing card payment:', error);
-      alert('Ошибка обработки платежа');
+      console.error('Payment error:', error);
+      alert('Ошибка при обработке платежа');
     }
   }
 
-  // Process invoice payment (from pricing.html)
+  // Process invoice payment (exact copy from pricing.html)
   function processInvoicePayment() {
     const modal = document.getElementById('paymentModal');
     const tariff = modal.getAttribute('data-tariff');
-    const monthlyPrice = modal.getAttribute('data-monthly-price');
-    const yearlyPrice = modal.getAttribute('data-yearly-price');
-    const price = currentPeriod === 1 ? monthlyPrice : yearlyPrice;
-    const period = currentPeriod === 1 ? 'месяц' : 'год';
+    const price = modal.getAttribute('data-yearly-price');
     
-    alert(`Выставление счета на годовой тариф "${tariff}" (${price}₽/${period})...\n\nВ реальном приложении здесь будет форма для выставления счета.`);
+    alert(`Выставление счета на годовой тариф "${tariff}" (${price}₽/год)...\n\nВ реальном приложении здесь будет форма для выставления счета.`);
     closePaymentModal();
     closeSubscriptionPlansModal();
   }
