@@ -210,8 +210,72 @@
 
     .modal-buttons {
       display: flex;
+      flex-direction: column;
       gap: 12px;
+    }
+
+    /* Modal styles from pricing.html */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
       justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #0b0f14;
+    }
+
+    .modal-price {
+      font-size: 32px;
+      font-weight: 700;
+      color: #22c55e;
+      margin-bottom: 16px;
+    }
+
+    .modal-subtitle {
+      color: #6b7280;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
     }
   </style>
 </head>
@@ -432,25 +496,16 @@
   </div>
 </div>
 
-<!-- Payment Modal -->
-<div id="paymentModal" class="modal" style="display: none;">
-  <div class="modal-content" style="max-width: 500px;">
-    <div class="modal-header">
-      <h3>Оформление подписки</h3>
-      <button class="modal-close" onclick="closePaymentModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div class="pricing-summary">
-        <div class="selected-tariff" id="selectedTariff">Solo</div>
-        <div class="selected-price" id="modalPrice">690₽/мес</div>
-        <div class="selected-subtitle" id="modalSubtitle">Выберите способ оплаты для привязки карты и автоматического списания</div>
-      </div>
-      
-      <div class="modal-buttons" id="modalButtons">
-        <button class="btn-primary" onclick="processCardPayment()">
-          💳 Оплатить картой
-        </button>
-      </div>
+<!-- Payment Modal (exact copy from pricing.html) -->
+<div class="modal" id="paymentModal">
+  <div class="modal-content">
+    <h3 class="modal-title">Подтверждение оплаты</h3>
+    <div class="modal-price" id="modalPrice">690₽/мес</div>
+    <p class="modal-subtitle" id="modalSubtitle">Выберите способ оплаты для привязки карты и автоматического списания</p>
+    <div class="modal-buttons" id="modalButtons">
+      <button class="btn-primary" onclick="processCardPayment()">
+        💳 Оплатить картой
+      </button>
     </div>
   </div>
 </div>
@@ -713,12 +768,12 @@
     modal.setAttribute('data-monthly-price', monthlyPrice);
     modal.setAttribute('data-yearly-price', yearlyPrice);
     
-    modal.style.display = 'flex';
+    modal.classList.add('active');
   }
 
   // Close payment modal
   function closePaymentModal() {
-    document.getElementById('paymentModal').style.display = 'none';
+    document.getElementById('paymentModal').classList.remove('active');
   }
 
   // Show subscription plans modal
