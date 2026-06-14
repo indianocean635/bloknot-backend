@@ -125,12 +125,15 @@ async function getSubscriptionPlans(req, res) {
 
         const plans = [
             {
-                id: 'solo',
+                id: 'solo-monthly',
                 name: 'Solo',
                 price: '690 ₽',
                 period: 'месяц',
+                billingType: 'monthly',
                 trialDays: 5,
                 description: '1 пользователь',
+                yearlyPrice: '5 520 ₽',
+                yearlyDiscount: '20%',
                 features: [
                     'Неограниченное количество записей',
                     'Онлайн-запись клиентов',
@@ -143,12 +146,15 @@ async function getSubscriptionPlans(req, res) {
                 ]
             },
             {
-                id: 'studio',
+                id: 'studio-monthly',
                 name: 'Studio',
                 price: '990 ₽',
                 period: 'месяц',
+                billingType: 'monthly',
                 trialDays: 5,
                 description: 'До 5 пользователей',
+                yearlyPrice: '7 920 ₽',
+                yearlyDiscount: '20%',
                 features: [
                     'Неограниченное количество записей',
                     'Онлайн-запись клиентов',
@@ -161,12 +167,15 @@ async function getSubscriptionPlans(req, res) {
                 ]
             },
             {
-                id: 'pro',
+                id: 'pro-monthly',
                 name: 'Pro',
                 price: '1 490 ₽',
                 period: 'месяц',
+                billingType: 'monthly',
                 trialDays: 5,
                 description: 'Более 5 пользователей',
+                yearlyPrice: '11 920 ₽',
+                yearlyDiscount: '20%',
                 features: [
                     'Неограниченное количество записей',
                     'Онлайн-запись клиентов',

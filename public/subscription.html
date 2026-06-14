@@ -255,11 +255,8 @@
     const plansDiv = document.getElementById('subscriptionPlans');
     
     plansDiv.innerHTML = plans.map(plan => `
-      <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;" 
-           onmouseover="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)'"
-           onmouseout="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'"
-           onclick="selectPlan('${plan.id}')">
-        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+      <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; transition: all 0.2s;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
           <div>
             <h4 style="margin: 0 0 4px 0; color: #1f2937; font-size: 18px;">${plan.name}</h4>
             <p style="margin: 0; color: #6b7280; font-size: 14px;">${plan.description}</p>
@@ -269,16 +266,198 @@
             <div style="font-size: 14px; color: #6b7280;">/${plan.period}</div>
           </div>
         </div>
-        <div style="border-top: 1px solid #f3f4f6; padding-top: 12px;">
+        
+        <div style="border-top: 1px solid #f3f4f6; padding-top: 12px; margin-bottom: 16px;">
           <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 14px;">
             ${plan.features.map(feature => `<li style="margin-bottom: 4px;">${feature}</li>`).join('')}
           </ul>
+        </div>
+        
+        <div style="border-top: 1px solid #f3f4f6; padding-top: 12px;">
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 16px; font-weight: 500; color: #1f2937; margin-bottom: 8px;">Выберите период оплаты:</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+              <button class="btn secondary" onclick="selectBillingType('${plan.id}', 'monthly', '${plan.price}')" 
+                      style="padding: 8px 12px; font-size: 14px;">
+                Ежемесячно
+                <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">${plan.price}/${plan.period}</div>
+              </button>
+              
+              <button class="btn primary" onclick="selectBillingType('${plan.id}', 'yearly', '${plan.yearlyPrice}')"
+                      style="padding: 8px 12px; font-size: 14px;">
+                Годовая оплата
+                <div style="font-size: 12px; margin-top: 2px;">
+                  <span style="text-decoration: line-through; color: #6b7280;">${parseInt(plan.price.replace(' ₽', '')) * 12} ₽</span>
+                  <span style="color: #10b981; font-weight: bold;"> ${plan.yearlyPrice}</span>
+                </div>
+                <div style="font-size: 11px; color: #10b981; font-weight: 500;">Экономия ${plan.yearlyDiscount}</div>
+              </button>
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button class="btn secondary" onclick="selectPaymentMethod('${plan.id}', 'monthly', 'card')" 
+                    style="padding: 6px 12px; font-size: 12px;">
+              💳 Привязать карту
+            </button>
+            <button class="btn secondary" onclick="selectPaymentMethod('${plan.id}', 'monthly', 'invoice')" 
+                    style="padding: 6px 12px; font-size: 12px;">
+              📄 По счету
+            </button>
+          </div>
         </div>
       </div>
     `).join('');
   }
 
-  // Select plan and start payment
+  // Select billing type
+  function selectBillingType(planId, billingType, price) {
+    console.log('[SUBSCRIPTION] Billing type selected:', { planId, billingType, price });
+    
+    // Store selected billing info
+    window.selectedBilling = {
+      planId: planId,
+      billingType: billingType,
+      price: price
+    };
+    
+    // Update UI to show selection
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(btn => {
+      if (btn.textContent.includes('Ежемесячно') || btn.textContent.includes('Годовая оплата')) {
+        btn.classList.remove('primary');
+        btn.classList.add('secondary');
+      }
+    });
+    
+    // Highlight selected button
+    event.target.classList.remove('secondary');
+    event.target.classList.add('primary');
+  }
+
+  // Select payment method
+  function selectPaymentMethod(planId, billingType, paymentMethod) {
+    console.log('[SUBSCRIPTION] Payment method selected:', { planId, billingType, paymentMethod });
+    
+    if (!window.selectedBilling) {
+      // Auto-select monthly if no billing type selected
+      window.selectedBilling = {
+        planId: planId,
+        billingType: 'monthly',
+        price: '690 ₽'
+      };
+    }
+    
+    window.selectedBilling.paymentMethod = paymentMethod;
+    
+    if (paymentMethod === 'card') {
+      // Show CloudPayments modal for card payment
+      const plan = {
+        id: planId,
+        name: planId.split('-')[0].charAt(0).toUpperCase() + planId.split('-')[0].slice(1),
+        price: window.selectedBilling.price,
+        billingType: billingType
+      };
+      showCloudPaymentsModal(plan);
+    } else if (paymentMethod === 'invoice') {
+      // Show invoice modal
+      showInvoiceModal(planId, billingType);
+    }
+  }
+
+  // Show invoice modal
+  function showInvoiceModal(planId, billingType) {
+    const planName = planId.split('-')[0].charAt(0).toUpperCase() + planId.split('-')[0].slice(1);
+    const price = window.selectedBilling.price;
+    const period = billingType === 'yearly' ? 'год' : 'месяц';
+    
+    const modalHtml = `
+      <div id="invoiceModal" class="modal" style="display: flex;">
+        <div class="modal-content" style="max-width: 500px;">
+          <div class="modal-header">
+            <h3>Выставление счета</h3>
+            <button class="modal-close" onclick="closeInvoiceModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-weight: 500;">Тариф:</span>
+                <span>${planName}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-weight: 500;">Период:</span>
+                <span>${period}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: 500;">Сумма:</span>
+                <span style="font-weight: bold; color: #1f2937;">${price}</span>
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email для отправки счета:</label>
+              <input type="email" id="invoiceEmail" value="${currentUser?.email || ''}" 
+                     style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" 
+                     placeholder="email@example.com">
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500;">Комментарий (необязательно):</label>
+              <textarea id="invoiceComment" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; min-height: 80px;" 
+                        placeholder="Дополнительная информация для счета"></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 8px;">
+              <button class="btn primary" onclick="sendInvoiceRequest()">Отправить заявку</button>
+              <button class="btn secondary" onclick="closeInvoiceModal()">Отмена</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
+
+  // Send invoice request
+  async function sendInvoiceRequest() {
+    const email = document.getElementById('invoiceEmail').value;
+    const comment = document.getElementById('invoiceComment').value;
+    
+    if (!email) {
+      alert('Пожалуйста, укажите email для отправки счета');
+      return;
+    }
+    
+    try {
+      console.log('[SUBSCRIPTION] Sending invoice request:', {
+        planId: window.selectedBilling.planId,
+        billingType: window.selectedBilling.billingType,
+        email: email,
+        comment: comment
+      });
+      
+      // Here you would send request to backend
+      alert(`Заявка на счет отправлена на email: ${email}\n\nТариф: ${window.selectedBilling.planId}\nПериод: ${window.selectedBilling.billingType}\nСумма: ${window.selectedBilling.price}`);
+      
+      closeInvoiceModal();
+      closeSubscriptionPlansModal();
+    } catch (error) {
+      console.error('[SUBSCRIPTION] Error sending invoice request:', error);
+      alert('Ошибка отправки заявки');
+    }
+  }
+
+  // Close invoice modal
+  function closeInvoiceModal() {
+    const modal = document.getElementById('invoiceModal');
+    if (modal) {
+      modal.remove();
+    }
+  }
+
+  // Select plan and start payment (legacy function)
   async function selectPlan(planId) {
     try {
       console.log('[SUBSCRIPTION] Plan selected:', planId);
