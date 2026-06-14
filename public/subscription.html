@@ -731,18 +731,16 @@
     });
   }
 
-  // Open payment modal (from pricing.html)
-  async function openPaymentModal(tariff, monthlyPrice, yearlyPrice) {
+  // Open payment modal (exact copy from pricing.html)
+  function openPaymentModal(tariff, monthlyPrice, yearlyPrice) {
     const modal = document.getElementById('paymentModal');
     const modalPrice = document.getElementById('modalPrice');
     const modalSubtitle = document.getElementById('modalSubtitle');
     const modalButtons = document.getElementById('modalButtons');
-    const selectedTariff = document.getElementById('selectedTariff');
     
     const price = currentPeriod === 1 ? monthlyPrice : yearlyPrice;
     const periodText = currentPeriod === 1 ? '/мес' : '/год';
     
-    selectedTariff.textContent = tariff;
     modalPrice.textContent = `${price}₽${periodText}`;
     
     if (currentPeriod === 1) {
@@ -775,6 +773,19 @@
   function closePaymentModal() {
     document.getElementById('paymentModal').classList.remove('active');
   }
+
+  // Event listeners for modal closing (from pricing.html)
+  document.getElementById('paymentModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closePaymentModal();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closePaymentModal();
+    }
+  });
 
   // Show subscription plans modal
   async function showSubscriptionPlans() {
