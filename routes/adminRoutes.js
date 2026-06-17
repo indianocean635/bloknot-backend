@@ -1154,4 +1154,36 @@ router.delete('/assign-client', requireAuth, async (req, res) => {
   }
 });
 
+// Migration endpoint for adding cardAttachedAt field
+router.post('/migrate-card-attached-at', requireAuth, async (req, res) => {
+  try {
+    console.log('[MIGRATION] Adding cardAttachedAt field to Subscription table');
+    
+    // Execute migration
+    await prisma.$executeRaw`ALTER TABLE "Subscription" ADD COLUMN "cardAttachedAt" TIMESTAMP(3)`;
+    
+    console.log('[MIGRATION] cardAttachedAt field added successfully');
+    
+    res.json({ 
+      success: true, 
+      message: 'Migration completed successfully. cardAttachedAt field added to Subscription table.' 
+    });
+  } catch (error) {
+    console.error('[MIGRATION ERROR]', error);
+    
+    // Check if column already exists
+    if (error.message.includes('already exists')) {
+      res.json({ 
+        success: true, 
+        message: 'cardAttachedAt field already exists in Subscription table.' 
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Migration failed', 
+        details: error.message 
+      });
+    }
+  }
+});
+
 module.exports = router;
