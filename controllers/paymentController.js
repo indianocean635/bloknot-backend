@@ -93,7 +93,7 @@ async function createPayment(req, res) {
     const cloudPaymentsDataForWidget = {
       PublicId: publicId,
       Description: description,
-      Amount: price,
+      Amount: period === 'monthly' ? 0 : price, // Free for trial period
       Currency: currency,
       InvoiceId: cloudPaymentsData.InvoiceId,
       AccountId: user.businessId,
@@ -327,6 +327,24 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
     });
 
     console.log('[SUBSCRIPTION ACTIVATED]', { businessId, subscriptionEndsAt });
+  }
+  
+  // For monthly plans with trial, keep TRIAL status - don't charge immediately
+  if (subscription.billingPeriod === 'MONTHLY' && subscription.subscriptionStatus === 'TRIAL') {
+    console.log('[TRIAL PAYMENT PROCESSED]', { 
+      businessId, 
+      trialEndsAt: subscription.trialEndsAt,
+      message: 'Payment processed but keeping TRIAL status - actual charge will happen after trial period'
+    });
+    
+    // Update cloudpayments subscription ID but keep TRIAL status
+    await prisma.subscription.update({
+      where: { businessId },
+      data: {
+        cloudpaymentsSubscriptionId: eventData.SubscriptionId,
+        lastPaymentAt: new Date()
+      }
+    });
   }
 }
 
