@@ -870,9 +870,18 @@
                   widget.auth(chargeOptions, function(options) {
                     // Success - card authorized for trial
                     console.log('Card authorized for trial', options);
-                    alert('Карта успешно привязана! Пробный период активирован на 5 дней.');
-                    window.closePaymentModal();
-                    window.location.href = '/dashboard.html';
+                    
+                    // Save card attachment status immediately
+                    saveCardAttachmentStatus().then(() => {
+                      alert('Карта успешно привязана! Пробный период активирован на 5 дней.');
+                      window.closePaymentModal();
+                      window.location.href = '/dashboard.html';
+                    }).catch(error => {
+                      console.error('Error saving card attachment:', error);
+                      alert('Карта привязана, но произошла ошибка сохранения статуса.');
+                      window.closePaymentModal();
+                      window.location.href = '/dashboard.html';
+                    });
                   }, function(reason, options) {
                     // Fail
                     console.error('Card authorization failed', reason, options);
@@ -930,7 +939,25 @@
 
       // Функция processInvoicePayment удалена - оплата счетом больше не доступна
 
-      // Функции для работы со счетами удалены - оплата счетом больше не доступна
+      // Save card attachment status immediately after successful authorization
+async function saveCardAttachmentStatus() {
+  try {
+    console.log('[CARD ATTACHMENT] Saving card attachment status...');
+    
+    const response = await Bloknot.api('/api/payments/save-card-attachment', {
+      method: 'POST',
+      body: JSON.stringify({})
+    });
+    
+    console.log('[CARD ATTACHMENT] Status saved successfully:', response);
+    return response;
+  } catch (error) {
+    console.error('[CARD ATTACHMENT] Error saving status:', error);
+    throw error;
+  }
+}
+
+// Функции для работы со счетами удалены - оплата счетом больше не доступна
 
       // Event listeners for modal closing
       document.getElementById('paymentModal').addEventListener('click', function(e) {

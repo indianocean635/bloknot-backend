@@ -513,7 +513,50 @@ async function handleRefund(businessId, transactionId, eventData) {
   }
 }
 
+// Save card attachment status immediately after successful authorization
+async function saveCardAttachment(req, res) {
+  try {
+    console.log('[CARD ATTACHMENT] Saving card attachment status for user:', req.user?.email);
+    
+    if (!req.user || !req.user.businessId) {
+      return res.status(403).json({ error: 'User not authenticated' });
+    }
+
+    // Find existing subscription
+    const subscription = await prisma.subscription.findUnique({
+      where: { businessId: req.user.businessId }
+    });
+
+    if (!subscription) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+
+    // Update card attachment time
+    const updatedSubscription = await prisma.subscription.update({
+      where: { businessId: req.user.businessId },
+      data: {
+        cardAttachedAt: new Date()
+      }
+    });
+
+    console.log('[CARD ATTACHMENT] Status updated successfully:', {
+      businessId: req.user.businessId,
+      cardAttachedAt: updatedSubscription.cardAttachedAt
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Card attachment status saved successfully',
+      cardAttachedAt: updatedSubscription.cardAttachedAt 
+    });
+  } catch (error) {
+    console.error('[CARD ATTACHMENT] Error saving status:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+}
+
 module.exports = {
   createPayment,
-  handleCloudPaymentsWebhook
+  handleCloudPaymentsWebhook,
+  saveCardAttachment
 };
