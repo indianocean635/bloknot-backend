@@ -12,37 +12,41 @@ async function checkSubscriptionStatus(req, res, next) {
             return res.status(401).json({ error: 'Authentication required' });
         }
 
-        // Получаем актуальные данные пользователя
-        const user = await prisma.user.findUnique({
-            where: { id: req.user.id },
-            select: {
-                id: true,
-                subscriptionStatus: true,
-                subscriptionType: true,
-                trialEndsAt: true,
-                subscriptionEndsAt: true,
-                nextPaymentDate: true,
-                email: true,
-                name: true
-            }
-        });
+        // Получаем данные пользователя и подписки
+        const [user, subscription] = await Promise.all([
+            prisma.user.findUnique({
+                where: { id: req.user.id },
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    businessId: true
+                }
+            }),
+            prisma.subscription.findUnique({
+                where: { businessId: req.user.businessId }
+            })
+        ]);
 
         if (!user) {
             console.log('[SUBSCRIPTION] User not found:', req.user.id);
             return res.status(404).json({ error: 'User not found' });
         }
 
-        console.log('[SUBSCRIPTION] User subscription data:', {
+        console.log('[SUBSCRIPTION] Subscription data:', {
             userId: user.id,
-            status: user.subscriptionStatus,
-            type: user.subscriptionType,
-            trialEndsAt: user.trialEndsAt,
-            subscriptionEndsAt: user.subscriptionEndsAt,
-            nextPaymentDate: user.nextPaymentDate
+            businessId: user.businessId,
+            subscription: subscription ? {
+                status: subscription.subscriptionStatus,
+                plan: subscription.plan,
+                trialEndsAt: subscription.trialEndsAt,
+                subscriptionEndsAt: subscription.subscriptionEndsAt,
+                nextPaymentDate: subscription.nextPaymentDate
+            } : null
         });
 
         // Проверяем и обновляем статус если нужно
-        const updatedStatus = await updateSubscriptionStatusIfNeeded(user);
+        const updatedStatus = await updateSubscriptionStatusIfNeeded(subscription);
         
         // Добавляем информацию о подписке в request
         req.subscription = {
@@ -102,52 +106,65 @@ function requireActiveSubscription(req, res, next) {
 /**
  * Обновление статуса подписки если необходимо
  */
-async function updateSubscriptionStatusIfNeeded(user) {
+async function updateSubscriptionStatusIfNeeded(subscription) {
     const now = new Date();
-    let updatedUser = { ...user };
+    
+    // Если нет подписки, возвращаем статус без подписки
+    if (!subscription) {
+        return {
+            status: 'none',
+            type: null,
+            isActive: false,
+            expiresAt: null,
+            trialEndsAt: null,
+            nextPaymentDate: null
+        };
+    }
+
+    let updatedSubscription = { ...subscription };
     let needsUpdate = false;
 
     console.log('[SUBSCRIPTION] Checking if status update needed:', {
-        currentStatus: user.subscriptionStatus,
-        trialEndsAt: user.trialEndsAt,
-        subscriptionEndsAt: user.subscriptionEndsAt,
+        currentStatus: subscription.subscriptionStatus,
+        trialEndsAt: subscription.trialEndsAt,
+        subscriptionEndsAt: subscription.subscriptionEndsAt,
         now: now.toISOString()
     });
 
     // Проверяем истечение trial периода
-    if (user.subscriptionStatus === 'trial' && user.trialEndsAt && now > user.trialEndsAt) {
+    if (subscription.subscriptionStatus === 'TRIAL' && subscription.trialEndsAt && now > subscription.trialEndsAt) {
         console.log('[SUBSCRIPTION] Trial period expired');
-        updatedUser.subscriptionStatus = 'expired';
+        updatedSubscription.subscriptionStatus = 'EXPIRED';
         needsUpdate = true;
     }
 
     // Проверяем истечение подписки
-    if ((user.subscriptionStatus === 'active' || user.subscriptionStatus === 'cancelled') && 
-        user.subscriptionEndsAt && now > user.subscriptionEndsAt) {
+    if ((subscription.subscriptionStatus === 'ACTIVE' || subscription.subscriptionStatus === 'CANCELLED') && 
+        subscription.subscriptionEndsAt && now > subscription.subscriptionEndsAt) {
         console.log('[SUBSCRIPTION] Subscription expired');
-        updatedUser.subscriptionStatus = 'expired';
+        updatedSubscription.subscriptionStatus = 'EXPIRED';
         needsUpdate = true;
     }
 
     // Обновляем в базе данных если нужно
     if (needsUpdate) {
-        console.log('[SUBSCRIPTION] Updating user status in database');
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { subscriptionStatus: updatedUser.subscriptionStatus }
+        console.log('[SUBSCRIPTION] Updating subscription status in database');
+        await prisma.subscription.update({
+            where: { id: subscription.id },
+            data: { subscriptionStatus: updatedSubscription.subscriptionStatus }
         });
     }
 
     // Определяем активность подписки
-    const isActive = updatedUser.subscriptionStatus === 'trial' || updatedUser.subscriptionStatus === 'active';
+    const isActive = updatedSubscription.subscriptionStatus === 'TRIAL' || updatedSubscription.subscriptionStatus === 'ACTIVE';
 
     return {
-        status: updatedUser.subscriptionStatus,
-        type: updatedUser.subscriptionType,
+        status: updatedSubscription.subscriptionStatus,
+        type: updatedSubscription.plan,
         isActive,
-        expiresAt: updatedUser.subscriptionEndsAt || updatedUser.trialEndsAt,
-        trialEndsAt: updatedUser.trialEndsAt,
-        nextPaymentDate: updatedUser.nextPaymentDate
+        expiresAt: updatedSubscription.subscriptionEndsAt || updatedSubscription.trialEndsAt,
+        trialEndsAt: updatedSubscription.trialEndsAt,
+        nextPaymentDate: updatedSubscription.nextPaymentDate
     };
 }
 
@@ -159,14 +176,10 @@ async function getSubscriptionInfo(userId) {
         const user = await prisma.user.findUnique({
             where: { id: userId },
             select: {
-                subscriptionStatus: true,
-                subscriptionType: true,
-                trialEndsAt: true,
-                subscriptionEndsAt: true,
-                nextPaymentDate: true,
-                cloudPaymentsSubscriptionId: true,
+                id: true,
                 email: true,
-                name: true
+                name: true,
+                businessId: true
             }
         });
 
@@ -174,7 +187,11 @@ async function getSubscriptionInfo(userId) {
             throw new Error('User not found');
         }
 
-        const updatedStatus = await updateSubscriptionStatusIfNeeded(user);
+        const subscription = await prisma.subscription.findUnique({
+            where: { businessId: user.businessId }
+        });
+
+        const updatedStatus = await updateSubscriptionStatusIfNeeded(subscription);
 
         return {
             status: updatedStatus.status,
@@ -183,9 +200,12 @@ async function getSubscriptionInfo(userId) {
             trialEndsAt: updatedStatus.trialEndsAt,
             subscriptionEndsAt: updatedStatus.expiresAt,
             nextPaymentDate: updatedStatus.nextPaymentDate,
-            cloudPaymentsSubscriptionId: user.cloudPaymentsSubscriptionId,
+            cloudPaymentsSubscriptionId: subscription?.cloudpaymentsSubscriptionId,
             email: user.email,
-            name: user.name
+            name: user.name,
+            plan: subscription?.plan,
+            maxUsers: subscription?.maxUsers,
+            usersLimit: subscription?.usersLimit
         };
     } catch (error) {
         console.error('[SUBSCRIPTION] Error getting subscription info:', error);

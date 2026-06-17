@@ -6,15 +6,17 @@ const { getSubscriptionInfo } = require('../middleware/subscriptionMiddleware');
  */
 async function getCloudSubscriptionInfo(req, res) {
     try {
-        console.log('[SUBSCRIPTION] Getting subscription info for user:', req.user?.id);
+        console.log('[SUBSCRIPTION] Getting subscription info for user:', req.user?.id, 'business:', req.user?.businessId);
 
         const subscriptionInfo = await getSubscriptionInfo(req.user.id);
 
         console.log('[SUBSCRIPTION] Subscription info retrieved:', {
             userId: req.user.id,
+            businessId: req.user.businessId,
             status: subscriptionInfo.status,
             type: subscriptionInfo.type,
-            isActive: subscriptionInfo.isActive
+            isActive: subscriptionInfo.isActive,
+            plan: subscriptionInfo.plan
         });
 
         res.json({
