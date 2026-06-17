@@ -544,9 +544,9 @@
   // Load current user data
   async function loadCurrentUser() {
     try {
-      const response = await fetch('/api/auth/me');
-      if (response.ok) {
-        currentUser = await response.json();
+      const result = await Bloknot.api('/api/auth/me');
+      if (result.success) {
+        currentUser = result.data;
         window.currentUser = currentUser;
       }
     } catch (error) {
@@ -565,10 +565,7 @@
     try {
       console.log('[SUBSCRIPTION] Loading subscription info...');
       
-      const response = await fetch('/api/cloudpayments/subscription?v=' + Date.now());
-      console.log('[SUBSCRIPTION] Response status:', response.status);
-      
-      const result = await response.json();
+      const result = await Bloknot.api('/api/cloudpayments/subscription?v=' + Date.now());
       console.log('[SUBSCRIPTION] Response data:', result);
 
       if (result.success) {
@@ -795,8 +792,7 @@
     try {
       console.log('[SUBSCRIPTION] Loading subscription plans...');
       
-      const response = await fetch('/api/cloudpayments/plans');
-      const result = await response.json();
+      const result = await Bloknot.api('/api/cloudpayments/plans');
 
       if (result.success) {
         document.getElementById('subscriptionPlansModal').style.display = 'block';
@@ -1118,8 +1114,7 @@
       console.log('[SUBSCRIPTION] Plan selected:', planId);
       
       // Get plan details
-      const response = await fetch('/api/cloudpayments/plans');
-      const result = await response.json();
+      const result = await Bloknot.api('/api/cloudpayments/plans');
       
       if (result.success) {
         selectedPlan = result.data.find(plan => plan.id === planId);
@@ -1191,12 +1186,8 @@
       console.log('[SUBSCRIPTION] Processing successful payment...');
       
       // Send payment data to backend
-      const response = await fetch('/api/cloudpayments/subscription/create', {
+      const result = await Bloknot.api('/api/cloudpayments/subscription/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
         body: JSON.stringify({
           subscriptionType: plan.id,
           cardToken: options.token,
@@ -1204,8 +1195,6 @@
           userName: currentUser?.name
         })
       });
-
-      const result = await response.json();
 
       if (result.success) {
         alert('Подписка успешно оформлена!');
@@ -1236,15 +1225,9 @@
     try {
       console.log('[SUBSCRIPTION] Cancelling subscription...');
       
-      const response = await fetch('/api/cloudpayments/subscription/cancel', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
+      const result = await Bloknot.api('/api/cloudpayments/subscription/cancel', {
+        method: 'POST'
       });
-
-      const result = await response.json();
 
       if (result.success) {
         alert(result.message);
