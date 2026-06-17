@@ -2,7 +2,8 @@ const express = require("express");
 const jwt = require('jsonwebtoken');
 const { 
   createPayment, 
-  handleCloudPaymentsWebhook 
+  handleCloudPaymentsWebhook,
+  saveCardAttachment 
 } = require("../controllers/paymentController");
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
