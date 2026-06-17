@@ -210,8 +210,16 @@ async function generateInvoice(req, res) {
       return res.status(400).json({ error: 'Неверный план подписки' });
     }
 
-    // Создание PDF
-    const doc = new PDFDocument({ margin: 50 });
+    // Создание PDF с поддержкой кириллицы
+    const doc = new PDFDocument({ 
+      margin: 50,
+      size: 'A4',
+      info: {
+        Title: `Счет на оплату для ${clientData.name}`,
+        Author: COMPANY_REQUISITES.name,
+        Subject: 'Подписка Bloknot'
+      }
+    });
     const chunks = [];
     
     doc.on('data', (chunk) => chunks.push(chunk));
@@ -232,65 +240,81 @@ async function generateInvoice(req, res) {
     });
 
     // Заголовок счета
-    doc.fontSize(20).text('СЧЕТ НА ОПЛАТУ', { align: 'center' });
-    doc.fontSize(12).text(`№ ${Date.now()} от ${new Date().toLocaleDateString('ru-RU')}`, { align: 'center' });
-    doc.moveDown();
+    doc.fontSize(18).font('Helvetica-Bold').text('СЧЕТ НА ОПЛАТУ', { align: 'center' });
+    doc.fontSize(12).font('Helvetica').text(`№ ${Date.now()} от ${new Date().toLocaleDateString('ru-RU')}`, { align: 'center' });
+    doc.moveDown(2);
 
     // Реквизиты продавца
-    doc.fontSize(14).text('Продавец:', { underline: true });
-    doc.fontSize(10).text(COMPANY_REQUISITES.name);
+    doc.fontSize(14).font('Helvetica-Bold').text('Продавец:');
+    doc.fontSize(10).font('Helvetica');
+    doc.text(COMPANY_REQUISITES.name);
     doc.text(`ИНН: ${COMPANY_REQUISITES.inn}`);
     doc.text(`ОГРНИП: ${COMPANY_REQUISITES.ogrn}`);
     doc.text(`Юридический адрес: ${COMPANY_REQUISITES.legalAddress}`);
     doc.moveDown();
 
     // Банковские реквизиты
-    doc.fontSize(12).text('Банковские реквизиты:', { underline: true });
-    doc.fontSize(10).text(`Расчетный счет: ${COMPANY_REQUISITES.bankAccount}`);
+    doc.fontSize(12).font('Helvetica-Bold').text('Банковские реквизиты:');
+    doc.fontSize(10).font('Helvetica');
+    doc.text(`Расчетный счет: ${COMPANY_REQUISITES.bankAccount}`);
     doc.text(`Банк: ${COMPANY_REQUISITES.bankName}`);
     doc.text(`БИК: ${COMPANY_REQUISITES.bankBik}`);
     doc.text(`Корр. счет: ${COMPANY_REQUISITES.bankCorrAccount}`);
     doc.moveDown();
 
     // Реквизиты покупателя
-    doc.fontSize(14).text('Покупатель:', { underline: true });
-    doc.fontSize(10).text(clientData.name);
+    doc.fontSize(14).font('Helvetica-Bold').text('Покупатель:');
+    doc.fontSize(10).font('Helvetica');
+    doc.text(clientData.name);
     doc.text(`ИНН: ${clientData.inn}`);
     if (clientData.kpp) doc.text(`КПП: ${clientData.kpp}`);
     if (clientData.address) doc.text(`Адрес: ${clientData.address}`);
-    doc.moveDown();
+    doc.moveDown(2);
 
     // Таблица с услугой
-    doc.fontSize(12).text('Услуги:', { underline: true });
+    doc.fontSize(12).font('Helvetica-Bold').text('Услуги:');
     doc.moveDown();
+    
+    // Таблица
+    const tableTop = doc.y;
+    const lineHeight = 20;
     
     // Шапка таблицы
-    doc.fontSize(10);
-    const tableTop = doc.y;
+    doc.fontSize(10).font('Helvetica-Bold');
     doc.text('Наименование услуги', 50, tableTop);
     doc.text('Кол-во', 300, tableTop);
-    doc.text('Цена', 350, tableTop);
-    doc.text('Сумма', 400, tableTop);
+    doc.text('Цена, ₽', 350, tableTop);
+    doc.text('Сумма, ₽', 430, tableTop);
+    
+    // Линия под шапкой
+    doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
     
     // Строка с услугой
-    const serviceRow = tableTop + 20;
-    doc.text(`Подписка "${planInfo.name}" - годовая (${planInfo.description})`, 50, serviceRow);
+    doc.fontSize(10).font('Helvetica');
+    const serviceRow = tableTop + 25;
+    doc.text(`Подписка "${planInfo.name}" - годовая (${planInfo.description})`, 50, serviceRow, { width: 240 });
     doc.text('1', 300, serviceRow);
-    doc.text(`${planInfo.price} ₽`, 350, serviceRow);
-    doc.text(`${planInfo.price} ₽`, 400, serviceRow);
+    doc.text(`${planInfo.price}`, 350, serviceRow);
+    doc.text(`${planInfo.price}`, 430, serviceRow);
+    
+    // Линия под услугой
+    doc.moveTo(50, serviceRow + 15).lineTo(550, serviceRow + 15).stroke();
     
     // Итого
-    doc.moveDown();
-    doc.fontSize(12).text(`Итого к оплате: ${planInfo.price} ₽`, { align: 'right' });
-    doc.moveDown();
+    doc.moveDown(2);
+    doc.fontSize(14).font('Helvetica-Bold').text(`Итого к оплате: ${planInfo.price} ₽`, { align: 'right' });
+    doc.moveDown(2);
 
     // Назначение платежа
-    doc.fontSize(10).text(`Назначение платежа: Оплата годовой подписки "${planInfo.name}" по Договору-оферте. НДС не облагается.`);
-    doc.moveDown();
+    doc.fontSize(10).font('Helvetica');
+    doc.text(`Назначение платежа: Оплата годовой подписки "${planInfo.name}" по Договору-оферте. НДС не облагается.`);
+    doc.moveDown(3);
 
     // Подпись
-    doc.fontSize(10).text('___________________ / Песков А.В. /', { align: 'right' });
+    doc.fontSize(10).font('Helvetica');
+    doc.text('___________________ / Песков А.В. /', { align: 'right' });
     doc.text('(ИП Песков Александр Валерьевич)', { align: 'right' });
+    doc.text('___________________', { align: 'right' });
 
     doc.end();
   } catch (error) {
@@ -314,6 +338,7 @@ function generateQRData(planInfo, clientData) {
     clientInn: clientData.inn
   };
 
+  // Формат для СБП и банковских приложений
   return `ST00012|Name=${paymentData.name}|PersonalAcc=${paymentData.account}|BankName=${COMPANY_REQUISITES.bankName}|BIC=${paymentData.bankBik}|CorrespAcc=${paymentData.corrAccount}|Sum=${paymentData.amount * 100}|Purpose=${paymentData.description}|PayeeINN=${paymentData.inn}|PayerINN=${paymentData.clientInn}`;
 }
 
