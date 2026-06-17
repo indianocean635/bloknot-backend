@@ -2380,9 +2380,32 @@ async function applyScheduleTime() {
 
   // Save schedule data to server
   try {
-    // Get current specialist ID
-    const specialistNameInput = document.querySelector('input[id^="specialistName"]');
-    const specialistId = specialistNameInput?.dataset.specialistId;
+    // Get current specialist ID - need to find the correct one
+    // Find which specialist is currently being edited by checking modal content
+    const modal = document.querySelector('.modal.active');
+    let specialistId = null;
+    
+    if (modal) {
+      // Try to find specialist ID in modal content
+      const modalContent = modal.innerHTML;
+      const specialistNameMatch = modalContent.match(/specialistName(\d+)/);
+      if (specialistNameMatch) {
+        const index = specialistNameMatch[1];
+        const nameInput = document.getElementById(`specialistName${index}`);
+        specialistId = nameInput?.dataset.specialistId;
+      }
+    }
+    
+    // Fallback: try to find the first specialist with an ID
+    if (!specialistId) {
+      const nameInputs = document.querySelectorAll('input[id^="specialistName"]');
+      for (const input of nameInputs) {
+        if (input.dataset.specialistId) {
+          specialistId = input.dataset.specialistId;
+          break;
+        }
+      }
+    }
     
     if (specialistId) {
       const settingsData = {
@@ -2394,6 +2417,7 @@ async function applyScheduleTime() {
       };
 
       console.log('Auto-saving schedule after apply:', settingsData);
+      console.log('Specialist ID:', specialistId);
 
       const response = await Bloknot.api(`/api/specialists/${specialistId}/settings`, {
         method: 'POST',
@@ -2401,6 +2425,8 @@ async function applyScheduleTime() {
       });
 
       console.log('Auto-save response:', response);
+    } else {
+      console.warn('No specialist ID found for auto-save');
     }
   } catch (error) {
     console.error('Error auto-saving schedule:', error);
