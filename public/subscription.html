@@ -601,15 +601,18 @@
       expired: 'Истекла'
     };
 
+    // Convert status to lower case for display
+    const normalizedStatus = (data.status || '').toLowerCase();
+
     let html = `
       <div style="display: grid; gap: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-weight: 500; color: #374151;">Тариф:</span>
-          <span style="color: #1f2937;">${data.status === 'trial' ? 'Пробный период' : getPlanName(data.type)}</span>
+          <span style="color: #1f2937;">${normalizedStatus === 'trial' ? 'Пробный период' : getPlanName(data.type)}</span>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-weight: 500; color: #374151;">Статус:</span>
-          <span style="color: ${statusColors[data.status]}; font-weight: 500;">${statusTexts[data.status]}</span>
+          <span style="color: ${statusColors[normalizedStatus]}; font-weight: 500;">${statusTexts[normalizedStatus] || data.status}</span>
         </div>
     `;
 
@@ -623,7 +626,7 @@
       `;
     }
 
-    if (data.trialEndsAt && data.status === 'trial') {
+    if (data.trialEndsAt && normalizedStatus === 'trial') {
       const trialEndDate = new Date(data.trialEndsAt);
       const daysLeft = Math.floor((trialEndDate - new Date()) / (1000 * 60 * 60 * 24));
       const dayWord = getDayWord(daysLeft);
@@ -649,7 +652,7 @@
     detailsDiv.innerHTML = html;
 
     // Show actions only for active subscriptions
-    if (data.status === 'active' || data.status === 'trial') {
+    if (normalizedStatus === 'active' || normalizedStatus === 'trial') {
       actionsDiv.style.display = 'block';
     } else {
       actionsDiv.style.display = 'none';
