@@ -27,6 +27,13 @@ function getJwtUser(req, cookieName) {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    
+    // Check if token contains HTML (possible error page)
+    if (token.includes('<') || token.includes('html')) {
+      console.log('[AUTH] Token contains HTML, rejecting');
+      return null;
+    }
+    
     console.log('[AUTH] Token from Authorization header:', token.substring(0, 20) + '...');
     try {
       const payload = jwt.verify(token, JWT_SECRET);
@@ -47,6 +54,13 @@ function getJwtUser(req, cookieName) {
     console.log('[AUTH] No token in Authorization header or cookie');
     return null;
   }
+  
+  // Check if token contains HTML (possible error page)
+  if (token.includes('<') || token.includes('html')) {
+    console.log('[AUTH] Cookie token contains HTML, rejecting');
+    return null;
+  }
+  
   console.log('[AUTH] Token from cookie:', token.substring(0, 20) + '...');
   try {
     const payload = jwt.verify(token, JWT_SECRET);
@@ -96,14 +110,27 @@ async function requireAuth(req, res, next) {
   } else {
     // Normal JWT authentication
     const user = getAuthUser(req);
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    if (!user) {
+      console.log('[AUTH] No user found in token');
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    // Check if token contains HTML (possible error page)
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.includes('<')) {
+      console.log('[AUTH] Token contains HTML, possible error page');
+      return res.status(401).json({ error: "Invalid token format" });
+    }
     
     fullUser = await prisma.user.findUnique({
       where: { id: user.id },
       include: { business: true }
     });
     
-    if (!fullUser) return res.status(401).json({ error: "User not found" });
+    if (!fullUser) {
+      console.log('[AUTH] User not found in database:', user.id);
+      return res.status(401).json({ error: "User not found" });
+    }
     
     req.user = {
       id: fullUser.id,
@@ -115,6 +142,12 @@ async function requireAuth(req, res, next) {
       business: fullUser.business,
       isImpersonated: false
     };
+    
+    console.log('[AUTH] User authenticated successfully:', { 
+      id: fullUser.id, 
+      email: fullUser.email, 
+      role: fullUser.role 
+    });
   }
   
   console.log('AUTH USER:', req.user);
