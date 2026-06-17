@@ -92,50 +92,92 @@ function validateINN(inn) {
  * Получение данных компании из ФНС
  */
 async function getCompanyDataFromFNS(inn) {
-  return new Promise((resolve, reject) => {
-    const url = `https://egrul.nalog.ru/?search=${inn}`;
-    
-    https.get(url, (res) => {
-      let data = '';
+  try {
+    return new Promise((resolve, reject) => {
+      const url = `https://egrul.nalog.ru/?search=${inn}`;
       
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      res.on('end', () => {
-        try {
-          const result = JSON.parse(data);
-          
-          if (result.status === '200' && result.rows && result.rows.length > 0) {
-            const company = result.rows[0];
+      const req = https.get(url, (res) => {
+        let data = '';
+        
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          try {
+            const result = JSON.parse(data);
             
-            resolve({
-              inn: company.i || inn,
-              name: company.c || company.n || 'Неизвестная компания',
-              ogrn: company.o || '',
-              address: company.a || '',
-              director: company.g || '',
-              kpp: company.p || '',
-              status: company.s || 'Действующая'
-            });
-          } else {
-            // Если не найдено в ФНС, возвращаем базовые данные
-            resolve({
-              inn: inn,
-              name: `ИНН ${inn}`,
-              ogrn: '',
-              address: '',
-              director: '',
-              kpp: inn.length === 12 ? '' : '0',
-              status: 'Требуется проверка'
-            });
+            if (result.status === '200' && result.rows && result.rows.length > 0) {
+              const company = result.rows[0];
+              
+              resolve({
+                inn: company.i || inn,
+                name: company.c || company.n || 'Неизвестная компания',
+                ogrn: company.o || '',
+                address: company.a || '',
+                director: company.g || '',
+                kpp: company.p || '',
+                status: company.s || 'Действующая'
+              });
+            } else {
+              // Если не найдено в ФНС, возвращаем базовые данные
+              resolve({
+                inn: inn,
+                name: `Организация с ИНН ${inn}`,
+                ogrn: '',
+                address: '',
+                director: '',
+                kpp: inn.length === 12 ? '' : '0',
+                status: 'Требуется проверка'
+              });
+            }
+          } catch (error) {
+            reject(error);
           }
-        } catch (error) {
-          reject(error);
-        }
+        });
       });
-    }).on('error', reject);
-  });
+      
+      req.on('error', (error) => {
+        console.log('[FNS API ERROR]', error.message);
+        // В случае ошибки API, возвращаем базовые данные
+        resolve({
+          inn: inn,
+          name: `Организация с ИНН ${inn}`,
+          ogrn: '',
+          address: '',
+          director: '',
+          kpp: inn.length === 12 ? '' : '0',
+          status: 'Требуется проверка'
+        });
+      });
+      
+      req.setTimeout(5000, () => {
+        req.destroy();
+        console.log('[FNS API TIMEOUT]');
+        resolve({
+          inn: inn,
+          name: `Организация с ИНН ${inn}`,
+          ogrn: '',
+          address: '',
+          director: '',
+          kpp: inn.length === 12 ? '' : '0',
+          status: 'Требуется проверка'
+        });
+      });
+    });
+  } catch (error) {
+    console.log('[FNS API CATCH ERROR]', error.message);
+    // В случае любой ошибки, возвращаем базовые данные
+    return {
+      inn: inn,
+      name: `Организация с ИНН ${inn}`,
+      ogrn: '',
+      address: '',
+      director: '',
+      kpp: inn.length === 12 ? '' : '0',
+      status: 'Требуется проверка'
+    };
+  }
 }
 
 /**
