@@ -2322,7 +2322,7 @@ function changeMonth(delta) {
 }
 
 // Apply schedule time to selected days
-function applyScheduleTime() {
+async function applyScheduleTime() {
   const startTime = document.getElementById('startTime').value;
   const endTime = document.getElementById('endTime').value;
   const timeStep = document.getElementById('timeStep').value;
@@ -2376,6 +2376,34 @@ function applyScheduleTime() {
       dayCell.classList.remove('selected');
     });
     document.getElementById('timeSettingsPanel').style.display = 'none';
+  }
+
+  // Save schedule data to server
+  try {
+    // Get current specialist ID
+    const specialistNameInput = document.querySelector('input[id^="specialistName"]');
+    const specialistId = specialistNameInput?.dataset.specialistId;
+    
+    if (specialistId) {
+      const settingsData = {
+        specialistId,
+        branchId: document.getElementById('specialistBranch').value || null,
+        schedule: window.specialistScheduleData || {},
+        categoryIds: Array.from(document.querySelectorAll('.category-checkbox:checked')).map(cb => cb.value),
+        serviceIds: Array.from(document.querySelectorAll('.service-checkbox:checked')).map(cb => cb.value)
+      };
+
+      console.log('Auto-saving schedule after apply:', settingsData);
+
+      const response = await Bloknot.api(`/api/specialists/${specialistId}/settings`, {
+        method: 'POST',
+        body: JSON.stringify(settingsData)
+      });
+
+      console.log('Auto-save response:', response);
+    }
+  } catch (error) {
+    console.error('Error auto-saving schedule:', error);
   }
 
   // Visual feedback on button
