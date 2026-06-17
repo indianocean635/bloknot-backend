@@ -3661,6 +3661,11 @@ async function processCardPayment() {
         window.location.href = '/dashboard.html';
       }
     } else {
+      // Check for trial restriction error
+      if (data.error === 'TRIAL_RESTRICTION') {
+        alert(data.message);
+        return;
+      }
       alert('Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка'));
     }
   } catch (error) {

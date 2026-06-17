@@ -900,6 +900,11 @@
               window.location.href = '/dashboard.html';
             }
           } else {
+            // Check for trial restriction error
+            if (paymentData.error === 'TRIAL_RESTRICTION') {
+              alert(paymentData.message);
+              return;
+            }
             alert('Ошибка создания платежа: ' + (paymentData.error || 'Неизвестная ошибка'));
           }
         } catch (error) {
@@ -909,6 +914,13 @@
           if (error.message === 'Unauthorized' || error.message.includes('401')) {
             alert('Для оплаты необходимо войти в аккаунт или зарегистрироваться');
             window.location.href = '/login.html';
+            return;
+          }
+          
+          // Check if it's a trial restriction error
+          if (error.message && error.message.includes('TRIAL_RESTRICTION')) {
+            const errorData = JSON.parse(error.message);
+            alert(errorData.message);
             return;
           }
           
