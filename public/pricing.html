@@ -865,17 +865,33 @@
                 : 'Оплатите годовую подписку со скидкой 20%';
 
               if (confirm(message)) {
-                widget.pay(chargeOptions, function(options) {
-                  // Success - payment completed
-                  console.log('Payment successful', options);
-                  alert('Оплата успешно выполнена!');
-                  window.closePaymentModal();
-                  window.location.href = '/dashboard.html';
-                }, function(reason, options) {
-                  // Fail
-                  console.error('Payment failed', reason, options);
-                  alert('Ошибка оплаты: ' + reason);
-                });
+                if (period === 'monthly') {
+                  // For monthly plans - use auth for trial period
+                  widget.auth(chargeOptions, function(options) {
+                    // Success - card authorized for trial
+                    console.log('Card authorized for trial', options);
+                    alert('Карта успешно привязана! Пробный период активирован на 5 дней.');
+                    window.closePaymentModal();
+                    window.location.href = '/dashboard.html';
+                  }, function(reason, options) {
+                    // Fail
+                    console.error('Card authorization failed', reason, options);
+                    alert('Ошибка привязки карты: ' + reason);
+                  });
+                } else {
+                  // For yearly plans - use charge for immediate payment
+                  widget.charge(chargeOptions, function(options) {
+                    // Success - payment completed
+                    console.log('Payment successful', options);
+                    alert('Оплата успешно выполнена! Годовая подписка активирована.');
+                    window.closePaymentModal();
+                    window.location.href = '/dashboard.html';
+                  }, function(reason, options) {
+                    // Fail
+                    console.error('Payment failed', reason, options);
+                    alert('Ошибка оплаты: ' + reason);
+                  });
+                }
               }
             } else {
               // Success without CloudPayments (subscription already created)

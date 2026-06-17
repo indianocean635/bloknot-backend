@@ -96,7 +96,7 @@ async function createPayment(req, res) {
     const cloudPaymentsDataForWidget = {
       PublicId: publicId,
       Description: description,
-      Amount: period === 'monthly' ? 0 : price, // Free for trial period, full price for yearly
+      Amount: period === 'monthly' ? 1 : price, // 1 for auth (trial), full price for yearly
       Currency: currency,
       InvoiceId: cloudPaymentsData.InvoiceId,
       AccountId: user.businessId,
