@@ -191,7 +191,15 @@
     }
     const ct = res.headers.get("content-type") || "";
     if (ct.includes("application/json")) return res.json();
-    return res.text();
+    
+    // If not JSON, check if it's HTML (error page)
+    const text = await res.text();
+    if (text.includes('<html') || text.includes('<!DOCTYPE')) {
+      console.error('[API] Received HTML instead of JSON:', text.substring(0, 200));
+      throw new Error('Server returned HTML instead of JSON. This might be an error page.');
+    }
+    
+    return text;
   }
 
   // Save token to all storage locations for maximum reliability
