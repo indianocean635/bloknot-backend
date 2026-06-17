@@ -1188,6 +1188,64 @@ router.post('/migrate-card-attached-at', requireAuth, async (req, res) => {
   }
 });
 
+// Search users by email pattern (for debugging)
+router.post('/search-users', async (req, res) => {
+  try {
+    const { emailPattern } = req.body;
+    
+    console.log('[SEARCH USERS]', { emailPattern });
+    
+    if (!emailPattern) {
+      return res.status(400).json({ error: 'Email pattern is required' });
+    }
+    
+    // Search users by email pattern (case insensitive)
+    const users = await prisma.user.findMany({
+      where: {
+        email: {
+          contains: emailPattern,
+          mode: 'insensitive'
+        }
+      },
+      include: {
+        business: {
+          include: {
+            subscription: true
+          }
+        }
+      },
+      take: 10 // Limit to 10 results
+    });
+    
+    const results = users.map(user => ({
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      businessId: user.business?.id,
+      businessName: user.business?.name,
+      hasSubscription: !!user.business?.subscription,
+      subscriptionStatus: user.business?.subscription?.subscriptionStatus,
+      cardAttachedAt: user.business?.subscription?.cardAttachedAt
+    }));
+    
+    console.log('[SEARCH USERS RESULTS]', { 
+      pattern: emailPattern, 
+      found: results.length,
+      results: results.map(r => ({ email: r.email, businessId: r.businessId }))
+    });
+    
+    res.json({ 
+      success: true, 
+      pattern: emailPattern,
+      found: results.length,
+      users: results 
+    });
+  } catch (error) {
+    console.error('[SEARCH USERS ERROR]', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
+
 // Temporary manual card attachment update without auth (remove after testing)
 router.post('/update-card-attachment-temp', async (req, res) => {
   try {
