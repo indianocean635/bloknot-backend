@@ -70,9 +70,12 @@ async function createPayment(req, res) {
       Email: user.email,
       RequireConfirmation: period === 'monthly', // Require confirmation for recurring
       TrialPeriod: period === 'monthly' ? TRIAL_DAYS : null,
-      Recurring: {
-        Interval: period === 'monthly' ? 'Month' : null,
-        Period: period === 'monthly' ? 1 : null
+      Recurring: period === 'monthly' ? {
+        Interval: 'Month',
+        Period: 1
+      } : {
+        Interval: 'Year',
+        Period: 1
       }
     };
 
@@ -93,7 +96,7 @@ async function createPayment(req, res) {
     const cloudPaymentsDataForWidget = {
       PublicId: publicId,
       Description: description,
-      Amount: period === 'monthly' ? 0 : price, // Free for trial period
+      Amount: period === 'monthly' ? 0 : price, // Free for trial period, full price for yearly
       Currency: currency,
       InvoiceId: cloudPaymentsData.InvoiceId,
       AccountId: user.businessId,
@@ -321,12 +324,18 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
       data: {
         subscriptionStatus: 'ACTIVE',
         subscriptionEndsAt,
+        cloudpaymentsSubscriptionId: eventData.SubscriptionId,
         lastPaymentAt: new Date(),
         isActive: true
       }
     });
 
-    console.log('[SUBSCRIPTION ACTIVATED]', { businessId, subscriptionEndsAt });
+    console.log('[YEARLY SUBSCRIPTION ACTIVATED]', { 
+      businessId, 
+      subscriptionEndsAt,
+      amount: eventData.Amount,
+      message: 'Yearly subscription activated for 1 year'
+    });
   }
   
   // For monthly plans with trial, keep TRIAL status - don't charge immediately
