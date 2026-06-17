@@ -231,9 +231,12 @@ async function generateInvoice(req, res) {
       const qrData = generateQRData(planInfo, clientData);
       const qrCodeDataURL = await QRCode.toDataURL(qrData);
       
+      // Преобразуем PDF в base64 правильно
+      const pdfBase64 = pdfBuffer.toString('base64');
+      
       res.json({
         success: true,
-        invoiceBase64: pdfBuffer.toString('base64'),
+        invoiceBase64: pdfBase64,
         qrCode: qrCodeDataURL,
         fileName: `invoice_${Date.now()}.pdf`
       });

@@ -1049,10 +1049,23 @@
             if (result.success) {
               // Download PDF
               const pdfData = result.invoiceBase64;
+              const binaryData = atob(pdfData);
+              const bytes = new Uint8Array(binaryData.length);
+              
+              for (let i = 0; i < binaryData.length; i++) {
+                bytes[i] = binaryData.charCodeAt(i);
+              }
+              
+              const blob = new Blob([bytes], { type: 'application/pdf' });
+              const url = URL.createObjectURL(blob);
+              
               const link = document.createElement('a');
-              link.href = `data:application/pdf;base64,${pdfData}`;
+              link.href = url;
               link.download = result.fileName;
               link.click();
+              
+              // Cleanup
+              setTimeout(() => URL.revokeObjectURL(url), 100);
 
               // Show QR code
               showQRCode(result.qrCode, tariff, price);
