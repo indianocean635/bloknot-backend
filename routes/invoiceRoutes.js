@@ -22,8 +22,8 @@ router.post('/generate', generateInvoice);
  */
 router.get('/plans', getPlans);
 
-// Тестовый эндпоинт для проверки PDF
-router.post('/test-pdf', async (req, res) => {
+// Тестовый эндпоинт для проверки PDF (без авторизации)
+router.get('/test-pdf', async (req, res) => {
   try {
     console.log('[TEST PDF] Starting PDF generation...');
     
