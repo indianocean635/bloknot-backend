@@ -565,8 +565,11 @@
     try {
       console.log('[SUBSCRIPTION] Loading subscription info...');
       
-      const response = await fetch('/api/cloudpayments/subscription');
+      const response = await fetch('/api/cloudpayments/subscription?v=' + Date.now());
+      console.log('[SUBSCRIPTION] Response status:', response.status);
+      
       const result = await response.json();
+      console.log('[SUBSCRIPTION] Response data:', result);
 
       if (result.success) {
         subscriptionData = result.data;

@@ -21,7 +21,11 @@ router.use(requireAuth);
 /**
  * Получение информации о текущей подписке
  */
-router.get('/subscription', checkSubscriptionStatus, getCloudSubscriptionInfo);
+router.get('/subscription', (req, res, next) => {
+    console.log('[CLOUDPAYMENTS ROUTE] Subscription endpoint called');
+    console.log('[CLOUDPAYMENTS ROUTE] User:', req.user?.id, 'Business:', req.user?.businessId);
+    next();
+}, checkSubscriptionStatus, getCloudSubscriptionInfo);
 
 /**
  * Получение доступных тарифов

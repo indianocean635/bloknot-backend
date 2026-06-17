@@ -5,7 +5,7 @@ const { prisma } = require('../services/prismaService');
  */
 async function checkSubscriptionStatus(req, res, next) {
     try {
-        console.log('[SUBSCRIPTION] Checking subscription status for user:', req.user?.id);
+        console.log('[SUBSCRIPTION] Checking subscription status for user:', req.user?.id, 'business:', req.user?.businessId);
         
         if (!req.user) {
             console.log('[SUBSCRIPTION] No user found in request');
