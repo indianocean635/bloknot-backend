@@ -105,6 +105,20 @@ async function getCompanyDataFromFNS(inn) {
         
         res.on('end', () => {
           try {
+            if (!data || data.trim() === '') {
+              console.log('[FNS API] Empty response, using fallback');
+              resolve({
+                inn: inn,
+                name: `Организация с ИНН ${inn}`,
+                ogrn: '',
+                address: '',
+                director: '',
+                kpp: inn.length === 12 ? '' : '0',
+                status: 'Требуется проверка'
+              });
+              return;
+            }
+            
             const result = JSON.parse(data);
             
             if (result.status === '200' && result.rows && result.rows.length > 0) {
