@@ -107,7 +107,8 @@ router.get('/users', requireAuth, async (req, res) => {
                 phone: true,
                 createdAt: true
               }
-            }
+            },
+            subscription: true
           }
         }
       },
@@ -132,7 +133,8 @@ router.get('/users', requireAuth, async (req, res) => {
       nextBillingAt: user.nextBillingAt,
       password: user.password,
       hasPassword: user.hasPassword,
-      staffUsers: user.business?.users || []
+      staffUsers: user.business?.users || [],
+      subscription: user.business?.subscription || null
     }));
 
     res.json(usersWithStaff);

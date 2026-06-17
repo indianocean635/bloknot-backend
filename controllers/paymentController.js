@@ -358,6 +358,7 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
         subscriptionEndsAt,
         cloudpaymentsSubscriptionId: eventData.SubscriptionId,
         lastPaymentAt: new Date(),
+        cardAttachedAt: new Date(),
         isActive: true
       }
     });
@@ -383,7 +384,8 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
       where: { businessId },
       data: {
         cloudpaymentsSubscriptionId: eventData.SubscriptionId,
-        lastPaymentAt: new Date()
+        lastPaymentAt: new Date(),
+        cardAttachedAt: new Date()
       }
     });
   }
