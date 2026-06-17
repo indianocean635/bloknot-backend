@@ -1188,6 +1188,65 @@ router.post('/migrate-card-attached-at', requireAuth, async (req, res) => {
   }
 });
 
+// Temporary manual card attachment update without auth (remove after testing)
+router.post('/update-card-attachment-temp', async (req, res) => {
+  try {
+    const { businessId, email } = req.body;
+    
+    console.log('[MANUAL CARD UPDATE TEMP]', { businessId, email });
+    
+    if (!businessId && !email) {
+      return res.status(400).json({ error: 'BusinessId or email is required' });
+    }
+    
+    // Find user by email if businessId not provided
+    let targetBusinessId = businessId;
+    if (!targetBusinessId && email) {
+      const user = await prisma.user.findUnique({
+        where: { email },
+        include: { business: true }
+      });
+      
+      if (!user || !user.business) {
+        return res.status(404).json({ error: 'User or business not found' });
+      }
+      
+      targetBusinessId = user.business.id;
+    }
+    
+    // Update subscription
+    const subscription = await prisma.subscription.findUnique({
+      where: { businessId: targetBusinessId }
+    });
+    
+    if (!subscription) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+    
+    const updatedSubscription = await prisma.subscription.update({
+      where: { businessId: targetBusinessId },
+      data: {
+        cardAttachedAt: new Date()
+      }
+    });
+    
+    console.log('[CARD ATTACHMENT UPDATED TEMP]', { 
+      businessId: targetBusinessId, 
+      cardAttachedAt: updatedSubscription.cardAttachedAt 
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Card attachment status updated successfully',
+      businessId: targetBusinessId,
+      cardAttachedAt: updatedSubscription.cardAttachedAt 
+    });
+  } catch (error) {
+    console.error('[MANUAL CARD UPDATE TEMP ERROR]', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
+
 // Manual card attachment update for debugging
 router.post('/update-card-attachment', requireAuth, async (req, res) => {
   try {
