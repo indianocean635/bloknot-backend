@@ -1478,13 +1478,10 @@ function openPaymentModal(tariff, monthlyPrice, yearlyPrice) {
       </button>
     `;
   } else {
-    modalSubtitle.textContent = 'Выберите способ оплаты годовой подписки со скидкой 20%';
+    modalSubtitle.textContent = 'Оплатите годовую подписку со скидкой 20%';
     modalButtons.innerHTML = `
       <button class="btn-primary" onclick="processCardPayment()">
         💳 Оплатить картой
-      </button>
-      <button class="btn-secondary" onclick="processInvoicePayment()">
-        📄 Выставить счет
       </button>
     `;
   }
@@ -3680,15 +3677,7 @@ async function processCardPayment() {
   }
 }
 
-// Process invoice payment (exact copy from pricing.html)
-function processInvoicePayment() {
-  const modal = document.getElementById('paymentModal');
-  const tariff = modal.getAttribute('data-tariff');
-  const price = modal.getAttribute('data-yearly-price');
-  
-  alert(`Выставление счета на годовой тариф "${tariff}" (${price}₽/год)...\n\nВ реальном приложении здесь будет форма для выставления счета.`);
-  closePaymentModal();
-}
+// Функция processInvoicePayment удалена - оплата счетом больше не доступна
 
 // Event listeners for modal closing (from pricing.html)
 document.getElementById('paymentModal').addEventListener('click', function(e) {
