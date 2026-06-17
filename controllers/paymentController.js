@@ -401,12 +401,31 @@ async function handlePaymentConfirm(businessId, transactionId, eventData) {
 
   if (!subscription) return;
 
-  await prisma.subscription.update({
-    where: { businessId },
-    data: {
-      lastPaymentAt: new Date()
-    }
-  });
+  // For trial periods, save card attachment time
+  if (subscription.subscriptionStatus === 'TRIAL' && subscription.billingPeriod === 'MONTHLY') {
+    console.log('[TRIAL CARD ATTACHED]', { 
+      businessId, 
+      subscriptionId: eventData.SubscriptionId,
+      message: 'Card attached for trial period'
+    });
+    
+    await prisma.subscription.update({
+      where: { businessId },
+      data: {
+        cloudpaymentsSubscriptionId: eventData.SubscriptionId,
+        lastPaymentAt: new Date(),
+        cardAttachedAt: new Date()
+      }
+    });
+  } else {
+    // For other cases, just update last payment time
+    await prisma.subscription.update({
+      where: { businessId },
+      data: {
+        lastPaymentAt: new Date()
+      }
+    });
+  }
 }
 
 // Handle payment failure
