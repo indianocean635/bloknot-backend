@@ -693,6 +693,63 @@ router.post('/create-super-admin', async (req, res) => {
   }
 });
 
+// Temporary debug endpoint without auth (remove after testing)
+router.get('/me-debug', async (req, res) => {
+  try {
+    console.log('[DEBUG ME] Headers:', req.headers);
+    console.log('[DEBUG ME] Cookies:', req.headers.cookie);
+    
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No Authorization header' });
+    }
+    
+    const token = authHeader.substring(7); // Remove 'Bearer '
+    console.log('[DEBUG ME] Token:', token.substring(0, 50) + '...');
+    
+    // Check if token contains HTML
+    if (token.includes('<') || token.includes('html')) {
+      console.log('[DEBUG ME] Token contains HTML!');
+      return res.status(401).json({ error: 'Token contains HTML' });
+    }
+    
+    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+    try {
+      const payload = jwt.verify(token, JWT_SECRET);
+      console.log('[DEBUG ME] Token payload:', payload);
+      
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          createdAt: true
+        }
+      });
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      if (user.role !== 'SUPER_ADMIN' && user.role !== 'SALES_STAFF') {
+        return res.status(403).json({ error: 'Access denied. Admin or Sales Staff only.' });
+      }
+      
+      res.json({
+        success: true,
+        user
+      });
+    } catch (error) {
+      console.error('[DEBUG ME] Error:', error);
+      res.status(401).json({ error: 'Invalid token', details: error.message });
+    }
+  } catch (error) {
+    console.error('[DEBUG ME] Unexpected error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
+
 // Get current admin info
 router.get('/me', requireAuth, async (req, res) => {
   try {
