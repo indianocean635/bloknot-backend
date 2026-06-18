@@ -141,59 +141,19 @@ async function createPayment(req, res) {
     console.log('[CLOUDPAYMENTS] Data prepared for widget:', cloudPaymentsDataForWidget);
 
     // For all plans (monthly and yearly), return widget data for payment processing
-    // Create subscription in TRIAL status for monthly plans or PENDING for yearly
-    let subscriptionData;
-    if (period === 'monthly') {
-      const trialEndsAt = new Date();
-      trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
-
-      subscriptionData = {
-        plan: planConfig.name,
-        maxUsers: planConfig.maxUsers,
-        usersLimit: planConfig.maxUsers,
-        subscriptionStatus: 'TRIAL',
-        trialEndsAt,
-        billingPeriod: 'MONTHLY',
-        cloudpaymentsSubscriptionId: null,
-        nextPaymentDate: trialEndsAt,
-        isActive: true,
-        cardAttachedAt: new Date()  // Set card attachment time when trial is created
-      };
-
-      console.log('[TRIAL READY]', {
-        businessId: user.businessId,
-        plan: planConfig.name,
-        trialEndsAt
-      });
-    } else {
-      subscriptionData = {
-        plan: planConfig.name,
-        maxUsers: planConfig.maxUsers,
-        usersLimit: planConfig.maxUsers,
-        subscriptionStatus: 'PENDING',
-        billingPeriod: 'YEARLY',
-        cloudpaymentsSubscriptionId: null,
-        isActive: false
-      };
-
-      console.log('[YEARLY PAYMENT READY]', {
-        businessId: user.businessId,
-        plan: planConfig.name
-      });
-    }
-
-    const subscription = await prisma.subscription.upsert({
-      where: { businessId: user.businessId },
-      update: subscriptionData,
-      create: {
-        businessId: user.businessId,
-        ...subscriptionData
-      }
+    // Do NOT create subscription yet - only create after successful card authorization
+    // This prevents users from getting trial without card attachment
+    
+    console.log('[PAYMENT INIT]', {
+      businessId: user.businessId,
+      plan: planConfig.name,
+      period: period,
+      message: 'Payment initialized - subscription will be created after card authorization'
     });
 
+    // Return payment widget data without creating subscription
     return res.json({
       success: true,
-      subscription,
       cloudPayments: cloudPaymentsDataForWidget,
       plan: planConfig.name,
       period,
@@ -400,9 +360,38 @@ async function handlePaymentConfirm(businessId, transactionId, eventData) {
     where: { businessId }
   });
 
-  if (!subscription) return;
+  // If no subscription exists, this is a new card authorization - create TRIAL subscription
+  if (!subscription) {
+    console.log('[CARD AUTHORIZED - CREATING TRIAL]', { 
+      businessId, 
+      subscriptionId: eventData.SubscriptionId,
+      message: 'Card successfully authorized, creating trial subscription'
+    });
+    
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
+    
+    await prisma.subscription.create({
+      data: {
+        businessId,
+        plan: 'SOLO', // Default plan - can be determined from eventData if needed
+        maxUsers: 1,
+        usersLimit: 1,
+        subscriptionStatus: 'TRIAL',
+        trialEndsAt,
+        billingPeriod: 'MONTHLY',
+        cloudpaymentsSubscriptionId: eventData.SubscriptionId,
+        nextPaymentDate: trialEndsAt,
+        isActive: true,
+        cardAttachedAt: new Date(),
+        lastPaymentAt: new Date()
+      }
+    });
+    
+    return;
+  }
 
-  // For trial periods, save card attachment time
+  // For existing subscriptions, update card attachment time
   if (subscription.subscriptionStatus === 'TRIAL' && subscription.billingPeriod === 'MONTHLY') {
     console.log('[TRIAL CARD ATTACHED]', { 
       businessId, 
