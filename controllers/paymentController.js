@@ -156,7 +156,8 @@ async function createPayment(req, res) {
         billingPeriod: 'MONTHLY',
         cloudpaymentsSubscriptionId: null,
         nextPaymentDate: trialEndsAt,
-        isActive: true
+        isActive: true,
+        cardAttachedAt: new Date()  // Set card attachment time when trial is created
       };
 
       console.log('[TRIAL READY]', {
