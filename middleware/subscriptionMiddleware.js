@@ -160,14 +160,9 @@ async function updateSubscriptionStatusIfNeeded(subscription) {
     let isActive = false;
     
     if (updatedSubscription.subscriptionStatus === 'TRIAL') {
-        // TRIAL активен, если дата окончания еще не наступила ИЛИ если trialEndsAt не установлено (считаем активным по умолчанию)
-        if (!updatedSubscription.trialEndsAt) {
-            // Если trialEndsAt не установлено, считаем TRIAL активным по умолчанию на 5 дней
-            console.log('[SUBSCRIPTION] TRIAL without trialEndsAt - assuming active');
-            isActive = true;
-        } else {
-            isActive = now <= updatedSubscription.trialEndsAt;
-        }
+        // TRIAL всегда считаем активным (демо режим должен работать полностью)
+        console.log('[SUBSCRIPTION] TRIAL status detected - setting active');
+        isActive = true;
     } else if (updatedSubscription.subscriptionStatus === 'ACTIVE') {
         // ACTIVE активен, если дата окончания еще не наступила
         isActive = !updatedSubscription.subscriptionEndsAt || now <= updatedSubscription.subscriptionEndsAt;
