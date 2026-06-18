@@ -165,14 +165,8 @@ async function createPublicAppointment(req, res) {
     // Обновляем статус подписки если необходимо
     const updatedSubscription = await updateSubscriptionStatusIfNeeded(business.owner);
 
-    // Проверяем активность подписки - TRIAL всегда считается активным
-    if (updatedSubscription.status === 'TRIAL') {
-      console.log('[SUBSCRIPTION] TRIAL subscription - allowing public appointments:', {
-        businessId: req.body.businessId,
-        ownerId: business.ownerId,
-        status: updatedSubscription.status
-      });
-    } else if (!updatedSubscription.isActive) {
+    // Проверяем активность подписки
+    if (!updatedSubscription.isActive) {
       console.log('[SUBSCRIPTION] Public appointment blocked - subscription expired:', {
         businessId: req.body.businessId,
         ownerId: business.ownerId,
@@ -567,14 +561,8 @@ async function createAppointment(req, res) {
     // Обновляем статус подписки если необходимо
     const updatedSubscription = await updateSubscriptionStatusIfNeeded(user);
 
-    // Проверяем активность подписки - TRIAL всегда считается активным
-    if (updatedSubscription.status === 'TRIAL') {
-      console.log('[SUBSCRIPTION] TRIAL subscription - allowing appointment creation:', {
-        userId: user.id,
-        businessId: user.businessId,
-        status: updatedSubscription.status
-      });
-    } else if (!updatedSubscription.isActive) {
+    // Проверяем активность подписки
+    if (!updatedSubscription.isActive) {
       console.log('[SUBSCRIPTION] Appointment creation blocked - subscription expired:', {
         userId: user.id,
         businessId: user.businessId,
