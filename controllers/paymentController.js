@@ -513,21 +513,52 @@ async function saveCardAttachment(req, res) {
     }
 
     // Find existing subscription
-    const subscription = await prisma.subscription.findUnique({
+    let subscription = await prisma.subscription.findUnique({
       where: { businessId: req.user.businessId }
     });
 
+    let updatedSubscription;
+    
     if (!subscription) {
-      return res.status(404).json({ error: 'Subscription not found' });
+      // Create TRIAL subscription if it doesn't exist
+      console.log('[CARD ATTACHMENT] Creating TRIAL subscription for user:', req.user.businessId);
+      
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
+      
+      subscription = await prisma.subscription.create({
+        data: {
+          businessId: req.user.businessId,
+          plan: 'SOLO', // Default plan
+          maxUsers: 1,
+          usersLimit: 1,
+          subscriptionStatus: 'TRIAL',
+          trialEndsAt,
+          billingPeriod: 'MONTHLY',
+          cloudpaymentsSubscriptionId: null,
+          nextPaymentDate: trialEndsAt,
+          isActive: true,
+          cardAttachedAt: new Date(),
+          lastPaymentAt: new Date()
+        }
+      });
+      
+      updatedSubscription = subscription;
+      
+      console.log('[CARD ATTACHMENT] TRIAL subscription created:', {
+        businessId: req.user.businessId,
+        trialEndsAt,
+        subscriptionId: subscription.id
+      });
+    } else {
+      // Update existing subscription
+      updatedSubscription = await prisma.subscription.update({
+        where: { businessId: req.user.businessId },
+        data: {
+          cardAttachedAt: new Date()
+        }
+      });
     }
-
-    // Update card attachment time
-    const updatedSubscription = await prisma.subscription.update({
-      where: { businessId: req.user.businessId },
-      data: {
-        cardAttachedAt: new Date()
-      }
-    });
 
     console.log('[CARD ATTACHMENT] Status updated successfully:', {
       businessId: req.user.businessId,
