@@ -1329,21 +1329,53 @@ router.post('/update-card-attachment-temp', async (req, res) => {
       targetBusinessId = user.business.id;
     }
     
-    // Update subscription
-    const subscription = await prisma.subscription.findUnique({
+    // Find or create subscription
+    let subscription = await prisma.subscription.findUnique({
       where: { businessId: targetBusinessId }
     });
     
-    if (!subscription) {
-      return res.status(404).json({ error: 'Subscription not found' });
-    }
+    let updatedSubscription;
     
-    const updatedSubscription = await prisma.subscription.update({
-      where: { businessId: targetBusinessId },
-      data: {
-        cardAttachedAt: new Date()
-      }
-    });
+    if (!subscription) {
+      // Create TRIAL subscription if it doesn't exist
+      console.log('[MANUAL CARD UPDATE] Creating TRIAL subscription for business:', targetBusinessId);
+      
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 5); // 5 days trial
+      
+      subscription = await prisma.subscription.create({
+        data: {
+          businessId: targetBusinessId,
+          plan: 'SOLO', // Default plan
+          maxUsers: 1,
+          usersLimit: 1,
+          subscriptionStatus: 'TRIAL',
+          trialEndsAt,
+          billingPeriod: 'MONTHLY',
+          cloudpaymentsSubscriptionId: null,
+          nextPaymentDate: trialEndsAt,
+          isActive: true,
+          cardAttachedAt: new Date(),
+          lastPaymentAt: new Date()
+        }
+      });
+      
+      updatedSubscription = subscription;
+      
+      console.log('[MANUAL CARD UPDATE] TRIAL subscription created:', {
+        businessId: targetBusinessId,
+        trialEndsAt,
+        subscriptionId: subscription.id
+      });
+    } else {
+      // Update existing subscription
+      updatedSubscription = await prisma.subscription.update({
+        where: { businessId: targetBusinessId },
+        data: {
+          cardAttachedAt: new Date()
+        }
+      });
+    }
     
     console.log('[CARD ATTACHMENT UPDATED TEMP]', { 
       businessId: targetBusinessId, 
