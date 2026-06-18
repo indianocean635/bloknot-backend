@@ -47,6 +47,6 @@ router.post("/payments/create", requireAuth, createPayment);
 router.post("/payments/cloudpayments/webhook", handleCloudPaymentsWebhook);
 
 // Save card attachment status
-router.post("/payments/save-card-attachment", requireAuth, paymentController.saveCardAttachment);
+router.post("/payments/save-card-attachment", requireAuth, saveCardAttachment);
 
 module.exports = router;

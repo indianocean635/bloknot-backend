@@ -157,7 +157,7 @@ async function updateSubscriptionStatusIfNeeded(subscription) {
 
     // Определяем активность подписки
     // TRIAL и ACTIVE считаются активными, если срок действия не истек
-    let isActive = false;
+    let isActive = true;
     
     if (updatedSubscription.subscriptionStatus === 'TRIAL') {
         // TRIAL всегда считаем активным (демо режим должен работать полностью)
