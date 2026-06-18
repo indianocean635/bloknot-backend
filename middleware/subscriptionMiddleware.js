@@ -156,7 +156,24 @@ async function updateSubscriptionStatusIfNeeded(subscription) {
     }
 
     // Определяем активность подписки
-    const isActive = updatedSubscription.subscriptionStatus === 'TRIAL' || updatedSubscription.subscriptionStatus === 'ACTIVE';
+    // TRIAL и ACTIVE считаются активными, если срок действия не истек
+    let isActive = false;
+    
+    if (updatedSubscription.subscriptionStatus === 'TRIAL') {
+        // TRIAL активен, если дата окончания еще не наступила
+        isActive = !updatedSubscription.trialEndsAt || now <= updatedSubscription.trialEndsAt;
+    } else if (updatedSubscription.subscriptionStatus === 'ACTIVE') {
+        // ACTIVE активен, если дата окончания еще не наступила
+        isActive = !updatedSubscription.subscriptionEndsAt || now <= updatedSubscription.subscriptionEndsAt;
+    }
+    
+    console.log('[SUBSCRIPTION] Subscription activity determined:', {
+        status: updatedSubscription.subscriptionStatus,
+        isActive,
+        trialEndsAt: updatedSubscription.trialEndsAt,
+        subscriptionEndsAt: updatedSubscription.subscriptionEndsAt,
+        now: now.toISOString()
+    });
 
     return {
         status: updatedSubscription.subscriptionStatus,
