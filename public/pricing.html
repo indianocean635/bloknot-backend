@@ -942,8 +942,20 @@
       // Save card attachment status immediately after successful authorization
 async function saveCardAttachmentStatus() {
   try {
-    console.log('[CARD ATTACHMENT] Saving card attachment status...');
+    console.log('[CARD ATTACHMENT] Starting card attachment save...');
+    console.log('[CARD ATTACHMENT] Current URL:', window.location.href);
+    console.log('[CARD ATTACHMENT] Bloknot.api available:', typeof Bloknot.api);
     
+    // Check if user is authenticated
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    console.log('[CARD ATTACHMENT] Token exists:', !!token);
+    
+    if (!token) {
+      console.error('[CARD ATTACHMENT] No authentication token found');
+      throw new Error('No authentication token');
+    }
+
+    console.log('[CARD ATTACHMENT] Making API call to save card attachment...');
     const response = await Bloknot.api('/api/payments/save-card-attachment', {
       method: 'POST',
       body: JSON.stringify({})
@@ -953,6 +965,7 @@ async function saveCardAttachmentStatus() {
     return response;
   } catch (error) {
     console.error('[CARD ATTACHMENT] Error saving status:', error);
+    console.error('[CARD ATTACHMENT] Error details:', error.message, error.stack);
     throw error;
   }
 }
