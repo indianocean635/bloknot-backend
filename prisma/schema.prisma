@@ -76,6 +76,8 @@ model Subscription {
   billingPeriod             String?  // MONTHLY, YEARLY
   lastPaymentAt             DateTime?
   cardAttachedAt            DateTime?
+  autoRenewal               Boolean  @default(false) // Enable/disable automatic renewal
+  trialToPaidConversionDate DateTime? // Date when trial converted to paid
   usersLimit                Int      @default(1) // Same as maxUsers for compatibility
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt

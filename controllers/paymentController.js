@@ -420,7 +420,7 @@ async function handlePaymentConfirm(businessId, transactionId, eventData) {
   }
 }
 
-// Handle payment failure
+// Handle payment failure с Grace Period
 async function handlePaymentFail(businessId, transactionId, eventData) {
   console.log('[PAYMENT FAILED]', { businessId, transactionId });
 
@@ -430,14 +430,23 @@ async function handlePaymentFail(businessId, transactionId, eventData) {
 
   if (!subscription) return;
 
-  // If trial payment failed, cancel subscription
+  // If trial payment failed, start Grace Period
   if (subscription.subscriptionStatus === 'TRIAL') {
+    const gracePeriodEnd = new Date();
+    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 7); // 7 дней Grace Period
+    
     await prisma.subscription.update({
       where: { businessId },
       data: {
-        subscriptionStatus: 'CANCELLED',
-        isActive: false
+        subscriptionStatus: 'grace_period',
+        gracePeriodEndsAt: gracePeriodEnd
       }
+    });
+    
+    console.log('[GRACE PERIOD STARTED]', { 
+      businessId, 
+      gracePeriodEnd,
+      message: 'Trial payment failed - 7 days grace period started'
     });
   }
 }

@@ -132,11 +132,11 @@ bot.on('callback_query', async (ctx) => {
         const timeStr = timeToUse?.replace(/.*T(\d{2}):(\d{2}).*/, '$1:$2') || '';
 
         const cancelMessage = `
-тЭМ ╨Ч╨░╨┐╨╕╤Б╤М ╨╛╤В╨╝╨╡╨╜╨╡╨╜╨░
+❌ Запись отменена
 
-ЁЯУЕ ${dateStr}
-ЁЯХР ${timeStr}
-ЁЯСитАНЁЯТ╝ ${booking?.master?.name || ''}
+📅 ${dateStr}
+🕐 ${timeStr}
+👨‍💼 ${booking?.master?.name || ''}
         `.trim();
 
         try {
@@ -145,7 +145,7 @@ bot.on('callback_query', async (ctx) => {
               inline_keyboard: [
                 [
                   {
-                    text: 'ЁЯУЕ ╨Я╨╡╤А╨╡╨╖╨░╨┐╨╕╤Б╨░╤В╤М╤Б╤П',
+                    text: '📅 Перезаписаться',
                     url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}`
                   }
                 ]
@@ -160,7 +160,7 @@ bot.on('callback_query', async (ctx) => {
               inline_keyboard: [
                 [
                   {
-                    text: 'ЁЯУЕ ╨Я╨╡╤А╨╡╨╖╨░╨┐╨╕╤Б╨░╤В╤М╤Б╤П',
+                    text: '📅 Перезаписаться',
                     url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}`
                   }
                 ]
@@ -170,7 +170,7 @@ bot.on('callback_query', async (ctx) => {
         }
 
         try {
-          await ctx.answerCbQuery('╨Ч╨░╨┐╨╕╤Б╤М ╤Г╤Б╨┐╨╡╤И╨╜╨╛ ╨╛╤В╨╝╨╡╨╜╨╡╨╜╨░');
+          await ctx.answerCbQuery('Запись успешно отменена');
         } catch (answerError) {
           // Ignore answer callback errors (e.g., query too old)
           console.log('[TELEGRAM BOT] Answer callback query failed (ignoring):', answerError.message);
@@ -179,7 +179,7 @@ bot.on('callback_query', async (ctx) => {
         console.log('[BOOKING CANCELLED] Booking ID:', bookingId, 'Chat ID:', chatId);
       } else {
         console.log('[TELEGRAM BOT] Cancel request failed');
-        await ctx.answerCbQuery('╨Ю╤И╨╕╨▒╨║╨░ ╨┐╤А╨╕ ╨╛╤В╨╝╨╡╨╜╨╡ ╨╖╨░╨┐╨╕╤Б╨╕', { show_alert: true });
+        await ctx.answerCbQuery('Ошибка при отмене записи', { show_alert: true });
       }
     } else {
       console.log('[TELEGRAM BOT] Unknown callback data:', data);
@@ -218,15 +218,15 @@ async function sendBookingConfirmationMessage(booking, chatId) {
     );
 
     const message = `
-тЬЕ ╨Ч╨░╨┐╨╕╤Б╤М ╨┐╨╛╨┤╤В╨▓╨╡╤А╨╢╨┤╨╡╨╜╨░!
+✅ Запись подтверждена!
 
-ЁЯУЛ ╨г╤Б╨╗╤Г╨│╨░: ${booking.service?.name}
-ЁЯСитАНЁЯТ╝ ╨б╨┐╨╡╤Ж╨╕╨░╨╗╨╕╤Б╤В: ${booking.master?.name}
-ЁЯУЕ ╨Ф╨░╤В╨░: ${dateStr}
-ЁЯХР ╨Т╤А╨╡╨╝╤П: ${timeStr}
-ЁЯПв ${booking.business?.name}
+📋 Услуга: ${booking.service?.name}
+👨‍💼 Специалист: ${booking.master?.name}
+📅 Дата: ${dateStr}
+🕐 Время: ${timeStr}
+🏢 ${booking.business?.name}
 
-╨Ц╨┤╨╡╨╝ ╨▓╨░╤Б!
+Ждем вас!
     `.trim();
 
     await bot.telegram.sendMessage(chatId, message, {
@@ -234,13 +234,13 @@ async function sendBookingConfirmationMessage(booking, chatId) {
         inline_keyboard: [
           [
             {
-              text: '╨Ю╤В╨╝╨╡╨╜╨╕╤В╤М ╨╖╨░╨┐╨╕╤Б╤М',
+              text: 'Отменить запись',
               callback_data: `cancel_${booking.id}`
             }
           ],
           [
             {
-              text: '╨Я╨╡╤А╨╡╨╖╨░╨┐╨╕╤Б╨░╤В╤М╤Б╤П',
+              text: 'Перезаписаться',
               url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}&token=${booking.bookingToken}&reschedule=true`
             }
           ]

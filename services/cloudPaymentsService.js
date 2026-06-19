@@ -15,7 +15,7 @@ class CloudPaymentsService {
     }
 
     /**
-     * Создание подписки
+     * Создание подписки с правильной логикой Trial
      */
     async createSubscription(userId, cardToken, subscriptionType, userEmail, userName) {
         try {
@@ -28,7 +28,7 @@ class CloudPaymentsService {
 
             const { prisma } = require('../services/prismaService');
             
-            // Получаем данные пользователя
+            // Получаем данные пользователя с существующей подпиской
             const user = await prisma.user.findUnique({
                 where: { id: userId },
                 include: { business: true }
@@ -38,43 +38,88 @@ class CloudPaymentsService {
                 throw new Error('User not found');
             }
 
+            // Проверяем существующую подписку
+            const existingSubscription = await prisma.subscription.findUnique({
+                where: { businessId: user.businessId }
+            });
+
             // Определяем параметры подписки
             const subscriptionConfig = this.getSubscriptionConfig(subscriptionType);
             const now = new Date();
             
             let trialEndsAt = null;
             let subscriptionEndsAt = null;
-            let firstPaymentAmount = 0;
+            let firstPaymentAmount = 1; // Минимальная сумма для авторизации карты
 
-            // Для месячной подписки с пробным периодом
-            if (subscriptionType === 'monthly') {
-                trialEndsAt = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000); // 5 дней
-                subscriptionEndsAt = new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000); // 35 дней (5 trial + 30 first month)
-                firstPaymentAmount = 0; // Бесплатный период
-            } else if (subscriptionType === 'yearly') {
+            // Проверяем, есть ли активный Trial
+            const hasActiveTrial = existingSubscription && 
+                                  existingSubscription.subscriptionStatus === 'TRIAL' && 
+                                  existingSubscription.trialEndsAt && 
+                                  new Date(existingSubscription.trialEndsAt) > now;
+
+            // Для подписок с пробным периодом (только месячные тарифы)
+            if (['solo', 'studio', 'pro', 'monthly'].includes(subscriptionType)) {
+                if (hasActiveTrial) {
+                    // Если есть активный Trial, используем существующие даты
+                    trialEndsAt = existingSubscription.trialEndsAt;
+                    subscriptionEndsAt = new Date(existingSubscription.trialEndsAt.getTime() + 30 * 24 * 60 * 60 * 1000); // +30 дней после Trial
+                    firstPaymentAmount = 1; // Тестовая авторизация на 1 рубль
+                    
+                    console.log('[CLOUDPAYMENTS] Using existing Trial:', {
+                        existingTrialEndsAt: existingSubscription.trialEndsAt,
+                        remainingTrialDays: Math.ceil((existingSubscription.trialEndsAt - now) / (1000 * 60 * 60 * 24))
+                    });
+                } else {
+                    // Если нет активного Trial, создаем новый только если не было раньше
+                    const hadTrialBefore = existingSubscription && 
+                                       existingSubscription.trialEndsAt && 
+                                       existingSubscription.trialEndsAt <= now;
+                    
+                    if (!hadTrialBefore && !existingSubscription) {
+                        // Первый Trial для нового пользователя
+                        trialEndsAt = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000); // 5 дней
+                        subscriptionEndsAt = new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000); // 35 дней (5 trial + 30 first month)
+                        firstPaymentAmount = 1; // Тестовая авторизация на 1 рубль
+                        
+                        console.log('[CLOUDPAYMENTS] Creating new Trial for first time user');
+                    } else {
+                        // Trial уже был, платный тариф без Trial
+                        trialEndsAt = null;
+                        subscriptionEndsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 дней
+                        firstPaymentAmount = subscriptionConfig.amount; // Полная стоимость
+                        
+                        console.log('[CLOUDPAYMENTS] User already had Trial, creating paid subscription');
+                    }
+                }
+            } else if (['solo-yearly', 'studio-yearly', 'pro-yearly'].includes(subscriptionType)) {
+                // Годовые тарифы - немедленная активация, полный доступ сразу после оплаты
                 subscriptionEndsAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 365 дней
-                firstPaymentAmount = subscriptionConfig.amount;
+                firstPaymentAmount = subscriptionConfig.amount; // Полная стоимость годового тарифа
+                
+                console.log('[CLOUDPAYMENTS] Creating yearly subscription');
             }
 
-            // Создаем подписку в CloudPayments
+            // Создаем подписку в CloudPayments с правильными параметрами
             const cloudPaymentsData = {
                 Token: cardToken,
                 AccountId: userId,
                 Email: userEmail,
                 Description: `Подписка ${subscriptionConfig.name} для ${user.business?.name || userName}`,
-                Amount: firstPaymentAmount,
+                Amount: firstPaymentAmount, // 1 рубль для месячных, полная стоимость для годовых
                 Currency: 'RUB',
                 RequireConfirmation: false,
-                StartDate: trialEndsAt || now,
-                Period: subscriptionType === 'monthly' ? 30 : 365,
-                Interval: 'Day',
-                MaxPeriods: subscriptionType === 'monthly' ? 12 : 1,
+                StartDate: now, // Немедленная активация
+                Period: ['solo', 'studio', 'pro', 'monthly'].includes(subscriptionType) ? 1 : 12, // 1 месяц или 12 месяцев
+                Interval: 'Month', // Правильный интервал
+                MaxPeriods: ['solo', 'studio', 'pro', 'monthly'].includes(subscriptionType) ? 12 : 1,
+                TrialPeriod: ['solo', 'studio', 'pro', 'monthly'].includes(subscriptionType) ? 5 : null, // 5 дней trial только для месячных тарифов
+                // ВАЖНО: Amount для рекуррентных платежей берется из конфигурации тарифа
                 CustomerReceipt: {
                     Items: [{
                         Label: subscriptionConfig.name,
-                        Price: subscriptionConfig.amount * 100, // в копейках
+                        Price: subscriptionConfig.amount * 100, // РЕАЛЬНАЯ ЦЕНА в копейках (99000 копеек)
                         Quantity: 1,
-                        Amount: subscriptionConfig.amount * 100,
+                        Amount: firstPaymentAmount * 100, // 1 рубль для месячных, полная стоимость для годовых
                         Vat: 20,
                         PaymentMethodType: 1,
                         PaymentObject: 1
@@ -96,6 +141,49 @@ class CloudPaymentsService {
                     subscriptionId: response.Model.Id,
                     status: response.Model.Status
                 });
+
+                // Обновляем или создаем данные подписки
+                if (existingSubscription) {
+                    // Обновляем существующую подписку
+                    await prisma.subscription.update({
+                        where: { businessId: user.businessId },
+                        data: {
+                            plan: subscriptionType.replace('-yearly', '').toUpperCase(),
+                            maxUsers: subscriptionConfig.maxUsers,
+                            usersLimit: subscriptionConfig.maxUsers,
+                            subscriptionStatus: trialEndsAt ? 'TRIAL' : 'ACTIVE',
+                            billingPeriod: ['solo-yearly', 'studio-yearly', 'pro-yearly'].includes(subscriptionType) ? 'YEARLY' : 'MONTHLY',
+                            trialEndsAt,
+                            subscriptionEndsAt,
+                            cloudpaymentsSubscriptionId: response.Model.Id.toString(),
+                            nextPaymentDate: trialEndsAt || subscriptionEndsAt,
+                            isActive: true,
+                            cardAttachedAt: new Date(),
+                            lastPaymentAt: new Date(),
+                            autoRenewal: true
+                        }
+                    });
+                } else {
+                    // Создаем новую подписку
+                    await prisma.subscription.create({
+                        data: {
+                            businessId: user.businessId,
+                            plan: subscriptionType.replace('-yearly', '').toUpperCase(),
+                            maxUsers: subscriptionConfig.maxUsers,
+                            usersLimit: subscriptionConfig.maxUsers,
+                            subscriptionStatus: trialEndsAt ? 'TRIAL' : 'ACTIVE',
+                            billingPeriod: ['solo-yearly', 'studio-yearly', 'pro-yearly'].includes(subscriptionType) ? 'YEARLY' : 'MONTHLY',
+                            trialEndsAt,
+                            subscriptionEndsAt,
+                            cloudpaymentsSubscriptionId: response.Model.Id.toString(),
+                            nextPaymentDate: trialEndsAt || subscriptionEndsAt,
+                            isActive: true,
+                            cardAttachedAt: new Date(),
+                            lastPaymentAt: new Date(),
+                            autoRenewal: true
+                        }
+                    });
+                }
 
                 // Обновляем данные пользователя
                 await prisma.user.update({
@@ -254,12 +342,16 @@ class CloudPaymentsService {
                 break;
 
             case 'Fail':
-                // Неудачное продление
-                console.log('[CLOUDPAYMENTS] Subscription renewal failed');
+                // Неудачное продление - Grace Period 7 дней
+                console.log('[CLOUDPAYMENTS] Subscription renewal failed - starting Grace Period');
+                const gracePeriodEnd = new Date();
+                gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 7); // 7 дней Grace Period
+                
                 await prisma.user.update({
                     where: { id: accountId },
                     data: {
-                        subscriptionStatus: 'expired'
+                        subscriptionStatus: 'grace_period',
+                        gracePeriodEndsAt: gracePeriodEnd
                     }
                 });
                 break;
@@ -375,15 +467,55 @@ class CloudPaymentsService {
      */
     getSubscriptionConfig(type) {
         const configs = {
-            monthly: {
-                name: 'Месячный тариф',
+            solo: {
+                name: 'Solo',
+                amount: 690, // 690 рублей
+                description: '1 пользователь',
+                maxUsers: 1
+            },
+            studio: {
+                name: 'Studio', 
                 amount: 990, // 990 рублей
-                description: 'Ежемесячная подписка с 5 днями бесплатного периода'
+                description: 'До 5 пользователей',
+                maxUsers: 5
+            },
+            pro: {
+                name: 'Pro',
+                amount: 1490, // 1490 рублей  
+                description: 'Более 5 пользователей',
+                maxUsers: 15
+            },
+            // Годовые тарифы со скидкой 20%
+            'solo-yearly': {
+                name: 'Solo (Год)',
+                amount: 6624, // 690 × 12 - 20% = 6624 рублей
+                description: '1 пользователь (годовая подписка)',
+                maxUsers: 1
+            },
+            'studio-yearly': {
+                name: 'Studio (Год)',
+                amount: 9504, // 990 × 12 - 20% = 9504 рублей
+                description: 'До 5 пользователей (годовая подписка)',
+                maxUsers: 5
+            },
+            'pro-yearly': {
+                name: 'Pro (Год)',
+                amount: 14304, // 1490 × 12 - 20% = 14304 рублей
+                description: 'Более 5 пользователей (годовая подписка)',
+                maxUsers: 15
+            },
+            // Для обратной совместимости
+            monthly: {
+                name: 'Studio',
+                amount: 990, // 990 рублей
+                description: 'До 5 пользователей',
+                maxUsers: 5
             },
             yearly: {
-                name: 'Годовой тариф',
-                amount: 9900, // 9900 рублей
-                description: 'Годовая подписка со скидкой 17%'
+                name: 'Studio (Год)',
+                amount: 9504, // 990 × 12 - 20% = 9504 рублей
+                description: 'До 5 пользователей (годовая подписка)',
+                maxUsers: 5
             }
         };
 

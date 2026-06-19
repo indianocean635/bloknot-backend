@@ -1,6 +1,6 @@
 const { prisma } = require('./prismaService');
 
-// Автоматическое конвертирование TRIAL в платную подписку
+// Автоматическое конвертирование TRIAL в платную подписку с Grace Period
 async function convertTrialToPaidSubscription() {
   console.log('[AUTO PAYMENT] Checking trial subscriptions for conversion...');
   
@@ -160,6 +160,9 @@ async function processAutoPayments() {
     // 2. Продлить платные подписки
     await renewPaidSubscriptions();
     
+    // 3. Обработать Grace Period
+    await handleGracePeriod();
+    
     console.log('[AUTO PAYMENT] Automatic payment processing completed successfully');
     
   } catch (error) {
@@ -167,8 +170,58 @@ async function processAutoPayments() {
   }
 }
 
+// Обработка Grace Period
+async function handleGracePeriod() {
+  console.log('[AUTO PAYMENT] Checking grace period subscriptions...');
+  
+  try {
+    const now = new Date();
+    
+    // Найти все подписки в Grace Period, которые истекают сегодня
+    const gracePeriodSubscriptions = await prisma.subscription.findMany({
+      where: {
+        subscriptionStatus: 'grace_period',
+        gracePeriodEndsAt: {
+          lte: now // gracePeriodEndsAt <= сейчас
+        }
+      },
+      include: {
+        business: true
+      }
+    });
+    
+    console.log(`[AUTO PAYMENT] Found ${gracePeriodSubscriptions.length} grace period subscriptions to expire`);
+    
+    for (const subscription of gracePeriodSubscriptions) {
+      try {
+        console.log(`[AUTO PAYMENT] Expiring grace period for business: ${subscription.businessId}`);
+        
+        // Отключить подписку
+        await prisma.subscription.update({
+          where: { id: subscription.id },
+          data: {
+            subscriptionStatus: 'expired',
+            isActive: false
+          }
+        });
+        
+        console.log(`[AUTO PAYMENT] Grace period expired: ${subscription.businessId}`);
+        
+      } catch (error) {
+        console.error(`[AUTO PAYMENT] Error expiring grace period for business ${subscription.businessId}:`, error);
+      }
+    }
+    
+    console.log('[AUTO PAYMENT] Grace period handling completed');
+    
+  } catch (error) {
+    console.error('[AUTO PAYMENT] Error in grace period handling:', error);
+  }
+}
+
 module.exports = {
   convertTrialToPaidSubscription,
   renewPaidSubscriptions,
+  handleGracePeriod,
   processAutoPayments
 };
