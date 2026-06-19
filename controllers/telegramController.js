@@ -1,4 +1,4 @@
-const { prisma } = require("../services/prismaService");
+﻿const { prisma } = require("../services/prismaService");
 const { sendBookingConfirmationMessage } = require("../services/telegramBotService");
 
 // Link Telegram chatId to booking using booking token
@@ -111,8 +111,8 @@ async function cancelBooking(req, res) {
           customer_name: updated.customerName,
           date: dateStr,
           time: timeStr,
-          specialist: updated.master?.name || 'Специалист',
-          service: updated.service?.name || 'Услуга',
+          specialist: updated.master?.name || '╨б╨┐╨╡╤Ж╨╕╨░╨╗╨╕╤Б╤В',
+          service: updated.service?.name || '╨г╤Б╨╗╤Г╨│╨░',
           booking_link: bookingLink
         };
 
@@ -225,13 +225,13 @@ async function sendReminders(req, res) {
       const timeStr = new Date(booking.startsAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
       const message = `
-⏰ Напоминание: Запись через 24 часа
+тП░ ╨Э╨░╨┐╨╛╨╝╨╕╨╜╨░╨╜╨╕╨╡: ╨Ч╨░╨┐╨╕╤Б╤М ╤З╨╡╤А╨╡╨╖ 24 ╤З╨░╤Б╨░
 
-📋 Услуга: ${booking.service?.name}
-👨‍💼 Специалист: ${booking.master?.name}
-📅 Дата: ${dateStr}
-🕐 Время: ${timeStr}
-🏢 ${booking.business?.name}
+ЁЯУЛ ╨г╤Б╨╗╤Г╨│╨░: ${booking.service?.name}
+ЁЯСитАНЁЯТ╝ ╨б╨┐╨╡╤Ж╨╕╨░╨╗╨╕╤Б╤В: ${booking.master?.name}
+ЁЯУЕ ╨Ф╨░╤В╨░: ${dateStr}
+ЁЯХР ╨Т╤А╨╡╨╝╤П: ${timeStr}
+ЁЯПв ${booking.business?.name}
       `.trim();
 
       // Send via bot (using bot service)
@@ -255,13 +255,13 @@ async function sendReminders(req, res) {
       const timeStr = new Date(booking.startsAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
       const message = `
-⏰ Напоминание: Запись через 1 час
+тП░ ╨Э╨░╨┐╨╛╨╝╨╕╨╜╨░╨╜╨╕╨╡: ╨Ч╨░╨┐╨╕╤Б╤М ╤З╨╡╤А╨╡╨╖ 1 ╤З╨░╤Б
 
-📋 Услуга: ${booking.service?.name}
-👨‍💼 Специалист: ${booking.master?.name}
-📅 Дата: ${dateStr}
-🕐 Время: ${timeStr}
-🏢 ${booking.business?.name}
+ЁЯУЛ ╨г╤Б╨╗╤Г╨│╨░: ${booking.service?.name}
+ЁЯСитАНЁЯТ╝ ╨б╨┐╨╡╤Ж╨╕╨░╨╗╨╕╤Б╤В: ${booking.master?.name}
+ЁЯУЕ ╨Ф╨░╤В╨░: ${dateStr}
+ЁЯХР ╨Т╤А╨╡╨╝╤П: ${timeStr}
+ЁЯПв ${booking.business?.name}
       `.trim();
 
       await prisma.appointment.update({

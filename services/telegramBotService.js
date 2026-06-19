@@ -1,4 +1,4 @@
-const { Telegraf } = require('telegraf');
+﻿const { Telegraf } = require('telegraf');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 require('dotenv').config();
 
@@ -24,7 +24,7 @@ bot.start(async (ctx) => {
   console.log('[TELEGRAM BOT] START payload:', payload);
 
   if (!payload) {
-    await ctx.reply('Бот подключен ✅\n\nДля получения уведомлений о записях, используйте ссылку из формы записи.');
+    await ctx.reply('╨С╨╛╤В ╨┐╨╛╨┤╨║╨╗╤О╤З╨╡╨╜ тЬЕ\n\n╨Ф╨╗╤П ╨┐╨╛╨╗╤Г╤З╨╡╨╜╨╕╤П ╤Г╨▓╨╡╨┤╨╛╨╝╨╗╨╡╨╜╨╕╨╣ ╨╛ ╨╖╨░╨┐╨╕╤Б╤П╤Е, ╨╕╤Б╨┐╨╛╨╗╤М╨╖╤Г╨╣╤В╨╡ ╤Б╤Б╤Л╨╗╨║╤Г ╨╕╨╖ ╤Д╨╛╤А╨╝╤Л ╨╖╨░╨┐╨╕╤Б╨╕.');
     return;
   }
 
@@ -58,15 +58,15 @@ bot.start(async (ctx) => {
       console.log('[TELEGRAM BOT] Backend response status:', response.status);
       const errorText = await response.text();
       console.log('[TELEGRAM BOT] Backend error response:', errorText);
-      await ctx.reply('Ошибка подключения. Недействительный токен.');
+      await ctx.reply('╨Ю╤И╨╕╨▒╨║╨░ ╨┐╨╛╨┤╨║╨╗╤О╤З╨╡╨╜╨╕╤П. ╨Э╨╡╨┤╨╡╨╣╤Б╤В╨▓╨╕╤В╨╡╨╗╤М╨╜╤Л╨╣ ╤В╨╛╨║╨╡╨╜.');
     }
   } catch (error) {
     if (error.name === 'AbortError') {
       console.error('[TELEGRAM BOT] Request timeout after 30 seconds');
-      await ctx.reply('Сервер перегружен. Попробуйте подключить Telegram позже через форму записи.');
+      await ctx.reply('╨б╨╡╤А╨▓╨╡╤А ╨┐╨╡╤А╨╡╨│╤А╤Г╨╢╨╡╨╜. ╨Я╨╛╨┐╤А╨╛╨▒╤Г╨╣╤В╨╡ ╨┐╨╛╨┤╨║╨╗╤О╤З╨╕╤В╤М Telegram ╨┐╨╛╨╖╨╢╨╡ ╤З╨╡╤А╨╡╨╖ ╤Д╨╛╤А╨╝╤Г ╨╖╨░╨┐╨╕╤Б╨╕.');
     } else {
       console.error('[TELEGRAM BOT] Error connecting:', error);
-      await ctx.reply('Ошибка подключения. Попробуйте позже.');
+      await ctx.reply('╨Ю╤И╨╕╨▒╨║╨░ ╨┐╨╛╨┤╨║╨╗╤О╤З╨╡╨╜╨╕╤П. ╨Я╨╛╨┐╤А╨╛╨▒╤Г╨╣╤В╨╡ ╨┐╨╛╨╖╨╢╨╡.');
     }
   }
 });
@@ -132,11 +132,11 @@ bot.on('callback_query', async (ctx) => {
         const timeStr = timeToUse?.replace(/.*T(\d{2}):(\d{2}).*/, '$1:$2') || '';
 
         const cancelMessage = `
-❌ Запись отменена
+тЭМ ╨Ч╨░╨┐╨╕╤Б╤М ╨╛╤В╨╝╨╡╨╜╨╡╨╜╨░
 
-📅 ${dateStr}
-🕐 ${timeStr}
-👨‍💼 ${booking?.master?.name || ''}
+ЁЯУЕ ${dateStr}
+ЁЯХР ${timeStr}
+ЁЯСитАНЁЯТ╝ ${booking?.master?.name || ''}
         `.trim();
 
         try {
@@ -145,7 +145,7 @@ bot.on('callback_query', async (ctx) => {
               inline_keyboard: [
                 [
                   {
-                    text: '📅 Перезаписаться',
+                    text: 'ЁЯУЕ ╨Я╨╡╤А╨╡╨╖╨░╨┐╨╕╤Б╨░╤В╤М╤Б╤П',
                     url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}`
                   }
                 ]
@@ -160,7 +160,7 @@ bot.on('callback_query', async (ctx) => {
               inline_keyboard: [
                 [
                   {
-                    text: '📅 Перезаписаться',
+                    text: 'ЁЯУЕ ╨Я╨╡╤А╨╡╨╖╨░╨┐╨╕╤Б╨░╤В╤М╤Б╤П',
                     url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}`
                   }
                 ]
@@ -170,7 +170,7 @@ bot.on('callback_query', async (ctx) => {
         }
 
         try {
-          await ctx.answerCbQuery('Запись успешно отменена');
+          await ctx.answerCbQuery('╨Ч╨░╨┐╨╕╤Б╤М ╤Г╤Б╨┐╨╡╤И╨╜╨╛ ╨╛╤В╨╝╨╡╨╜╨╡╨╜╨░');
         } catch (answerError) {
           // Ignore answer callback errors (e.g., query too old)
           console.log('[TELEGRAM BOT] Answer callback query failed (ignoring):', answerError.message);
@@ -179,7 +179,7 @@ bot.on('callback_query', async (ctx) => {
         console.log('[BOOKING CANCELLED] Booking ID:', bookingId, 'Chat ID:', chatId);
       } else {
         console.log('[TELEGRAM BOT] Cancel request failed');
-        await ctx.answerCbQuery('Ошибка при отмене записи', { show_alert: true });
+        await ctx.answerCbQuery('╨Ю╤И╨╕╨▒╨║╨░ ╨┐╤А╨╕ ╨╛╤В╨╝╨╡╨╜╨╡ ╨╖╨░╨┐╨╕╤Б╨╕', { show_alert: true });
       }
     } else {
       console.log('[TELEGRAM BOT] Unknown callback data:', data);
@@ -188,7 +188,7 @@ bot.on('callback_query', async (ctx) => {
   } catch (error) {
     console.error('[TELEGRAM BOT] Error handling callback:', error);
     try {
-      await ctx.answerCbQuery('Произошла ошибка. Попробуйте позже.', { show_alert: true });
+      await ctx.answerCbQuery('╨Я╤А╨╛╨╕╨╖╨╛╤И╨╗╨░ ╨╛╤И╨╕╨▒╨║╨░. ╨Я╨╛╨┐╤А╨╛╨▒╤Г╨╣╤В╨╡ ╨┐╨╛╨╖╨╢╨╡.', { show_alert: true });
     } catch (answerError) {
       console.log('[TELEGRAM BOT] Answer callback query failed in error handler (ignoring):', answerError.message);
     }
@@ -218,15 +218,15 @@ async function sendBookingConfirmationMessage(booking, chatId) {
     );
 
     const message = `
-✅ Запись подтверждена!
+тЬЕ ╨Ч╨░╨┐╨╕╤Б╤М ╨┐╨╛╨┤╤В╨▓╨╡╤А╨╢╨┤╨╡╨╜╨░!
 
-📋 Услуга: ${booking.service?.name}
-👨‍💼 Специалист: ${booking.master?.name}
-📅 Дата: ${dateStr}
-🕐 Время: ${timeStr}
-🏢 ${booking.business?.name}
+ЁЯУЛ ╨г╤Б╨╗╤Г╨│╨░: ${booking.service?.name}
+ЁЯСитАНЁЯТ╝ ╨б╨┐╨╡╤Ж╨╕╨░╨╗╨╕╤Б╤В: ${booking.master?.name}
+ЁЯУЕ ╨Ф╨░╤В╨░: ${dateStr}
+ЁЯХР ╨Т╤А╨╡╨╝╤П: ${timeStr}
+ЁЯПв ${booking.business?.name}
 
-Ждем вас!
+╨Ц╨┤╨╡╨╝ ╨▓╨░╤Б!
     `.trim();
 
     await bot.telegram.sendMessage(chatId, message, {
@@ -234,13 +234,13 @@ async function sendBookingConfirmationMessage(booking, chatId) {
         inline_keyboard: [
           [
             {
-              text: 'Отменить запись',
+              text: '╨Ю╤В╨╝╨╡╨╜╨╕╤В╤М ╨╖╨░╨┐╨╕╤Б╤М',
               callback_data: `cancel_${booking.id}`
             }
           ],
           [
             {
-              text: 'Перезаписаться',
+              text: '╨Я╨╡╤А╨╡╨╖╨░╨┐╨╕╤Б╨░╤В╤М╤Б╤П',
               url: `https://bloknotservis.ru/booking-new.html?slug=${booking.business?.slug}&token=${booking.bookingToken}&reschedule=true`
             }
           ]
@@ -320,7 +320,7 @@ async function startBot() {
 
 // Setup reminder system
 function setupReminderSystem() {
-  console.log('⏰ Reminder system started (every hour)');
+  console.log('тП░ Reminder system started (every hour)');
   
   // Send reminders every hour
   setInterval(async () => {
@@ -358,9 +358,9 @@ module.exports = {
 
 // Start bot if this file is run directly
 if (require.main === module) {
-  console.log('🚀 Starting Telegram Bot...');
-  console.log('📡 Mode: Polling');
-  console.log('🔗 Backend URL: https://bloknotservis.ru');
+  console.log('ЁЯЪА Starting Telegram Bot...');
+  console.log('ЁЯУб Mode: Polling');
+  console.log('ЁЯФЧ Backend URL: https://bloknotservis.ru');
 
   // Clear webhook before starting in polling mode
   bot.telegram.deleteWebhook()
@@ -380,7 +380,7 @@ if (require.main === module) {
   });
 
   healthApp.listen(8080, () => {
-    console.log('🚀 Health check server listening on port 8080');
+    console.log('ЁЯЪА Health check server listening on port 8080');
   });
 
   // Start the bot
