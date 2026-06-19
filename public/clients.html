@@ -127,9 +127,13 @@
 <script>
 // Simple API function
 async function apiCall(url, options = {}) {
+  // Get token from localStorage
+  const token = localStorage.getItem('token');
+  
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : '',
       ...options.headers
     },
     ...options
