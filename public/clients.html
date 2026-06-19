@@ -125,101 +125,25 @@
 
 <script src="/app.js?v=20260420"></script>
 <script>
-// API function using Bloknot.apiCall
+// API function using Bloknot.api
 async function apiCall(url, options = {}) {
-  // Use the existing Bloknot.apiCall function
-  if (typeof Bloknot !== 'undefined' && Bloknot.apiCall) {
-    return await Bloknot.apiCall(url, options);
+  // Use the existing Bloknot.api function
+  if (typeof Bloknot !== 'undefined' && Bloknot.api) {
+    return await Bloknot.api(url, options);
   }
   
   // Fallback if Bloknot is not available
-  console.error('[ERROR] Bloknot.apiCall not available');
-  throw new Error('Bloknot.apiCall not available');
-}
-
-// Fallback API function
-async function apiCallFallback(url, options = {}) {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : '',
-      ...options.headers
-    },
-    credentials: 'include',
-    ...options
-  });
-  
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-  
-  return response.json();
-}
-
-// Fallback function for loading clients
-async function loadClientsFallback() {
-  try {
-    console.log('[FALLBACK] Loading clients with direct API call');
-    const appointments = await apiCallFallback('/api/appointments');
-    
-    // Extract unique clients
-    const clientsMap = new Map();
-    
-    appointments.forEach(appointment => {
-      if (appointment.customerName) {
-        const key = appointment.customerName.toLowerCase();
-        if (!clientsMap.has(key)) {
-          clientsMap.set(key, {
-            name: appointment.customerName,
-            phone: appointment.customerPhone || '',
-            telegram: appointment.customerTelegram || '',
-            firstAppointment: appointment.startsAt,
-            lastAppointment: appointment.startsAt,
-            totalAppointments: 1,
-            services: [appointment.service?.name || 'Неизвестная услуга']
-          });
-        } else {
-          const client = clientsMap.get(key);
-          client.totalAppointments++;
-          client.lastAppointment = appointment.startsAt;
-          if (!client.services.includes(appointment.service?.name || 'Неизвестная услуга')) {
-            client.services.push(appointment.service?.name || 'Неизвестная услуга');
-          }
-        }
-      }
-    });
-    
-    allClients = Array.from(clientsMap.values());
-    displayClients(allClients);
-    
-  } catch (error) {
-    console.error('[FALLBACK] Error loading clients:', error);
-    document.getElementById('clientsList').innerHTML = `
-      <div style="text-align: center; padding: 40px; color: #6b7280;">
-        <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;">👥</div>
-        <h3>Не удалось загрузить клиентов</h3>
-        <p>Попробуйте обновить страницу</p>
-      </div>
-    `;
-  }
+  console.error('[ERROR] Bloknot.api not available');
+  throw new Error('Bloknot.api not available');
 }
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', function() {
-  // Ждем загрузки Bloknot
-  setTimeout(() => {
-    if (typeof Bloknot !== 'undefined') {
-      Bloknot.renderHeader('clients');
-      loadClients();
-    } else {
-      console.error('[ERROR] Bloknot not loaded after timeout');
-      // Пробуем загрузить клиентов с fallback
-      loadClientsFallback();
-    }
-    setupEventListeners();
-  }, 100); // Даем время на загрузку Bloknot
+  if (typeof Bloknot !== 'undefined') {
+    Bloknot.renderHeader('clients');
+  }
+  loadClients();
+  setupEventListeners();
 });
 
 function setupEventListeners() {
