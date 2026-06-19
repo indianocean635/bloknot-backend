@@ -717,8 +717,13 @@
 
     // Get business slug from URL
     function getBusinessSlug() {
+      console.log('[DEBUG] getBusinessSlug called');
+      console.log('[DEBUG] Current URL:', window.location.href);
+      console.log('[DEBUG] Search params:', window.location.search);
       const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('slug') || urlParams.get('business');
+      const slug = urlParams.get('slug') || urlParams.get('business');
+      console.log('[DEBUG] Extracted slug:', slug);
+      return slug;
     }
 
     // Get reschedule token from URL
@@ -769,20 +774,32 @@
     // Load business data
     async function loadBusinessData() {
       try {
-        const businessSlug = getBusinessSlug();
+        console.log('[DEBUG] loadBusinessData starting');
+        console.log('[DEBUG] Current URL:', window.location.href);
+        console.log('[DEBUG] Search params:', window.location.search);
+        
+        // Принудительно извлекаем slug из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const businessSlug = urlParams.get('slug') || urlParams.get('business');
+        
+        console.log('[DEBUG] businessSlug value:', businessSlug);
         let response;
 
         if (businessSlug) {
           // Load by slug for public booking
           let apiUrl = `/api/public/business/${encodeURIComponent(businessSlug)}`;
+          console.log('[DEBUG] Using public API URL:', apiUrl);
           // Add branchId filter if branch is selected
           if (selectedBranch && selectedBranch.id) {
             apiUrl += `?branchId=${selectedBranch.id}`;
           }
           response = await fetch(apiUrl);
+          console.log('[DEBUG] Public API response status:', response.status);
         } else {
           // Load from settings for authenticated user
+          console.log('[DEBUG] No businessSlug found, using authenticated route');
           response = await fetch('/api/settings/business');
+          console.log('[DEBUG] Authenticated API response status:', response.status);
         }
 
         if (!response.ok) {
@@ -818,9 +835,13 @@
         }
 
         // Update business info
-        document.getElementById('business-name').textContent = businessData.business?.name || businessData.name || 'Бизнес';
+        const businessName = businessData.business?.name || businessData.name || 'ТЕСТ ЕБАНА';
+        console.log('Setting business name:', businessName);
+        document.getElementById('business-name').textContent = businessName;
         const branches = businessData.branches || [];
-        document.getElementById('business-address').textContent = branches.length > 0 ? branches[0].address : 'Адрес не указан';
+        const businessAddress = branches.length > 0 ? branches[0].address : 'Ворвского, Сочи';
+        console.log('Setting business address:', businessAddress);
+        document.getElementById('business-address').textContent = businessAddress;
 
         // Hide old branch selector
         document.getElementById('branch-selector').style.display = 'none';

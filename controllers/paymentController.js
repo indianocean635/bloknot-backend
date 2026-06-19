@@ -384,7 +384,9 @@ async function handlePaymentConfirm(businessId, transactionId, eventData) {
         nextPaymentDate: trialEndsAt,
         isActive: true,
         cardAttachedAt: new Date(),
-        lastPaymentAt: new Date()
+        lastPaymentAt: new Date(),
+        autoRenewal: true, // Включить автоматическое продление
+        trialToPaidConversionDate: trialEndsAt // Дата конвертации в платную подписку
       }
     });
     

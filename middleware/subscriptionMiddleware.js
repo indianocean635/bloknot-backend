@@ -163,6 +163,16 @@ async function updateSubscriptionStatusIfNeeded(subscription) {
         // TRIAL всегда считаем активным (демо режим должен работать полностью)
         console.log('[SUBSCRIPTION] TRIAL status detected - setting active');
         isActive = true;
+        
+        // Проверяем не истек ли TRIAL период - если истек, подписка должна быть ACTIVE
+        if (updatedSubscription.trialEndsAt && now > updatedSubscription.trialEndsAt) {
+            console.log('[SUBSCRIPTION] TRIAL expired, should be ACTIVE - checking auto-renewal');
+            // Если есть autoRenewal, подписка должна быть ACTIVE
+            if (updatedSubscription.autoRenewal) {
+                console.log('[SUBSCRIPTION] Auto-renewal enabled, subscription should be ACTIVE');
+                isActive = true;
+            }
+        }
     } else if (updatedSubscription.subscriptionStatus === 'ACTIVE') {
         // ACTIVE активен, если дата окончания еще не наступила
         isActive = !updatedSubscription.subscriptionEndsAt || now <= updatedSubscription.subscriptionEndsAt;
