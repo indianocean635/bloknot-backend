@@ -125,25 +125,16 @@
 
 <script src="/app.js?v=20260420"></script>
 <script>
-// Simple API function
+// API function using Bloknot.apiCall
 async function apiCall(url, options = {}) {
-  // Get token from localStorage
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : '',
-      ...options.headers
-    },
-    ...options
-  });
-  
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
+  // Use the existing Bloknot.apiCall function
+  if (typeof Bloknot !== 'undefined' && Bloknot.apiCall) {
+    return await Bloknot.apiCall(url, options);
   }
   
-  return response.json();
+  // Fallback if Bloknot is not available
+  console.error('[ERROR] Bloknot.apiCall not available');
+  throw new Error('Bloknot.apiCall not available');
 }
 
 // Инициализация
