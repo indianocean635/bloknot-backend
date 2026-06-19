@@ -3005,16 +3005,16 @@ async function loadBranches() {
     if (branchesGrid && branches) {
       branchesGrid.innerHTML = branches.map(branch => `
         <div class="branch-item" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: start;">
-            <div style="flex: 1;">
-              <div style="font-weight: 600; margin-bottom: 4px;">${branch.name}</div>
-              ${branch.city ? `<div style="font-size: 14px; color: #666;">${branch.city}</div>` : ''}
-              ${branch.address ? `<div style="font-size: 13px; color: #888;">${branch.address}</div>` : ''}
-              ${branch.directions ? `<div style="font-size: 12px; color: #999; margin-top: 4px;">${branch.directions}</div>` : ''}
+          <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
+            <div style="flex: 1; min-width: 0; word-wrap: break-word;">
+              <div style="font-weight: 600; margin-bottom: 4px; word-break: break-word; overflow-wrap: break-word;">${branch.name}</div>
+              ${branch.city ? `<div style="font-size: 14px; color: #666; word-break: break-word;">${branch.city}</div>` : ''}
+              ${branch.address ? `<div style="font-size: 13px; color: #888; word-break: break-word;">${branch.address}</div>` : ''}
+              ${branch.directions ? `<div style="font-size: 12px; color: #999; margin-top: 4px; word-break: break-word;">${branch.directions}</div>` : ''}
             </div>
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              <button class="btn secondary" onclick="editBranch(${branch.id})" style="padding: 4px 8px; font-size: 11px;">Редактировать</button>
-              <button class="btn secondary" onclick="deleteBranch(${branch.id})" style="padding: 4px 8px; font-size: 11px;">Удалить</button>
+            <div style="display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;">
+              <button class="btn secondary" onclick="editBranch(${branch.id})" style="padding: 4px 8px; font-size: 11px; white-space: nowrap;">Редактировать</button>
+              <button class="btn secondary" onclick="deleteBranch(${branch.id})" style="padding: 4px 8px; font-size: 11px; white-space: nowrap;">Удалить</button>
             </div>
           </div>
         </div>
