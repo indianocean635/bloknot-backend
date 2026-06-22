@@ -217,15 +217,21 @@ function verifyCloudPaymentsSignature(data, signature) {
   const apiSecret = process.env.CLOUDPAYMENTS_API_SECRET;
   if (!apiSecret) return false;
 
-  const sortedKeys = Object.keys(data).sort();
-  const signatureString = sortedKeys
-    .map(key => `${key}${data[key]}`)
-    .join('');
-  
+  // Используем HMAC-SHA256 с полным телом запроса согласно документации CloudPayments
+  const body = JSON.stringify(data);
   const expectedSignature = crypto
-    .createHash('sha256')
-    .update(signatureString + apiSecret)
+    .createHmac('sha256', apiSecret)
+    .update(body)
     .digest('hex');
+
+  // Логирование для анализа
+  console.log('[WEBHOOK SIGNATURE DEBUG]', {
+    receivedSignature: signature,
+    calculatedSignature: expectedSignature,
+    webhookBodyString: body,
+    algorithm: 'HMAC-SHA256',
+    apiSecretLength: apiSecret?.length
+  });
 
   return signature === expectedSignature;
 }
