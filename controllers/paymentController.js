@@ -237,7 +237,13 @@ async function handleCloudPaymentsWebhook(req, res) {
     console.log('[CLOUDPAYMENTS WEBHOOK]', JSON.stringify(eventData, null, 2));
 
     // Verify signature
-    const signature = req.headers['x-signature'];
+    const signature =
+        req.headers['content-hmac'] ||
+        req.headers['x-content-hmac'] ||
+        req.get('Content-HMAC') ||
+        req.get('X-Content-HMAC');
+    
+    console.log('SIGNATURE FOUND:', signature);
     console.log('[WEBHOOK] Signature verification:', { 
       hasSignature: !!signature, 
       signatureLength: signature?.length,
