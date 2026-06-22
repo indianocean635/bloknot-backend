@@ -238,6 +238,17 @@ async function handleCloudPaymentsWebhook(req, res) {
 
     // Verify signature
     const signature = req.headers['x-signature'];
+    console.log('[WEBHOOK] Signature verification:', { 
+      hasSignature: !!signature, 
+      signatureLength: signature?.length,
+      headers: Object.keys(req.headers)
+    });
+    
+    if (!signature) {
+      console.error('[WEBHOOK] No signature provided');
+      return res.status(401).json({ error: 'No signature provided' });
+    }
+    
     if (!verifyCloudPaymentsSignature(eventData, signature)) {
       console.error('[WEBHOOK] Invalid signature');
       return res.status(401).json({ error: 'Invalid signature' });
