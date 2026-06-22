@@ -300,18 +300,14 @@ async function handleCloudPaymentsWebhook(req, res) {
     const subscriptionId = eventData.SubscriptionId;
     const transactionId = eventData.TransactionId;
 
-    // Protection against duplicate webhooks
-    const existingTransaction = await prisma.subscription.findFirst({
-      where: {
-        businessId: accountId,
-        cloudpaymentsSubscriptionId: subscriptionId
-      }
+    console.log('[WEBHOOK EVENT PROCESSING]', {
+      eventType,
+      accountId,
+      subscriptionId,
+      transactionId,
+      amount: eventData.Amount,
+      status: eventData.Status
     });
-
-    if (!existingTransaction) {
-      console.error('[WEBHOOK] Subscription not found', { accountId, subscriptionId });
-      return res.status(404).json({ error: 'Subscription not found' });
-    }
 
     switch (eventType) {
       case 'Pay':
@@ -351,13 +347,52 @@ async function handleCloudPaymentsWebhook(req, res) {
 
 // Handle successful payment
 async function handlePaymentSuccess(businessId, transactionId, eventData) {
-  console.log('[PAYMENT SUCCESS]', { businessId, transactionId });
+  console.log('[PAYMENT SUCCESS]', { businessId, transactionId, eventData });
 
   const subscription = await prisma.subscription.findUnique({
     where: { businessId }
   });
 
-  if (!subscription) return;
+  // If no subscription exists, create one for successful payment
+  if (!subscription) {
+    console.log('[CREATING SUBSCRIPTION FROM PAYMENT]', { 
+      businessId, 
+      subscriptionId: eventData.SubscriptionId,
+      amount: eventData.Amount,
+      message: 'Creating subscription from successful payment'
+    });
+    
+    const subscriptionEndsAt = new Date();
+    subscriptionEndsAt.setMonth(subscriptionEndsAt.getMonth() + 1); // Monthly by default
+    
+    await prisma.subscription.create({
+      data: {
+        businessId,
+        plan: 'SOLO',
+        maxUsers: 1,
+        usersLimit: 1,
+        subscriptionStatus: 'ACTIVE',
+        subscriptionEndsAt,
+        billingPeriod: 'MONTHLY',
+        cloudpaymentsSubscriptionId: eventData.SubscriptionId,
+        nextPaymentDate: subscriptionEndsAt,
+        isActive: true,
+        cardAttachedAt: new Date(),
+        lastPaymentAt: new Date(),
+        autoRenewal: true
+      }
+    });
+
+    console.log('[SUBSCRIPTION CREATED AND ACTIVATED]', { 
+      businessId, 
+      subscriptionEndsAt,
+      amount: eventData.Amount,
+      subscriptionId: eventData.SubscriptionId,
+      message: 'Monthly SOLO subscription activated'
+    });
+    
+    return;
+  }
 
   // For yearly plans, activate immediately
   if (subscription.billingPeriod === 'YEARLY') {
