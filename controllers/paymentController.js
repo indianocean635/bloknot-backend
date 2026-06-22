@@ -217,31 +217,38 @@ function verifyCloudPaymentsSignature(req, signature) {
   const apiSecret = process.env.CLOUDPAYMENTS_API_SECRET;
   if (!apiSecret) return false;
 
-  // Используем HMAC-SHA256 с оригинальным сырым телом запроса согласно документации CloudPayments
-  const rawBody = req.rawBody || req.body;
-  const body = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);
-  const expectedSignatureHex = crypto
+  // Используем ТОЛЬКО сырое тело запроса согласно документации CloudPayments
+  // file_get_contents('php://input') в PHP эквивалентно req.rawBody в Node.js
+  const body = req.rawBody || JSON.stringify(req.body);
+  
+  // Согласно документации: hash_hmac('SHA256', $post_data, $secret_key, true)
+  // где $post_data = file_get_contents('php://input') - СЫРОЕ ТЕЛО
+  const hmacBinary = crypto
     .createHmac('sha256', apiSecret)
     .update(body)
-    .digest('hex');
+    .digest(); // binary формат (true в PHP)
   
-  // CloudPayments присылает подпись в Base64, конвертируем наш результат в Base64
   const expectedSignatureBase64 = crypto
     .createHmac('sha256', apiSecret)
     .update(body)
-    .digest('base64');
+    .digest('base64'); // base64_encode(hash_hmac(..., true))
 
   const isMatch = signature === expectedSignatureBase64;
 
-  // Логирование для анализа
+  // Детальное логирование для анализа
+  const secretMasked = apiSecret ? 
+    apiSecret.substring(0, 3) + '...' + apiSecret.substring(apiSecret.length - 3) : 
+    'undefined';
+
   console.log('[WEBHOOK SIGNATURE DEBUG]', {
     receivedSignature: signature,
-    calculatedSignatureHex: expectedSignatureHex,
-    calculatedSignatureBase64: expectedSignatureBase64,
-    webhookBodyString: body,
+    calculatedSignature: expectedSignatureBase64,
+    secretLength: apiSecret?.length || 0,
+    secretMasked: secretMasked,
     bodyLength: body.length,
+    bodyPreview: body.substring(0, 100) + '...',
     algorithm: 'HMAC-SHA256',
-    apiSecretLength: apiSecret?.length,
+    format: 'base64_encode(hash_hmac(SHA256, raw_body, secret, true))',
     isMatch: isMatch
   });
 
