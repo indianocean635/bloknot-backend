@@ -220,17 +220,24 @@ function verifyCloudPaymentsSignature(req, signature) {
   // Используем HMAC-SHA256 с оригинальным сырым телом запроса согласно документации CloudPayments
   const rawBody = req.rawBody || req.body;
   const body = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);
-  const expectedSignature = crypto
+  const expectedSignatureHex = crypto
     .createHmac('sha256', apiSecret)
     .update(body)
     .digest('hex');
+  
+  // CloudPayments присылает подпись в Base64, конвертируем наш результат в Base64
+  const expectedSignatureBase64 = crypto
+    .createHmac('sha256', apiSecret)
+    .update(body)
+    .digest('base64');
 
-  const isMatch = signature === expectedSignature;
+  const isMatch = signature === expectedSignatureBase64;
 
   // Логирование для анализа
   console.log('[WEBHOOK SIGNATURE DEBUG]', {
     receivedSignature: signature,
-    calculatedSignature: expectedSignature,
+    calculatedSignatureHex: expectedSignatureHex,
+    calculatedSignatureBase64: expectedSignatureBase64,
     webhookBodyString: body,
     bodyLength: body.length,
     algorithm: 'HMAC-SHA256',
