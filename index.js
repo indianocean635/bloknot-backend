@@ -56,6 +56,16 @@ app.use((req, res, next) => {
   
   req.on('end', () => {
     req.rawBody = data;
+    
+    // Парсим JSON для express.json() совместимости
+    try {
+      if (data && req.headers['content-type']?.includes('application/json')) {
+        req.body = JSON.parse(data);
+      }
+    } catch (error) {
+      // Если парсинг не удался, express.json() обработает позже
+    }
+    
     next();
   });
   
