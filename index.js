@@ -39,6 +39,26 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Middleware
 app.use(cookieParser());
+
+// Raw body middleware для webhook подписи CloudPayments
+app.use((req, res, next) => {
+  let data = '';
+  
+  req.on('data', (chunk) => {
+    data += chunk;
+  });
+  
+  req.on('end', () => {
+    req.rawBody = data;
+    next();
+  });
+  
+  req.on('error', (err) => {
+    console.error('[RAW BODY MIDDLEWARE] Error:', err);
+    next(err);
+  });
+});
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
