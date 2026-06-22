@@ -217,21 +217,20 @@ function verifyCloudPaymentsSignature(req, signature) {
   const apiSecret = process.env.CLOUDPAYMENTS_API_SECRET;
   if (!apiSecret) return false;
 
-  // Используем ТОЛЬКО сырое тело запроса согласно документации CloudPayments
-  // file_get_contents('php://input') в PHP эквивалентно req.rawBody в Node.js
-  const body = req.rawBody || JSON.stringify(req.body);
+  // Детальная проверка rawBody vs body
+  const hasRawBody = !!req.rawBody;
+  const rawBodyLength = req.rawBody?.length || 0;
+  const bodyString = JSON.stringify(req.body);
+  const bodyStringLength = bodyString.length;
+  
+  // Используем сырое тело если доступно, иначе парсированный JSON
+  const body = req.rawBody || bodyString;
   
   // Согласно документации: hash_hmac('SHA256', $post_data, $secret_key, true)
-  // где $post_data = file_get_contents('php://input') - СЫРОЕ ТЕЛО
-  const hmacBinary = crypto
-    .createHmac('sha256', apiSecret)
-    .update(body)
-    .digest(); // binary формат (true в PHP)
-  
   const expectedSignatureBase64 = crypto
     .createHmac('sha256', apiSecret)
     .update(body)
-    .digest('base64'); // base64_encode(hash_hmac(..., true))
+    .digest('base64');
 
   const isMatch = signature === expectedSignatureBase64;
 
@@ -245,8 +244,19 @@ function verifyCloudPaymentsSignature(req, signature) {
     calculatedSignature: expectedSignatureBase64,
     secretLength: apiSecret?.length || 0,
     secretMasked: secretMasked,
-    bodyLength: body.length,
-    bodyPreview: body.substring(0, 100) + '...',
+    rawBodyCheck: {
+      hasRawBody: hasRawBody,
+      rawBodyLength: rawBodyLength,
+      rawBodyPreview: req.rawBody?.substring(0, 100) + '...',
+      bodyStringLength: bodyStringLength,
+      bodyStringPreview: bodyString.substring(0, 100) + '...',
+      bodiesMatch: req.rawBody === bodyString
+    },
+    usedBody: {
+      source: hasRawBody ? 'rawBody' : 'JSON.stringify(req.body)',
+      length: body.length,
+      preview: body.substring(0, 100) + '...'
+    },
     algorithm: 'HMAC-SHA256',
     format: 'base64_encode(hash_hmac(SHA256, raw_body, secret, true))',
     isMatch: isMatch
