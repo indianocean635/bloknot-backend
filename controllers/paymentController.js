@@ -213,27 +213,32 @@ async function createCloudPaymentsPayment(data) {
 }
 
 // Verify CloudPayments signature
-function verifyCloudPaymentsSignature(data, signature) {
+function verifyCloudPaymentsSignature(req, signature) {
   const apiSecret = process.env.CLOUDPAYMENTS_API_SECRET;
   if (!apiSecret) return false;
 
-  // Используем HMAC-SHA256 с полным телом запроса согласно документации CloudPayments
-  const body = JSON.stringify(data);
+  // Используем HMAC-SHA256 с оригинальным сырым телом запроса согласно документации CloudPayments
+  const rawBody = req.rawBody || req.body;
+  const body = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);
   const expectedSignature = crypto
     .createHmac('sha256', apiSecret)
     .update(body)
     .digest('hex');
+
+  const isMatch = signature === expectedSignature;
 
   // Логирование для анализа
   console.log('[WEBHOOK SIGNATURE DEBUG]', {
     receivedSignature: signature,
     calculatedSignature: expectedSignature,
     webhookBodyString: body,
+    bodyLength: body.length,
     algorithm: 'HMAC-SHA256',
-    apiSecretLength: apiSecret?.length
+    apiSecretLength: apiSecret?.length,
+    isMatch: isMatch
   });
 
-  return signature === expectedSignature;
+  return isMatch;
 }
 
 // Handle CloudPayments webhook
@@ -261,7 +266,7 @@ async function handleCloudPaymentsWebhook(req, res) {
       return res.status(401).json({ error: 'No signature provided' });
     }
     
-    if (!verifyCloudPaymentsSignature(eventData, signature)) {
+    if (!verifyCloudPaymentsSignature(req, signature)) {
       console.error('[WEBHOOK] Invalid signature');
       return res.status(401).json({ error: 'Invalid signature' });
     }
