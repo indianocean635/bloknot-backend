@@ -40,6 +40,16 @@ const requireAuth = async (req, res, next) => {
   }
 };
 
+// Test endpoint (no auth)
+router.get("/payments/test", (req, res) => {
+  console.log('[PAYMENT TEST] Request received');
+  res.json({ 
+    success: true, 
+    message: 'Payment API working',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Create payment
 router.post("/payments/create", requireAuth, createPayment);
 
