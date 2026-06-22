@@ -42,6 +42,12 @@ app.use(cookieParser());
 
 // Raw body middleware для webhook подписи CloudPayments
 app.use((req, res, next) => {
+  // Пропускаем GET, HEAD, OPTIONS запросы - у них нет тела
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    req.rawBody = '';
+    return next();
+  }
+  
   let data = '';
   
   req.on('data', (chunk) => {
