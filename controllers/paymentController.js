@@ -312,7 +312,8 @@ async function handleCloudPaymentsWebhook(req, res) {
 
     console.log('[SIGNATURE VALID]');
 
-    const eventType = eventData.Event;
+    // CloudPayments использует OperationType вместо Event
+    const eventType = eventData.OperationType || eventData.Event;
     const accountId = eventData.AccountId; // businessId
     const subscriptionId = eventData.SubscriptionId;
     const transactionId = eventData.TransactionId;
@@ -328,6 +329,7 @@ async function handleCloudPaymentsWebhook(req, res) {
 
     switch (eventType) {
       case 'Pay':
+      case 'Payment':  // CloudPayments отправляет "Payment"
         await handlePaymentSuccess(accountId, transactionId, eventData);
         break;
 
