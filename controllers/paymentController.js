@@ -213,49 +213,104 @@ async function createCloudPaymentsPayment(data) {
 }
 
 // Verify CloudPayments signature
-function verifyCloudPaymentsSignature(data, signature) {
+function verifyCloudPaymentsSignature(req, signature) {
   const apiSecret = process.env.CLOUDPAYMENTS_API_SECRET;
   if (!apiSecret) return false;
 
-  const sortedKeys = Object.keys(data).sort();
-  const signatureString = sortedKeys
-    .map(key => `${key}${data[key]}`)
-    .join('');
+  // Детальная проверка rawBody vs body
+  const hasRawBody = !!req.rawBody;
+  const rawBodyLength = req.rawBody?.length || 0;
+  const bodyString = JSON.stringify(req.body);
+  const bodyStringLength = bodyString.length;
   
-  const expectedSignature = crypto
-    .createHash('sha256')
-    .update(signatureString + apiSecret)
-    .digest('hex');
+  // Используем сырое тело если доступно, иначе парсированный JSON
+  const body = req.rawBody || bodyString;
+  
+  // Согласно документации: hash_hmac('SHA256', $post_data, $secret_key, true)
+  const expectedSignatureBase64 = crypto
+    .createHmac('sha256', apiSecret)
+    .update(body)
+    .digest('base64');
 
-  return signature === expectedSignature;
+  const isMatch = signature === expectedSignatureBase64;
+
+  // Детальное логирование для анализа
+  const secretMasked = apiSecret ? 
+    apiSecret.substring(0, 3) + '...' + apiSecret.substring(apiSecret.length - 3) : 
+    'undefined';
+
+  console.log('[WEBHOOK SIGNATURE DEBUG]', {
+    receivedSignature: signature,
+    calculatedSignature: expectedSignatureBase64,
+    secretLength: apiSecret?.length || 0,
+    secretMasked: secretMasked,
+    rawBodyCheck: {
+      hasRawBody: hasRawBody,
+      rawBodyLength: rawBodyLength,
+      rawBodyPreview: req.rawBody?.substring(0, 100) + '...',
+      bodyStringLength: bodyStringLength,
+      bodyStringPreview: bodyString.substring(0, 100) + '...',
+      bodiesMatch: req.rawBody === bodyString
+    },
+    usedBody: {
+      source: hasRawBody ? 'rawBody' : 'JSON.stringify(req.body)',
+      length: body.length,
+      preview: body.substring(0, 100) + '...'
+    },
+    algorithm: 'HMAC-SHA256',
+    format: 'base64_encode(hash_hmac(SHA256, raw_body, secret, true))',
+    isMatch: isMatch
+  });
+
+  return isMatch;
 }
 
 // Handle CloudPayments webhook
 async function handleCloudPaymentsWebhook(req, res) {
   try {
-    const eventData = req.body;
-    console.log('[CLOUDPAYMENTS WEBHOOK]', JSON.stringify(eventData, null, 2));
+    console.log('[WEBHOOK RECEIVED]', {
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      contentType: req.headers['content-type'],
+      contentLength: req.headers['content-length']
+    });
 
-    // Verify signature - CloudPayments sends signature in multiple possible headers
-    const signature = req.headers['content-hmac'] || 
-                    req.headers['x-content-hmac'] || 
-                    req.headers['Content-HMAC'] || 
-                    req.headers['X-Content-HMAC'] ||
-                    req.headers['x-signature'];
+    const eventData = req.body;
+    console.log('[WEBHOOK BODY]', JSON.stringify(eventData, null, 2));
+    console.log('[WEBHOOK RAW BODY]', {
+      hasRawBody: !!req.rawBody,
+      rawBodyLength: req.rawBody?.length || 0,
+      rawBodyPreview: req.rawBody?.substring(0, 200) + '...'
+    });
+
+    // Verify signature
+    const signature =
+        req.headers['content-hmac'] ||
+        req.headers['x-content-hmac'] ||
+        req.get('Content-HMAC') ||
+        req.get('X-Content-HMAC');
     
-    console.log('[WEBHOOK] Signature headers:', {
+    console.log('[WEBHOOK SIGNATURE HEADERS]', {
       'content-hmac': req.headers['content-hmac'],
       'x-content-hmac': req.headers['x-content-hmac'],
-      'Content-HMAC': req.headers['Content-HMAC'],
-      'X-Content-HMAC': req.headers['X-Content-HMAC'],
-      'x-signature': req.headers['x-signature'],
-      'selected': signature
+      'Content-HMAC': req.get('Content-HMAC'),
+      'X-Content-HMAC': req.get('X-Content-HMAC'),
+      finalSignature: signature,
+      signatureLength: signature?.length
     });
+    
+    if (!signature) {
+      console.error('[WEBHOOK] No signature provided');
+      return res.status(401).json({ error: 'No signature provided' });
+    }
     
     if (!verifyCloudPaymentsSignature(req, signature)) {
       console.error('[WEBHOOK] Invalid signature');
       return res.status(401).json({ error: 'Invalid signature' });
     }
+
+    console.log('[SIGNATURE VALID]');
 
     // CloudPayments использует OperationType вместо Event
     const eventType = eventData.OperationType || eventData.Event;
@@ -263,40 +318,18 @@ async function handleCloudPaymentsWebhook(req, res) {
     const subscriptionId = eventData.SubscriptionId;
     const transactionId = eventData.TransactionId;
 
-    // Protection against duplicate webhooks
-    // For first payment (card verification), subscriptionId is empty, so check by businessId
-    let existingTransaction;
-    if (subscriptionId) {
-      // For recurring payments, check by subscription ID
-      existingTransaction = await prisma.subscription.findFirst({
-        where: {
-          businessId: accountId,
-          cloudpaymentsSubscriptionId: subscriptionId
-        }
-      });
-    } else {
-      // For first payment (card verification), check any active subscription for this business
-      existingTransaction = await prisma.subscription.findFirst({
-        where: {
-          businessId: accountId
-        }
-      });
-    }
-
-    // If no subscription exists for first payment, this is card verification - create trial
-    if (!existingTransaction && !subscriptionId && eventType === 'Payment') {
-      console.log('[WEBHOOK] First payment detected - creating trial subscription', { accountId, transactionId });
-      await handlePaymentConfirm(accountId, transactionId, eventData);
-      return res.json({ status: 'ok', message: 'Trial subscription created' });
-    }
-
-    if (!existingTransaction) {
-      console.error('[WEBHOOK] Subscription not found', { accountId, subscriptionId });
-      return res.status(404).json({ error: 'Subscription not found' });
-    }
+    console.log('[WEBHOOK EVENT PROCESSING]', {
+      eventType,
+      accountId,
+      subscriptionId,
+      transactionId,
+      amount: eventData.Amount,
+      status: eventData.Status
+    });
 
     switch (eventType) {
       case 'Pay':
+      case 'Payment':  // CloudPayments отправляет "Payment"
         await handlePaymentSuccess(accountId, transactionId, eventData);
         break;
 
@@ -333,13 +366,53 @@ async function handleCloudPaymentsWebhook(req, res) {
 
 // Handle successful payment
 async function handlePaymentSuccess(businessId, transactionId, eventData) {
-  console.log('[PAYMENT SUCCESS]', { businessId, transactionId });
+  console.log('[PAYMENT SUCCESS]', { businessId, transactionId, eventData });
 
   const subscription = await prisma.subscription.findUnique({
     where: { businessId }
   });
 
-  if (!subscription) return;
+  // If no subscription exists, create one for successful payment
+  if (!subscription) {
+    console.log('[CREATING SUBSCRIPTION FROM PAYMENT]', { 
+      businessId, 
+      subscriptionId: eventData.SubscriptionId,
+      amount: eventData.Amount,
+      message: 'Creating subscription from successful payment'
+    });
+    
+    const subscriptionEndsAt = new Date();
+    subscriptionEndsAt.setMonth(subscriptionEndsAt.getMonth() + 1); // Monthly by default
+    
+    await prisma.subscription.create({
+      data: {
+        businessId,
+        plan: 'SOLO',
+        maxUsers: 1,
+        usersLimit: 1,
+        subscriptionStatus: 'ACTIVE',
+        subscriptionEndsAt,
+        billingPeriod: 'MONTHLY',
+        cloudpaymentsSubscriptionId: eventData.SubscriptionId,
+        nextPaymentDate: subscriptionEndsAt,
+        isActive: true,
+        cardAttachedAt: new Date(),
+        lastPaymentAt: new Date(),
+        autoRenewal: true
+      }
+    });
+
+    console.log('[SUBSCRIPTION ACTIVATED]', { 
+      businessId, 
+      subscriptionEndsAt,
+      amount: eventData.Amount,
+      subscriptionId: eventData.SubscriptionId,
+      plan: 'SOLO',
+      message: 'Monthly SOLO subscription activated successfully'
+    });
+    
+    return;
+  }
 
   // For yearly plans, activate immediately
   if (subscription.billingPeriod === 'YEARLY') {
@@ -454,7 +527,7 @@ async function handlePaymentConfirm(businessId, transactionId, eventData) {
   }
 }
 
-// Handle payment failure с Grace Period
+// Handle payment failure
 async function handlePaymentFail(businessId, transactionId, eventData) {
   console.log('[PAYMENT FAILED]', { businessId, transactionId });
 
@@ -464,23 +537,14 @@ async function handlePaymentFail(businessId, transactionId, eventData) {
 
   if (!subscription) return;
 
-  // If trial payment failed, start Grace Period
+  // If trial payment failed, cancel subscription
   if (subscription.subscriptionStatus === 'TRIAL') {
-    const gracePeriodEnd = new Date();
-    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 7); // 7 дней Grace Period
-    
     await prisma.subscription.update({
       where: { businessId },
       data: {
-        subscriptionStatus: 'grace_period',
-        gracePeriodEndsAt: gracePeriodEnd
+        subscriptionStatus: 'CANCELLED',
+        isActive: false
       }
-    });
-    
-    console.log('[GRACE PERIOD STARTED]', { 
-      businessId, 
-      gracePeriodEnd,
-      message: 'Trial payment failed - 7 days grace period started'
     });
   }
 }
