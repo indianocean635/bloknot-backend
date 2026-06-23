@@ -3574,10 +3574,22 @@ function addPhoneFormatting() {
 }
 
 // Open as Client Function
-function openAsClient() {
-  // Open online booking page in new window/tab
-  const bookingUrl = 'https://bloknotservis.ru/booking-new.html?slug=' + businessData.slug;
-  window.open(bookingUrl, '_blank');
+async function openAsClient() {
+  try {
+    // Get business data to obtain the correct slug
+    const businessData = await Bloknot.api('/api/settings/business');
+    if (!businessData || !businessData.slug) {
+      console.error('No business data or slug found');
+      return;
+    }
+    
+    // Open online booking page in new window/tab
+    const bookingUrl = 'https://bloknotservis.ru/booking-new.html?slug=' + businessData.slug;
+    console.log('[OPEN AS CLIENT] Opening booking URL:', bookingUrl);
+    window.open(bookingUrl, '_blank');
+  } catch (error) {
+    console.error('Error opening booking page:', error);
+  }
 }
 
 // Open Video Instruction Function
