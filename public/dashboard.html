@@ -390,7 +390,7 @@
           return;
         }
         
-        const link = String(location.origin || "").replace(/\/$/, "") + "/booking-new.html?slug=jhjhjh-mail-ru-1781770316471";
+        const link = String(location.origin || "").replace(/\/$/, "") + "/booking-new.html?slug=" + businessData.slug;
         console.log('[BOOKING LINK] Generated link:', link);
         
         const input = Bloknot.qs("#bookingLink");
