@@ -268,8 +268,21 @@ function verifyCloudPaymentsSignature(req, signature) {
 // Handle CloudPayments webhook
 async function handleCloudPaymentsWebhook(req, res) {
   try {
+    console.log('[WEBHOOK RECEIVED]', {
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      contentType: req.headers['content-type'],
+      contentLength: req.headers['content-length']
+    });
+
     const eventData = req.body;
-    console.log('[CLOUDPAYMENTS WEBHOOK]', JSON.stringify(eventData, null, 2));
+    console.log('[WEBHOOK BODY]', JSON.stringify(eventData, null, 2));
+    console.log('[WEBHOOK RAW BODY]', {
+      hasRawBody: !!req.rawBody,
+      rawBodyLength: req.rawBody?.length || 0,
+      rawBodyPreview: req.rawBody?.substring(0, 200) + '...'
+    });
 
     // Verify signature
     const signature =
@@ -278,11 +291,13 @@ async function handleCloudPaymentsWebhook(req, res) {
         req.get('Content-HMAC') ||
         req.get('X-Content-HMAC');
     
-    console.log('SIGNATURE FOUND:', signature);
-    console.log('[WEBHOOK] Signature verification:', { 
-      hasSignature: !!signature, 
-      signatureLength: signature?.length,
-      headers: Object.keys(req.headers)
+    console.log('[WEBHOOK SIGNATURE HEADERS]', {
+      'content-hmac': req.headers['content-hmac'],
+      'x-content-hmac': req.headers['x-content-hmac'],
+      'Content-HMAC': req.get('Content-HMAC'),
+      'X-Content-HMAC': req.get('X-Content-HMAC'),
+      finalSignature: signature,
+      signatureLength: signature?.length
     });
     
     if (!signature) {
@@ -294,6 +309,8 @@ async function handleCloudPaymentsWebhook(req, res) {
       console.error('[WEBHOOK] Invalid signature');
       return res.status(401).json({ error: 'Invalid signature' });
     }
+
+    console.log('[SIGNATURE VALID]');
 
     const eventType = eventData.Event;
     const accountId = eventData.AccountId; // businessId
@@ -383,12 +400,13 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
       }
     });
 
-    console.log('[SUBSCRIPTION CREATED AND ACTIVATED]', { 
+    console.log('[SUBSCRIPTION ACTIVATED]', { 
       businessId, 
       subscriptionEndsAt,
       amount: eventData.Amount,
       subscriptionId: eventData.SubscriptionId,
-      message: 'Monthly SOLO subscription activated'
+      plan: 'SOLO',
+      message: 'Monthly SOLO subscription activated successfully'
     });
     
     return;
