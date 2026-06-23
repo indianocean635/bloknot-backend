@@ -39,6 +39,39 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Middleware
 app.use(cookieParser());
+
+// Raw body middleware ТОЛЬКО для CloudPayments webhook с парсингом form data
+app.use('/api/payments/cloudpayments/webhook', (req, res, next) => {
+  let data = '';
+  
+  req.on('data', (chunk) => {
+    data += chunk;
+  });
+  
+  req.on('end', () => {
+    req.rawBody = data;
+    
+    // Парсим URL-encoded данные для CloudPayments webhook
+    const contentType = req.headers['content-type'] || '';
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      try {
+        const querystring = require('querystring');
+        req.body = querystring.parse(data);
+      } catch (error) {
+        console.error('[WEBHOOK FORM PARSE ERROR]', error);
+        req.body = {};
+      }
+    }
+    
+    next();
+  });
+  
+  req.on('error', (err) => {
+    console.error('[WEBHOOK RAW BODY ERROR]', err);
+    next(err);
+  });
+});
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
