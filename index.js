@@ -40,6 +40,9 @@ if (!fs.existsSync(uploadsDir)) {
 // Middleware
 app.use(cookieParser());
 
+// Express JSON middleware для обычных запросов
+app.use(express.json({ limit: '50mb' }));
+
 // Raw body middleware ТОЛЬКО для CloudPayments webhook с парсингом form data
 app.use('/api/payments/cloudpayments/webhook', (req, res, next) => {
   let data = '';
@@ -71,8 +74,6 @@ app.use('/api/payments/cloudpayments/webhook', (req, res, next) => {
     next(err);
   });
 });
-
-app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // CORS middleware for mobile devices
