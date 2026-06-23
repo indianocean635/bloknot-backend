@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Онлайн запись - Bloknot</title>
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f8fafc;
+      color: #1f2937;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .booking-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .booking-header {
+      background: white;
+      padding: 24px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: center;
+    }
+
+    .business-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      margin: 0 auto 16px;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: #6b7280;
+    }
+
+    .business-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+
+    .business-name {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+
+    .business-address {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .branch-selector {
+      margin-bottom: 8px;
+    }
+
+    .branch-selected {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .branch-selected:hover {
+      background: #f1f5f9;
+      border-color: #d1d5db;
+    }
+
+    .branch-arrow {
+      font-size: 16px;
+      transition: transform 0.2s;
+    }
+
+    .branch-selector.open .branch-arrow {
+      transform: rotate(180deg);
+    }
+
+    .branch-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-top: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+
+    .branch-option {
+      padding: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .branch-option:hover {
+      background: #f8fafc;
+    }
+
+    .branch-option.selected {
+      background: #eff6ff;
+      color: #3b82f6;
+    }
+
+    .booking-content {
+      padding: 32px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1f2937;
+    }
+
+    .services-grid {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .service-item {
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+
+    .service-item:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+    }
+
+    .service-item.selected {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .service-checkbox {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #e5e7eb;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .service-item.selected .service-checkbox {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .service-checkbox::after {
+      content: '✓';
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      display: none;
+    }
+
+    .service-item.selected .service-checkbox::after {
+      display: block;
+    }
+
+    .service-info {
+      flex: 1;
+    }
+
+    .service-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .service-duration {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .service-price {
+      font-weight: 600;
+      color: #059669;
+      font-size: 18px;
+    }
+
+    .specialists-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .specialist-item {
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .specialist-item:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+    }
+
+    .specialist-item.selected {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .specialist-photo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #6b7280;
+      overflow: hidden;
+    }
+
+    .specialist-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .specialist-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .specialist-specialization {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .calendar-section {
+      margin-bottom: 32px;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .calendar-nav button {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .calendar-nav button:hover {
+      background: #f3f4f6;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+
+    .calendar-day-header {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      padding: 8px 0;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .calendar-day:hover {
+      background: #f3f4f6;
+    }
+
+    .calendar-day.available {
+      background: white;
+    }
+
+    .calendar-day.available:hover {
+      background: #eff6ff;
+      border-color: #3b82f6;
+    }
+
+    .calendar-day.selected {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    .calendar-day.disabled {
+      color: #d1d5db;
+      cursor: not-allowed;
+      background: #f9fafb;
+    }
+
+    .time-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 8px;
+    }
+
+    .time-slot {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+
+    .time-slot:hover {
+      background: #f3f4f6;
+    }
+
+    .time-slot.available {
+      border-color: #10b981;
+      color: #059669;
+    }
+
+    .time-slot.available:hover {
+      background: #ecfdf5;
+    }
+
+    .time-slot.selected {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    .time-slot.disabled {
+      background: #f9fafb;
+      color: #d1d5db;
+      cursor: not-allowed;
+    }
+
+    .time-slot.break {
+      background: #f3f4f6;
+      color: #9ca3af;
+      cursor: not-allowed;
+      border-color: #e5e7eb;
+    }
+
+    .contact-form {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-label {
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #374151;
+    }
+
+    .form-input {
+      padding: 12px 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .book-button {
+      width: 100%;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .book-button:hover {
+      background: #2563eb;
+    }
+
+    .book-button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .back-button {
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 8px 0;
+      margin-bottom: 16px;
+      transition: color 0.2s;
+    }
+
+    .back-button:hover {
+      color: #3b82f6;
+    }
+
+    .selection-options-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .selection-option {
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .selection-option:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+    }
+
+    .selection-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 32px;
+      color: #6b7280;
+    }
+
+    .error {
+      text-align: center;
+      padding: 60px 32px;
+      color: #ef4444;
+    }
+
+    .success {
+      text-align: center;
+      padding: 60px 32px;
+      color: #10b981;
+    }
+
+    .booking-nav-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 32px;
+    }
+
+    .booking-nav-item {
+      display: block;
+      padding: 24px;
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .booking-nav-item:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .nav-icon {
+      font-size: 32px;
+      color: #3b82f6;
+      margin-bottom: 16px;
+    }
+
+    .nav-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+
+    .nav-description {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+      }
+
+      .booking-content {
+        padding: 24px;
+      }
+
+      .masters-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .time-slots-grid {
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+      }
+
+      .selection-options-grid .selection-option:first-child {
+        border-color: #3b82f6;
+        background: #f8fafc;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="booking-card">
+      <div class="booking-header">
+        <div class="business-logo" id="business-logo"></div>
+        <div class="business-name" id="business-name">Loading...</div>
+        <button id="about-branch-btn" onclick="toggleAboutBranch()" style="margin-top: 8px; padding: 6px 12px; background: transparent; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; color: #6b7280; cursor: pointer; display: none; align-items: center; gap: 4px;">
+          О филиале <span id="about-branch-arrow">▼</span>
+        </button>
+        <div class="branch-selector" id="branch-selector">
+          <div class="branch-selected">
+            <span id="selected-branch">Main Branch</span>
+            <span class="branch-arrow">+</span>
+          </div>
+          <div class="branch-dropdown" id="branch-dropdown" style="display: none;">
+            <div class="branch-option" data-branch="main">Main Branch</div>
+            <div class="branch-option" data-branch="branch1">Branch 1</div>
+            <div class="branch-option" data-branch="branch2">Branch 2</div>
+          </div>
+        </div>
+        <div class="business-address" id="business-address">Loading...</div>
+      </div>
+      
+      <div id="about-branch-section" style="display: none; padding: 24px 32px; border-bottom: 1px solid #e5e7eb;">
+        <div id="branch-description" style="margin-bottom: 20px; font-size: 14px; color: #374151; line-height: 1.6;"></div>
+        <div id="works-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;"></div>
+      </div>
+      
+      <div class="booking-content">
+        <div id="loading" class="loading">Загрузка данных бизнеса...</div>
+
+        <div id="error" class="error" style="display: none;">
+          Не удалось загрузить информацию о бизнесе. Убедитесь, что ссылка содержит параметр slug.
+        </div>
+
+        <div id="branches-section" style="display: none;">
+          <h2 class="section-title">Выберите филиал</h2>
+          <div class="services-grid" id="branches-grid"></div>
+        </div>
+
+        <div id="selection-menu-section" style="display: none;">
+          <button class="back-button" onclick="goBack('branches')">← Назад</button>
+          <div class="selection-options-grid" id="selection-options-grid">
+            <div class="selection-option" onclick="selectOption('specialist')">
+              <div class="selection-title">Выбрать специалиста</div>
+            </div>
+            <div class="selection-option" onclick="selectOption('service')">
+              <div class="selection-title">Выбрать услуги</div>
+            </div>
+            <div class="selection-option" onclick="selectOption('datetime')">
+              <div class="selection-title">Выбрать дату и время</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="specialists-section" style="display: none;">
+          <button class="back-button" onclick="goBack('selection-menu')">← Назад</button>
+          <h2 class="section-title">Выберите специалиста</h2>
+          <div class="specialists-grid" id="specialists-grid"></div>
+        </div>
+
+        <div id="services-section" style="display: none;">
+          <button class="back-button" onclick="goBack('selection-menu')">← Назад</button>
+          <h2 class="section-title">Выберите услугу</h2>
+          <div class="services-grid" id="services-grid"></div>
+          <button class="book-button" id="services-continue-btn" style="margin-top: 20px; display: none;" onclick="proceedFromServices()">Далее</button>
+        </div>
+
+        <div id="calendar-section" class="calendar-section" style="display: none;">
+          <button class="back-button" onclick="goBack('selection-menu')">← Назад</button>
+          <h2 class="section-title">Выберите дату и время</h2>
+          <div class="calendar-header">
+            <button id="prev-month">&lt;</button>
+            <span id="calendar-month"></span>
+            <button id="next-month">&gt;</button>
+          </div>
+          <div class="calendar-grid" id="calendar-grid"></div>
+          <div id="time-section" style="display: none; margin-top: 20px;">
+            <h3 class="section-title" style="font-size: 18px;">Выберите время</h3>
+            <div class="time-slots-grid" id="time-slots-grid"></div>
+          </div>
+        </div>
+
+        <div id="contact-form-section" class="contact-form" style="display: none;">
+          <button class="back-button" id="contact-back-button" onclick="goBackFromContact()">← Назад</button>
+          <h2 class="section-title" style="margin-bottom: 20px;">Контактные данные</h2>
+          <form id="contact-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Имя *</label>
+                <input type="text" id="client-name" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Телефон *</label>
+                <input type="tel" id="client-phone" class="form-input" value="+7" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Комментарий</label>
+                <input type="text" id="client-comment" class="form-input" placeholder="Комментарий к записи">
+              </div>
+            </div>
+            <button type="submit" class="book-button" id="book-button">Записаться</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Business data
+    let businessData = null;
+    let selectedServices = []; // Changed to array for multiple services
+    let selectedSpecialist = null;
+    let selectedBranch = null;
+    let selectedDate = null;
+    let selectedTime = null;
+    let selectedOption = null; // 'specialist', 'service', or 'datetime'
+    let bookingToken = null; // Global booking token
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+
+    // Get business slug from URL
+    function getBusinessSlug() {
+      console.log('[DEBUG] getBusinessSlug called');
+      console.log('[DEBUG] Current URL:', window.location.href);
+      console.log('[DEBUG] Search params:', window.location.search);
+      const urlParams = new URLSearchParams(window.location.search);
+      const slug = urlParams.get('slug') || urlParams.get('business');
+      console.log('[DEBUG] Extracted slug:', slug);
+      return slug;
+    }
+
+    // Get reschedule token from URL
+    function getRescheduleToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('token');
+    }
+
+    // Check if in reschedule mode
+    function isRescheduleMode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('reschedule') === 'true';
+    }
+
+    // Load existing booking for reschedule
+    async function loadExistingBooking(token) {
+      try {
+        const response = await fetch(`/api/public/appointment/${token}`);
+        if (!response.ok) {
+          console.error('Failed to load existing booking');
+          return;
+        }
+
+        const booking = await response.json();
+        console.log('Existing booking loaded:', booking);
+
+        // Store existing booking for later deletion
+        window.existingBooking = booking;
+
+        // Pre-select specialist and service from existing booking
+        if (booking.masterId) {
+          selectedSpecialist = businessData.masters.find(m => m.id === booking.masterId);
+        }
+        if (booking.serviceId) {
+          selectedService = businessData.services.find(s => s.id === booking.serviceId);
+        }
+
+        // Skip to date/time selection
+        selectedOption = 'datetime';
+        document.getElementById('selection-menu-section').style.display = 'none';
+        showDateTimeSection();
+
+      } catch (error) {
+        console.error('Error loading existing booking:', error);
+      }
+    }
+
+    // Load business data
+    async function loadBusinessData() {
+      try {
+        console.log('[DEBUG] loadBusinessData starting');
+        console.log('[DEBUG] Current URL:', window.location.href);
+        console.log('[DEBUG] Search params:', window.location.search);
+        
+        // Принудительно извлекаем slug из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const businessSlug = urlParams.get('slug') || urlParams.get('business');
+        
+        console.log('[DEBUG] businessSlug value:', businessSlug);
+        let response;
+
+        if (businessSlug) {
+          // Load by slug for public booking
+          let apiUrl = `/api/public/business/${encodeURIComponent(businessSlug)}`;
+          console.log('[DEBUG] Using public API URL:', apiUrl);
+          // Add branchId filter if branch is selected
+          if (selectedBranch && selectedBranch.id) {
+            apiUrl += `?branchId=${selectedBranch.id}`;
+          }
+          response = await fetch(apiUrl);
+          console.log('[DEBUG] Public API response status:', response.status);
+        } else {
+          // Load from settings for authenticated user
+          console.log('[DEBUG] No businessSlug found, using authenticated route');
+          response = await fetch('/api/settings/business');
+          console.log('[DEBUG] Authenticated API response status:', response.status);
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          
+          // Check if it's a subscription error
+          if (errorData.code === 'SUBSCRIPTION_EXPIRED') {
+            console.log('[SUBSCRIPTION] Business subscription expired - showing message');
+            document.getElementById('booking-form-section').innerHTML = `
+              <div style="text-align: center; padding: 60px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;">🔒</div>
+                <h2 style="color: #374151; margin-bottom: 8px;">Онлайн-запись временно недоступна</h2>
+                <p style="color: #6b7280; margin-bottom: 24px;">Владелец аккаунта не продлил подписку.</p>
+                <p style="color: #9ca3af; font-size: 14px;">Попробуйте обратиться к владельцу бизнеса для возобновления услуги.</p>
+              </div>
+            `;
+            return; // Don't throw error, just stop loading
+          }
+          
+          throw new Error('Не удалось загрузить данные бизнеса');
+        }
+
+        businessData = await response.json();
+        console.log('Business data loaded:', businessData);
+        console.log('Business data structure:', JSON.stringify(businessData, null, 2));
+
+        // Check if in reschedule mode and load existing booking
+        if (isRescheduleMode()) {
+          const rescheduleToken = getRescheduleToken();
+          if (rescheduleToken) {
+            await loadExistingBooking(rescheduleToken);
+          }
+        }
+
+        // Update business info
+        const businessName = businessData.business?.name || businessData.name || 'ТЕСТ ЕБАНА';
+        console.log('Setting business name:', businessName);
+        document.getElementById('business-name').textContent = businessName;
+        const branches = businessData.branches || [];
+        const businessAddress = branches.length > 0 ? branches[0].address : 'Ворвского, Сочи';
+        console.log('Setting business address:', businessAddress);
+        document.getElementById('business-address').textContent = businessAddress;
+
+        // Hide old branch selector
+        document.getElementById('branch-selector').style.display = 'none';
+
+        // Update logo if available
+        const logo = businessData.business?.logo || businessData.logo;
+        console.log('Logo data:', logo);
+        if (logo) {
+          // Use proxy endpoint to avoid CORS issues
+          const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(logo)}`;
+          document.getElementById('business-logo').innerHTML = `<img src="${proxyUrl}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">`;
+        }
+
+        // Load branch description and work photos
+        const branchDescription = businessData.business?.description || businessData.description;
+        const branchDescriptionEl = document.getElementById('branch-description');
+        if (branchDescription && branchDescriptionEl) {
+          branchDescriptionEl.textContent = branchDescription;
+        }
+
+        // Load work photos
+        const worksGallery = document.getElementById('works-gallery');
+        if (worksGallery && businessData.workPhotos && businessData.workPhotos.length > 0) {
+          worksGallery.innerHTML = '';
+          businessData.workPhotos.forEach(work => {
+            const workImg = document.createElement('img');
+            // Use proxy endpoint to avoid CORS issues
+            const imageUrl = work.imageUrl || work.url;
+            const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(imageUrl)}`;
+            workImg.src = proxyUrl;
+            workImg.alt = work.description || '';
+            workImg.style.cssText = 'width: 100%; height: 200px; object-fit: cover; border-radius: 8px;';
+            worksGallery.appendChild(workImg);
+          });
+        }
+
+        // Show "О филиале" button if there's description or work photos
+        const aboutBranchBtn = document.getElementById('about-branch-btn');
+        if (aboutBranchBtn && (branchDescription || (businessData.workPhotos && businessData.workPhotos.length > 0))) {
+          aboutBranchBtn.style.display = 'flex';
+        }
+
+        // Load and display branches first (only if no branch is selected yet)
+        if (!selectedBranch || !selectedBranch.id) {
+          loadBranches();
+          // Show booking content instead of navigation
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('branches-section').style.display = 'block';
+        } else {
+          // If branch is already selected, go directly to selection menu
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('branches-section').style.display = 'none';
+          document.getElementById('selection-menu-section').style.display = 'block';
+        }
+
+      } catch (error) {
+        console.error('Error loading business data:', error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = 'Не удалось загрузить информацию о бизнесе. ' + error.message;
+      }
+    }
+
+    // Load branches
+    function loadBranches() {
+      const branchesGrid = document.getElementById('branches-grid');
+
+      if (!businessData.branches || businessData.branches.length === 0) {
+        branchesGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Филиалы пока не добавлены</div>';
+        return;
+      }
+
+      branchesGrid.innerHTML = businessData.branches.map(branch => `
+        <div class="service-item" data-branch-id="${branch.id}">
+          <div class="service-info">
+            <div class="service-name">${branch.name}</div>
+            <div class="service-duration">${branch.city ? branch.city + ', ' : ''}${branch.address}</div>
+            ${branch.schedule ? `<div class="service-duration" style="font-size: 12px; margin-top: 4px;">${branch.schedule}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      // Add click handlers
+      document.querySelectorAll('.service-item[data-branch-id]').forEach(item => {
+        item.addEventListener('click', () => selectBranch(item));
+      });
+    }
+
+    // Select branch
+    function selectBranch(element) {
+      // Remove previous selection
+      document.querySelectorAll('.service-item[data-branch-id]').forEach(item => {
+        item.classList.remove('selected');
+      });
+
+      // Add selection
+      element.classList.add('selected');
+      selectedBranch = {
+        id: element.dataset.branchId
+      };
+
+      // Reload business data with branch filter
+      loadBusinessData();
+
+      // Hide branches, show selection menu
+      document.getElementById('branches-section').style.display = 'none';
+      document.getElementById('selection-menu-section').style.display = 'block';
+
+      // Scroll to selection menu
+      document.getElementById('selection-menu-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Select option from menu
+    function selectOption(option) {
+      selectedOption = option;
+
+      // Hide selection menu
+      document.getElementById('selection-menu-section').style.display = 'none';
+
+      if (option === 'specialist') {
+        // Show specialists
+        document.getElementById('specialists-section').style.display = 'block';
+        loadSpecialists();
+      } else if (option === 'service') {
+        // Show services
+        document.getElementById('services-section').style.display = 'block';
+        loadServices();
+      } else if (option === 'datetime') {
+        // Show calendar
+        document.getElementById('calendar-section').style.display = 'block';
+        loadCalendar();
+      }
+
+      // Scroll to section
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Go back to previous section
+    function goBack(section) {
+      // Hide all sections
+      document.getElementById('branches-section').style.display = 'none';
+      document.getElementById('selection-menu-section').style.display = 'none';
+      document.getElementById('specialists-section').style.display = 'none';
+      document.getElementById('services-section').style.display = 'none';
+      document.getElementById('calendar-section').style.display = 'none';
+      document.getElementById('time-section').style.display = 'none';
+      document.getElementById('contact-form-section').style.display = 'none';
+
+      // Show the requested section
+      document.getElementById(section + '-section').style.display = 'block';
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Go back from contact form
+    function goBackFromContact() {
+      // Determine where to go back based on selected option
+      if (selectedOption === 'datetime') {
+        // Date/Time → Specialist → Services → Contact
+        // Go back to services if service was selected, otherwise to specialists
+        if (selectedServices.length > 0) {
+          goBack('services');
+        } else {
+          goBack('specialists');
+        }
+      } else {
+        // Specialist/Service → Date/Time → Contact
+        goBack('calendar');
+      }
+    }
+
+    // Load services
+    function loadServices() {
+      const servicesGrid = document.getElementById('services-grid');
+
+      console.log('loadServices called');
+      console.log('selectedSpecialist:', selectedSpecialist);
+      console.log('selectedSpecialist.id:', selectedSpecialist?.id);
+      console.log('businessData.masters:', businessData.masters);
+      console.log('All masters with IDs:', businessData.masters?.map(m => ({ id: m.id, name: m.name })));
+      console.log('businessData.services:', businessData.services);
+      console.log('businessData.categories:', businessData.categories);
+
+      if (!businessData.services || businessData.services.length === 0) {
+        servicesGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Услуги пока не добавлены</div>';
+        return;
+      }
+
+      // Filter services by specialist if selected
+      let filteredServices = businessData.services;
+      let filteredCategories = businessData.categories || [];
+
+      if (selectedSpecialist && businessData.masters) {
+        const specialist = businessData.masters.find(m => m.id === parseInt(selectedSpecialist.id));
+        console.log('Found specialist:', specialist);
+        if (specialist) {
+          console.log('Specialist categoryIds:', specialist.categoryIds);
+          console.log('Specialist serviceIds:', specialist.serviceIds);
+          // Filter by categoryIds and serviceIds
+          if (specialist.categoryIds && specialist.categoryIds.length > 0) {
+            console.log('Filtering categories by:', specialist.categoryIds);
+            filteredCategories = (businessData.categories || []).filter(c =>
+              specialist.categoryIds.includes(c.id)
+            );
+            console.log('Filtered categories:', filteredCategories);
+            console.log('All categories with IDs:', (businessData.categories || []).map(c => ({ id: c.id, name: c.name })));
+          }
+          if (specialist.serviceIds && specialist.serviceIds.length > 0) {
+            console.log('Filtering services by:', specialist.serviceIds);
+            console.log('All services with IDs:', businessData.services.map(s => ({ id: s.id, name: s.name, categoryId: s.categoryId })));
+            filteredServices = businessData.services.filter(s =>
+              specialist.serviceIds.includes(s.id)
+            );
+            console.log('Filtered services:', filteredServices);
+          }
+        } else {
+          console.log('Specialist not found in masters array!');
+        }
+      }
+
+      // Group services by category if categories exist
+      if (filteredCategories && filteredCategories.length > 0) {
+        console.log('Rendering services with categories');
+        let html = '';
+        filteredCategories.forEach(category => {
+          const categoryServices = filteredServices.filter(s => s.categoryId === category.id);
+          console.log('Category:', category.name, 'services:', categoryServices);
+          if (categoryServices.length > 0) {
+            html += `<h3 style="margin: 24px 0 16px; font-size: 18px; font-weight: 600; color: #1f2937;">${category.name}</h3>`;
+            html += categoryServices.map(service => `
+              <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
+                <div class="service-checkbox"></div>
+                <div class="service-info">
+                  <div class="service-name">${service.name}</div>
+                  <div class="service-duration">${service.duration} мин</div>
+                </div>
+                <div class="service-price">${service.price} ₽</div>
+              </div>
+            `).join('');
+          }
+        });
+
+        // Add services without category
+        const uncategorizedServices = filteredServices.filter(s => !s.categoryId);
+        console.log('Uncategorized services:', uncategorizedServices);
+        if (uncategorizedServices.length > 0) {
+          html += `<h3 style="margin: 24px 0 16px; font-size: 18px; font-weight: 600; color: #1f2937;">Без категории</h3>`;
+          html += uncategorizedServices.map(service => `
+            <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
+              <div class="service-checkbox"></div>
+              <div class="service-info">
+                <div class="service-name">${service.name}</div>
+                <div class="service-duration">${service.duration} мин</div>
+              </div>
+              <div class="service-price">${service.price} ₽</div>
+            </div>
+          `).join('');
+        }
+
+        console.log('Final HTML length:', html.length);
+        servicesGrid.innerHTML = html;
+      } else {
+        console.log('No categories, rendering all services');
+        // No categories, just list all services
+        servicesGrid.innerHTML = filteredServices.map(service => `
+          <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
+            <div class="service-checkbox"></div>
+            <div class="service-info">
+              <div class="service-name">${service.name}</div>
+              <div class="service-duration">${service.duration} мин</div>
+            </div>
+            <div class="service-price">${service.price} ₽</div>
+          </div>
+        `).join('');
+      }
+
+      // Add click handlers
+      document.querySelectorAll('.service-item').forEach(item => {
+        item.addEventListener('click', () => selectService(item));
+      });
+    }
+
+    // Load specialists
+    function loadSpecialists() {
+      const specialistsGrid = document.getElementById('specialists-grid');
+
+      if (!businessData.masters || businessData.masters.length === 0) {
+        specialistsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Специалисты пока не добавлены</div>';
+        return;
+      }
+
+      // Filter specialists by selected services
+      let filteredMasters = businessData.masters;
+
+      if (selectedServices && selectedServices.length > 0) {
+        const selectedServiceIds = selectedServices.map(s => parseInt(s.id));
+        console.log('Filtering specialists by selected service IDs:', selectedServiceIds);
+
+        filteredMasters = businessData.masters.filter(master => {
+          // Check if master has any of the selected services in their serviceIds
+          if (master.serviceIds && master.serviceIds.length > 0) {
+            const hasMatchingService = master.serviceIds.some(serviceId =>
+              selectedServiceIds.includes(parseInt(serviceId))
+            );
+            console.log(`Master ${master.name} has matching service:`, hasMatchingService, 'serviceIds:', master.serviceIds);
+            return hasMatchingService;
+          }
+          return false;
+        });
+
+        console.log('Filtered masters:', filteredMasters);
+      }
+
+      if (filteredMasters.length === 0) {
+        specialistsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Нет специалистов, которые могут выполнить выбранные услуги</div>';
+        return;
+      }
+
+      specialistsGrid.innerHTML = filteredMasters.map(master => `
+        <div class="specialist-item" data-specialist-id="${master.id}">
+          <div class="specialist-photo">
+            ${master.avatarUrl ? `<img src="/api/proxy/image?url=${encodeURIComponent(master.avatarUrl)}" alt="${master.name}">` : '<span>?</span>'}
+          </div>
+          <div class="specialist-name">${master.name}</div>
+          <div class="specialist-specialization">${master.specializations || 'Специалист'}</div>
+        </div>
+      `).join('');
+
+      // Add click handlers
+      document.querySelectorAll('.specialist-item').forEach(item => {
+        item.addEventListener('click', () => selectSpecialist(item));
+      });
+    }
+
+    // Select service
+    function selectService(element) {
+      const serviceId = element.dataset.serviceId;
+      const duration = parseInt(element.dataset.duration) || 0;
+      const price = parseInt(element.dataset.price) || 0;
+
+      console.log('Selecting service:', serviceId, 'duration:', duration, 'price:', price);
+
+      const serviceData = {
+        id: serviceId,
+        duration: duration,
+        price: price
+      };
+
+      // Toggle selection
+      const existingIndex = selectedServices.findIndex(s => s.id === serviceId);
+      if (existingIndex !== -1) {
+        // Remove selection
+        selectedServices.splice(existingIndex, 1);
+        element.classList.remove('selected');
+      } else {
+        // Add selection
+        selectedServices.push(serviceData);
+        element.classList.add('selected');
+      }
+
+      // Show/hide continue button based on selection
+      const continueBtn = document.getElementById('services-continue-btn');
+      if (continueBtn) {
+        continueBtn.style.display = selectedServices.length > 0 ? 'block' : 'none';
+      }
+    }
+
+    // Proceed from services section
+    function proceedFromServices() {
+      if (selectedServices.length === 0) {
+        return;
+      }
+
+      // Hide services
+      document.getElementById('services-section').style.display = 'none';
+
+      // Determine next step based on selected option
+      if (selectedOption === 'specialist') {
+        // Specialist → Services → Date/Time
+        document.getElementById('calendar-section').style.display = 'block';
+        loadCalendar();
+      } else if (selectedOption === 'service') {
+        // Service → Specialist → Date/Time
+        document.getElementById('specialists-section').style.display = 'block';
+        loadSpecialists();
+      } else {
+        // Date/Time → Specialist → Services
+        document.getElementById('contact-form-section').style.display = 'block';
+      }
+
+      // Scroll to section
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Select specialist
+    function selectSpecialist(element) {
+      // Remove previous selection
+      document.querySelectorAll('.specialist-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+
+      // Add selection
+      element.classList.add('selected');
+      const specialistId = element.dataset.specialistId;
+      const master = businessData.masters.find(m => m.id === parseInt(specialistId));
+      selectedSpecialist = {
+        id: specialistId,
+        schedule: master?.schedule || null,
+        categoryIds: master?.categoryIds || [],
+        serviceIds: master?.serviceIds || []
+      };
+
+      // Hide specialists
+      document.getElementById('specialists-section').style.display = 'none';
+
+      // Determine next step based on selected option
+      if (selectedOption === 'specialist') {
+        // Specialist → Services → Date/Time
+        document.getElementById('services-section').style.display = 'block';
+        loadServices();
+      } else if (selectedOption === 'datetime') {
+        // Date/Time → Specialist → Services
+        document.getElementById('services-section').style.display = 'block';
+        loadServices();
+      } else {
+        // Service → Specialist → Date/Time
+        document.getElementById('calendar-section').style.display = 'block';
+        loadCalendar();
+      }
+
+      // Scroll to section
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Load calendar
+    function loadCalendar() {
+      const calendarGrid = document.getElementById('calendar-grid');
+      const monthElement = document.getElementById('calendar-month');
+
+      const now = new Date();
+      const year = currentYear;
+      const month = currentMonth;
+
+      monthElement.textContent = new Date(year, month).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+      
+      // Day headers
+      const dayHeaders = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+      calendarGrid.innerHTML = dayHeaders.map(day => 
+        `<div class="calendar-day-header">${day}</div>`
+      ).join('');
+      
+      // Calendar days
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      // Adjust for Monday start
+      const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+      
+      // Empty cells for alignment
+      for (let i = 0; i < adjustedFirstDay; i++) {
+        calendarGrid.innerHTML += '<div class="calendar-day disabled"></div>';
+      }
+      
+      // Days of month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        // Use UTC for date comparison to avoid timezone issues
+        const date = new Date(Date.UTC(year, month, day));
+        const nowUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+        const isToday = date.getTime() === nowUTC.getTime();
+        const isPast = date < nowUTC;
+
+        // Check if this day is in the specialist's schedule
+        let isAvailable = !isPast;
+        if (selectedSpecialist && selectedSpecialist.schedule) {
+          const daySchedule = selectedSpecialist.schedule[dateKey];
+          isAvailable = !isPast && daySchedule && daySchedule.enabled;
+        }
+
+        calendarGrid.innerHTML += `
+          <div class="calendar-day ${isToday ? 'today' : ''} ${isAvailable ? 'available' : 'disabled'}"
+               data-date="${dateKey}"
+               ${isAvailable ? '' : 'disabled'}>
+            ${day}
+          </div>
+        `;
+      }
+      
+      // Add click handlers
+      document.querySelectorAll('.calendar-day.available').forEach(day => {
+        day.addEventListener('click', () => selectDate(day));
+      });
+
+      // Add month navigation handlers
+      document.getElementById('prev-month').addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+          currentMonth = 11;
+          currentYear--;
+        }
+        loadCalendar();
+      });
+
+      document.getElementById('next-month').addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
+        }
+        loadCalendar();
+      });
+    }
+
+    // Select date
+    function selectDate(element) {
+      // Remove previous selection
+      document.querySelectorAll('.calendar-day').forEach(day => {
+        day.classList.remove('selected');
+      });
+
+      // Add selection
+      element.classList.add('selected');
+      selectedDate = element.dataset.date;
+
+      // Show time slots within calendar section
+      document.getElementById('time-section').style.display = 'block';
+
+      // Load time slots
+      loadTimeSlots();
+
+      // Scroll to time slots
+      document.getElementById('time-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Load time slots
+    function loadTimeSlots() {
+      const timeSlotsGrid = document.getElementById('time-slots-grid');
+
+      console.log('loadTimeSlots called');
+      console.log('selectedSpecialist:', selectedSpecialist);
+      console.log('selectedSpecialist.schedule:', selectedSpecialist?.schedule);
+      console.log('selectedDate:', selectedDate);
+
+      // Get current time for disabling past slots
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const isToday = selectedDate === todayStr;
+
+      if (!selectedSpecialist || !selectedSpecialist.schedule) {
+        console.log('No schedule found, using default time slots');
+        // Default time slots if no schedule
+        const timeSlots = [
+          '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+          '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+          '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+          '18:00', '18:30', '19:00', '19:30'
+        ];
+
+        timeSlotsGrid.innerHTML = timeSlots.map(time => {
+          // Check if time slot is in the past for today
+          let isDisabled = false;
+          if (isToday) {
+            const [hours, minutes] = time.split(':').map(Number);
+            const slotTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+            isDisabled = slotTime <= now;
+          }
+
+          return `<div class="time-slot ${isDisabled ? 'disabled' : 'available'}" data-time="${time}">${time}</div>`;
+        }).join('');
+      } else {
+        // Use specialist's schedule
+        const schedule = selectedSpecialist.schedule;
+        const dateKey = selectedDate;
+        const daySchedule = schedule[dateKey];
+
+        console.log('Schedule keys:', Object.keys(schedule));
+        console.log('Date key:', dateKey);
+        console.log('Day schedule:', daySchedule);
+
+        if (daySchedule && daySchedule.enabled) {
+          const startTime = daySchedule.startTime;
+          const endTime = daySchedule.endTime;
+
+          console.log('Start time:', startTime, 'End time:', endTime);
+
+          // Generate time slots with the specialist's time step
+          const timeStep = daySchedule.timeStep || 15;
+          const timeSlots = generateTimeSlots(startTime, endTime, timeStep);
+
+          console.log('Generated time slots:', timeSlots);
+
+          // Filter out time slots that fall within breaks and mark them as gray
+          const breaks = daySchedule.breaks || [];
+          const timeSlotsWithBreaks = timeSlots.map(function(time) {
+            const slotTime = new Date(selectedDate + 'T' + time);
+            let isBreak = false;
+            for (var i = 0; i < breaks.length; i++) {
+              const breakStart = new Date(selectedDate + 'T' + breaks[i].start);
+              const breakEnd = new Date(selectedDate + 'T' + breaks[i].end);
+              if (slotTime >= breakStart && slotTime < breakEnd) {
+                isBreak = true;
+                break;
+              }
+            }
+            return {
+              time: time,
+              isBreak: isBreak
+            };
+          });
+
+          console.log('Time slots with break status:', timeSlotsWithBreaks);
+
+          timeSlotsGrid.innerHTML = timeSlotsWithBreaks.map(function(slot) {
+            // Check if time slot is in the past for today
+            let isDisabled = false;
+            if (isToday && !slot.isBreak) {
+              const [hours, minutes] = slot.time.split(':').map(Number);
+              const slotTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+              isDisabled = slotTime <= now;
+            }
+
+            if (slot.isBreak) {
+              return '<div class="time-slot break" data-time="' + slot.time + '">' + slot.time + '</div>';
+            } else if (isDisabled) {
+              return '<div class="time-slot disabled" data-time="' + slot.time + '">' + slot.time + '</div>';
+            } else {
+              return '<div class="time-slot available" data-time="' + slot.time + '">' + slot.time + '</div>';
+            }
+          }).join('');
+        } else {
+          console.log('Day not enabled in schedule or no day schedule found, using default time slots');
+          // Use default time slots if no schedule for this day
+          const timeSlots = [
+            '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+            '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+            '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+            '18:00', '18:30', '19:00', '19:30'
+          ];
+          timeSlotsGrid.innerHTML = timeSlots.map(time => {
+            // Check if time slot is in the past for today
+            let isDisabled = false;
+            if (isToday) {
+              const [hours, minutes] = time.split(':').map(Number);
+              const slotTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+              isDisabled = slotTime <= now;
+            }
+
+            return `<div class="time-slot ${isDisabled ? 'disabled' : 'available'}" data-time="${time}">${time}</div>`;
+          }).join('');
+        }
+      }
+
+      // Load existing appointments and mark occupied slots
+      loadAppointmentsAndMarkOccupied();
+
+      // Add click handlers only for available slots
+      document.querySelectorAll('.time-slot.available').forEach(slot => {
+        slot.addEventListener('click', () => selectTime(slot));
+      });
+    }
+
+    // Load appointments and mark occupied time slots
+    async function loadAppointmentsAndMarkOccupied() {
+      try {
+        console.log('loadAppointmentsAndMarkOccupied called');
+        const businessId = businessData.business?.id || businessData.id;
+        console.log('businessId:', businessId);
+        if (!businessId) {
+          console.error('No businessId found in businessData:', businessData);
+          return;
+        }
+        const apiUrl = `/api/public/appointments?masterId=${selectedSpecialist.id}&from=${selectedDate}&to=${selectedDate}&businessId=${businessId}`;
+        console.log('Fetching appointments from:', apiUrl);
+        const response = await fetch(apiUrl);
+        console.log('Response status:', response.status);
+        if (response.ok) {
+          const appointments = await response.json();
+          console.log('Appointments loaded:', appointments);
+          
+          appointments.forEach(appointment => {
+            const appointmentStart = new Date(appointment.startsAt);
+            const appointmentEnd = new Date(appointment.endsAt);
+            console.log('Processing appointment:', appointment.id, 'from', appointmentStart, 'to', appointmentEnd);
+            
+            // Mark all time slots within the appointment duration as occupied
+            document.querySelectorAll('.time-slot.available').forEach(slot => {
+              const slotTime = slot.dataset.time;
+              const [slotHour, slotMin] = slotTime.split(':').map(Number);
+              const slotDate = new Date(selectedDate);
+              slotDate.setHours(slotHour, slotMin, 0, 0);
+              
+              // Check if this slot is within the appointment time range
+              if (slotDate >= appointmentStart && slotDate < appointmentEnd) {
+                console.log('Marking slot as occupied:', slotTime);
+                slot.classList.remove('available');
+                slot.classList.add('occupied');
+                slot.style.pointerEvents = 'none';
+                slot.style.opacity = '0.5';
+                slot.style.backgroundColor = '#e5e7eb';
+              }
+            });
+          });
+        } else {
+          console.error('Failed to load appointments, status:', response.status);
+        }
+      } catch (error) {
+        console.error('Error loading appointments:', error);
+      }
+    }
+
+    // Generate time slots with given step (in minutes)
+    function generateTimeSlots(startTime, endTime, stepMinutes) {
+      const slots = [];
+      const [startHour, startMin] = startTime.split(':').map(Number);
+      const [endHour, endMin] = endTime.split(':').map(Number);
+
+      let currentMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+
+      while (currentMinutes + stepMinutes <= endMinutes) {
+        const hour = Math.floor(currentMinutes / 60);
+        const minute = currentMinutes % 60;
+        slots.push(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+        currentMinutes += stepMinutes;
+      }
+
+      return slots;
+    }
+
+    // Select time
+    function selectTime(element) {
+      // Remove previous selection
+      document.querySelectorAll('.time-slot').forEach(slot => {
+        slot.classList.remove('selected');
+      });
+
+      // Add selection
+      element.classList.add('selected');
+      selectedTime = element.dataset.time;
+
+      // Hide time section
+      document.getElementById('time-section').style.display = 'none';
+
+      // Determine next step based on selected option
+      if (selectedOption === 'datetime') {
+        // Date/Time → Specialist → Services → Contact
+        // Check if specialist is already selected
+        if (selectedSpecialist) {
+          // Show services
+          document.getElementById('calendar-section').style.display = 'none';
+          document.getElementById('services-section').style.display = 'block';
+          loadServices();
+        } else {
+          // Show specialists
+          document.getElementById('calendar-section').style.display = 'none';
+          document.getElementById('specialists-section').style.display = 'block';
+          loadSpecialists();
+        }
+      } else {
+        // Specialist/Service → Date/Time → Contact
+        document.getElementById('calendar-section').style.display = 'none';
+        document.getElementById('contact-form-section').style.display = 'block';
+      }
+
+      // Scroll to section
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Handle contact form submission
+    document.getElementById('contact-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Validate phone number
+      const phoneInput = document.getElementById('client-phone');
+      const phoneValue = phoneInput.value.replace(/\D/g, '');
+      if (phoneValue.length < 11) {
+        alert('Пожалуйста, введите полный номер телефона (11 цифр)');
+        phoneInput.focus();
+        return;
+      }
+
+      // Validate services
+      if (!selectedServices || selectedServices.length === 0) {
+        alert('Пожалуйста, выберите хотя бы одну услугу');
+        return;
+      }
+
+      // Validate time
+      if (!selectedTime) {
+        alert('Пожалуйста, выберите время записи');
+        return;
+      }
+
+      // Validate date
+      if (!selectedDate) {
+        alert('Пожалуйста, выберите дату записи');
+        return;
+      }
+
+      // Calculate total duration from all selected services
+      console.log('Selected services:', selectedServices);
+      const totalDuration = selectedServices.reduce((sum, service) => {
+        const duration = parseInt(service.duration) || 0;
+        return sum + duration;
+      }, 0);
+      const totalPrice = selectedServices.reduce((sum, service) => {
+        const price = parseInt(service.price) || 0;
+        return sum + price;
+      }, 0);
+
+      console.log('Total duration:', totalDuration, 'Total price:', totalPrice);
+
+      const [hours, minutes] = selectedTime.split(':').map(Number);
+      // Use simple format without timezone offset to avoid UTC conversion
+      const startsAtISO = selectedDate + 'T' + selectedTime + ':00';
+      
+      // Calculate endsAt with same format
+      const endHours = hours + Math.floor((minutes + totalDuration) / 60);
+      const endMinutes = (minutes + totalDuration) % 60;
+      const endsAtISO = selectedDate + 'T' + 
+        String(endHours).padStart(2, '0') + ':' + 
+        String(endMinutes).padStart(2, '0') + ':00';
+
+      // Use the first service as the primary service (for compatibility with existing API)
+      const primaryService = selectedServices[0];
+
+      const formData = {
+        businessId: businessData.business?.id || businessData.id,
+        serviceId: primaryService.id,
+        masterId: selectedSpecialist.id,
+        branchId: selectedBranch,
+        startsAt: startsAtISO,
+        endsAt: endsAtISO,
+        customerName: document.getElementById('client-name').value,
+        customerPhone: document.getElementById('client-phone').value,
+        customerComment: document.getElementById('client-comment').value,
+        // Include all selected services
+        services: selectedServices.map(s => ({
+          id: s.id,
+          duration: s.duration,
+          price: s.price
+        })),
+        totalDuration: totalDuration,
+        totalPrice: totalPrice
+      };
+
+      console.log('Booking data:', formData);
+      console.log('Required fields check:', {
+        businessId: formData.businessId,
+        serviceId: formData.serviceId,
+        masterId: formData.masterId,
+        branchId: formData.branchId,
+        startsAt: formData.startsAt,
+        endsAt: formData.endsAt,
+        customerName: formData.customerName,
+        customerPhone: formData.customerPhone
+      });
+      console.log('selectedBranch:', selectedBranch);
+      console.log('businessData:', businessData);
+
+      try {
+        // If in reschedule mode, delete old booking first
+        if (isRescheduleMode() && window.existingBooking) {
+          try {
+            await fetch(`/api/public/appointments/${window.existingBooking.id}`, {
+              method: 'DELETE'
+            });
+            console.log('Old booking deleted for reschedule');
+          } catch (error) {
+            console.error('Error deleting old booking:', error);
+          }
+        }
+
+        // Send booking data to API
+        const response = await fetch('/api/public/appointments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          
+          // Check for subscription errors
+          if (errorData.code === 'SUBSCRIPTION_EXPIRED') {
+            throw new Error('Онлайн-запись временно недоступна. Владелец аккаунта не продлил подписку.');
+          }
+          
+          if (response.status === 409) {
+            // Time slot conflict - show specific error
+            throw new Error(errorData.error || 'Это время уже занято. Пожалуйста, выберите другое время.');
+          }
+          throw new Error(errorData.error || 'Не удалось создать запись');
+        }
+
+        const appointment = await response.json();
+        bookingToken = appointment.bookingToken; // Global variable
+        const appointmentId = appointment.id;
+
+        // Show success message
+        const serviceNames = selectedServices.map(s => businessData.services.find(service => service.id == s.id)?.name).join(', ');
+        document.getElementById('contact-form-section').innerHTML = `
+          <div class="success">
+            <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;"><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #22c55e; border-radius: 50%; color: white; font-size: 18px; margin-right: 8px;">✓</span>Запись успешно создана</h2>
+            <p style="margin-bottom: 8px;">Услуги: ${serviceNames}</p>
+            <p style="margin-bottom: 8px;">Специалист: ${businessData.masters.find(m => m.id == selectedSpecialist.id)?.name}</p>
+            <p style="margin-bottom: 8px;">Дата: ${new Date(selectedDate).toLocaleDateString('ru-RU')} в ${selectedTime}</p>
+            <p style="margin-bottom: 8px;">Общая стоимость: ${totalPrice} ₽</p>
+            <p style="margin-top: 16px;">Спасибо, что выбрали ${businessData.business?.name || businessData.name}!</p>
+            <div style="margin-top: 24px; padding: 16px; background: #f8fafc; border-radius: 8px;">
+              <p style="margin-bottom: 12px; font-weight: 500;">Где удобно получить напоминание?</p>
+              <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+                <button id="connect-telegram-btn" style="padding: 10px 20px; background: #229ED9; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; min-width: 200px;">
+                  Подключить Telegram
+                </button>
+                <!-- WhatsApp кнопка скрыта - уведомления отправляются автоматически -->
+                <button id="connect-vk-community-btn" style="padding: 10px 20px; background: #0077FF; color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; min-width: 200px;">
+                  Подключить ВКонтакте
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Add event listener to connect Telegram button
+        document.getElementById('connect-telegram-btn').addEventListener('click', () => {
+          // Directly open Telegram deep-link with booking token
+          window.open(`https://t.me/bloknot_booking_bot?start=${bookingToken}`, '_blank');
+        });
+
+        // WhatsApp уведомления отправляются автоматически - обработчик не нужен
+
+        // Add event listener to connect VK Community button
+        document.getElementById('connect-vk-community-btn').addEventListener('click', async () => {
+          try {
+            console.log('[VK COMMUNITY] button clicked');
+            console.log('[VK COMMUNITY] bookingToken:', bookingToken);
+            
+            if (!bookingToken) {
+              alert('Сначала создайте запись');
+              return;
+            }
+            
+            // Получаем данные записи
+            const apiUrl = `/api/public/appointment/${bookingToken}`;
+            console.log('[VK COMMUNITY] Fetching from:', apiUrl);
+            
+            const appointmentResponse = await fetch(apiUrl);
+            console.log('[VK COMMUNITY] Response status:', appointmentResponse.status);
+            
+            const appointmentData = await appointmentResponse.json();
+            console.log('[VK COMMUNITY] Response data:', appointmentData);
+            
+            if (!appointmentData.success) {
+              console.error('[VK COMMUNITY] API Error:', appointmentData);
+              alert('Ошибка получения данных записи: ' + (appointmentData.error || 'Unknown error'));
+              return;
+            }
+            
+            const { appointment } = appointmentData.data;
+            
+            // Создаем код привязки
+            console.log('[VK COMMUNITY] Creating VK code...');
+            const vkResponse = await fetch(`/api/public/appointment/${bookingToken}/vk-request`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            
+            console.log('[VK COMMUNITY] VK Response status:', vkResponse.status);
+            const result = await vkResponse.json();
+            console.log('[VK COMMUNITY] VK Response data:', result);
+            
+            if (!result.success) {
+              console.error('[VK COMMUNITY] VK API Error:', result);
+              alert('Ошибка создания кода привязки: ' + (result.error || 'Unknown error'));
+              return;
+            }
+            
+            const { code, expiresAt } = result.data;
+            
+            // Показываем модальное окно с кодом
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0,0,0,0.5);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 10000;
+            `;
+            
+            modal.innerHTML = `
+              <div style="background: white; padding: 24px; border-radius: 12px; max-width: 400px; margin: 20px; text-align: center;">
+                                <p style="margin: 0 0 20px 0; color: #666; line-height: 1.5;">
+                  Скопируй код и отправь его в сообщения сообщества
+                </p>
+                <div style="background: #f0f7ff; border: 2px solid #0077FF; padding: 16px; border-radius: 8px; margin: 0 0 20px 0; position: relative;">
+                  <div style="font-size: 24px; font-weight: bold; color: #0077FF; letter-spacing: 2px;">${code}</div>
+                  <button id="copy-code" style="position: absolute; top: 8px; right: 8px; background: #0077FF; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px;">
+                    📋
+                  </button>
+                </div>
+                <button id="open-vk-group" style="background: #0077FF; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin: 0 8px;">
+                  Перейти к диалогу в ВКонтакте
+                </button>
+                <div style="margin-top: 16px;">
+                  <button id="close-modal" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                    Закрыть
+                  </button>
+                </div>
+              </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Обработчики кнопок
+            document.getElementById('open-vk-group').addEventListener('click', () => {
+              // Открываем диалог с сообществом
+              // TODO: Получать ID группы из настроек бизнеса
+              const groupId = '238506692'; // ID группы из VK_GROUP_ID
+              window.open(`https://vk.com/im?sel=-${groupId}`, '_blank');
+            });
+            
+            document.getElementById('copy-code').addEventListener('click', () => {
+              navigator.clipboard.writeText(code).then(() => {
+                const btn = document.getElementById('copy-code');
+                const originalText = btn.textContent;
+                btn.textContent = '✅';
+                btn.style.background = '#28a745';
+                setTimeout(() => {
+                  btn.textContent = originalText;
+                  btn.style.background = '#0077FF';
+                }, 2000);
+              });
+            });
+            
+            document.getElementById('close-modal').addEventListener('click', () => {
+              document.body.removeChild(modal);
+            });
+            
+            // Закрытие по клику на фон
+            modal.addEventListener('click', (e) => {
+              if (e.target === modal) {
+                document.body.removeChild(modal);
+              }
+            });
+            
+          } catch (error) {
+            console.error('[VK COMMUNITY] Error:', error);
+            alert('Ошибка при подключении ВКонтакте. Попробуйте позже.');
+          }
+        });
+      } catch (error) {
+        console.error('Error creating booking:', error);
+        alert('Ошибка при создании записи. Пожалуйста, попробуйте еще раз.');
+      }
+    });
+
+    // Phone formatting function
+    function formatPhone(input) {
+      // Remove all non-digit characters
+      let digits = input.value.replace(/\D/g, '');
+      
+      // Ensure it starts with 7 (Russian country code)
+      if (digits.length > 0 && !digits.startsWith('7')) {
+        digits = '7' + digits;
+      }
+      
+      // Limit to 11 digits (7 + 10 digit number)
+      digits = digits.substring(0, 11);
+      
+      // Format as +7 (XXX) - XXX - XX - XX
+      let formatted = '+7';
+      if (digits.length > 1) {
+        formatted += ' (' + digits.substring(1, 4) + ')';
+      }
+      if (digits.length > 4) {
+        formatted += ' - ' + digits.substring(4, 7);
+      }
+      if (digits.length > 7) {
+        formatted += ' - ' + digits.substring(7, 9);
+      }
+      if (digits.length > 9) {
+        formatted += ' - ' + digits.substring(9, 11);
+      }
+      
+      input.value = formatted;
+    }
+
+    // Toggle about branch section
+    function toggleAboutBranch() {
+      const section = document.getElementById('about-branch-section');
+      const arrow = document.getElementById('about-branch-arrow');
+      
+      if (section.style.display === 'none') {
+        section.style.display = 'block';
+        arrow.textContent = '▲';
+      } else {
+        section.style.display = 'none';
+        arrow.textContent = '▼';
+      }
+    }
+
+    // Load data when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      loadBusinessData();
+      
+      // Add phone formatting
+      const phoneInput = document.getElementById('client-phone');
+      if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+          formatPhone(e.target);
+        });
+        
+        phoneInput.addEventListener('focus', (e) => {
+          if (e.target.value === '+7') {
+            e.target.select();
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

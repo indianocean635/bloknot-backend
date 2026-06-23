@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Подписка - Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="cache-control" content="no-cache, no-store, must-revalidate">
+  <meta name="pragma" content="no-cache">
+  <meta name="expires" content="0">
+  <link rel="stylesheet" href="/styles.css?v=20260408" />
+  <!-- CloudPayments Widget -->
+  <script src="https://widget.cloudpayments.ru/bundles/cloudpayments"></script>
+  
+  <style>
+    /* Pricing styles from pricing.html */
+    .billing-period-section {
+      margin-bottom: 32px;
+    }
+
+    .billing-period-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .period-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .period-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .period-btn {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: white;
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .period-btn:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+
+    .period-btn.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    .discount-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #22c55e;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 32px;
+      margin-bottom: 60px;
+    }
+
+    .pricing-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 6px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .pricing-card.featured {
+      border-color: #22c55e;
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: -8px;
+      right: 16px;
+      background: #22c55e;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .pricing-header {
+      margin-bottom: 12px;
+    }
+
+    .pricing-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #1f2937;
+    }
+
+    .pricing-users {
+      color: #6b7280;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .pricing-price {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .price-monthly {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+
+    .price-period {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .pricing-buttons {
+      margin-bottom: 24px;
+    }
+
+    .pricing-features {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .pricing-features li {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .feature-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #22c55e;
+      margin-right: 12px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .feature-icon::before {
+      content: '✓';
+      color: white;
+      font-size: 10px;
+      display: block;
+      text-align: center;
+      line-height: 16px;
+    }
+
+    .pricing-summary {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .selected-tariff {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+
+    .selected-price {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+
+    .selected-subtitle {
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .modal-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Modal styles from pricing.html */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #0b0f14;
+    }
+
+    .modal-price {
+      font-size: 32px;
+      font-weight: 700;
+      color: #22c55e;
+      margin-bottom: 16px;
+    }
+
+    .modal-subtitle {
+      color: #6b7280;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+
+<div id="app-header"></div>
+
+<main class="container">
+  <h1 class="page-title">Подписка</h1>
+  <p class="page-subtitle">Управление вашей подпиской на сервис</p>
+
+  <!-- Subscription Info -->
+  <div class="card" style="margin-top:12px;">
+    <div id="subscriptionInfo" style="margin-bottom: 16px;">
+      <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+        <div id="subscriptionDetails">
+          <p style="color: #6b7280; font-size: 14px;">Загрузка информации о подписке...</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="subscriptionActions" style="display: none;">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn secondary" id="changePlanBtn" style="font-size: 12px; padding: 6px 12px; height: auto;">Сменить тариф</button>
+        <button class="btn secondary" id="cancelSubscriptionBtn" style="font-size: 12px; padding: 6px 12px; height: auto;">Отменить подписку</button>
+      </div>
+    </div>
+  </div>
+
+  </main>
+
+<!-- Subscription Plans Modal -->
+<div id="subscriptionPlansModal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 1200px; padding: 0;">
+    <div class="modal-header" style="padding: 24px; border-bottom: 1px solid #e5e7eb;">
+      <h3>Выберите тариф</h3>
+      <button class="modal-close" onclick="closeSubscriptionPlansModal()">&times;</button>
+    </div>
+    
+    <!-- Billing Period Toggle -->
+    <section class="billing-period-section" style="padding: 24px 24px 0;">
+      <div class="billing-period-toggle">
+        <span class="period-label">Срок подписки</span>
+        <div class="period-buttons">
+          <button class="period-btn active" id="period-1" onclick="selectPeriod(1)">
+            1 месяц
+          </button>
+          <button class="period-btn" id="period-12" onclick="selectPeriod(12)">
+            12 месяцев
+            <span class="discount-badge">-20%</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Grid -->
+    <section class="pricing-grid" style="padding: 24px;">
+      <div class="pricing-card">
+        <div class="pricing-header">
+          <h3 class="pricing-name">Solo</h3>
+          <p class="pricing-users">1 пользователь</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" data-monthly="690" data-yearly="6624">690₽</div>
+          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('Solo', '690', '6624')">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Неограниченное количество записей</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Онлайн-запись клиентов</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Управление услугами</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Продвинутая аналитика</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Персональный менеджер</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Экспорт данных</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Кастомизация бренда</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Напомининие о записи в телеграм</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pricing-card featured">
+        <div class="popular-badge">Популярное</div>
+        <div class="pricing-header">
+          <h3 class="pricing-name">Studio</h3>
+          <p class="pricing-users">До 5 пользователей</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" data-monthly="990" data-yearly="9504">990₽</div>
+          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('Studio', '990', '9504')">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Неограниченное количество записей</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Онлайн-запись клиентов</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Управление услугами</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Продвинутая аналитика</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Персональный менеджер</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Экспорт данных</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Кастомизация бренда</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Напомининие о записи в телеграм</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pricing-header">
+          <h3 class="pricing-name">Pro</h3>
+          <p class="pricing-users">Более 5 пользователей</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" data-monthly="1490" data-yearly="14304">1 490₽</div>
+          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('Pro', '1490', '14304')">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Неограниченное количество записей</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Онлайн-запись клиентов</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Управление услугами</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Продвинутая аналитика</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Персональный менеджер</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Экспорт данных</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Кастомизация бренда</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Напомининие о записи в телеграм</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Payment Modal (exact copy from pricing.html) -->
+<div class="modal" id="paymentModal">
+  <div class="modal-content">
+    <h3 class="modal-title">Подтверждение оплаты</h3>
+    <div class="modal-price" id="modalPrice">690₽/мес</div>
+    <p class="modal-subtitle" id="modalSubtitle">Выберите способ оплаты для привязки карты и автоматического списания</p>
+    <div class="modal-buttons" id="modalButtons">
+      <button class="btn-primary" onclick="processCardPayment()">
+        💳 Оплатить картой
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CloudPayments Payment Modal -->
+<div id="cloudPaymentsModal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 400px;">
+    <div class="modal-header">
+      <h3>Оплата подписки</h3>
+      <button class="modal-close" onclick="closeCloudPaymentsModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="selectedPlanInfo" style="margin-bottom: 20px;">
+        <!-- Plan info will be shown here -->
+      </div>
+      <div id="cloudPaymentsWidget">
+        <!-- CloudPayments widget will be initialized here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let subscriptionData = null;
+  let selectedPlan = null;
+  let currentUser = null;
+  let currentPeriod = 1;
+
+  // Load user data and subscription info on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    loadCurrentUser();
+    loadSubscriptionInfo();
+    setupSubscriptionEventListeners();
+  });
+
+  // Load current user data
+  async function loadCurrentUser() {
+    try {
+      const result = await Bloknot.api('/api/auth/me');
+      if (result.success) {
+        currentUser = result.data;
+        window.currentUser = currentUser;
+      }
+    } catch (error) {
+      console.error('[SUBSCRIPTION] Error loading user:', error);
+    }
+  }
+
+  // Setup event listeners
+  function setupSubscriptionEventListeners() {
+    document.getElementById('changePlanBtn').addEventListener('click', showSubscriptionPlans);
+    document.getElementById('cancelSubscriptionBtn').addEventListener('click', cancelSubscription);
+  }
+
+  // Load subscription information
+  async function loadSubscriptionInfo() {
+    try {
+      console.log('[SUBSCRIPTION] Loading subscription info...');
+      
+      const result = await Bloknot.api('/api/cloudpayments/subscription?v=' + Date.now());
+      console.log('[SUBSCRIPTION] Response data:', result);
+
+      if (result.success) {
+        subscriptionData = result.data;
+        displaySubscriptionInfo(subscriptionData);
+      } else {
+        console.error('[SUBSCRIPTION] Failed to load subscription info:', result.error);
+        displaySubscriptionError('Не удалось загрузить информацию о подписке');
+      }
+    } catch (error) {
+      console.error('[SUBSCRIPTION] Error loading subscription info:', error);
+      displaySubscriptionError('Ошибка загрузки данных о подписке');
+    }
+  }
+
+  
+  // Display subscription information
+  function displaySubscriptionInfo(data) {
+    const detailsDiv = document.getElementById('subscriptionDetails');
+    const actionsDiv = document.getElementById('subscriptionActions');
+
+    const statusColors = {
+      trial: '#3b82f6',
+      active: '#10b981',
+      cancelled: '#f59e0b',
+      expired: '#ef4444'
+    };
+
+    const statusTexts = {
+      trial: 'Пробный период',
+      active: 'Активна',
+      cancelled: 'Отменена',
+      expired: 'Истекла'
+    };
+
+    // Convert status to lower case for display
+    const normalizedStatus = (data.status || '').toLowerCase();
+
+    let html = `
+      <div style="display: grid; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 500; color: #374151;">Тариф:</span>
+          <span style="color: #1f2937;">${normalizedStatus === 'trial' ? 'Пробный период' : getPlanName(data.type)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 500; color: #374151;">Статус:</span>
+          <span style="color: ${statusColors[normalizedStatus]}; font-weight: 500;">${statusTexts[normalizedStatus] || data.status}</span>
+        </div>
+    `;
+
+    if (data.nextPaymentDate) {
+      const nextPaymentDate = new Date(data.nextPaymentDate);
+      html += `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 500; color: #374151;">Следующее списание:</span>
+          <span style="color: #1f2937;">${nextPaymentDate.toLocaleDateString('ru-RU')}</span>
+        </div>
+      `;
+    }
+
+    if (data.trialEndsAt && normalizedStatus === 'trial') {
+      const trialEndDate = new Date(data.trialEndsAt);
+      const daysLeft = Math.floor((trialEndDate - new Date()) / (1000 * 60 * 60 * 24));
+      const dayWord = getDayWord(daysLeft);
+      html += `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 500; color: #374151;">Окончание пробного периода:</span>
+          <span style="color: #1f2937;">${trialEndDate.toLocaleDateString('ru-RU')} (${daysLeft} ${dayWord})</span>
+        </div>
+      `;
+    }
+
+    if (data.subscriptionEndsAt) {
+      const subscriptionEndDate = new Date(data.subscriptionEndsAt);
+      html += `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 500; color: #374151;">Окончание доступа:</span>
+          <span style="color: #1f2937;">${subscriptionEndDate.toLocaleDateString('ru-RU')}</span>
+        </div>
+      `;
+    }
+
+    html += '</div>';
+    detailsDiv.innerHTML = html;
+
+    // Show actions only for active subscriptions
+    if (normalizedStatus === 'active' || normalizedStatus === 'trial') {
+      actionsDiv.style.display = 'block';
+    } else {
+      actionsDiv.style.display = 'none';
+    }
+  }
+
+  // Display subscription error
+  function displaySubscriptionError(message) {
+    const detailsDiv = document.getElementById('subscriptionDetails');
+    detailsDiv.innerHTML = `
+      <div style="color: #ef4444; font-size: 14px; text-align: center;">
+        ${message}
+      </div>
+    `;
+  }
+
+  
+  // Get plan name in Russian
+  function getPlanName(type) {
+    const planNames = {
+      solo: 'Solo',
+      studio: 'Studio',
+      pro: 'Pro',
+      trial: 'Пробный период',
+      null: 'Без подписки',
+      undefined: 'Без подписки'
+    };
+    return planNames[type] || planNames.trial;
+  }
+
+  // Get correct Russian word for days
+  function getDayWord(days) {
+    if (days === 1) return 'день';
+    if (days >= 2 && days <= 4) return 'дня';
+    return 'дней';
+  }
+
+  // Period selection function (from pricing.html)
+  function selectPeriod(period) {
+    currentPeriod = period;
+    
+    document.querySelectorAll('.period-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.getElementById(`period-${period}`).classList.add('active');
+    
+    updatePrices();
+  }
+
+  // Update prices based on selected period (from pricing.html)
+  function updatePrices() {
+    const priceElements = document.querySelectorAll('.price-monthly');
+    const periodElements = document.querySelectorAll('.price-period');
+    
+    priceElements.forEach(element => {
+      const monthlyPrice = element.getAttribute('data-monthly');
+      const yearlyPrice = element.getAttribute('data-yearly');
+      
+      const formatNumber = (num) => {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      };
+      
+      if (currentPeriod === 1) {
+        element.textContent = `${formatNumber(monthlyPrice)}₽`;
+      } else {
+        element.textContent = `${formatNumber(yearlyPrice)}₽`;
+      }
+    });
+    
+    periodElements.forEach(element => {
+      const monthlyText = element.getAttribute('data-monthly-text');
+      const yearlyText = element.getAttribute('data-yearly-text');
+      
+      if (currentPeriod === 1) {
+        element.textContent = monthlyText;
+      } else {
+        element.textContent = yearlyText;
+      }
+    });
+  }
+
+  // Open payment modal (exact copy from pricing.html)
+  function openPaymentModal(tariff, monthlyPrice, yearlyPrice) {
+    const modal = document.getElementById('paymentModal');
+    const modalPrice = document.getElementById('modalPrice');
+    const modalSubtitle = document.getElementById('modalSubtitle');
+    const modalButtons = document.getElementById('modalButtons');
+    
+    const price = currentPeriod === 1 ? monthlyPrice : yearlyPrice;
+    const periodText = currentPeriod === 1 ? '/мес' : '/год';
+    
+    modalPrice.textContent = `${price}₽${periodText}`;
+    
+    if (currentPeriod === 1) {
+      modalSubtitle.textContent = 'Выберите способ оплаты для привязки карты и автоматического списания';
+      modalButtons.innerHTML = `
+        <button class="btn-primary" onclick="processCardPayment()">
+          💳 Оплатить картой
+        </button>
+      `;
+    } else {
+      modalSubtitle.textContent = 'Оплатите годовую подписку со скидкой 20%';
+      modalButtons.innerHTML = `
+        <button class="btn-primary" onclick="processCardPayment()">
+          💳 Оплатить картой
+        </button>
+      `;
+    }
+    
+    modal.setAttribute('data-tariff', tariff);
+    modal.setAttribute('data-monthly-price', monthlyPrice);
+    modal.setAttribute('data-yearly-price', yearlyPrice);
+    
+    modal.classList.add('active');
+  }
+
+  // Close payment modal
+  function closePaymentModal() {
+    document.getElementById('paymentModal').classList.remove('active');
+  }
+
+  // Event listeners for modal closing (from pricing.html)
+  document.getElementById('paymentModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closePaymentModal();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closePaymentModal();
+    }
+  });
+
+  // Show subscription plans modal
+  async function showSubscriptionPlans() {
+    try {
+      console.log('[SUBSCRIPTION] Loading subscription plans...');
+      
+      const result = await Bloknot.api('/api/cloudpayments/plans');
+
+      if (result.success) {
+        document.getElementById('subscriptionPlansModal').style.display = 'block';
+        // Initialize prices
+        updatePrices();
+      } else {
+        alert('Не удалось загрузить тарифы');
+      }
+    } catch (error) {
+      console.error('[SUBSCRIPTION] Error loading plans:', error);
+      alert('Ошибка загрузки тарифов');
+    }
+  }
+
+  // Display subscription plans
+  function displaySubscriptionPlans(plans) {
+    const plansDiv = document.getElementById('subscriptionPlans');
+    
+    plansDiv.innerHTML = plans.map(plan => `
+      <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; transition: all 0.2s;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+          <div>
+            <h4 style="margin: 0 0 4px 0; color: #1f2937; font-size: 18px;">${plan.name}</h4>
+            <p style="margin: 0; color: #6b7280; font-size: 14px;">${plan.description}</p>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 24px; font-weight: bold; color: #1f2937;">${plan.price}</div>
+            <div style="font-size: 14px; color: #6b7280;">/${plan.period}</div>
+          </div>
+        </div>
+        
+        <div style="border-top: 1px solid #f3f4f6; padding-top: 12px; margin-bottom: 16px;">
+          <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 14px;">
+            ${plan.features.map(feature => `<li style="margin-bottom: 4px;">${feature}</li>`).join('')}
+          </ul>
+        </div>
+        
+        <div style="border-top: 1px solid #f3f4f6; padding-top: 12px;">
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 16px; font-weight: 500; color: #1f2937; margin-bottom: 8px;">Выберите период оплаты:</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+              <button class="btn secondary" onclick="selectBillingType('${plan.id}', 'monthly', '${plan.price}')" 
+                      style="padding: 8px 12px; font-size: 14px;">
+                Ежемесячно
+                <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">${plan.price}/${plan.period}</div>
+              </button>
+              
+              <button class="btn primary" onclick="selectBillingType('${plan.id}', 'yearly', '${plan.yearlyPrice}')"
+                      style="padding: 8px 12px; font-size: 14px;">
+                Годовая оплата
+                <div style="font-size: 12px; margin-top: 2px;">
+                  <span style="text-decoration: line-through; color: #6b7280;">${parseInt(plan.price.replace(' ₽', '')) * 12} ₽</span>
+                  <span style="color: #10b981; font-weight: bold;"> ${plan.yearlyPrice}</span>
+                </div>
+                <div style="font-size: 11px; color: #10b981; font-weight: 500;">Экономия ${plan.yearlyDiscount}</div>
+              </button>
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button class="btn secondary" onclick="selectPaymentMethod('${plan.id}', 'monthly', 'card')" 
+                    style="padding: 6px 12px; font-size: 12px;">
+              💳 Привязать карту
+            </button>
+            <button class="btn secondary" onclick="selectPaymentMethod('${plan.id}', 'monthly', 'invoice')" 
+                    style="padding: 6px 12px; font-size: 12px;">
+              📄 По счету
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Select billing type
+  function selectBillingType(planId, billingType, price) {
+    console.log('[SUBSCRIPTION] Billing type selected:', { planId, billingType, price });
+    
+    // Store selected billing info
+    window.selectedBilling = {
+      planId: planId,
+      billingType: billingType,
+      price: price
+    };
+    
+    // Update UI to show selection
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(btn => {
+      if (btn.textContent.includes('Ежемесячно') || btn.textContent.includes('Годовая оплата')) {
+        btn.classList.remove('primary');
+        btn.classList.add('secondary');
+      }
+    });
+    
+    // Highlight selected button
+    event.target.classList.remove('secondary');
+    event.target.classList.add('primary');
+  }
+
+  // Select payment method
+  function selectPaymentMethod(planId, billingType, paymentMethod) {
+    console.log('[SUBSCRIPTION] Payment method selected:', { planId, billingType, paymentMethod });
+    
+    if (!window.selectedBilling) {
+      // Auto-select monthly if no billing type selected
+      window.selectedBilling = {
+        planId: planId,
+        billingType: 'monthly',
+        price: '690 ₽'
+      };
+    }
+    
+    window.selectedBilling.paymentMethod = paymentMethod;
+    
+    if (paymentMethod === 'card') {
+      // Show CloudPayments modal for card payment
+      const plan = {
+        id: planId,
+        name: planId.split('-')[0].charAt(0).toUpperCase() + planId.split('-')[0].slice(1),
+        price: window.selectedBilling.price,
+        billingType: billingType
+      };
+      showCloudPaymentsModal(plan);
+    } else if (paymentMethod === 'invoice') {
+      // Show invoice modal
+      showInvoiceModal(planId, billingType);
+    }
+  }
+
+  // Show invoice modal
+  function showInvoiceModal(planId, billingType) {
+    const planName = planId.split('-')[0].charAt(0).toUpperCase() + planId.split('-')[0].slice(1);
+    const price = window.selectedBilling.price;
+    const period = billingType === 'yearly' ? 'год' : 'месяц';
+    
+    const modalHtml = `
+      <div id="invoiceModal" class="modal" style="display: flex;">
+        <div class="modal-content" style="max-width: 500px;">
+          <div class="modal-header">
+            <h3>Выставление счета</h3>
+            <button class="modal-close" onclick="closeInvoiceModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-weight: 500;">Тариф:</span>
+                <span>${planName}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-weight: 500;">Период:</span>
+                <span>${period}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: 500;">Сумма:</span>
+                <span style="font-weight: bold; color: #1f2937;">${price}</span>
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email для отправки счета:</label>
+              <input type="email" id="invoiceEmail" value="${currentUser?.email || ''}" 
+                     style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" 
+                     placeholder="email@example.com">
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500;">Комментарий (необязательно):</label>
+              <textarea id="invoiceComment" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; min-height: 80px;" 
+                        placeholder="Дополнительная информация для счета"></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 8px;">
+              <button class="btn primary" onclick="sendInvoiceRequest()">Отправить заявку</button>
+              <button class="btn secondary" onclick="closeInvoiceModal()">Отмена</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
+
+  // Send invoice request
+  async function sendInvoiceRequest() {
+    const email = document.getElementById('invoiceEmail').value;
+    const comment = document.getElementById('invoiceComment').value;
+    
+    if (!email) {
+      alert('Пожалуйста, укажите email для отправки счета');
+      return;
+    }
+    
+    try {
+      console.log('[SUBSCRIPTION] Sending invoice request:', {
+        planId: window.selectedBilling.planId,
+        billingType: window.selectedBilling.billingType,
+        email: email,
+        comment: comment
+      });
+      
+      // Here you would send request to backend
+      alert(`Заявка на счет отправлена на email: ${email}\n\nТариф: ${window.selectedBilling.planId}\nПериод: ${window.selectedBilling.billingType}\nСумма: ${window.selectedBilling.price}`);
+      
+      closeInvoiceModal();
+      closeSubscriptionPlansModal();
+    } catch (error) {
+      console.error('[SUBSCRIPTION] Error sending invoice request:', error);
+      alert('Ошибка отправки заявки');
+    }
+  }
+
+  
+  // Process card payment (exact copy from pricing.html)
+  async function processCardPayment() {
+    const modal = document.getElementById('paymentModal');
+    const tariff = modal.getAttribute('data-tariff');
+    const period = currentPeriod === 1 ? 'monthly' : 'yearly';
+    
+    // Map tariff names to plan IDs
+    const planMap = {
+      'Solo': 'solo',
+      'Studio': 'studio',
+      'Pro': 'pro'
+    };
+    
+    const plan = planMap[tariff];
+    
+    try {
+      const data = await Bloknot.api('/api/payments/create', {
+        method: 'POST',
+        body: JSON.stringify({ plan, period })
+      });
+
+      if (data.success) {
+        // Always use CloudPayments widget for payment processing
+        if (data.cloudPayments) {
+          const widget = new cp.CloudPayments();
+
+          const chargeOptions = {
+            publicId: data.cloudPayments.PublicId,
+            description: data.cloudPayments.Description,
+            amount: data.cloudPayments.Amount,
+            currency: data.cloudPayments.Currency,
+            invoiceId: data.cloudPayments.InvoiceId,
+            accountId: data.cloudPayments.AccountId,
+            email: data.cloudPayments.Email,
+            requireConfirmation: data.cloudPayments.RequireConfirmation,
+            trialPeriod: data.cloudPayments.TrialPeriod,
+            recurring: data.cloudPayments.Recurring
+          };
+
+          const message = period === 'monthly' 
+            ? 'Привяжите карту для активации пробного периода на 5 дней. Первое списание через 5 дней.'
+            : 'Оплатите годовую подписку со скидкой 20%';
+
+          if (confirm(message)) {
+            widget.pay(chargeOptions, function(options) {
+              // Success
+              console.log('Payment successful', options);
+              alert('Оплата успешно выполнена!');
+              closePaymentModal();
+              closeSubscriptionPlansModal();
+              // Redirect to dashboard or reload
+              window.location.href = '/dashboard.html';
+            }, function(reason, options) {
+              // Fail
+              console.error('Payment failed', reason, options);
+              alert('Ошибка оплаты: ' + reason);
+            });
+          }
+        } else {
+          // Success without CloudPayments (subscription already created)
+          alert('Подписка активирована!');
+          closePaymentModal();
+          closeSubscriptionPlansModal();
+          window.location.href = '/dashboard.html';
+        }
+      } else {
+        // Check for trial restriction error
+        if (data.error === 'TRIAL_RESTRICTION') {
+          alert(data.message);
+          return;
+        }
+        alert('Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка'));
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      
+      // Check if it's an authorization error
+      if (error.message === 'Unauthorized' || error.message.includes('401')) {
+        alert('Для оплаты необходимо войти в аккаунт или зарегистрироваться');
+        window.location.href = '/login.html';
+        return;
+      }
+      
+      alert('Ошибка при обработке платежа');
+    }
+  }
+
+  // Функция processInvoicePayment удалена - оплата счетом больше не доступна
+
+  // Close invoice modal
+  function closeInvoiceModal() {
+    const modal = document.getElementById('invoiceModal');
+    if (modal) {
+      modal.remove();
+    }
+  }
+
+  // Select plan and start payment (legacy function)
+  async function selectPlan(planId) {
+    try {
+      console.log('[SUBSCRIPTION] Plan selected:', planId);
+      
+      // Get plan details
+      const result = await Bloknot.api('/api/cloudpayments/plans');
+      
+      if (result.success) {
+        selectedPlan = result.data.find(plan => plan.id === planId);
+        if (selectedPlan) {
+          document.getElementById('subscriptionPlansModal').style.display = 'none';
+          startCloudPaymentsPayment(selectedPlan);
+        }
+      }
+    } catch (error) {
+      console.error('[SUBSCRIPTION] Error selecting plan:', error);
+      alert('Ошибка выбора тарифа');
+    }
+  }
+
+  // Start CloudPayments payment
+  function startCloudPaymentsPayment(plan) {
+    console.log('[SUBSCRIPTION] Starting CloudPayments payment for plan:', plan);
+    
+    // Display selected plan info
+    document.getElementById('selectedPlanInfo').innerHTML = `
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h4 style="margin: 0 0 8px 0; color: #1f2937;">${plan.name}</h4>
+        <p style="margin: 0; color: #6b7280;">${plan.description}</p>
+        <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-top: 12px;">${plan.price}</div>
+      </div>
+    `;
+
+    // Show payment modal
+    document.getElementById('cloudPaymentsModal').style.display = 'block';
+
+    // Initialize CloudPayments widget
+    const widget = new cp.CloudPayments({
+      language: 'ru',
+      skin: 'modern'
+    });
+
+    // Get user data
+    const userEmail = currentUser?.email || '';
+    const userName = currentUser?.name || '';
+
+    widget.charge({
+      publicId: 'pk_...', // Will be set from environment
+      description: `Подписка ${plan.name} для ${userName}`,
+      amount: plan.price.replace(/[^\d]/g, ''), // Remove non-digit characters
+      currency: 'RUB',
+      accountId: currentUser?.id,
+      email: userEmail,
+      skin: 'modern',
+      data: {
+        planType: plan.id,
+        userId: currentUser?.id,
+        userEmail: userEmail,
+        userName: userName
+      }
+    }, function(options) {
+      // onSuccess callback
+      console.log('[SUBSCRIPTION] Payment successful:', options);
+      handlePaymentSuccess(options, plan);
+    }, function(reason, options) {
+      // onFail callback
+      console.log('[SUBSCRIPTION] Payment failed:', reason, options);
+      handlePaymentFailure(reason, options);
+    });
+  }
+
+  // Handle payment success
+  async function handlePaymentSuccess(options, plan) {
+    try {
+      console.log('[SUBSCRIPTION] Processing successful payment...');
+      
+      // Send payment data to backend
+      const result = await Bloknot.api('/api/cloudpayments/subscription/create', {
+        method: 'POST',
+        body: JSON.stringify({
+          subscriptionType: plan.id,
+          cardToken: options.token,
+          userEmail: currentUser?.email,
+          userName: currentUser?.name
+        })
+      });
+
+      if (result.success) {
+        alert('Подписка успешно оформлена!');
+        document.getElementById('cloudPaymentsModal').style.display = 'none';
+        loadSubscriptionInfo(); // Reload subscription info
+      } else {
+        alert('Ошибка оформления подписки: ' + result.error);
+      }
+    } catch (error) {
+      console.error('[SUBSCRIPTION] Error processing payment success:', error);
+      alert('Ошибка обработки платежа');
+    }
+  }
+
+  // Handle payment failure
+  function handlePaymentFailure(reason, options) {
+    console.log('[SUBSCRIPTION] Payment failed:', reason);
+    alert('Платеж не выполнен: ' + reason);
+    document.getElementById('cloudPaymentsModal').style.display = 'none';
+  }
+
+  // Cancel subscription
+  async function cancelSubscription() {
+    if (!confirm('Вы уверены, что хотите отменить подписку? Доступ останется активным до окончания оплаченного периода.')) {
+      return;
+    }
+
+    try {
+      console.log('[SUBSCRIPTION] Cancelling subscription...');
+      
+      const result = await Bloknot.api('/api/cloudpayments/subscription/cancel', {
+        method: 'POST'
+      });
+
+      if (result.success) {
+        alert(result.message);
+        loadSubscriptionInfo(); // Reload subscription info
+      } else {
+        alert('Ошибка отмены подписки: ' + result.error);
+      }
+    } catch (error) {
+      console.error('[SUBSCRIPTION] Error cancelling subscription:', error);
+      alert('Ошибка отмены подписки');
+    }
+  }
+
+  // Close subscription plans modal
+  function closeSubscriptionPlansModal() {
+    document.getElementById('subscriptionPlansModal').style.display = 'none';
+  }
+
+  // Close CloudPayments modal
+  function closeCloudPaymentsModal() {
+    document.getElementById('cloudPaymentsModal').style.display = 'none';
+  }
+
+  // Close modals on background click
+  document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('modal')) {
+      event.target.style.display = 'none';
+    }
+  });
+</script>
+
+<script src="/app.js?v=20260425-data-isolation&t=1713633600"></script>
+<script>
+  // Initialize header with active tab
+  if (typeof Bloknot !== 'undefined') {
+    Bloknot.renderHeader("dashboard");
+  } else {
+    console.error('SUBSCRIPTION: Bloknot is not available!');
+  }
+</script>
+
+</body>
+</html>

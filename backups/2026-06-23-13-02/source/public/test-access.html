@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест доступа - Bloknot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f0f8ff;
+        }
+        .status {
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        h1 { color: #0066cc; text-align: center; }
+        .details { font-family: monospace; background: #f8f9fa; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Тест доступа к сайту</h1>
+    
+    <div class="status success">
+        <h2>✅ Страница загрузилась!</h2>
+        <p>Если вы видите это сообщение, то сайт доступен с вашего устройства.</p>
+    </div>
+
+    <div class="status info">
+        <h2>📊 Информация о доступе:</h2>
+        <div class="details">
+            <strong>URL:</strong> <span id="url"></span><br>
+            <strong>Время загрузки:</strong> <span id="time"></span><br>
+            <strong>User Agent:</strong> <span id="ua"></span><br>
+            <strong>IP адрес:</strong> <span id="ip"></span><br>
+            <strong>Referer:</strong> <span id="referer"></span>
+        </div>
+    </div>
+
+    <div class="status info">
+        <h2>🌐 Сетевая диагностика:</h2>
+        <div class="details">
+            <strong>Протокол:</strong> <span id="protocol"></span><br>
+            <strong>Хост:</strong> <span id="host"></span><br>
+            <strong>Порт:</strong> <span id="port"></span><br>
+            <strong>HTTPS:</strong> <span id="https"></span>
+        </div>
+    </div>
+
+    <div class="status info">
+        <h2>🔧 Техническая информация:</h2>
+        <div class="details">
+            <strong>Cookies включены:</strong> <span id="cookies"></span><br>
+            <strong>JavaScript включен:</strong> <span id="js"></span><br>
+            <strong>Размер экрана:</strong> <span id="screen"></span><br>
+            <strong>Мобильное устройство:</strong> <span id="mobile"></span>
+        </div>
+    </div>
+
+    <script>
+        // Заполняем информацию
+        document.getElementById('url').textContent = window.location.href;
+        document.getElementById('time').textContent = new Date().toLocaleString();
+        document.getElementById('ua').textContent = navigator.userAgent;
+        document.getElementById('ip').textContent = 'Определяется...';
+        document.getElementById('referer').textContent = document.referrer || 'Прямой доступ';
+        
+        document.getElementById('protocol').textContent = window.location.protocol;
+        document.getElementById('host').textContent = window.location.host;
+        document.getElementById('port').textContent = window.location.port || 'стандартный';
+        document.getElementById('https').textContent = window.location.protocol === 'https:' ? 'Да' : 'Нет';
+        
+        document.getElementById('cookies').textContent = navigator.cookieEnabled ? 'Да' : 'Нет';
+        document.getElementById('js').textContent = 'Да (выполняется)';
+        document.getElementById('screen').textContent = screen.width + 'x' + screen.height;
+        document.getElementById('mobile').textContent = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 'Да' : 'Нет';
+
+        // Пытаемся определить IP через внешний сервис
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('ip').textContent = data.ip;
+            })
+            .catch(error => {
+                document.getElementById('ip').textContent = 'Не удалось определить (' + error.message + ')';
+            });
+
+        // Тестируем загрузку других ресурсов
+        fetch('/booking-new.html')
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ booking-new.html доступен');
+                } else {
+                    console.error('❌ booking-new.html не доступен:', response.status);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Ошибка загрузки booking-new.html:', error);
+            });
+    </script>
+</body>
+</html>

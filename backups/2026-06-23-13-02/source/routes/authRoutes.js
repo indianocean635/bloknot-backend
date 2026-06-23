@@ -1,0 +1,558 @@
+const express = require('express');
+const nodemailer = require('nodemailer');
+const { PrismaClient } = require('@prisma/client');
+const { requireAuth } = require('../middleware/authMiddleware');
+const router = express.Router();
+
+const prisma = new PrismaClient();
+
+// Load environment variables from .env file
+require('dotenv').config();
+
+// Debug: Output S3_BUCKET to console
+console.log('S3_BUCKET:', process.env.S3_BUCKET);
+
+// Временное хранилище пользователей и токенов
+const memoryUsers = new Map();
+const memoryTokens = new Map();
+
+// Email transporter (Yandex SMTP)
+let transporter = null;
+
+// Always initialize with existing settings
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT) || 465,
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+  console.log('Email transporter configured with Yandex SMTP');
+} else {
+  console.log('Email not configured - missing SMTP settings');
+}
+
+// POST /api/auth/register
+router.post('/register', async (req, res) => {
+  const { name, phone, email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  console.log(`[REGISTER ATTEMPT] Email: ${email}, Name: ${name}`);
+
+  try {
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    // Hash password
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Check if there's a pending staff invitation for this email
+    const pendingInvite = await prisma.staffInvite.findFirst({
+      where: {
+        email: email.toLowerCase(),
+        status: 'pending'
+      },
+      include: {
+        business: true
+      }
+    });
+
+    let user, business;
+
+    if (pendingInvite) {
+      // User is accepting an invitation - join existing business as STAFF
+      console.log(`[INVITATION ACCEPT] Email: ${email}, Business: ${pendingInvite.business.name}`);
+
+      user = await prisma.user.create({
+        data: {
+          email,
+          phone: phone || null,
+          name: name || null,
+          role: 'STAFF',
+          password: hashedPassword,
+          businessId: pendingInvite.businessId
+        }
+      });
+
+      // Create Staff record linking user to business
+      await prisma.staff.create({
+        data: {
+          name: name || email.split('@')[0],
+          userId: user.id,
+          businessId: pendingInvite.businessId
+        }
+      });
+
+      // Update invitation status
+      await prisma.staffInvite.update({
+        where: { id: pendingInvite.id },
+        data: { status: 'accepted' }
+      });
+
+      // Activate the corresponding Master record
+      await prisma.master.updateMany({
+        where: {
+          email: email.toLowerCase(),
+          businessId: pendingInvite.businessId
+        },
+        data: { active: true }
+      });
+
+      business = pendingInvite.business;
+    } else {
+      // Regular registration - create new business with OWNER role
+      const timestamp = Date.now();
+      const slug = `${email.toLowerCase().replace('@', '-').replace('.', '-')}-${timestamp}`;
+
+      business = await prisma.business.create({
+        data: {
+          name: '',
+          slug: slug,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          owner: {
+            create: {
+              email,
+              phone: phone || null,
+              name: name || null,
+              role: 'OWNER',
+              createdAt: new Date(),
+              password: hashedPassword
+            }
+          }
+        },
+        include: { owner: true }
+      });
+
+      user = business.owner;
+
+      // Update user with businessId
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { businessId: business.id }
+      });
+    }
+
+    // Get fresh user data
+    const freshUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { business: true }
+    });
+
+    console.log(`[REGISTER SUCCESS] User: ${email}, BusinessId: ${business.id}, Role: ${freshUser.role}`);
+
+    // Generate JWT token
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '30d' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: freshUser.id,
+        email: freshUser.email,
+        name: freshUser.name,
+        phone: freshUser.phone,
+        businessId: freshUser.businessId,
+        role: freshUser.role
+      }
+    });
+
+  } catch (error) {
+    console.error('[REGISTER ERROR]', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/login (password authentication)
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+  
+  console.log(`[LOGIN ATTEMPT] Email: ${email}`);
+  
+  try {
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        business: true,
+        ownedBusiness: true,
+        staffProfile: true
+      }
+    });
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    // Check if user has password
+    if (!user.password) {
+      return res.status(401).json({ error: 'Please use magic link to login first' });
+    }
+    
+    // Verify password
+    const bcrypt = require('bcrypt');
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    console.log(`[LOGIN SUCCESS] Email: ${email}`);
+    
+    // Generate JWT token
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '90d' }
+    );
+    
+    // Set authentication cookie with SameSite=None, Secure for iOS PWA
+    const maxAge = 90 * 24 * 60 * 60;
+    const expires = new Date(Date.now() + maxAge * 1000).toUTCString();
+    res.cookie('auth', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      maxAge: maxAge,
+      expires: new Date(Date.now() + maxAge * 1000),
+      path: '/',
+    });
+    
+    console.log('[LOGIN SUCCESS] User:', {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      businessId: user.businessId
+    });
+    
+    res.json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        businessId: user.businessId
+      }
+    });
+    
+  } catch (error) {
+    console.error('[LOGIN ERROR]', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/request-login moved to magicLinkRoutes.js to avoid conflicts
+
+// POST /api/auth/send-link (alias for compatibility)
+router.post('/send-link', async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: "Email required" });
+  }
+  
+  const token = 'token_' + Date.now();
+  
+  // Store token in memory
+  memoryTokens.set(token, { email, createdAt: new Date(), expiresAt: new Date(Date.now() + 3600000) });
+  
+  // Send email if transporter is configured
+  if (transporter) {
+    try {
+      const verifyUrl = `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`;
+      
+      await transporter.sendMail({
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: 'Bloknot - Ссылка для входа',
+        html: `
+          <h2>Добро пожаловать в Bloknot!</h2>
+          <p>Нажмите на ссылку ниже, чтобы войти в свой аккаунт:</p>
+          <p><a href="${verifyUrl}">Войти в аккаунт</a></p>
+          <p>Если вы не запрашивали эту ссылку, просто проигнорируйте это письмо.</p>
+          <p>Ссылка действительна в течение 1 часа.</p>
+        `
+      });
+      
+      console.log('Email sent to:', email);
+    } catch (error) {
+      console.error('Email sending error:', error);
+    }
+  } else {
+    console.log('Email not sent - transporter not configured');
+    console.log('Login link for', email, ':', `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`);
+  }
+  
+  res.json({
+    success: true,
+    message: "Login link sent",
+    verifyUrl: `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`
+  });
+});
+
+// POST /api/auth/magic-link (алиас к send-link)
+router.post('/magic-link', async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: "Email required" });
+  }
+  
+  const token = 'token_' + Date.now();
+  
+  // Store token in memory
+  memoryTokens.set(token, { email, createdAt: new Date(), expiresAt: new Date(Date.now() + 3600000) });
+  
+  // Send email if transporter is configured
+  if (transporter) {
+    try {
+      const verifyUrl = `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`;
+      
+      await transporter.sendMail({
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: 'Bloknot - Ссылка для входа',
+        html: `
+          <h2>Добро пожаловать в Bloknot!</h2>
+          <p>Нажмите на ссылку ниже, чтобы войти в свой аккаунт:</p>
+          <p><a href="${verifyUrl}">Войти в аккаунт</a></p>
+          <p>Если вы не запрашивали эту ссылку, просто проигнорируйте это письмо.</p>
+          <p>Ссылка действительна в течение 1 часа.</p>
+        `
+      });
+      
+      console.log('Email sent to:', email);
+    } catch (error) {
+      console.error('Email sending error:', error);
+    }
+  } else {
+    console.log('Email not sent - transporter not configured');
+    console.log('Login link for', email, ':', `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`);
+  }
+  
+  res.json({
+    success: true,
+    message: "Login link sent",
+    verifyUrl: `${process.env.DOMAIN || 'https://bloknotservis.ru'}/auth/magic-link?token=${token}`
+  });
+});
+
+// GET /api/auth/magic/:token
+router.get('/magic/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    const tokenData = memoryTokens.get(token);
+    
+    if (!tokenData) {
+      return res.status(400).json({ error: "Invalid or expired token" });
+    }
+    
+    if (new Date() > tokenData.expiresAt) {
+      memoryTokens.delete(token);
+      return res.status(400).json({ error: "Token expired" });
+    }
+
+    const user = memoryUsers.get(tokenData.email);
+    
+    console.log('✅ TOKEN VERIFIED:', token, 'for email:', tokenData.email);
+
+    res.json({ 
+      success: true,
+      message: "Token verified successfully",
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        businessId: user.businessId
+      },
+      token 
+    });
+
+  } catch (error) {
+    console.error('❌ VERIFY MAGIC LINK ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /api/auth/me
+router.get('/me', requireAuth, async (req, res) => {
+  try {
+    console.log('[AUTH ME REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      role: req.user?.role,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user) {
+      console.warn('[SECURITY] Missing user', { userId: req.user?.id });
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Get fresh user data from database
+    const freshUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { business: true }
+    });
+
+    if (!freshUser) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+    
+    console.log('[AUTH ME RESPONSE]', {
+      id: freshUser.id,
+      email: freshUser.email,
+      role: freshUser.role,
+      businessId: freshUser.businessId,
+      hasBusiness: !!freshUser.business
+    });
+    
+    res.json({ 
+      success: true,
+      user: {
+        id: freshUser.id,
+        email: freshUser.email,
+        name: freshUser.name,
+        phone: freshUser.phone,
+        role: freshUser.role,
+        businessId: freshUser.businessId || null, // Explicitly handle null
+        requiresPassword: !freshUser.password
+      }
+    });
+  } catch (error) {
+    console.error('GET USER ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/auth/logout
+router.post('/logout', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      memoryTokens.delete(token);
+    }
+    
+    res.json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('LOGOUT ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /auth/verify (frontend)
+router.get('/verify', async (req, res) => {
+  try {
+    console.log('VERIFY REQUEST:', req.query);
+    const { token } = req.query;
+    
+    if (!token) {
+      console.log('No token provided');
+      return res.status(400).json({ error: "Token required" });
+    }
+    
+    // Check token in memory
+    const tokenData = memoryTokens.get(token);
+    
+    if (!tokenData) {
+      console.log('Invalid token:', token);
+      return res.status(400).json({ error: "Invalid or expired token" });
+    }
+    
+    if (new Date() > tokenData.expiresAt) {
+      memoryTokens.delete(token);
+      console.log('Token expired:', token);
+      return res.status(400).json({ error: "Token expired" });
+    }
+
+    // Find real user in database using email from token
+    const realUser = await prisma.user.findUnique({
+      where: { email: tokenData.email },
+      include: { business: true }
+    });
+    
+    if (!realUser) {
+      console.log('User not found in database:', tokenData.email);
+      return res.status(400).json({ error: "User not found" });
+    }
+    
+    console.log('Token verified:', token, 'for email:', tokenData.email, 'real user:', realUser.email);
+    
+    // Redirect to frontend with success
+    res.redirect('/?verified=true&token=' + token);
+  } catch (error) {
+    console.error('Verify error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /auth/update-profile
+router.post('/update-profile', async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const user = req.user;
+    
+    if (!user) {
+      console.warn('[SECURITY] Missing user', { userId: req.user?.id });
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    const { name } = req.body;
+    
+    // Update user name
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { name: name || null }
+    });
+    
+    console.log(`[AUTH] Profile updated for user: ${user.email}, name: ${name}`);
+    
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name
+      }
+    });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+module.exports = router;

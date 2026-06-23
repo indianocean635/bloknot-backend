@@ -1,0 +1,294 @@
+﻿const { prisma } = require("../services/prismaService");
+const { sendBookingConfirmationMessage } = require("../services/telegramBotService");
+
+// Link Telegram chatId to booking using booking token
+async function linkBooking(req, res) {
+  try {
+    console.log('[TELEGRAM] Linking booking:', req.body);
+
+    const { bookingToken, chatId, username } = req.body;
+
+    if (!bookingToken || !chatId) {
+      return res.status(400).json({ error: "Booking token and chatId are required" });
+    }
+
+    // Find booking by token
+    const booking = await prisma.appointment.findUnique({
+      where: { bookingToken },
+      include: {
+        service: true,
+        master: true,
+        business: true
+      }
+    });
+
+    if (!booking) {
+      return res.status(404).json({ error: "Invalid booking token" });
+    }
+
+    // Update booking with chatId
+    const updated = await prisma.appointment.update({
+      where: { id: booking.id },
+      data: {
+        telegramChatId: String(chatId),
+        customerTelegram: username || customerTelegram
+      },
+      include: {
+        service: true,
+        master: true,
+        business: true
+      }
+    });
+
+    console.log('[TELEGRAM] Booking linked successfully:', updated.id);
+
+    // Send confirmation message to Telegram
+    await sendBookingConfirmationMessage(updated, chatId);
+
+    res.json({ booking: updated });
+  } catch (error) {
+    console.error('[TELEGRAM] Error linking booking:', error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// Cancel booking
+async function cancelBooking(req, res) {
+  try {
+    console.log('[TELEGRAM] Canceling booking:', req.body);
+
+    const { bookingId, chatId } = req.body;
+
+    if (!bookingId || !chatId) {
+      return res.status(400).json({ error: "Booking ID and chatId are required" });
+    }
+
+    // Find booking and validate chatId
+    const booking = await prisma.appointment.findUnique({
+      where: { id: parseInt(bookingId) },
+      include: {
+        master: true
+      }
+    });
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    // Validate chatId (user can only cancel their own booking)
+    if (booking.telegramChatId !== String(chatId)) {
+      console.error('[TELEGRAM] ChatId validation failed for booking:', bookingId);
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    // Update booking status to cancelled
+    const updated = await prisma.appointment.update({
+      where: { id: parseInt(bookingId) },
+      data: { status: 'CANCELLED' },
+      include: {
+        master: true,
+        business: true,
+        service: true
+      }
+    });
+
+    console.log('[TELEGRAM] Booking cancelled successfully:', bookingId);
+    console.log('[TELEGRAM] Booking status after cancellation:', updated.status);
+
+    // Send VK cancellation notification if VK user ID is present
+    if (updated.customerVkId) {
+      try {
+        const { sendCancellation } = require('../services/vkNotificationService');
+        
+        const timeToUse = updated.startsAtLocal || updated.startsAt;
+        const dateStr = timeToUse.replace(/(\d{4})-(\d{2})-(\d{2})T.*/, '$3.$2.$1');
+        const timeStr = timeToUse.replace(/.*T(\d{2}):(\d{2}).*/, '$1:$2');
+
+        const domain = process.env.DOMAIN || process.env.FRONTEND_URL || 'https://bloknotservis.ru';
+        const bookingLink = `${domain}/book/${updated.business?.slug}`;
+
+        const templateVariables = {
+          customer_name: updated.customerName,
+          date: dateStr,
+          time: timeStr,
+          specialist: updated.master?.name || '╨б╨┐╨╡╤Ж╨╕╨░╨╗╨╕╤Б╤В',
+          service: updated.service?.name || '╨г╤Б╨╗╤Г╨│╨░',
+          booking_link: bookingLink
+        };
+
+        sendCancellation(updated.customerVkId, templateVariables)
+          .then(() => console.log('[TELEGRAM] VK cancellation sent for booking:', bookingId))
+          .catch((error) => console.error('[TELEGRAM] Error sending VK cancellation:', error));
+      } catch (error) {
+        console.error('[TELEGRAM] Error sending VK cancellation notification:', error);
+      }
+    }
+
+    res.json({ success: true, booking: updated });
+  } catch (error) {
+    console.error('[TELEGRAM] Error cancelling booking:', error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// Generate reschedule link
+async function generateRescheduleLink(req, res) {
+  try {
+    console.log('[TELEGRAM] Generating reschedule link:', req.body);
+
+    const { bookingId, chatId } = req.body;
+
+    if (!bookingId || !chatId) {
+      return res.status(400).json({ error: "Booking ID and chatId are required" });
+    }
+
+    // Find booking and validate chatId
+    const booking = await prisma.appointment.findUnique({
+      where: { id: parseInt(bookingId) },
+      include: {
+        business: true
+      }
+    });
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    // Validate chatId (user can only reschedule their own booking)
+    if (booking.telegramChatId !== String(chatId)) {
+      console.error('[TELEGRAM] ChatId validation failed for booking:', bookingId);
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    // Generate reschedule URL
+    const businessSlug = booking.business?.slug;
+    const rescheduleUrl = `https://bloknotservis.ru/booking-new.html?slug=${businessSlug}&reschedule=${booking.bookingToken}`;
+
+    console.log('[TELEGRAM] Reschedule link generated for booking:', bookingId);
+
+    res.json({ rescheduleUrl });
+  } catch (error) {
+    console.error('[TELEGRAM] Error generating reschedule link:', error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// Send reminders for upcoming bookings
+async function sendReminders(req, res) {
+  try {
+    console.log('[TELEGRAM] Sending reminders...');
+
+    const now = new Date();
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+    const twentyFourHoursLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    // Find bookings that need reminders
+    const bookingsNeeding24hReminder = await prisma.appointment.findMany({
+      where: {
+        startsAt: {
+          gte: now,
+          lte: twentyFourHoursLater
+        },
+        reminderSent24h: false,
+        telegramChatId: { not: null },
+        status: 'PENDING'
+      },
+      include: {
+        service: true,
+        master: true,
+        business: true
+      }
+    });
+
+    const bookingsNeeding1hReminder = await prisma.appointment.findMany({
+      where: {
+        startsAt: {
+          gte: now,
+          lte: oneHourLater
+        },
+        reminderSent1h: false,
+        telegramChatId: { not: null },
+        status: 'PENDING'
+      },
+      include: {
+        service: true,
+        master: true,
+        business: true
+      }
+    });
+
+    const reminders = [];
+
+    // Send 24h reminders
+    for (const booking of bookingsNeeding24hReminder) {
+      const dateStr = new Date(booking.startsAt).toLocaleDateString('ru-RU');
+      const timeStr = new Date(booking.startsAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+      const message = `
+тП░ ╨Э╨░╨┐╨╛╨╝╨╕╨╜╨░╨╜╨╕╨╡: ╨Ч╨░╨┐╨╕╤Б╤М ╤З╨╡╤А╨╡╨╖ 24 ╤З╨░╤Б╨░
+
+ЁЯУЛ ╨г╤Б╨╗╤Г╨│╨░: ${booking.service?.name}
+ЁЯСитАНЁЯТ╝ ╨б╨┐╨╡╤Ж╨╕╨░╨╗╨╕╤Б╤В: ${booking.master?.name}
+ЁЯУЕ ╨Ф╨░╤В╨░: ${dateStr}
+ЁЯХР ╨Т╤А╨╡╨╝╤П: ${timeStr}
+ЁЯПв ${booking.business?.name}
+      `.trim();
+
+      // Send via bot (using bot service)
+      // Note: This will be handled by the bot service, we just mark as sent
+      await prisma.appointment.update({
+        where: { id: booking.id },
+        data: { reminderSent24h: true }
+      });
+
+      reminders.push({
+        bookingId: booking.id,
+        type: '24h',
+        chatId: booking.telegramChatId,
+        message
+      });
+    }
+
+    // Send 1h reminders
+    for (const booking of bookingsNeeding1hReminder) {
+      const dateStr = new Date(booking.startsAt).toLocaleDateString('ru-RU');
+      const timeStr = new Date(booking.startsAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+      const message = `
+тП░ ╨Э╨░╨┐╨╛╨╝╨╕╨╜╨░╨╜╨╕╨╡: ╨Ч╨░╨┐╨╕╤Б╤М ╤З╨╡╤А╨╡╨╖ 1 ╤З╨░╤Б
+
+ЁЯУЛ ╨г╤Б╨╗╤Г╨│╨░: ${booking.service?.name}
+ЁЯСитАНЁЯТ╝ ╨б╨┐╨╡╤Ж╨╕╨░╨╗╨╕╤Б╤В: ${booking.master?.name}
+ЁЯУЕ ╨Ф╨░╤В╨░: ${dateStr}
+ЁЯХР ╨Т╤А╨╡╨╝╤П: ${timeStr}
+ЁЯПв ${booking.business?.name}
+      `.trim();
+
+      await prisma.appointment.update({
+        where: { id: booking.id },
+        data: { reminderSent1h: true }
+      });
+
+      reminders.push({
+        bookingId: booking.id,
+        type: '1h',
+        chatId: booking.telegramChatId,
+        message
+      });
+    }
+
+    console.log(`[TELEGRAM] Reminders sent: ${reminders.length}`);
+
+    res.json({ reminders });
+  } catch (error) {
+    console.error('[TELEGRAM] Error sending reminders:', error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+module.exports = {
+  linkBooking,
+  cancelBooking,
+  generateRescheduleLink,
+  sendReminders
+};

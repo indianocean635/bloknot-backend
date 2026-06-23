@@ -1,0 +1,849 @@
+const express = require('express');
+const router = express.Router();
+const { prisma } = require("../services/prismaService");
+const { requireAuth } = require("../middleware/authMiddleware");
+const https = require('https');
+const nodemailer = require('nodemailer');
+
+// УБРАЛИ МОК MIDDLEWARE - ИСПОЛЬЗУЕМ НАСТОЯЩУЮ JWT АВТОРИЗАЦИЮ
+
+// Email transporter (Yandex SMTP) - same as in authRoutes
+let transporter = null;
+
+// Initialize email transporter
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT) || 465,
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+  console.log('SettingsRoutes: Email transporter configured with Yandex SMTP');
+} else {
+  console.log('SettingsRoutes: Email not configured - missing SMTP settings');
+}
+
+// Get business settings
+router.get("/business", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const business = await prisma.business.findUnique({
+      where: { id: req.user.businessId },
+      include: {
+        branches: true,
+        categories: {
+          include: { services: true }
+        },
+        masters: {
+          select: {
+            id: true,
+            name: true,
+            specializations: true,
+            avatarUrl: true,
+            branchId: true,
+            schedule: true,
+            categoryIds: true,
+            serviceIds: true,
+            active: true
+          }
+        },
+        services: true,
+        workPhotos: {
+          where: { isLogo: true }
+        },
+        subscription: true
+      }
+    });
+
+    console.log('Business workPhotos:', business.workPhotos);
+
+    // Get logo photo
+    const logoPhoto = business.workPhotos && business.workPhotos.length > 0 ? business.workPhotos[0].imageUrl : null;
+    console.log('Logo photo:', logoPhoto);
+
+    // Return business data with logo in correct format
+    const result = {
+      ...business,
+      logo: logoPhoto
+    };
+
+    console.log('Business data with logo:', result.logo);
+    res.json(result);
+  } catch (error) {
+    console.error("Error getting business:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get business name
+router.get("/business/name", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const business = await prisma.business.findUnique({
+      where: { id: req.user.businessId },
+      select: { name: true }
+    });
+    
+    res.json(business);
+  } catch (error) {
+    console.error("Error getting business name:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Update business name
+router.patch("/business/name", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { name } = req.body;
+    
+    if (!name || name.trim() === "") {
+      return res.status(400).json({ error: "Business name is required" });
+    }
+    
+    const business = await prisma.business.update({
+      where: { id: req.user.businessId },
+      data: { name: name.trim() }
+    });
+    
+    res.json(business);
+  } catch (error) {
+    console.error("Error updating business name:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Update business
+router.patch("/business", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { description } = req.body;
+    
+    const updateData = {};
+    if (description !== undefined) {
+      updateData.description = description?.trim() || null;
+    }
+    
+    const business = await prisma.business.update({
+      where: { id: req.user.businessId },
+      data: updateData
+    });
+    
+    res.json(business);
+  } catch (error) {
+    console.error("Error updating business:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get branches
+router.get("/branches", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const branches = await prisma.branch.findMany({
+      where: { businessId: req.user.businessId },
+      orderBy: { createdAt: 'asc' }
+    });
+    
+    res.json(branches);
+  } catch (error) {
+    console.error("Error getting branches:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Create branch
+router.post("/branches", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { name, city, address, directions, schedule } = req.body;
+
+    // Generate default name if not provided
+    let branchName = name?.trim();
+    if (!branchName) {
+      if (city?.trim()) {
+        branchName = city.trim();
+      } else if (address?.trim()) {
+        branchName = address.trim();
+      } else {
+        // Count existing branches to generate a default name
+        const existingBranches = await prisma.branch.count({
+          where: { businessId: req.user.businessId }
+        });
+        branchName = `Филиал ${existingBranches + 1}`;
+      }
+    }
+
+    const branch = await prisma.branch.create({
+      data: {
+        name: branchName,
+        city: city?.trim() || "",
+        address: address?.trim() || "",
+        directions: directions?.trim() || "",
+        schedule: schedule?.trim() || "",
+        businessId: req.user.businessId
+      }
+    });
+
+    res.json(branch);
+  } catch (error) {
+    console.error("Error creating branch:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Update branch
+router.patch("/branches/:id", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { id } = req.params;
+    const { name, city, address, directions, schedule } = req.body;
+
+    const branch = await prisma.branch.findFirst({
+      where: {
+        id: parseInt(id),
+        businessId: req.user.businessId
+      }
+    });
+
+    if (!branch) {
+      return res.status(404).json({ error: "Branch not found" });
+    }
+
+    // Generate new name if provided, otherwise keep existing
+    let newName = name?.trim();
+    if (newName) {
+      // Use the provided name
+    } else if (city?.trim()) {
+      newName = city.trim();
+    } else if (address?.trim()) {
+      newName = address.trim();
+    } else {
+      // Keep existing name
+      newName = branch.name;
+    }
+
+    const updatedBranch = await prisma.branch.update({
+      where: { id: parseInt(id) },
+      data: {
+        name: newName,
+        city: city?.trim() || branch.city,
+        address: address?.trim() || branch.address,
+        directions: directions?.trim() || branch.directions,
+        schedule: schedule !== undefined ? schedule?.trim() : branch.schedule
+      }
+    });
+
+    res.json(updatedBranch);
+  } catch (error) {
+    console.error("Error updating branch:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Delete branch
+router.delete("/branches/:id", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { id } = req.params;
+    
+    const branch = await prisma.branch.findFirst({
+      where: { 
+        id: parseInt(id),
+        businessId: req.user.businessId 
+      }
+    });
+    
+    if (!branch) {
+      return res.status(404).json({ error: "Branch not found" });
+    }
+    
+    await prisma.branch.delete({
+      where: { id: parseInt(id) }
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting branch:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get categories
+router.get("/categories", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const categories = await prisma.category.findMany({
+      where: { businessId: req.user.businessId },
+      include: { services: true },
+      orderBy: { name: 'asc' }
+    });
+    
+    res.json(categories);
+  } catch (error) {
+    console.error("Error getting categories:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Create category
+router.post("/categories", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { name } = req.body;
+    
+    if (!name || name.trim() === "") {
+      return res.status(400).json({ error: "Category name is required" });
+    }
+    
+    const category = await prisma.category.create({
+      data: {
+        name: name.trim(),
+        businessId: req.user.businessId
+      }
+    });
+    
+    res.json(category);
+  } catch (error) {
+    console.error("Error creating category:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Update category
+router.patch("/categories/:id", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { id } = req.params;
+    const { name } = req.body;
+    
+    const category = await prisma.category.findFirst({
+      where: { 
+        id: parseInt(id),
+        businessId: req.user.businessId 
+      }
+    });
+    
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+    
+    const updatedCategory = await prisma.category.update({
+      where: { id: parseInt(id) },
+      data: {
+        name: name?.trim() || category.name
+      }
+    });
+    
+    res.json(updatedCategory);
+  } catch (error) {
+    console.error("Error updating category:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Delete category
+router.delete("/categories/:id", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { id } = req.params;
+    
+    const category = await prisma.category.findFirst({
+      where: { 
+        id: parseInt(id),
+        businessId: req.user.businessId 
+      }
+    });
+    
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+    
+    await prisma.category.delete({
+      where: { id: parseInt(id) }
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get services
+router.get("/services", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const services = await prisma.service.findMany({
+      where: { businessId: req.user.businessId },
+      include: { category: true },
+      orderBy: { name: 'asc' }
+    });
+    
+    res.json(services);
+  } catch (error) {
+    console.error("Error getting services:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Create service
+router.post("/services", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { name, duration, price, categoryId } = req.body;
+    
+    if (!name || name.trim() === "") {
+      return res.status(400).json({ error: "Service name is required" });
+    }
+    
+    if (!duration || duration <= 0) {
+      return res.status(400).json({ error: "Duration must be greater than 0" });
+    }
+    
+    if (!price || price <= 0) {
+      return res.status(400).json({ error: "Price must be greater than 0" });
+    }
+    
+    const service = await prisma.service.create({
+      data: {
+        name: name.trim(),
+        duration: parseInt(duration),
+        price: parseFloat(price),
+        categoryId: categoryId ? parseInt(categoryId) : null,
+        businessId: req.user.businessId
+      },
+      include: { category: true }
+    });
+    
+    res.json(service);
+  } catch (error) {
+    console.error("Error creating service:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Update service
+router.patch("/services/:id", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { id } = req.params;
+    const { name, duration, price, categoryId } = req.body;
+    
+    const service = await prisma.service.findFirst({
+      where: { 
+        id: parseInt(id),
+        businessId: req.user.businessId 
+      }
+    });
+    
+    if (!service) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+    
+    const updatedService = await prisma.service.update({
+      where: { id: parseInt(id) },
+      data: {
+        name: name?.trim() || service.name,
+        duration: duration ? parseInt(duration) : service.duration,
+        price: price ? parseFloat(price) : service.price,
+        categoryId: categoryId ? parseInt(categoryId) : service.categoryId
+      },
+      include: { category: true }
+    });
+    
+    res.json(updatedService);
+  } catch (error) {
+    console.error("Error updating service:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Delete service
+router.delete("/services/:id", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { id } = req.params;
+    
+    const service = await prisma.service.findFirst({
+      where: { 
+        id: parseInt(id),
+        businessId: req.user.businessId 
+      }
+    });
+    
+    if (!service) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+    
+    await prisma.service.delete({
+      where: { id: parseInt(id) }
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting service:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get masters
+router.get("/masters", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const masters = await prisma.master.findMany({
+      where: { businessId: req.user.businessId },
+      orderBy: { name: 'asc' }
+    });
+    
+    res.json(masters);
+  } catch (error) {
+    console.error("Error getting masters:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Create master
+router.post("/masters", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { name, email } = req.body;
+    
+    if (!name || name.trim() === "") {
+      return res.status(400).json({ error: "Master name is required" });
+    }
+    
+    if (!email || email.trim() === "") {
+      return res.status(400).json({ error: "Master email is required" });
+    }
+    
+    const master = await prisma.master.create({
+      data: {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        active: true,
+        businessId: req.user.businessId
+      }
+    });
+    
+    res.json(master);
+  } catch (error) {
+    console.error("Error creating master:", error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Update master
+router.patch("/masters/:id", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { id } = req.params;
+    const { name, email, active } = req.body;
+    
+    const master = await prisma.master.findFirst({
+      where: { 
+        id: parseInt(id),
+        businessId: req.user.businessId 
+      }
+    });
+    
+    if (!master) {
+      return res.status(404).json({ error: "Master not found" });
+    }
+    
+    const updatedMaster = await prisma.master.update({
+      where: { id: parseInt(id) },
+      data: {
+        name: name?.trim() || master.name,
+        email: email?.trim().toLowerCase() || master.email,
+        active: active !== undefined ? active : master.active
+      }
+    });
+    
+    res.json(updatedMaster);
+  } catch (error) {
+    console.error("Error updating master:", error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Delete master
+router.delete("/masters/:id", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { id } = req.params;
+    
+    const master = await prisma.master.findFirst({
+      where: { 
+        id: parseInt(id),
+        businessId: req.user.businessId 
+      }
+    });
+    
+    if (!master) {
+      return res.status(404).json({ error: "Master not found" });
+    }
+    
+    await prisma.master.delete({
+      where: { id: parseInt(id) }
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting master:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get works
+router.get("/works", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const works = await prisma.workPhoto.findMany({
+      where: { businessId: req.user.businessId },
+      orderBy: { id: "desc" }
+    });
+
+    const transformedWorks = works.map(work => ({
+      id: work.id,
+      url: work.imageUrl,
+      description: work.caption,
+      isLogo: work.isLogo,
+      createdAt: work.createdAt
+    }));
+
+    res.json(transformedWorks);
+  } catch (error) {
+    console.error("Error getting works:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Invite specialist
+router.post("/invite-specialist", requireAuth, async (req, res) => {
+  try {
+    console.log('[REQUEST]', {
+      userId: req.user?.id,
+      businessId: req.user?.businessId,
+      route: req.originalUrl
+    });
+
+    const { email, name, businessName, businessId, inviteLink, message } = req.body;
+
+    if (!email || !name) {
+      return res.status(400).json({ error: "Email and name are required" });
+    }
+
+    // Check if invitation already exists for this email and business
+    const existingInvite = await prisma.staffInvite.findFirst({
+      where: {
+        email: email.trim().toLowerCase(),
+        businessId: req.user.businessId,
+        status: 'pending'
+      }
+    });
+
+    if (existingInvite) {
+      return res.status(400).json({ error: "Invitation already sent to this email" });
+    }
+
+    // Create staff invitation record
+    const invite = await prisma.staffInvite.create({
+      data: {
+        email: email.trim().toLowerCase(),
+        businessId: req.user.businessId,
+        status: 'pending'
+      }
+    });
+
+    // Check if master record already exists for this email in this business
+    let specialist;
+    const existingMaster = await prisma.master.findFirst({
+      where: {
+        email: email.trim().toLowerCase(),
+        businessId: req.user.businessId
+      }
+    });
+
+    if (existingMaster) {
+      // Update existing master record
+      specialist = await prisma.master.update({
+        where: { id: existingMaster.id },
+        data: {
+          name: name.trim(),
+          active: false // Ensure it's inactive until invitation is accepted
+        }
+      });
+    } else {
+      // Create new master record for display (inactive until invitation is accepted)
+      specialist = await prisma.master.create({
+        data: {
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          active: false,
+          businessId: req.user.businessId
+        }
+      });
+    }
+
+    // Generate invitation link with business slug
+    const business = await prisma.business.findUnique({
+      where: { id: req.user.businessId },
+      select: { slug: true }
+    });
+
+    const invitationUrl = `${process.env.FRONTEND_URL || 'https://bloknotservis.ru'}?invite=${business.slug}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`;
+
+    // Send invitation email if transporter is available
+    if (transporter) {
+      const mailOptions = {
+        from: `"${businessName || 'Bloknot'}" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: `Приглашение присоединиться к ${businessName || 'Bloknot'}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Приглашение присоединиться к команде</h2>
+            <p>Здравствуйте, ${name}!</p>
+            <p>${message || 'Вас пригласили присоединиться к нашей команде в ' + (businessName || 'Bloknot') + '.'}</p>
+            <p>Для принятия приглашения, пожалуйста, перейдите по ссылке ниже и зарегистрируйтесь:</p>
+            <p><a href="${invitationUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Принять приглашение</a></p>
+            <p style="margin-top: 20px; color: #666; font-size: 12px;">Если кнопка не работает, скопируйте эту ссылку в браузер:<br>${invitationUrl}</p>
+            <p>Если вы не хотите принимать это приглашение, просто проигнорируйте это письмо.</p>
+            <p>С уважением,<br>Команда ${businessName || 'Bloknot'}</p>
+          </div>
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+    }
+
+    res.json({
+      success: true,
+      invite: invite,
+      specialist: specialist,
+      message: transporter ? "Invitation sent successfully" : "Invitation created, but email not sent (SMTP not configured)"
+    });
+  } catch (error) {
+    console.error("Error inviting specialist:", error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: "Email already invited" });
+    }
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+module.exports = router;

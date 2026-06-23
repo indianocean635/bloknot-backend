@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Тест PDF генерации</h1>
+        
+        <div class="test-section">
+            <h3>Тест 1: Получение PDF с сервера</h3>
+            <button class="btn" onclick="testPDFServer()">Получить PDF с сервера</button>
+            <div id="server-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Тест 2: Декодирование и скачивание</h3>
+            <button class="btn" onclick="testPDFDecode()">Декодировать и скачать PDF</button>
+            <div id="decode-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Тест 3: Полный цикл</h3>
+            <button class="btn" onclick="testFullCycle()">Полный тест (получить + скачать)</button>
+            <div id="full-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        let pdfData = null;
+
+        async function testPDFServer() {
+            const resultDiv = document.getElementById('server-result');
+            resultDiv.innerHTML = 'Загрузка...';
+            
+            try {
+                const response = await fetch('/api/invoice/test-pdf');
+                const data = await response.json();
+                
+                if (data.success) {
+                    pdfData = data.invoiceBase64;
+                    resultDiv.innerHTML = `<span class="success">✅ Успешно получено</span>\n`;
+                    resultDiv.innerHTML += `Размер base64: ${pdfData.length} символов\n`;
+                    resultDiv.innerHTML += `Имя файла: ${data.fileName}\n`;
+                    resultDiv.innerHTML += `Первые 100 символов: ${pdfData.substring(0, 100)}...`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Ошибка: ${data.error}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Ошибка запроса: ${error.message}</span>`;
+            }
+        }
+
+        function testPDFDecode() {
+            const resultDiv = document.getElementById('decode-result');
+            
+            if (!pdfData) {
+                resultDiv.innerHTML = '<span class="error">❌ Сначала получите PDF с сервера</span>';
+                return;
+            }
+            
+            resultDiv.innerHTML = 'Декодирование...';
+            
+            try {
+                // Очистка base64
+                const cleanBase64 = pdfData.replace(/\s/g, '');
+                console.log('Очищенный base64:', cleanBase64.length, 'символов');
+                
+                // Декодирование
+                const binaryData = atob(cleanBase64);
+                console.log('Декодировано:', binaryData.length, 'байт');
+                
+                // Создание Uint8Array
+                const bytes = new Uint8Array(binaryData.length);
+                for (let i = 0; i < binaryData.length; i++) {
+                    bytes[i] = binaryData.charCodeAt(i);
+                }
+                console.log('Uint8Array создан:', bytes.length, 'байт');
+                
+                // Создание Blob
+                const blob = new Blob([bytes], { type: 'application/pdf' });
+                console.log('Blob создан:', blob.size, 'байт');
+                
+                // Создание URL
+                const url = URL.createObjectURL(blob);
+                console.log('URL создан:', url);
+                
+                // Скачивание
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'test.pdf';
+                link.click();
+                
+                // Открытие в новой вкладке
+                window.open(url, '_blank');
+                
+                resultDiv.innerHTML = `<span class="success">✅ PDF успешно декодирован и скачан</span>\n`;
+                resultDiv.innerHTML += `Размер файла: ${blob.size} байт\n`;
+                resultDiv.innerHTML += `Открыт в новой вкладке и начато скачивание`;
+                
+                // Очистка через 5 секунд
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Ошибка декодирования: ${error.message}</span>`;
+                console.error('PDF decode error:', error);
+            }
+        }
+
+        async function testFullCycle() {
+            const resultDiv = document.getElementById('full-result');
+            resultDiv.innerHTML = 'Выполнение полного цикла...';
+            
+            try {
+                // Шаг 1: Получение PDF
+                const response = await fetch('/api/invoice/test-pdf');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error);
+                }
+                
+                // Шаг 2: Декодирование
+                const cleanBase64 = data.invoiceBase64.replace(/\s/g, '');
+                const binaryData = atob(cleanBase64);
+                
+                const bytes = new Uint8Array(binaryData.length);
+                for (let i = 0; i < binaryData.length; i++) {
+                    bytes[i] = binaryData.charCodeAt(i);
+                }
+                
+                // Шаг 3: Создание файла
+                const blob = new Blob([bytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                
+                // Шаг 4: Скачивание
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = data.fileName;
+                link.click();
+                
+                // Шаг 5: Открытие
+                window.open(url, '_blank');
+                
+                resultDiv.innerHTML = `<span class="success">✅ Полный цикл выполнен успешно!</span>\n`;
+                resultDiv.innerHTML += `Получено: ${data.invoiceBase64.length} символов\n`;
+                resultDiv.innerHTML += `Размер файла: ${blob.size} байт\n`;
+                resultDiv.innerHTML += `Файл скачан и открыт в новой вкладке`;
+                
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Ошибка: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

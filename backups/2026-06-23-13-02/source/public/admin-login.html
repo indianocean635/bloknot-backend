@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Вход Админа - Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <div class="admin-login-container">
+      <div class="admin-login-header">
+        <h1 class="page-title">Вход в Админ Панель</h1>
+        <p class="page-subtitle">Для супер админа и сотрудников отдела продаж</p>
+        <button onclick="clearCache()" style="background: #ff6b6b; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 10px;">
+          Очистить кэш
+        </button>
+      </div>
+      <div class="card" style="max-width:400px; margin:20px auto">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="admin@bloknotservis.ru" autocomplete="email" />
+        </div>
+
+        <div class="field">
+          <label for="password">Пароль</label>
+          <input id="password" type="password" placeholder="Введите пароль админа" autocomplete="current-password" />
+        </div>
+      </div>
+
+      <div class="notice" id="notice" style="display:none; margin-top:10px"></div>
+
+      <div class="actions" style="margin-top:14px">
+        <button class="btn" id="loginBtn" type="button">Войти</button>
+      </div>
+
+      <div class="actions" style="margin-top:10px">
+        <a class="btn secondary" href="/">Вернуться на главный сайт</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const notice = document.getElementById('notice');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+
+    function showNotice(text) {
+      if (!text) {
+        notice.style.display = 'none';
+        notice.textContent = '';
+        return;
+      }
+      notice.style.display = 'block';
+      notice.textContent = text;
+    }
+
+    async function login() {
+      const email = String(emailInput.value || '').trim();
+      const password = String(passwordInput.value || '').trim();
+
+      if (!email || !password) {
+        showNotice('Please enter email and password');
+        return;
+      }
+
+      showNotice('');
+      loginBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Login failed');
+        }
+
+        console.log('Admin login successful - JWT cookie set');
+
+        showNotice('Login successful! Redirecting...');
+        setTimeout(() => {
+          window.location.href = '/admin.html';
+        }, 1000);
+
+      } catch (e) {
+        showNotice('Login failed: ' + (e && e.message ? e.message : 'Unknown error'));
+      } finally {
+        loginBtn.disabled = false;
+      }
+    }
+
+    function clearCache() {
+      // Clear all localStorage data
+      localStorage.clear();
+      
+      // Clear all sessionStorage data
+      sessionStorage.clear();
+      
+      // Clear all cookies
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
+      
+      showNotice('Cache cleared! Please refresh the page.');
+      
+      // Reload page after 2 seconds
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    }
+
+    loginBtn.addEventListener('click', login);
+    passwordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') login();
+    });
+
+    emailInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        passwordInput.focus();
+      }
+    });
+
+    // Auto-focus email
+    emailInput.focus();
+  </script>
+</body>
+</html>

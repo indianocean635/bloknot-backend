@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки ВКонтакте</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #0077FF;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-active { background: #28a745; }
+        .status-inactive { background: #dc3545; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .btn {
+            background: #0077FF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #0077FF;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        .subscribers-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .subscribers-table th,
+        .subscribers-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .subscribers-table th {
+            background: #f8f9fa;
+            font-weight: 500;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Настройки → ВКонтакте</h1>
+            <p>Управление интеграцией с сообществом ВКонтакте</p>
+        </div>
+
+        <div id="content">
+            <div class="loading">Загрузка...</div>
+        </div>
+    </div>
+
+    <script>
+        let businessId = null;
+        let vkSettings = null;
+
+        // Загрузка настроек
+        async function loadSettings() {
+            try {
+                // Получаем businessId из URL или localStorage
+                const urlParams = new URLSearchParams(window.location.search);
+                businessId = urlParams.get('businessId') || localStorage.getItem('businessId');
+                
+                if (!businessId) {
+                    showError('Business ID не найден');
+                    return;
+                }
+
+                // Загружаем настройки VK
+                const response = await fetch(`/api/vk-community/settings/${businessId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    vkSettings = result.data;
+                    renderSettings();
+                } else {
+                    renderNotConfigured();
+                }
+                
+                // Загружаем статистику
+                loadStats();
+                
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showError('Ошибка загрузки настроек');
+            }
+        }
+
+        // Отрисовка настроек
+        function renderSettings() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="status-card">
+                    <h3>📊 Статус сообщества</h3>
+                    <p>
+                        <span class="status-indicator ${vkSettings.isActive ? 'status-active' : 'status-inactive'}"></span>
+                        Сообщество ${vkSettings.isActive ? 'активно' : 'неактивно'}
+                    </p>
+                    <p><strong>ID группы:</strong> ${vkSettings.vkGroupId}</p>
+                    <p><strong>Подключено пользователей:</strong> ${vkSettings.subscribersCount}</p>
+                    <p><strong>Дата настройки:</strong> ${new Date(vkSettings.createdAt).toLocaleString('ru-RU')}</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">${vkSettings.subscribersCount}</div>
+                        <div class="stat-label">Подписчиков VK</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="todayMessages">-</div>
+                        <div class="stat-label">Сообщений сегодня</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="successRate">-</div>
+                        <div class="stat-label">Успешная доставка</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h3>🧪 Тестовая отправка</h3>
+                    <div class="form-group">
+                        <label>VK User ID для теста:</label>
+                        <input type="number" id="testVkUserId" placeholder="Введите ID пользователя VK">
+                    </div>
+                    <button class="btn" onclick="sendTestMessage()">Отправить тестовое сообщение</button>
+                </div>
+
+                <div>
+                    <h3>👥 Подписчики</h3>
+                    <table class="subscribers-table">
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th>Телефон</th>
+                                <th>VK User ID</th>
+                                <th>Дата подключения</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscribersTable">
+                            <tr>
+                                <td colspan="4" style="text-align: center;">Загрузка...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button class="btn btn-secondary" onclick="toggleVKStatus()">
+                        ${vkSettings.isActive ? 'Деактивировать' : 'Активировать'} сообщество
+                    </button>
+                </div>
+            `;
+            
+            loadSubscribers();
+        }
+
+        // Отрисовка страницы настройки
+        function renderNotConfigured() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="status-card">
+                    <h3>⚙️ Настройка сообщества ВКонтакте</h3>
+                    <p>Сообщество еще не настроено. Для настройки выполните следующие шаги:</p>
+                    <ol style="margin: 20px 0; padding-left: 20px;">
+                        <li>Создайте сообщество ВКонтакте</li>
+                        <li>Включите Callback API в настройках сообщества</li>
+                        <li>Добавьте сервер в Callback API</li>
+                        <li>Получите токен доступа</li>
+                    </ol>
+                </div>
+
+                <form id="vkSettingsForm">
+                    <div class="form-group">
+                        <label>ID группы ВКонтакте:</label>
+                        <input type="number" name="vkGroupId" required placeholder="Например: 123456789">
+                    </div>
+                    <div class="form-group">
+                        <label>Токен доступа:</label>
+                        <textarea name="vkGroupToken" required placeholder="Токен из настроек сообщества" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Callback URL:</label>
+                        <input type="url" name="vkCallbackUrl" readonly value="${window.location.origin}/api/vk-community/callback/${businessId}">
+                        <small style="color: #666;">Скопируйте этот URL и добавьте в настройки Callback API</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Код подтверждения:</label>
+                        <input type="text" name="vkConfirmationCode" required placeholder="Код из настроек Callback API">
+                        <small style="color: #666;">Появится после добавления сервера</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Секретный ключ (опционально):label>
+                        <input type="text" name="vkSecretKey" placeholder="Для дополнительной безопасности">
+                    </div>
+                    <button type="submit" class="btn">Сохранить настройки</button>
+                </form>
+            `;
+
+            // Обработчик формы
+            document.getElementById('vkSettingsForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await saveSettings();
+            });
+        }
+
+        // Сохранение настроек
+        async function saveSettings() {
+            const formData = new FormData(document.getElementById('vkSettingsForm'));
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch(`/api/vk-community/settings/${businessId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Настройки сохранены успешно');
+                    loadSettings(); // Перезагружаем
+                } else {
+                    showError(result.error || 'Ошибка сохранения настроек');
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showError('Ошибка сохранения настроек');
+            }
+        }
+
+        // Загрузка статистики
+        async function loadStats() {
+            if (!vkSettings) return;
+            
+            try {
+                // TODO: Добавить endpoint для статистики
+                document.getElementById('todayMessages').textContent = '0';
+                document.getElementById('successRate').textContent = '100%';
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Загрузка подписчиков
+        async function loadSubscribers() {
+            if (!vkSettings) return;
+            
+            try {
+                const response = await fetch(`/api/vk-community/subscribers/${businessId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const tbody = document.getElementById('subscribersTable');
+                    tbody.innerHTML = result.data.map(sub => `
+                        <tr>
+                            <td>${sub.customerName}</td>
+                            <td>${sub.customerPhone}</td>
+                            <td>${sub.vkUserId}</td>
+                            <td>${new Date(sub.createdAt).toLocaleString('ru-RU')}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading subscribers:', error);
+            }
+        }
+
+        // Отправка тестового сообщения
+        async function sendTestMessage() {
+            const vkUserId = document.getElementById('testVkUserId').value;
+            
+            if (!vkUserId) {
+                showError('Введите VK User ID');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/vk-community/test-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        businessId,
+                        vkUserId: parseInt(vkUserId)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Тестовое сообщение отправлено');
+                } else {
+                    showError(result.error || 'Ошибка отправки сообщения');
+                }
+            } catch (error) {
+                console.error('Error sending test message:', error);
+                showError('Ошибка отправки сообщения');
+            }
+        }
+
+        // Переключение статуса
+        async function toggleVKStatus() {
+            try {
+                const response = await fetch(`/api/vk-community/settings/${businessId}/toggle`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Статус изменен');
+                    loadSettings();
+                } else {
+                    showError(result.error || 'Ошибка изменения статуса');
+                }
+            } catch (error) {
+                console.error('Error toggling status:', error);
+                showError('Ошибка изменения статуса');
+            }
+        }
+
+        // Показать уведомление
+        function showSuccess(message) {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success';
+            alert.textContent = message;
+            document.querySelector('.container').insertBefore(alert, document.querySelector('.header'));
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        function showError(message) {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-error';
+            alert.textContent = message;
+            document.querySelector('.container').insertBefore(alert, document.querySelector('.header'));
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', loadSettings);
+    </script>
+</body>
+</html>

@@ -1,0 +1,492 @@
+(function () {
+  const API_BASE = "https://bloknotservis.ru"; // Updated: 2026-04-20
+  console.log('APP.JS LOADED - API_BASE:', API_BASE);
+
+  // Auto-refresh on version change - DISABLED to prevent infinite reload
+  async function checkForUpdates() {
+    // Disabled to prevent infinite reload loop
+    return;
+    
+    try {
+      const currentVersion = '0' // Remove localStorage usage - version from API || '0';
+      
+      // Check server version
+      const response = await fetch('/api/version');
+      const serverVersion = response.ok ? (await response.json()).version : '1';
+      
+      if (currentVersion !== serverVersion) {
+        // Remove localStorage usage - version managed by server
+        // Force refresh to get latest version
+        window.location.reload(true);
+      }
+    } catch (e) {
+      // Fallback to meta tag if API fails
+      try {
+        const currentVersion = '0' // Remove localStorage usage - version from API || '0';
+        const pageVersion = document.querySelector('meta[name="version"]')?.content || '1';
+        
+        if (currentVersion !== pageVersion) {
+          // Remove localStorage usage - version managed by server
+          window.location.reload(true);
+        }
+      } catch (e2) {
+        // Ignore all errors
+      }
+    }
+  }
+
+  // Check for updates on page load - DISABLED
+  // checkForUpdates();
+
+  // Check periodically (every 30 seconds) - DISABLED
+  // setInterval(checkForUpdates, 30000);
+
+  function ensureFavicon() {
+    const head = document.head;
+    if (!head) return;
+    const hasIcon = !!head.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
+    if (hasIcon) return;
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.type = "image/png";
+    link.href = "/favicon.png";
+    head.appendChild(link);
+  }
+
+  function ensurePwaMeta() {
+    const head = document.head;
+    if (!head) return;
+
+    if (!head.querySelector('link[rel="manifest"]')) {
+      const m = document.createElement("link");
+      m.rel = "manifest";
+      m.href = "/manifest.webmanifest";
+      head.appendChild(m);
+    }
+
+    if (!head.querySelector('meta[name="theme-color"]')) {
+      const t = document.createElement("meta");
+      t.name = "theme-color";
+      t.content = "#22c55e";
+      head.appendChild(t);
+    }
+  }
+
+  function registerServiceWorker() {
+    try {
+      // Service Worker отключен - блокирует мобильные
+      console.log('[APP] Service Worker disabled for mobile');
+      return;
+    } catch (e) {}
+  }
+
+  function initAuthFlagFromQuery() {
+    try {
+      const params = new URLSearchParams(location.search || "");
+      if (params.get("logged") === "1") {
+        // Check if token is in localStorage from magic link callback
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          console.log('Login successful - token saved to localStorage for iOS PWA');
+        }
+        params.delete("logged");
+        const next = location.pathname + (params.toString() ? "?" + params.toString() : "") + (location.hash || "");
+        history.replaceState(null, "", next);
+      }
+    } catch (e) {}
+  }
+
+  ensureFavicon();
+  ensurePwaMeta();
+  registerServiceWorker();
+  initAuthFlagFromQuery();
+
+  function qs(sel) {
+    return document.querySelector(sel);
+  }
+
+  
+  function esc(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  async function api(path, opts) {
+    // Check for token in multiple storage locations with priority
+    let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+    
+    // If not in storage, try IndexedDB
+    if (!token) {
+      try {
+        const db = await indexedDB.open('bloknot-auth', 1);
+        const tx = db.transaction('auth', 'readonly');
+        const store = tx.objectStore('auth');
+        const result = await store.get('token');
+        if (result) {
+          token = result.value;
+          // Sync back to all storage locations
+          localStorage.setItem('auth_token', token);
+          sessionStorage.setItem('auth_token', token);
+          console.log('Token found in IndexedDB, synced to storage');
+        }
+        db.close();
+      } catch (e) {
+        console.log('IndexedDB not available:', e);
+      }
+    }
+    
+    // If still no token, try cookie
+    if (!token) {
+      const cookies = document.cookie.split(';').map(c => c.trim());
+      const authCookie = cookies.find(c => c.startsWith('auth='));
+      if (authCookie) {
+        token = decodeURIComponent(authCookie.substring(5));
+        // Sync to all storage locations
+        localStorage.setItem('auth_token', token);
+        sessionStorage.setItem('auth_token', token);
+        console.log('Token found in cookie, synced to storage');
+      }
+    }
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      ...opts?.headers
+    };
+    
+    // Add Authorization header if token exists
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const options = {
+      ...opts,
+      credentials: 'include',
+      headers: headers
+    };
+    
+    const fullUrl = API_BASE + path;
+    console.log('[API CALL]', { path, hasToken: !!token, hasCookie: true });
+    
+    const res = await fetch(fullUrl, options);
+    
+    if (!res.ok) {
+      let text = "";
+      try {
+        text = await res.text();
+      } catch (e) {}
+      console.error('[API ERROR]', { path, status: res.status, text });
+
+      // Don't auto-redirect on 401 - let the page handle it
+      // This prevents infinite redirect loops
+      if (res.status === 401) {
+        console.log('[API] 401 Unauthorized - not auto-redirecting');
+        throw new Error('Unauthorized');
+      }
+
+      throw new Error(text || ("HTTP " + res.status));
+    }
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("application/json")) return res.json();
+    
+    // If not JSON, check if it's HTML (error page)
+    const text = await res.text();
+    if (text.includes('<html') || text.includes('<!DOCTYPE')) {
+      console.error('[API] Received HTML instead of JSON:', text.substring(0, 200));
+      throw new Error('Server returned HTML instead of JSON. This might be an error page.');
+    }
+    
+    return text;
+  }
+
+  // Save token to all storage locations for maximum reliability
+  async function saveAuthToken(token) {
+    console.log('[SAVE TOKEN] Saving token to all storage locations');
+    // Save to localStorage
+    try {
+      localStorage.setItem('auth_token', token);
+      console.log('[SAVE TOKEN] Saved to localStorage');
+    } catch (e) {
+      console.log('[SAVE TOKEN] localStorage save failed:', e);
+    }
+    // Save to sessionStorage (for current session)
+    try {
+      sessionStorage.setItem('auth_token', token);
+      console.log('[SAVE TOKEN] Saved to sessionStorage');
+    } catch (e) {
+      console.log('[SAVE TOKEN] sessionStorage save failed:', e);
+    }
+    // Save to IndexedDB (for iOS PWA)
+    try {
+      const db = await indexedDB.open('bloknot-auth', 1);
+      if (!db.objectStoreNames.contains('auth')) {
+        db.createObjectStore('auth');
+      }
+      const tx = db.transaction('auth', 'readwrite');
+      const store = tx.objectStore('auth');
+      await store.put({ id: 'token', value: token });
+      db.close();
+      console.log('[SAVE TOKEN] Saved to IndexedDB');
+    } catch (e) {
+      console.log('[SAVE TOKEN] IndexedDB save failed:', e);
+    }
+    // Save to cookie as fallback for iOS Safari
+    try {
+      // For iOS PWA, use simpler cookie without Secure flag
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const cookieOptions = isIOS
+        ? `auth=${token}; path=/; max-age=7776000; SameSite=Lax`
+        : `auth=${token}; path=/; max-age=7776000; SameSite=Lax; Secure`;
+      document.cookie = cookieOptions;
+      console.log('[SAVE TOKEN] Saved to cookie (iOS mode:', isIOS, ')');
+    } catch (e) {
+      console.log('[SAVE TOKEN] Cookie save failed:', e);
+    }
+    console.log('[SAVE TOKEN] Token saved successfully');
+  }
+
+  // Clear token from all storage locations
+  async function clearAuthToken() {
+    console.log('[CLEAR TOKEN] Clearing token from all storage locations');
+    localStorage.removeItem('auth_token');
+    sessionStorage.removeItem('auth_token');
+    try {
+      const db = await indexedDB.open('bloknot-auth', 1);
+      const tx = db.transaction('auth', 'readwrite');
+      const store = tx.objectStore('auth');
+      await store.delete('token');
+      db.close();
+      console.log('[CLEAR TOKEN] Cleared from IndexedDB');
+    } catch (e) {
+      console.log('[CLEAR TOKEN] IndexedDB clear failed:', e);
+    }
+    // Clear cookie
+    try {
+      document.cookie = 'auth=; path=/; max-age=0; SameSite=Lax; Secure';
+      console.log('[CLEAR TOKEN] Cleared cookie');
+    } catch (e) {
+      console.log('[CLEAR TOKEN] Cookie clear failed:', e);
+    }
+    console.log('[CLEAR TOKEN] Token cleared successfully');
+  }
+
+  let deferredInstallPrompt = null;
+  try {
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+    });
+  } catch (e) {}
+
+  function isIOS() {
+    const ua = navigator.userAgent || "";
+    return /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  }
+
+  function isStandalone() {
+    try {
+      return (
+        window.matchMedia &&
+        window.matchMedia("(display-mode: standalone)").matches
+      ) || window.navigator.standalone === true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function ensureBookmarkModal() {
+    if (document.getElementById("bookmark-modal")) return;
+    const wrap = document.createElement("div");
+    wrap.id = "bookmark-modal";
+    wrap.style.position = "fixed";
+    wrap.style.inset = "0";
+    wrap.style.background = "rgba(15,23,42,0.45)";
+    wrap.style.backdropFilter = "blur(6px)";
+    wrap.style.display = "none";
+    wrap.style.alignItems = "center";
+    wrap.style.justifyContent = "center";
+    wrap.style.padding = "18px";
+    wrap.style.zIndex = "9999";
+    wrap.innerHTML = `
+      <div class="card" style="max-width:520px; width:100%">
+        <div class="item-title" style="font-size:18px">Сохранить в закладках</div>
+        <div class="item-meta" id="bookmark-text" style="margin-top:8px"></div>
+        <div class="actions" style="margin-top:14px; justify-content:flex-end">
+          <button class="btn secondary" id="bookmark-close" type="button">Закрыть</button>
+          <button class="btn" id="bookmark-install" type="button" style="display:none">Добавить на экран</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(wrap);
+
+    const closeBtn = document.getElementById("bookmark-close");
+    closeBtn.addEventListener("click", () => {
+      wrap.style.display = "none";
+    });
+    wrap.addEventListener("click", (e) => {
+      if (e.target === wrap) wrap.style.display = "none";
+    });
+  }
+
+  async function openBookmarkHelp() {
+    ensureBookmarkModal();
+    const modal = document.getElementById("bookmark-modal");
+    const text = document.getElementById("bookmark-text");
+    const installBtn = document.getElementById("bookmark-install");
+
+    if (isStandalone()) {
+      text.innerHTML = "Похоже, приложение уже добавлено на главный экран.";
+      installBtn.style.display = "none";
+      modal.style.display = "flex";
+      return;
+    }
+
+    const ua = navigator.userAgent || "";
+    const isMac = /Macintosh|Mac OS X/.test(ua);
+    const isWin = /Windows/.test(ua);
+
+    if (isIOS()) {
+      text.innerHTML =
+        "<div style=\"display:grid; gap:8px\">" +
+        "<div><b>Добавить на экран «Домой»</b></div>" +
+        "<div>1) Открой сайт именно в <b>Safari</b> (не внутри Telegram/Instagram/ВК браузера).</div>" +
+        "<div>2) Нажми кнопку <b>Поделиться</b> (квадрат со стрелкой вверх).</div>" +
+        "<div>3) Прокрути список действий вниз и выбери <b>\"На экран «Домой»\"</b> / <b>\"Add to Home Screen\"</b>.</div>" +
+        "<div>Если пункта нет: нажми <b>\"Изменить действия\"</b> и включи \"На экран «Домой»\" (или обнови iOS).</div>" +
+        "</div>";
+      installBtn.style.display = "none";
+      modal.style.display = "flex";
+      return;
+    }
+
+    const parts = [];
+
+    if (deferredInstallPrompt) {
+      parts.push(
+        "<div><b>Установить как приложение</b></div>" +
+          "<div>Нажми кнопку ниже — появится системное окно установки Bloknot.</div>"
+      );
+      installBtn.style.display = "inline-flex";
+      installBtn.onclick = async () => {
+        try {
+          const p = deferredInstallPrompt;
+          deferredInstallPrompt = null;
+          installBtn.style.display = "none";
+          await p.prompt();
+        } catch (e) {}
+      };
+    } else {
+      installBtn.style.display = "none";
+      if (isWin) {
+        parts.push(
+          "<div><b>Установить как приложение (Edge/Chrome)</b></div>" +
+            "<div>Открой меню браузера → <b>Установить приложение</b> / <b>Приложения</b> → <b>Установить этот сайт как приложение</b>.</div>"
+        );
+      } else if (isMac) {
+        parts.push(
+          "<div><b>Установить как приложение (Chrome/Edge)</b></div>" +
+            "<div>Открой меню браузера → <b>Install app</b> / <b>Установить</b>.</div>"
+        );
+      }
+    }
+
+    if (isMac) {
+      parts.push("<div><b>Добавить в закладки</b></div><div>Нажми <b>Cmd + D</b>.</div>");
+    } else if (isWin) {
+      parts.push("<div><b>Добавить в закладки</b></div><div>Нажми <b>Ctrl + D</b>.</div>");
+    }
+
+    if (isWin) {
+      parts.push(
+        "<div><b>Закрепить на панели задач</b></div>" +
+          "<div>После установки: открой приложение Bloknot → правой кнопкой по иконке на панели задач → <b>Закрепить</b>.</div>" +
+          "<div>Если не установлено: закрепить нельзя — сначала нужно установить как приложение.</div>"
+      );
+    } else if (isMac) {
+      parts.push(
+        "<div><b>Закрепить в Dock</b></div>" +
+          "<div>После установки: открой Bloknot → правой кнопкой по иконке в Dock → <b>Параметры</b> → <b>Оставить в Dock</b>.</div>"
+      );
+    }
+
+    text.innerHTML = `<div style="display:grid; gap:10px">${parts.join("")}</div>`;
+    modal.style.display = "flex";
+  }
+
+  async function triggerInstallPrompt() {
+    if (!deferredInstallPrompt) return false;
+    try {
+      const p = deferredInstallPrompt;
+      deferredInstallPrompt = null;
+      await p.prompt();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function renderHeader(active) {
+    const host = qs("#app-header");
+    if (!host) return;
+
+    const isLoggedIn = (() => {
+      try {
+        return false; // Remove localStorage usage - auth via JWT cookie
+      } catch (e) {
+        return false;
+      }
+    })();
+
+    const brandHref = isLoggedIn ? "/dashboard.html" : "/";
+
+    const links = [
+      { key: "dashboard", href: "/dashboard.html", label: "Кабинет" },
+      { key: "settings", href: "/settings.html", label: "Настройки" },
+      { key: "calendar", href: "/calendar.html", label: "Календарь" },
+    ];
+
+    host.innerHTML = `
+      <div class="header">
+        <div class="container header-inner">
+          <a class="brand" href="${brandHref}" aria-label="Bloknot">
+            <img src="/logo-wordmark.svg?v=10" alt="Bloknot" style="height:34px; display:block" />
+          </a>
+          <nav class="nav" aria-label="Навигация">
+            ${links
+              .map(
+                (l) =>
+                  `<a href="${l.href}" class="${l.key === active ? "active" : ""}">${esc(
+                    l.label
+                  )}</a>`
+              )
+              .join("")}
+            <button class="btn secondary" id="bookmark-btn" type="button" style="padding:8px 10px; border-radius:10px">Установить</button>
+          </nav>
+        </div>
+      </div>
+    `;
+
+    const b = host.querySelector("#bookmark-btn");
+    if (b) {
+      b.addEventListener("click", () => {
+        triggerInstallPrompt().then((didPrompt) => {
+          if (!didPrompt) openBookmarkHelp();
+        });
+      });
+    }
+
+  }
+
+  window.Bloknot = {
+    API_BASE,
+    qs,
+    esc,
+    api,
+    renderHeader,
+    saveAuthToken,
+    clearAuthToken,
+  };
+})();

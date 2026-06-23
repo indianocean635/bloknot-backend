@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VK Mobile Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .test-button {
+            background: #0077FF;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 VK Mobile Test</h1>
+    
+    <div class="info">
+        <h3>Информация об устройстве:</h3>
+        <p><strong>User Agent:</strong> <span id="userAgent"></span></p>
+        <p><strong>Мобильное:</strong> <span id="isMobile"></span></p>
+        <p><strong>Размер экрана:</strong> <span id="screenSize"></span></p>
+    </div>
+
+    <button id="testVkBtn" class="test-button">🧪 Тестировать VK авторизацию</button>
+    <button id="clearLogBtn" class="test-button">🗑️ Очистить лог</button>
+
+    <div class="info">
+        <h3>Лог тестирования:</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        // Логирование
+        const logElement = document.getElementById('log');
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}\n`;
+            logElement.textContent += logMessage;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        // Информация об устройстве
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        document.getElementById('isMobile').textContent = isMobile ? 'Да' : 'Нет';
+        document.getElementById('screenSize').textContent = `${window.screen.width}x${window.screen.height}`;
+
+        log('🧪 VK Mobile Test initialized');
+        log(`📱 Mobile device: ${isMobile}`);
+        log(`🔍 User Agent: ${navigator.userAgent}`);
+
+        // Тест VK авторизации
+        document.getElementById('testVkBtn').addEventListener('click', async () => {
+            log('🔘 VK button clicked');
+            
+            try {
+                // Получаем конфигурацию VK
+                log('📡 Fetching VK config...');
+                const response = await fetch('/api/vk/config');
+                const config = await response.json();
+                
+                log('✅ VK config received');
+                log(`📋 App ID: ${config.appId}`);
+                log(`📋 Enabled: ${config.enabled}`);
+
+                if (!config.enabled) {
+                    log('❌ VK notifications disabled');
+                    alert('VK уведомления временно недоступны');
+                    return;
+                }
+
+                if (!config.appId) {
+                    log('❌ VK App ID is missing');
+                    alert('VK App ID не настроен');
+                    return;
+                }
+
+                // Генерируем PKCE
+                log('🔐 Generating PKCE parameters...');
+                
+                function generateCodeVerifier(length = 128) {
+                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+                    let result = '';
+                    for (let i = 0; i < length; i++) {
+                        result += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    return result;
+                }
+
+                async function generateCodeChallenge(verifier) {
+                    const encoder = new TextEncoder();
+                    const data = encoder.encode(verifier);
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    const base64String = btoa(String.fromCharCode(...hashArray));
+                    return base64String.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+                }
+
+                const codeVerifier = generateCodeVerifier();
+                const codeChallenge = await generateCodeChallenge(codeVerifier);
+                
+                log(`🔐 Code verifier length: ${codeVerifier.length}`);
+                log(`🔐 Code challenge: ${codeChallenge}`);
+
+                // Формируем URL авторизации
+                const redirectUri = window.location.origin + '/api/vk/callback';
+                const encodedRedirectUri = encodeURIComponent(redirectUri);
+                const state = 'mobile-test-' + Date.now();
+                const scope = 'openid email';
+                
+                const authUrl = `https://id.vk.com/authorize?client_id=${config.appId}&redirect_uri=${encodedRedirectUri}&state=${state}&scope=${encodeURIComponent(scope)}&code_challenge=${codeChallenge}&code_challenge_method=S256&response_type=code&prompt=login&lang=ru`;
+                
+                log(`🔗 Auth URL: ${authUrl}`);
+                log(`🔄 Redirect URI: ${redirectUri}`);
+
+                // Сохраняем verifier
+                sessionStorage.setItem('vk_code_verifier', codeVerifier);
+                sessionStorage.setItem('vk_state', state);
+                log('💾 Code verifier saved to sessionStorage');
+
+                // Мобильный fallback
+                if (isMobile) {
+                    log('📱 Using mobile fallback - direct redirect');
+                    log('🚀 Redirecting to VK...');
+                    window.location.href = authUrl;
+                } else {
+                    log('🖥️ Using desktop popup');
+                    const popup = window.open(authUrl, '_blank', 'width=600,height=600');
+                    
+                    if (!popup) {
+                        log('❌ Popup blocked, falling back to direct redirect');
+                        window.location.href = authUrl;
+                        return;
+                    }
+                    
+                    log('✅ Popup opened successfully');
+                }
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                console.error(error);
+            }
+        });
+
+        // Очистка лога
+        document.getElementById('clearLogBtn').addEventListener('click', () => {
+            logElement.textContent = '';
+            log('🗑️ Log cleared');
+        });
+
+        // Проверяем callback параметры при загрузке
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+        
+        if (code) {
+            log('🔄 VK callback detected - authorization code received');
+            log(`📋 Code: ${code.substring(0, 20)}...`);
+        }
+        
+        if (error) {
+            log(`❌ VK callback error: ${error}`);
+        }
+    </script>
+</body>
+</html>

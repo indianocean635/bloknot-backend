@@ -1,0 +1,36 @@
+<svg width="80" height="80" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="#f8fafc" stroke="#4c6fff" stroke-width="3"/>
+  
+  <!-- Suitcase -->
+  <rect x="60" y="70" width="80" height="60" fill="#dc2626" rx="8"/>
+  <rect x="60" y="70" width="80" height="12" fill="#991b1b" rx="6"/>
+  
+  <!-- Suitcase handle -->
+  <path d="M 85 70 Q 85 55 100 55 Q 115 55 115 70" stroke="#1e293b" stroke-width="4" fill="none"/>
+  
+  <!-- Money bills around suitcase -->
+  <g transform="rotate(-15 100 100)">
+    <rect x="40" y="85" width="25" height="15" fill="#10b981" rx="2"/>
+    <text x="52" y="95" font-family="Arial" font-size="10" font-weight="bold" text-anchor="middle" fill="white">$</text>
+  </g>
+  
+  <g transform="rotate(10 100 100)">
+    <rect x="135" y="85" width="25" height="15" fill="#10b981" rx="2"/>
+    <text x="147" y="95" font-family="Arial" font-size="10" font-weight="bold" text-anchor="middle" fill="white">$</text>
+  </g>
+  
+  <g transform="rotate(25 100 100)">
+    <rect x="45" y="110" width="25" height="15" fill="#10b981" rx="2"/>
+    <text x="57" y="120" font-family="Arial" font-size="10" font-weight="bold" text-anchor="middle" fill="white">$</text>
+  </g>
+  
+  <g transform="rotate(-20 100 100)">
+    <rect x="130" y="110" width="25" height="15" fill="#10b981" rx="2"/>
+    <text x="142" y="120" font-family="Arial" font-size="10" font-weight="bold" text-anchor="middle" fill="white">$</text>
+  </g>
+  
+  <!-- Lock on suitcase -->
+  <rect x="90" y="95" width="20" height="15" fill="#fbbf24" rx="2"/>
+  <circle cx="100" cy="102" r="3" fill="#1e293b"/>
+</svg>

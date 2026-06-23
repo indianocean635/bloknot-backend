@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Тарифы — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .tariff-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+    
+    .tariff-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+    
+    .tariff-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .tariff-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    }
+    
+    .tariff-card.featured {
+      border-color: #4c6fff;
+      box-shadow: 0 8px 16px rgba(76,111,255,0.2);
+    }
+    
+    .tariff-name {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .tariff-price {
+      font-size: 32px;
+      font-weight: 800;
+      color: #4c6fff;
+      margin-bottom: 16px;
+    }
+    
+    .tariff-users {
+      color: #6b7280;
+      margin-bottom: 24px;
+    }
+    
+    .tariff-features {
+      text-align: left;
+      margin-bottom: 32px;
+    }
+    
+    .tariff-features li {
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .tariff-features li:before {
+      content: "✓";
+      color: #10b981;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    
+    .tariff-button {
+      width: 100%;
+      padding: 12px 24px;
+      background: #4c6fff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .tariff-button:hover {
+      background: #3730a3;
+    }
+    
+    .tariff-button.secondary {
+      background: transparent;
+      color: #4c6fff;
+      border: 2px solid #4c6fff;
+    }
+    
+    .tariff-button.secondary:hover {
+      background: #4c6fff;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Bloknot">
+        <img src="/logo-wordmark.svg?v=10" alt="Bloknot" style="height:34px; display:block" />
+      </a>
+    </div>
+  </div>
+  
+  <main class="tariff-container">
+    <h1 class="page-title">Тарифы</h1>
+    <p class="page-subtitle">Выберите подходящий тариф для вашего бизнеса</p>
+    
+    <div class="tariff-grid">
+      <div class="tariff-card">
+        <div class="tariff-name">Solo</div>
+        <div class="tariff-price">690 ₽/мес</div>
+        <div class="tariff-users">1 пользователь</div>
+        <ul class="tariff-features">
+          <li>Неограниченное количество записей</li>
+          <li>Онлайн-запись клиентов</li>
+          <li>Управление услугами</li>
+          <li>Автоматические напоминания</li>
+          <li>Базовая аналитика</li>
+        </ul>
+        <button class="tariff-button secondary">Выбрать тариф</button>
+      </div>
+      
+      <div class="tariff-card featured">
+        <div class="tariff-name">Studio</div>
+        <div class="tariff-price">990 ₽/мес</div>
+        <div class="tariff-users">до 5 пользователей</div>
+        <ul class="tariff-features">
+          <li>Все из тарифа Solo</li>
+          <li>До 5 сотрудников</li>
+          <li>Расширенная аналитика</li>
+          <li>Интеграция с мессенджерами</li>
+          <li>Кастомизация бренда</li>
+          <li>Приоритетная поддержка</li>
+        </ul>
+        <button class="tariff-button">Выбрать тариф</button>
+      </div>
+      
+      <div class="tariff-card">
+        <div class="tariff-name">Pro</div>
+        <div class="tariff-price">1490 ₽/мес</div>
+        <div class="tariff-users">более 5 пользователей</div>
+        <ul class="tariff-features">
+          <li>Все из тарифа Studio</li>
+          <li>Неограниченное количество сотрудников</li>
+          <li>API доступ</li>
+          <li>Продвинутая аналитика</li>
+          <li>Персональный менеджер</li>
+          <li>Собственный домен</li>
+          <li>Экспорт данных</li>
+        </ul>
+        <button class="tariff-button secondary">Выбрать тариф</button>
+      </div>
+    </div>
+    
+    <div style="margin-top: 48px; padding: 24px; background: #f8f9fa; border-radius: 12px;">
+      <h3 style="margin-bottom: 16px;">Дополнительная информация</h3>
+      <ul style="list-style: none; padding: 0;">
+        <li style="padding: 8px 0;">✓ 14 дней бесплатного тестового периода</li>
+        <li style="padding: 8px 0;">✓ Отмена подписки в любой момент</li>
+        <li style="padding: 8px 0;">✓ Скидка 10% при оплате на год вперед</li>
+        <li style="padding: 8px 0;">✓ Безопасная оплата через банковскую карту</li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>

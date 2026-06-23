@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VK Авторизация - Успех</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 400px;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .success-icon {
+      font-size: 48px;
+      color: #28a745;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 15px;
+    }
+    p {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .btn {
+      background: #007bff;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="success-icon">✅</div>
+    <h1>Авторизация VK успешна!</h1>
+    <p>Ваш аккаунт VK успешно подключен к сервису.</p>
+    <a href="/" class="btn">Перейти на главную</a>
+  </div>
+
+  <script>
+    console.log('[VK CALLBACK] Page loaded');
+    console.log('[VK CALLBACK] Full URL:', window.location.href);
+    
+    // Получаем параметры из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const vkUserId = urlParams.get('vk_user_id');
+    const error = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+    const state = urlParams.get('state');
+    const code = urlParams.get('code');
+    
+    console.log('[VK CALLBACK] URL Parameters:');
+    console.log('  - token:', token ? token.substring(0, 20) + '...' : 'null');
+    console.log('  - vk_user_id:', vkUserId);
+    console.log('  - error:', error);
+    console.log('  - error_description:', errorDescription);
+    console.log('  - state:', state);
+    console.log('  - code:', code);
+    
+    if (error) {
+      console.error('[VK CALLBACK] VK returned error:', error, errorDescription);
+      document.querySelector('.container').innerHTML = `
+        <div class="error-icon">❌</div>
+        <h1>Ошибка VK OAuth</h1>
+        <p>VK вернул ошибку авторизации</p>
+        <div class="error-message">
+          <strong>Ошибка:</strong> ${error}<br>
+          <strong>Описание:</strong> ${errorDescription || 'Нет описания'}<br>
+          <strong>State:</strong> ${state || 'Нет'}
+        </div>
+        <a href="/" class="btn">Перейти на главную</a>
+      `;
+    } else if (token) {
+      // Сохраняем токен в localStorage
+      localStorage.setItem('auth_token', token);
+      console.log('[VK CALLBACK] VK Auth token saved:', token.substring(0, 20) + '...');
+      
+      // Если это было в окне бронирования, закрываем окно
+      if (window.opener) {
+        console.log('[VK CALLBACK] Sending message to opener window');
+        window.opener.postMessage({
+          type: 'VK_AUTH_SUCCESS',
+          token: token,
+          vkUserId: vkUserId,
+          state: state
+        }, '*');
+        
+        // Закрываем через короткую задержку
+        setTimeout(() => {
+          console.log('[VK CALLBACK] Closing popup window');
+          window.close();
+        }, 1000);
+      }
+    } else {
+      console.error('[VK CALLBACK] No token received');
+      document.querySelector('.container').innerHTML = `
+        <div class="error-icon">❌</div>
+        <h1>Ошибка авторизации</h1>
+        <p>Токен не получен от VK</p>
+        <div class="error-message">
+          Проверьте консоль для детальной информации
+        </div>
+        <a href="/" class="btn">Перейти на главную</a>
+      `;
+    }
+  </script>
+</body>
+</html>

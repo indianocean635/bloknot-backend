@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Test - Bloknot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f8f9fa;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-group {
+      margin: 15px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+    .result {
+      margin: 15px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #d1ecf1; color: #0c5460; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🔐 Тест входа</h2>
+    
+    <div class="form-group">
+      <label>Email:</label>
+      <input type="email" id="email" placeholder="ваш@email.com">
+    </div>
+    
+    <div class="form-group">
+      <label>Пароль:</label>
+      <input type="password" id="password" placeholder="Пароль">
+    </div>
+    
+    <button class="btn" onclick="testLogin()">Тест входа</button>
+    <button class="btn" onclick="testRegister()">Тест регистрации</button>
+    <button class="btn" onclick="testAPI()">Тест API</button>
+    
+    <div id="result"></div>
+  </div>
+
+  <script>
+    function showResult(message, type = 'info') {
+      const result = document.getElementById('result');
+      result.className = `result ${type}`;
+      result.innerHTML = message;
+    }
+    
+    async function testAPI() {
+      showResult('Тестирую API...', 'info');
+      
+      try {
+        // Тест версии API
+        const versionResponse = await fetch('/api/version');
+        if (versionResponse.ok) {
+          const version = await versionResponse.json();
+          showResult(`✅ API работает! Версия: ${version.version}`, 'success');
+        } else {
+          showResult('❌ API версия не отвечает', 'error');
+        }
+      } catch (error) {
+        showResult(`❌ Ошибка API: ${error.message}`, 'error');
+      }
+    }
+    
+    async function testLogin() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      if (!email || !password) {
+        showResult('❌ Введите email и пароль', 'error');
+        return;
+      }
+      
+      showResult('Пытаюсь войти...', 'info');
+      
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          showResult(`✅ Вход успешен! Токен: ${data.token?.substring(0, 20)}...`, 'success');
+        } else {
+          const error = await response.json();
+          showResult(`❌ Ошибка входа: ${error.message || 'Неизвестная ошибка'}`, 'error');
+        }
+      } catch (error) {
+        showResult(`❌ Сетевая ошибка: ${error.message}`, 'error');
+      }
+    }
+    
+    async function testRegister() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      if (!email || !password) {
+        showResult('❌ Введите email и пароль', 'error');
+        return;
+      }
+      
+      showResult('Пытаюсь зарегистрироваться...', 'info');
+      
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            name: 'Test User', 
+            email, 
+            password,
+            phone: '+70000000000'
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          showResult(`✅ Регистрация успешна!`, 'success');
+        } else {
+          const error = await response.json();
+          showResult(`❌ Ошибка регистрации: ${error.message || 'Неизвестная ошибка'}`, 'error');
+        }
+      } catch (error) {
+        showResult(`❌ Сетевая ошибка: ${error.message}`, 'error');
+      }
+    }
+    
+    // Информация о браузере
+    console.log('User Agent:', navigator.userAgent);
+    console.log('Current URL:', window.location.origin);
+  </script>
+</body>
+</html>

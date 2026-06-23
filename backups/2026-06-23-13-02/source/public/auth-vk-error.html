@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VK Авторизация - Ошибка</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 400px;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .error-icon {
+      font-size: 48px;
+      color: #dc3545;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 15px;
+    }
+    p {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      word-wrap: break-word;
+    }
+    .btn {
+      background: #007bff;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="error-icon">❌</div>
+    <h1>Ошибка авторизации VK</h1>
+    <p>Произошла ошибка при подключении аккаунта VK.</p>
+    
+    <div class="error-message" id="errorMessage">
+      Не удалось подключить ВКонтакте. Попробуйте еще раз.
+    </div>
+    
+    <a href="/" class="btn">Перейти на главную</a>
+  </div>
+
+  <script>
+    console.log('[VK ERROR CALLBACK] Page loaded');
+    console.log('[VK ERROR CALLBACK] Full URL:', window.location.href);
+    
+    // Получаем параметры из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorMessage = urlParams.get('message');
+    const error = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+    const state = urlParams.get('state');
+    const code = urlParams.get('code');
+    
+    console.log('[VK ERROR CALLBACK] URL Parameters:');
+    console.log('  - message:', errorMessage);
+    console.log('  - error:', error);
+    console.log('  - error_description:', errorDescription);
+    console.log('  - state:', state);
+    console.log('  - code:', code);
+
+    if (errorMessage) {
+      // Если ошибка в формате JSON, показываем красивое сообщение
+      if (errorMessage.includes('Not found') || errorMessage.includes('{"error"')) {
+        document.getElementById('errorMessage').textContent = 'Не удалось подключить ВКонтакте. Попробуйте еще раз.';
+      } else {
+        document.getElementById('errorMessage').textContent = decodeURIComponent(errorMessage);
+      }
+      console.log('[VK ERROR CALLBACK] Backend error message:', errorMessage);
+    }
+    
+    if (error) {
+      console.error('[VK ERROR CALLBACK] VK OAuth error:', error, errorDescription);
+      document.getElementById('errorMessage').innerHTML = `
+        <strong>OAuth Error:</strong> ${error}<br>
+        <strong>Description:</strong> ${errorDescription || 'Нет описания'}<br>
+        <strong>Backend Error:</strong> ${errorMessage || 'Нет'}
+      `;
+    }
+    
+    // Если это было в окне бронирования, закрываем окно
+    if (window.opener) {
+      console.log('[VK ERROR CALLBACK] Sending error message to opener window');
+      window.opener.postMessage({
+        type: 'VK_AUTH_ERROR',
+        error: errorMessage || error || 'Unknown error',
+        errorDescription: errorDescription,
+        state: state
+      }, '*');
+      
+      setTimeout(() => {
+        console.log('[VK ERROR CALLBACK] Closing popup window');
+        window.close();
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

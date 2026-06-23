@@ -1,0 +1,3843 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Настройки - Bloknot</title>
+  <link rel="stylesheet" href="/styles.css?v=3.2&t=202604081231" />
+  <!-- CloudPayments Widget -->
+  <script src="https://widget.cloudpayments.ru/bundles/cloudpayments"></script>
+  
+  <style>
+    /* Pricing styles from pricing.html */
+    .billing-period-section {
+      margin-bottom: 32px;
+    }
+
+    .billing-period-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .period-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .period-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .period-btn {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: white;
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .period-btn:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+
+    .period-btn.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    .discount-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #22c55e;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 32px;
+      margin-bottom: 60px;
+    }
+
+    .pricing-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 6px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .pricing-card.featured {
+      border-color: #22c55e;
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: -8px;
+      right: 16px;
+      background: #22c55e;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .pricing-header {
+      margin-bottom: 12px;
+    }
+
+    .pricing-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #1f2937;
+    }
+
+    .pricing-users {
+      color: #6b7280;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .pricing-price {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .price-monthly {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+
+    .price-period {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .pricing-buttons {
+      margin-bottom: 24px;
+    }
+
+    .pricing-features {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .pricing-features li {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .feature-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #22c55e;
+      margin-right: 12px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .feature-icon::before {
+      content: '✓';
+      color: white;
+      font-size: 10px;
+      display: block;
+      text-align: center;
+      line-height: 16px;
+    }
+
+    /* Modal styles from pricing.html */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #0b0f14;
+    }
+
+    .modal-price {
+      font-size: 32px;
+      font-weight: 700;
+      color: #22c55e;
+      margin-bottom: 16px;
+    }
+
+    .modal-subtitle {
+      color: #6b7280;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+
+<div id="app-header"></div>
+
+<main class="container">
+  <!-- Video Instruction Button -->
+  <div style="display: flex; justify-content: flex-start; margin-bottom: 16px;">
+    <button class="ios-button" onclick="openVideoInstruction()" style="padding: 8px 16px; font-size: 12px;">
+      <span class="button-icon">▶</span>
+      <span class="button-text">Видео инструкция настроек</span>
+    </button>
+  </div>
+
+  <!-- Specialists -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>Специалисты</h2>
+      <button class="btn" id="addMasterBtn">+ Добавить специалиста</button>
+    </div>
+    
+    <!-- Tariff Selection -->
+    <div id="tariffSelection" style="margin-bottom: 16px;">
+      <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px;">
+        <strong>Выберите тариф: 1, 5 или более специалистов?</strong>
+      </p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn secondary ios-tariff-btn" onclick="openSingleTariffModal('Solo', '690', '6624', '1 специалист')">1 специалист</button>
+        <button class="btn secondary ios-tariff-btn" onclick="openSingleTariffModal('Studio', '990', '9504', '5 специалистов')">5 специалистов</button>
+        <button class="btn secondary ios-tariff-btn" onclick="openSingleTariffModal('Pro', '1490', '14304', 'Более 5 специалистов')">Более 5 специалистов</button>
+      </div>
+    </div>
+    
+    <!-- Single Tariff Modal -->
+<div class="modal" id="tariffModal">
+  <div class="modal-content" style="max-width: 500px; padding: 32px;">
+    <h3 class="modal-title">Выберите период оплаты</h3>
+    
+    <!-- Billing Period Toggle -->
+    <div class="billing-period-section">
+      <div class="billing-period-toggle">
+        <span class="period-label">Выберите период оплаты:</span>
+        <div class="period-buttons">
+          <button class="period-btn active" id="tariff-period-1" onclick="selectTariffPeriod(1)">
+            1 месяц
+          </button>
+          <button class="period-btn" id="tariff-period-12" onclick="selectTariffPeriod(12)">
+            12 месяцев
+            <span class="discount-badge">-20%</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Single Pricing Card -->
+    <section class="pricing-grid" style="padding: 24px 0;">
+      <div class="pricing-card" id="singleTariffCard">
+        <div class="pricing-header">
+          <h3 class="pricing-name" id="tariffName">Solo</h3>
+          <p class="pricing-users" id="tariffUsers">1 специалист</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" id="tariffPrice" data-monthly="690" data-yearly="6624">690₽</div>
+          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" id="tariffPayButton" onclick="openPaymentModal('Solo', '690', '6624')">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features" id="tariffFeatures">
+          <!-- Features will be populated dynamically -->
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Payment Modal (exact copy from pricing.html) -->
+<div class="modal" id="paymentModal">
+  <div class="modal-content">
+    <h3 class="modal-title">Подтверждение оплаты</h3>
+    <div class="modal-price" id="modalPrice">690₽/мес</div>
+    <p class="modal-subtitle" id="modalSubtitle">Выберите способ оплаты для привязки карты и автоматического списания</p>
+    <div class="modal-buttons" id="modalButtons">
+      <button class="btn-primary" onclick="processCardPayment()">
+        💳 Оплатить картой
+      </button>
+    </div>
+  </div>
+</div>
+    
+    <!-- Tariff Required Modal -->
+    <div id="tariffRequiredModal" class="modal" style="display: none;">
+      <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+          <h3>Необходимо выбрать тариф</h3>
+          <button class="modal-close" onclick="closeTariffRequiredModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="margin: 0 0 16px 0; color: #374151; font-size: 14px;">
+            Для редактирования настроек необходимо сначала выбрать тариф.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn primary" onclick="closeTariffRequiredModal()">Понятно</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="items-grid" id="mastersGrid">
+    </div>
+  </section>
+
+  <!-- Branding -->
+  <section class="settings-section">
+    <div class="section-header">
+      <h2>Брендинг</h2>
+    </div>
+    
+    <div class="branding-container">
+      <div class="branding-item">
+        <h3>Logo</h3>
+        <div class="logo-upload" onclick="handleLogoClick()">
+          <div class="logo-circle">
+            <div class="logo-plus">+</div>
+          </div>
+          <input type="file" id="logoInput" accept="image/*" style="display: none;" onchange="handleLogoSelect(this)">
+        </div>
+      </div>
+      
+      <div class="branding-item">
+        <h3>Название компании</h3>
+        <div class="company-info">
+          <input type="text" id="companyNameInput" placeholder="Введите название компании">
+          <button class="btn" id="saveCompanyNameBtn">Сохранить</button>
+        </div>
+      </div>
+      
+      <div class="branding-item">
+        <h3>Филиалы</h3>
+        <div class="branches-info">
+          <button class="btn" id="addBranchBtn">+ Добавить филиал</button>
+          <div class="items-grid" id="branchesGrid" style="margin-top: 12px;">
+          </div>
+        </div>
+      </div>
+      
+      <div class="branding-item">
+        <h3>Онлайн запись</h3>
+        <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+          <button class="ios-button" onclick="openAsClient()">
+            <span class="button-icon"></span>
+            <span class="button-text">Открыть как клиент</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Compact Layout Container -->
+  <div class="compact-settings-grid">
+    <!-- Categories + Services -->
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Категории услуг</h2>
+        <button class="btn" id="addCategoryBtn">+ Добавить категорию</button>
+      </div>
+      
+      <div class="items-grid" id="categoriesGrid">
+      </div>
+    </section>
+
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Услуги</h2>
+        <button class="btn" id="addServiceBtn">+ Добавить услугу</button>
+      </div>
+      
+      <div class="items-grid" id="servicesGrid">
+      </div>
+    </section>
+
+    <!-- Work Photos -->
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>Фотографии работ</h2>
+        <button class="btn" id="addWorkBtn">+ Добавить фото</button>
+      </div>
+      
+      <div class="items-grid" id="worksGrid">
+      </div>
+    </section>
+
+    <!-- About Branch -->
+    <section class="settings-section compact">
+      <div class="section-header">
+        <h2>О филиале</h2>
+      </div>
+      
+      <div style="margin-bottom: 12px;">
+        <textarea id="branchDescription" placeholder="Напишите о вашей компании..." style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; min-height: 120px; font-family: inherit; font-size: 14px; resize: vertical;"></textarea>
+      </div>
+      
+      <div style="display: flex; justify-content: flex-end;">
+        <button class="btn primary" id="saveBranchDescriptionBtn" onclick="saveBranchDescription()" style="padding: 8px 16px; font-size: 14px;">Сохранить</button>
+      </div>
+    </section>
+  </div>
+
+  </main>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle">Добавить</h3>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <!-- Dynamic content -->
+    </div>
+  </div>
+</div>
+
+<style>
+
+/* Settings Sections */
+.settings-section {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #f3f4f6;
+}
+
+.compact-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.settings-section.compact {
+  margin-bottom: 0;
+  padding: 12px;
+  font-size: 14px;
+}
+
+.settings-section.compact h2 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.settings-section.compact h3 {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.settings-section.compact .btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.settings-section.compact input,
+.settings-section.compact .items-grid {
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .compact-settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .branding-container {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .items-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .branding-container {
+    grid-template-columns: 1fr;
+  }
+
+  .items-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .section-header .btn {
+    width: 100%;
+  }
+
+  .settings-section {
+    padding: 12px;
+  }
+
+  .settings-section h2 {
+    font-size: 18px;
+  }
+
+  .branding-item {
+    padding: 12px;
+  }
+
+  .branding-item h3 {
+    font-size: 14px;
+  }
+
+  .company-info {
+    flex-direction: column;
+  }
+
+  .company-info input {
+    width: 100%;
+  }
+
+  .company-info .btn {
+    width: 100%;
+  }
+}
+
+/* Branding */
+.branding-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.branding-item {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.branding-item h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #374151;
+}
+
+.logo-preview {
+  width: 120px;
+  height: 120px;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  background: white;
+}
+
+.no-logo {
+  color: #9ca3af;
+  font-size: 14px;
+  text-align: center;
+}
+
+.logo-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.company-info {
+  display: flex;
+  gap: 8px;
+}
+
+.company-info input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+/* Specialist Forms */
+.specialist-form {
+  margin-bottom: 16px;
+}
+
+.specialist-form .card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.specialist-form .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.specialist-form .card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #374151;
+}
+
+.specialist-form .field {
+  margin-bottom: 12px;
+}
+
+.specialist-form .field label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+}
+
+.specialist-form .field input,
+.specialist-form .field select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.specialist-form .field input:focus,
+.specialist-form .field select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.specialist-form .field input[type="file"] {
+  padding: 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+}
+
+.specialist-form .action-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.specialist-form .action-buttons .btn {
+  padding: 8px 16px;
+  font-size: 12px;
+}
+
+/* Common Styles */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #374151;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.schedule-container {
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+/* Avatar Upload Styles */
+.avatar-upload {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.avatar-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.avatar-circle:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.avatar-plus {
+  font-size: 24px;
+  color: #9ca3af;
+  font-weight: 300;
+}
+
+/* Logo Upload Styles */
+.logo-upload {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.logo-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.logo-circle:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.logo-plus {
+  font-size: 32px;
+  color: #9ca3af;
+  font-weight: 300;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn.primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn.primary:hover {
+  background: #2563eb;
+}
+
+.btn.secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn.secondary:hover {
+  background: #e5e7eb;
+}
+
+.btn.success {
+  background: #10b981;
+  color: white;
+}
+
+.btn.success:hover {
+  background: #059669;
+}
+
+.btn.danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn.danger:hover {
+  background: #dc2626;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 10% auto;
+  padding: 0;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #374151;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: #374151;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+.modal-footer {
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 24px 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Client Preview Section Styles */
+.client-preview-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 200px;
+}
+
+.client-preview-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.preview-description {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* iOS-style Button */
+.ios-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 25px;
+  color: #3b82f6;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.ios-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.ios-button:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.ios-button:hover::before {
+  left: 100%;
+}
+
+.ios-button:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.button-icon {
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.button-text {
+  white-space: nowrap;
+}
+
+/* iOS-style Tariff Buttons */
+.ios-tariff-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ios-tariff-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.ios-tariff-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.ios-tariff-btn:hover::before {
+  left: 100%;
+}
+
+.ios-tariff-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.ios-tariff-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.footer {
+  background: #f8f9fa;
+  border-top: 1px solid #e5e7eb;
+  padding: 48px 0 24px;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 32px;
+}
+
+.footer-section h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #111;
+}
+
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-section li {
+  margin-bottom: 8px;
+}
+
+.footer-link {
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.footer-link:hover {
+  color: #4c6fff;
+  text-decoration: underline;
+}
+
+.footer-email {
+  color: #6b7280;
+  font-size: 14px;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.footer-email:hover {
+  color: #4c6fff;
+}
+</style>
+
+<script src="/app.js?v=20260420-1&t=1713633600"></script>
+<script>
+// Initialize specialist forms on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize header
+  if (typeof Bloknot !== 'undefined' && Bloknot.renderHeader) {
+    Bloknot.renderHeader("settings");
+  }
+
+  // Load specialist limit from API instead of localStorage
+  loadSpecialistLimitFromAPI();
+
+  // Load all data (logo, works, etc.)
+  loadAllData();
+
+  // Hide add specialist button if no tariff selected
+  const addBtn = document.getElementById('addMasterBtn');
+  if (addBtn) {
+    addBtn.style.display = 'none';
+  }
+
+  // Add work button event listener
+  const addWorkBtn = document.getElementById('addWorkBtn');
+  if (addWorkBtn) {
+    // Remove any existing listeners to prevent duplicates
+    const newBtn = addWorkBtn.cloneNode(true);
+    addWorkBtn.parentNode.replaceChild(newBtn, addWorkBtn);
+    newBtn.addEventListener('click', () => {
+      if (!hasTariffAndCard()) {
+        showTariffRequiredModal();
+        return;
+      }
+      handleAddWork();
+    });
+  }
+
+  // Add event listener for company name save button
+  const saveCompanyNameBtn = document.getElementById('saveCompanyNameBtn');
+  if (saveCompanyNameBtn) {
+    const newSaveBtn = saveCompanyNameBtn.cloneNode(true);
+    saveCompanyNameBtn.parentNode.replaceChild(newSaveBtn, saveCompanyNameBtn);
+    newSaveBtn.addEventListener('click', () => {
+      if (!hasTariffAndCard()) {
+        showTariffRequiredModal();
+        return;
+      }
+      saveCompanyName();
+    });
+  }
+
+  // Add event listener for add branch button
+  const addBranchBtn = document.getElementById('addBranchBtn');
+  if (addBranchBtn) {
+    const newAddBtn = addBranchBtn.cloneNode(true);
+    addBranchBtn.parentNode.replaceChild(newAddBtn, addBranchBtn);
+    newAddBtn.addEventListener('click', () => {
+      if (!hasTariffAndCard()) {
+        showTariffRequiredModal();
+        return;
+      }
+      openBranchModal();
+    });
+  }
+
+  // Add event listener for add category button
+  const addCategoryBtn = document.getElementById('addCategoryBtn');
+  if (addCategoryBtn) {
+    const newCatBtn = addCategoryBtn.cloneNode(true);
+    addCategoryBtn.parentNode.replaceChild(newCatBtn, addCategoryBtn);
+    newCatBtn.addEventListener('click', () => {
+      if (!hasTariffAndCard()) {
+        showTariffRequiredModal();
+        return;
+      }
+      openCategoryModal();
+    });
+  }
+
+  // Add event listener for add service button
+  const addServiceBtn = document.getElementById('addServiceBtn');
+  if (addServiceBtn) {
+    const newSvcBtn = addServiceBtn.cloneNode(true);
+    addServiceBtn.parentNode.replaceChild(newSvcBtn, addServiceBtn);
+    newSvcBtn.addEventListener('click', () => {
+      if (!hasTariffAndCard()) {
+        showTariffRequiredModal();
+        return;
+      }
+      openServiceModal();
+    });
+  }
+
+  // Load initial data
+  loadCompanyName();
+  loadBranches();
+  loadCategories();
+  loadServices();
+});
+
+// Load specialist limit from API
+async function loadSpecialistLimitFromAPI() {
+  try {
+    console.log('[LOAD] Starting parallel API calls...');
+
+    // Make API calls in parallel for faster loading
+    const [userResponse, businessResponse] = await Promise.all([
+      Bloknot.api('/api/auth/me'),
+      Bloknot.api('/api/settings/business')
+    ]);
+
+    const user = userResponse.user;
+    const business = businessResponse;
+
+    console.log('[LOAD] API calls completed');
+
+    if (!user.businessId) {
+      console.log('No business found for user');
+      showNoBusinessUI();
+      return;
+    }
+
+    console.log('Business data:', business);
+    console.log('Subscription:', business.subscription);
+
+    // Store business data globally for tariff checks
+    window.currentBusiness = business;
+
+    // Update specialist forms based on subscription
+    const subscription = business.subscription || { plan: 'FREE' };
+    const specialistLimit = getSpecialistLimitFromPlan(subscription.plan);
+
+    console.log('Specialist limit:', specialistLimit);
+
+    updateSpecialistForms(specialistLimit);
+
+  } catch (error) {
+    console.error('Error loading specialist limit:', error);
+    showNoBusinessUI();
+  }
+}
+
+// Load business data and update window.currentBusiness
+async function loadBusinessData() {
+  try {
+    const business = await Bloknot.api('/api/settings/business');
+    window.currentBusiness = business;
+    console.log('[LOAD BUSINESS] Updated window.currentBusiness:', business);
+  } catch (error) {
+    console.error('Error loading business data:', error);
+  }
+}
+
+// Get specialist limit from plan name
+function getSpecialistLimitFromPlan(plan) {
+  if (!plan || plan === 'FREE' || plan === 'free') return 0; // No subscription = 0 specialists
+  if (plan.includes('1') || plan === 'SOLO') return 1;
+  if (plan.includes('5') || plan === 'STUDIO') return 5;
+  return 15; // PRO or default
+}
+
+// Show UI for users without business - DISABLED
+function showNoBusinessUI() {
+  // Do nothing - all users now have business after registration
+  console.log('showNoBusinessUI called but disabled');
+}
+
+// Load specialists from API
+async function loadSpecialistsFromAPI() {
+  try {
+    const specialists = await Bloknot.api('/api/specialists');
+    console.log('Loaded specialists from API:', specialists);
+    
+    // Update UI with loaded specialists
+    updateSpecialistsUI(specialists);
+    
+  } catch (error) {
+    console.error('Error loading specialists:', error);
+    // Show empty state instead of fallback
+    updateSpecialistsUI([]);
+  }
+}
+
+// Update specialists UI
+function updateSpecialistsUI(specialists) {
+  // TODO: Implement UI update with specialists data
+  console.log('Updating specialists UI with:', specialists);
+}
+
+// Period selection for tariff modal
+let currentTariffPeriod = 1;
+
+function selectTariffPeriod(period) {
+  currentTariffPeriod = period;
+  
+  document.querySelectorAll('#tariffModal .period-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.getElementById(`tariff-period-${period}`).classList.add('active');
+  
+  updateTariffPrices();
+}
+
+// Update prices in tariff modal
+function updateTariffPrices() {
+  const priceElement = document.getElementById('tariffPrice');
+  const periodElement = document.querySelector('#tariffModal .price-period');
+  
+  const monthlyPrice = priceElement.getAttribute('data-monthly');
+  const yearlyPrice = priceElement.getAttribute('data-yearly');
+  
+  const formatNumber = (num) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  };
+  
+  if (currentTariffPeriod === 1) {
+    priceElement.textContent = `${formatNumber(monthlyPrice)}₽`;
+    periodElement.textContent = 'в месяц';
+  } else {
+    priceElement.textContent = `${formatNumber(yearlyPrice)}₽`;
+    periodElement.textContent = 'в год';
+  }
+}
+
+// Tariff data
+const tariffData = {
+  'Solo': {
+    name: 'Solo',
+    users: '1 специалист',
+    features: [
+      'Неограниченное количество записей',
+      'Онлайн-запись клиентов',
+      'Управление услугами',
+      'Продвинутая аналитика',
+      'Персональный менеджер',
+      'Экспорт данных',
+      'Кастомизация бренда',
+      'Напоминание о записи в телеграм'
+    ]
+  },
+  'Studio': {
+    name: 'Studio',
+    users: 'До 5 специалистов',
+    featured: true,
+    features: [
+      'Неограниченное количество записей',
+      'Онлайн-запись клиентов',
+      'Управление услугами',
+      'Продвинутая аналитика',
+      'Персональный менеджер',
+      'Экспорт данных',
+      'Кастомизация бренда',
+      'Напоминание о записи в телеграм'
+    ]
+  },
+  'Pro': {
+    name: 'Pro',
+    users: 'Более 5 специалистов',
+    features: [
+      'Неограниченное количество записей',
+      'Онлайн-запись клиентов',
+      'Управление услугами',
+      'Продвинутая аналитика',
+      'Персональный менеджер',
+      'Экспорт данных',
+      'Кастомизация бренда',
+      'Напоминание о записи в телеграм'
+    ]
+  }
+};
+
+// Open single tariff modal
+function openSingleTariffModal(tariff, monthlyPrice, yearlyPrice, description) {
+  const modal = document.getElementById('tariffModal');
+  const data = tariffData[tariff];
+  
+  // Update tariff info
+  document.getElementById('tariffName').textContent = data.name;
+  document.getElementById('tariffUsers').textContent = data.users;
+  
+  // Update price
+  const priceElement = document.getElementById('tariffPrice');
+  priceElement.setAttribute('data-monthly', monthlyPrice);
+  priceElement.setAttribute('data-yearly', yearlyPrice);
+  
+  // Update pay button
+  const payButton = document.getElementById('tariffPayButton');
+  payButton.setAttribute('onclick', `openPaymentModal('${tariff}', '${monthlyPrice}', '${yearlyPrice}')`);
+  
+  // Update features
+  const featuresContainer = document.getElementById('tariffFeatures');
+  featuresContainer.innerHTML = data.features.map(feature => `
+    <li>
+      <div class="feature-icon"></div>
+      <span>${feature}</span>
+    </li>
+  `).join('');
+  
+  // Update card styling
+  const card = document.getElementById('singleTariffCard');
+  card.classList.remove('featured');
+  if (data.featured) {
+    card.classList.add('featured');
+  }
+  
+  // Reset period and show modal
+  currentTariffPeriod = 1;
+  document.getElementById('tariff-period-1').classList.add('active');
+  document.getElementById('tariff-period-12').classList.remove('active');
+  
+  updateTariffPrices();
+  modal.classList.add('active');
+}
+
+// Close tariff modal
+function closeTariffModal() {
+  document.getElementById('tariffModal').classList.remove('active');
+}
+
+// Open payment modal (exact copy from pricing.html)
+function openPaymentModal(tariff, monthlyPrice, yearlyPrice) {
+  const modal = document.getElementById('paymentModal');
+  const modalPrice = document.getElementById('modalPrice');
+  const modalSubtitle = document.getElementById('modalSubtitle');
+  const modalButtons = document.getElementById('modalButtons');
+  
+  const price = currentTariffPeriod === 1 ? monthlyPrice : yearlyPrice;
+  const periodText = currentTariffPeriod === 1 ? '/мес' : '/год';
+  
+  modalPrice.textContent = `${price}₽${periodText}`;
+  
+  if (currentTariffPeriod === 1) {
+    modalSubtitle.textContent = 'Выберите способ оплаты для привязки карты и автоматического списания';
+    modalButtons.innerHTML = `
+      <button class="btn-primary" onclick="processCardPayment()">
+        💳 Оплатить картой
+      </button>
+    `;
+  } else {
+    modalSubtitle.textContent = 'Оплатите годовую подписку со скидкой 20%';
+    modalButtons.innerHTML = `
+      <button class="btn-primary" onclick="processCardPayment()">
+        💳 Оплатить картой
+      </button>
+    `;
+  }
+  
+  modal.setAttribute('data-tariff', tariff);
+  modal.setAttribute('data-monthly-price', monthlyPrice);
+  modal.setAttribute('data-yearly-price', yearlyPrice);
+  
+  modal.classList.add('active');
+}
+
+// Close payment modal
+function closePaymentModal() {
+  document.getElementById('paymentModal').classList.remove('active');
+}
+
+function closeTariffRequiredModal() {
+  document.getElementById('tariffRequiredModal').style.display = 'none';
+}
+
+// Check if user has selected tariff and added card
+function hasTariffAndCard() {
+  const business = window.currentBusiness;
+  console.log('[TARIFF CHECK] window.currentBusiness:', business);
+  
+  if (!business) {
+    console.log('[TARIFF CHECK] No business found');
+    return false;
+  }
+  
+  const subscription = business.subscription;
+  console.log('[TARIFF CHECK] subscription:', subscription);
+  
+  if (!subscription || !subscription.plan || subscription.plan === 'FREE' || subscription.plan === 'free') {
+    console.log('[TARIFF CHECK] No valid subscription plan, plan:', subscription?.plan);
+    return false;
+  }
+  
+  // Check if card is added (we can check if subscription has card info or if payment was processed)
+  // For now, we'll assume if plan is not FREE, card is added
+  console.log('[TARIFF CHECK] Has valid tariff:', subscription.plan);
+  return true;
+}
+
+// Show tariff required modal
+function showTariffRequiredModal() {
+  document.getElementById('tariffRequiredModal').style.display = 'block';
+}
+
+// Handle logo click - check tariff before allowing upload
+function handleLogoClick() {
+  if (!hasTariffAndCard()) {
+    showTariffRequiredModal();
+    return;
+  }
+  document.getElementById('logoInput').click();
+}
+
+async function processPayment() {
+  const planName = document.getElementById('selectedPlanName').textContent;
+  console.log('Selected plan name:', planName);
+  
+  // Map plan name to plan ID - check PRO first since it contains "5"
+  let planId = 'SOLO';
+  if (planName.includes('Более 5') || planName.includes('Pro') || planName.includes('15')) {
+    planId = 'PRO';
+  } else if (planName.includes('Solo') || planName.includes('1') || planName.includes('1 специалист')) {
+    planId = 'SOLO';
+  } else if (planName.includes('Studio') || planName.includes('5') || planName.includes('5 специалистов')) {
+    planId = 'STUDIO';
+  }
+  console.log('Mapped plan ID:', planId);
+  
+  // Map to CloudPayments plan IDs
+  const planMap = {
+    'SOLO': 'solo',
+    'STUDIO': 'studio',
+    'PRO': 'pro'
+  };
+  
+  const plan = planMap[planId];
+  const period = 'monthly'; // Settings only supports monthly recurring
+  
+  try {
+    const data = await Bloknot.api('/api/payments/create', {
+      method: 'POST',
+      body: JSON.stringify({ plan, period })
+    });
+
+    if (data.success) {
+      // Test mode: CloudPayments credentials not configured
+      if (data.testMode) {
+        console.log('[TEST MODE] Payment successful:', data.message);
+        closePaymentModal();
+
+        // Calculate specialist limit directly from planId
+        const specialistLimit = getSpecialistLimitFromPlan(planId);
+        console.log(`Specialist limit from plan ${planId}:`, specialistLimit);
+
+        // Update specialist forms immediately
+        updateSpecialistForms(specialistLimit);
+
+        // Reload business data to update subscription info
+        loadBusinessData();
+
+        alert('Тестовый режим: Подписка активирована (CloudPayments не настроен)');
+        return;
+      }
+
+      // Production mode: use CloudPayments widget
+      if (data.cloudPayments) {
+        const widget = new cp.CloudPayments();
+
+        const chargeOptions = {
+          publicId: data.cloudPayments.PublicId,
+          description: data.cloudPayments.Description,
+          amount: data.cloudPayments.Amount,
+          currency: data.cloudPayments.Currency,
+          invoiceId: data.cloudPayments.InvoiceId,
+          accountId: data.cloudPayments.AccountId,
+          email: data.cloudPayments.Email,
+          requireConfirmation: data.cloudPayments.RequireConfirmation,
+          trialPeriod: data.cloudPayments.TrialPeriod,
+          recurring: data.cloudPayments.Recurring
+        };
+
+        widget.charge(chargeOptions, function(options) {
+          // Success
+          console.log('Payment successful', options);
+          closePaymentModal();
+
+          // Calculate specialist limit directly from planId
+          const specialistLimit = getSpecialistLimitFromPlan(planId);
+          console.log(`Specialist limit from plan ${planId}:`, specialistLimit);
+
+          // Update specialist forms immediately
+          updateSpecialistForms(specialistLimit);
+
+          // Reload business data to update subscription info
+          loadBusinessData();
+
+          alert('Оплата успешна! Теперь вы можете добавлять специалистов.');
+        }, function(reason, options) {
+          // Fail
+          console.error('Payment failed', reason, options);
+          document.getElementById('paymentError').textContent = 'Ошибка оплаты: ' + reason;
+        });
+      } else {
+        // Success without CloudPayments (subscription already created)
+        closePaymentModal();
+
+        const specialistLimit = getSpecialistLimitFromPlan(planId);
+        updateSpecialistForms(specialistLimit);
+        loadBusinessData();
+
+        alert('Подписка активирована!');
+      }
+    } else {
+      document.getElementById('paymentError').textContent = 'Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка');
+    }
+  } catch (error) {
+    console.error('Payment error:', error);
+    document.getElementById('paymentError').textContent = 'Ошибка при обработке платежа';
+  }
+}
+
+function updateSpecialistForms(limit) {
+  const grid = document.getElementById('mastersGrid');
+
+  // Save existing specialist data before clearing
+  const existingData = [];
+  const existingForms = grid.querySelectorAll('.specialist-form');
+  existingForms.forEach((form, index) => {
+    const formIndex = index + 1;
+    const nameInput = document.getElementById(`specialistName${formIndex}`);
+    const emailInput = document.getElementById(`specialistEmail${formIndex}`);
+    const avatarInput = document.getElementById(`specialistAvatar${formIndex}`);
+    const avatarCircle = form.querySelector('.avatar-circle');
+
+    existingData[index] = {
+      name: nameInput?.value || '',
+      email: emailInput?.value || null,
+      specialistId: nameInput?.dataset.specialistId || '',
+      avatarId: avatarInput?.dataset.avatarId || '',
+      avatarUrl: avatarCircle?.style.backgroundImage || '',
+      // Save specialist settings if loaded
+      settings: window.allSpecialistSettings?.[formIndex] || null
+    };
+  });
+
+  // Store the maximum limit for later use
+  window.maxSpecialistLimit = limit;
+
+  grid.innerHTML = '';
+
+  // Load all specialist data first to determine how many forms we need
+  Bloknot.api('/api/specialists').then(specialists => {
+    const specialistCount = specialists ? specialists.length : 0;
+    // Show all existing specialists if they exceed 5, otherwise show min(5, limit)
+    const initialCount = specialistCount > 5 ? specialistCount : Math.min(5, limit);
+    window.currentSpecialistCount = initialCount;
+
+    for (let i = 1; i <= initialCount; i++) {
+      const form = createSpecialistForm(i, limit);
+      grid.appendChild(form);
+
+      // Restore existing data if available
+      if (existingData[i - 1]) {
+        const data = existingData[i - 1];
+        const nameInput = document.getElementById(`specialistName${i}`);
+        const emailInput = document.getElementById(`specialistEmail${i}`);
+        const avatarInput = document.getElementById(`specialistAvatar${i}`);
+        const avatarCircle = form.querySelector('.avatar-circle');
+
+        if (nameInput) {
+          nameInput.value = data.name;
+          if (data.specialistId) {
+            nameInput.dataset.specialistId = data.specialistId;
+          }
+        }
+        if (emailInput && data.email) {
+          emailInput.value = data.email;
+        }
+        if (avatarInput && data.avatarId) {
+          avatarInput.dataset.avatarId = data.avatarId;
+        }
+        if (avatarCircle && data.avatarUrl) {
+          avatarCircle.style.backgroundImage = data.avatarUrl;
+          avatarCircle.style.backgroundSize = 'cover';
+          avatarCircle.style.backgroundPosition = 'center';
+          avatarCircle.querySelector('.avatar-plus')?.remove();
+        }
+
+        // Restore specialist settings if available
+        if (data.settings) {
+          window.allSpecialistSettings = window.allSpecialistSettings || {};
+          window.allSpecialistSettings[i] = data.settings;
+        }
+      }
+    }
+
+    // Load all specialist data at once after forms are created
+    loadAllSpecialistData();
+
+    // Update add button - show if plan > 5 and current count < max
+    const addBtn = document.getElementById('addMasterBtn');
+    if (addBtn) {
+      addBtn.style.display = (limit > 5 && window.currentSpecialistCount < limit) ? 'block' : 'none';
+      // Update onclick handler to add one specialist at a time
+      addBtn.onclick = addOneSpecialist;
+    }
+  }).catch(error => {
+    console.error('Error loading specialists for form count:', error);
+    // Fallback to original behavior if API fails
+    const initialCount = limit > 5 ? 5 : limit;
+    window.currentSpecialistCount = initialCount;
+
+    for (let i = 1; i <= initialCount; i++) {
+      const form = createSpecialistForm(i, limit);
+      grid.appendChild(form);
+
+      if (existingData[i - 1]) {
+        const data = existingData[i - 1];
+        const nameInput = document.getElementById(`specialistName${i}`);
+        const emailInput = document.getElementById(`specialistEmail${i}`);
+        const avatarInput = document.getElementById(`specialistAvatar${i}`);
+        const avatarCircle = form.querySelector('.avatar-circle');
+
+        if (nameInput) {
+          nameInput.value = data.name;
+          if (data.specialistId) {
+            nameInput.dataset.specialistId = data.specialistId;
+          }
+        }
+        if (emailInput && data.email) {
+          emailInput.value = data.email;
+        }
+        if (avatarInput && data.avatarId) {
+          avatarInput.dataset.avatarId = data.avatarId;
+        }
+        if (avatarCircle && data.avatarUrl) {
+          avatarCircle.style.backgroundImage = data.avatarUrl;
+          avatarCircle.style.backgroundSize = 'cover';
+          avatarCircle.style.backgroundPosition = 'center';
+          avatarCircle.querySelector('.avatar-plus')?.remove();
+        }
+
+        if (data.settings) {
+          window.allSpecialistSettings = window.allSpecialistSettings || {};
+          window.allSpecialistSettings[i] = data.settings;
+        }
+      }
+    }
+
+    loadAllSpecialistData();
+
+    const addBtn = document.getElementById('addMasterBtn');
+    if (addBtn) {
+      addBtn.style.display = (limit > 5 && window.currentSpecialistCount < limit) ? 'block' : 'none';
+      addBtn.onclick = addOneSpecialist;
+    }
+  });
+}
+
+function addOneSpecialist() {
+  if (!window.currentSpecialistCount || !window.maxSpecialistLimit) return;
+  if (window.currentSpecialistCount >= window.maxSpecialistLimit) {
+    alert('Достигнут лимит специалистов');
+    return;
+  }
+
+  const grid = document.getElementById('mastersGrid');
+  const newIndex = window.currentSpecialistCount + 1;
+  const form = createSpecialistForm(newIndex, window.maxSpecialistLimit);
+  grid.appendChild(form);
+
+  window.currentSpecialistCount = newIndex;
+
+  // Load data for the new specialist
+  loadAllSpecialistData();
+
+  // Hide add button if reached max
+  const addBtn = document.getElementById('addMasterBtn');
+  if (addBtn && window.currentSpecialistCount >= window.maxSpecialistLimit) {
+    addBtn.style.display = 'none';
+  }
+}
+
+function createSpecialistForm(index, limit) {
+  const form = document.createElement('div');
+  form.className = 'specialist-form';
+  const isSoloPlan = limit === 1;
+  const emailFieldHtml = isSoloPlan ? '' : `
+        <div class="field">
+          <label>Email:</label>
+          <input type="email" id="specialistEmail${index}" placeholder="Введите email адрес" onchange="saveSpecialistData(${index})" oninput="saveSpecialistData(${index})">
+        </div>`;
+  const inviteButtonHtml = isSoloPlan ? '' : `<button class="btn secondary" onclick="inviteSpecialist(${index})" style="margin-right: 8px; font-size: 11px; padding: 4px 8px;">Пригласить</button>`;
+  form.innerHTML = `
+    <div class="card">
+      <div class="card-body">
+        <div class="field">
+          <label>Имя:</label>
+          <input type="text" id="specialistName${index}" placeholder="Введите имя специалиста" onchange="saveSpecialistData(${index})" oninput="saveSpecialistData(${index})">
+        </div>
+        ${emailFieldHtml}
+        <div class="field">
+          <label>Avatar:</label>
+          <div class="avatar-upload" onclick="document.getElementById('specialistAvatar${index}').click()">
+            <div class="avatar-circle">
+              <div class="avatar-plus">+</div>
+            </div>
+            <input type="file" id="specialistAvatar${index}" accept="image/*" style="display: none;" onchange="handleAvatarSelect(${index}, this)">
+          </div>
+        </div>
+        <div class="field">
+          <button class="btn secondary" onclick="openScheduleSettings(${index})" style="width: 100%;">Настройки специалиста</button>
+          </div>
+        </div>
+        <div class="action-buttons" style="margin-top: 8px;">
+          ${inviteButtonHtml}
+<button class="btn secondary" onclick="deleteSpecialist(${index})" style="font-size: 11px; padding: 4px 8px;">Удалить</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  return form;
+}
+
+// Debounce timer for saving
+const saveDebounceTimers = {};
+
+// Save specialist data to API
+function saveSpecialistData(index) {
+  const nameInput = document.getElementById(`specialistName${index}`);
+  const emailInput = document.getElementById(`specialistEmail${index}`);
+
+  const name = nameInput?.value || '';
+  const email = emailInput?.value || '';
+
+  // Get the specialist ID from the dataset if it exists
+  const specialistId = nameInput?.dataset.specialistId || emailInput?.dataset.specialistId || null;
+
+  // Clear previous debounce timer
+  if (saveDebounceTimers[index]) {
+    clearTimeout(saveDebounceTimers[index]);
+  }
+
+  // Debounce save to avoid too many API calls (reduced to 300ms for faster response)
+  saveDebounceTimers[index] = setTimeout(async () => {
+    try {
+      // For SOLO plan (1 specialist), email is not required
+      const isSoloPlan = window.maxSpecialistLimit === 1;
+      const specialistData = {
+        name,
+        email: isSoloPlan ? null : email
+      };
+
+      if (specialistId) {
+        // Update existing specialist by ID
+        await Bloknot.api(`/api/specialists/${specialistId}`, {
+          method: 'PUT',
+          body: JSON.stringify(specialistData)
+        });
+        console.log(`Updated specialist ${index} (ID: ${specialistId}):`, specialistData);
+      } else if (name && (isSoloPlan || email)) {
+        // Create new specialist only if we have required fields
+        const newSpecialist = await Bloknot.api('/api/specialists', {
+          method: 'POST',
+          body: JSON.stringify(specialistData)
+        });
+        console.log(`Created specialist ${index}:`, specialistData);
+
+        // Store the new specialist ID on the inputs for future updates
+        if (nameInput) nameInput.dataset.specialistId = newSpecialist.id;
+        if (emailInput) emailInput.dataset.specialistId = newSpecialist.id;
+      }
+    } catch (error) {
+      console.error(`Error saving specialist ${index}:`, error);
+      // Don't show alert for empty fields - that's normal
+      if (name || email) {
+        alert(`Ошибка сохранения специалиста: ${error.message}`);
+      }
+    }
+  }, 300); // 300ms debounce for faster response
+}
+
+// Load all specialist data at once (much faster than sequential loading)
+async function loadAllSpecialistData() {
+  try {
+    console.log('[LOAD SPECIALISTS] Fetching specialists...');
+    const specialists = await Bloknot.api('/api/specialists');
+    console.log('[LOAD SPECIALISTS] Specialists:', specialists);
+
+    if (specialists && specialists.length > 0) {
+      specialists.forEach((specialist, index) => {
+        const formIndex = index + 1;
+        const nameInput = document.getElementById(`specialistName${formIndex}`);
+        const emailInput = document.getElementById(`specialistEmail${formIndex}`);
+
+        if (nameInput && specialist.name) {
+          nameInput.value = specialist.name;
+          // Store specialist ID on the input for proper matching
+          nameInput.dataset.specialistId = specialist.id;
+        }
+        if (emailInput && specialist.email) {
+          emailInput.value = specialist.email;
+          // Store specialist ID on the input for proper matching
+          emailInput.dataset.specialistId = specialist.id;
+        }
+
+        // Load avatar if exists
+        if (specialist.avatarUrl) {
+          console.log('[LOAD SPECIALISTS] Loading avatar for specialist:', specialist.id, 'URL:', specialist.avatarUrl);
+          const avatarInput = document.getElementById(`specialistAvatar${formIndex}`);
+          if (avatarInput) {
+            const avatarCircle = avatarInput.previousElementSibling;
+            if (avatarCircle) {
+              avatarCircle.innerHTML = `<img src="${specialist.avatarUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+              console.log('[LOAD SPECIALISTS] Avatar loaded for specialist:', specialist.id);
+            } else {
+              console.warn('[LOAD SPECIALISTS] Avatar circle not found for specialist:', specialist.id);
+            }
+          } else {
+            console.warn('[LOAD SPECIALISTS] Avatar input not found for specialist:', specialist.id);
+          }
+        }
+      });
+      console.log(`Loaded ${specialists.length} specialists`);
+    }
+  } catch (error) {
+    console.error('Error loading all specialists:', error);
+    alert(`Ошибка загрузки специалистов: ${error.message}`);
+  }
+}
+
+// Load specialist data from API (kept for backward compatibility)
+async function loadSpecialistData(index) {
+  try {
+    const specialists = await Bloknot.api('/api/specialists');
+
+    if (specialists && specialists.length >= index) {
+      const specialist = specialists[index - 1];
+
+      // Populate form fields
+      const nameInput = document.getElementById(`specialistName${index}`);
+      const emailInput = document.getElementById(`specialistEmail${index}`);
+
+      if (nameInput && specialist.name) {
+        nameInput.value = specialist.name;
+      }
+      if (emailInput && specialist.email) {
+        emailInput.value = specialist.email;
+      }
+
+      console.log(`Loaded specialist ${index} data:`, specialist);
+    }
+  } catch (error) {
+    console.error(`Error loading specialist ${index}:`, error);
+  }
+}
+
+async function saveSpecialist(index) {
+  const emailInput = document.getElementById(`specialistEmail${index}`);
+  const specialistData = {
+    name: document.getElementById(`specialistName${index}`).value,
+    email: emailInput ? emailInput.value : null,
+    avatar: document.getElementById(`specialistAvatar${index}`).files[0],
+    schedule: '' // Remove localStorage usage
+  };
+  
+  try {
+    // Save specialist to backend
+    const response = await Bloknot.api('/api/specialists', {
+      method: 'POST',
+      body: JSON.stringify(specialistData)
+    });
+    
+    alert('Специалист сохранен успешно!');
+  } catch (error) {
+    alert('Ошибка сохранения специалиста: ' + error.message);
+  }
+}
+
+function openScheduleSettings(index) {
+  // Store current specialist index globally for use in applyScheduleTime
+  window.currentSpecialistIndex = index;
+  
+  // Get specialist info
+  const nameInput = document.getElementById(`specialistName${index}`);
+  const emailInput = document.getElementById(`specialistEmail${index}`);
+  const specialistName = nameInput?.value || 'Специалист';
+  const specialistEmail = emailInput?.value || null;
+
+  // Open specialist settings modal
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 900px; max-height: 95vh; overflow-y: auto;">
+      <div class="modal-header">
+        <div>
+          <h3>Настройки специалиста</h3>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: #6b7280;">${specialistName} ${specialistEmail ? `(${specialistEmail})` : ''}</p>
+        </div>
+        <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="specialistSettingsContent">
+          <p>Загрузка настроек...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" onclick="this.closest('.modal').remove()">Закрыть</button>
+        <button class="btn primary" onclick="saveSpecialistSettings(${index}); this.closest('.modal').remove();">Сохранить</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  loadSpecialistSettings(index);
+}
+
+async function loadSpecialistSettings(index) {
+  try {
+    const content = document.getElementById('specialistSettingsContent');
+    if (!content) return;
+
+    // Get specialist data
+    const nameInput = document.getElementById(`specialistName${index}`);
+    const specialistId = nameInput?.dataset.specialistId;
+
+    // Load existing specialist settings if available
+    let specialistSettings = null;
+    if (specialistId) {
+      try {
+        specialistSettings = await Bloknot.api(`/api/specialists/${specialistId}/settings`);
+      } catch (error) {
+        console.log('No existing settings found, using defaults');
+      }
+    }
+
+    // Load business data for categories, services, and branches
+    const businessData = await Bloknot.api('/api/settings/business');
+    const categories = businessData.categories || [];
+    const services = categories?.flatMap(cat => cat.services) || [];
+    const branches = businessData.branches || [];
+
+    content.innerHTML = `
+      <div style="margin-bottom: 20px;">
+        <h4 style="margin-bottom: 12px;">Филиал</h4>
+        <select id="specialistBranch" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          <option value="">Выберите филиал</option>
+          ${branches.map(b => `<option value="${b.id}">${b.name}</option>`).join('')}
+        </select>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="margin-bottom: 12px;">График работы</h4>
+        <div style="display: flex; gap: 16px;">
+          <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <button class="btn secondary" onclick="changeMonth(-1)" style="padding: 4px 8px; font-size: 14px;">←</button>
+              <span id="currentMonth" style="font-weight: 600;"></span>
+              <button class="btn secondary" onclick="changeMonth(1)" style="padding: 4px 8px; font-size: 14px;">→</button>
+            </div>
+            <div id="scheduleSettings" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+            </div>
+            <div style="margin-top: 12px; font-size: 12px; color: #6b7280;">
+              Нажмите на дату, чтобы выбрать рабочее время. Зажмите Ctrl/Cmd для выбора нескольких дней.
+            </div>
+          </div>
+          <div id="timeSettingsPanel" style="width: 200px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; display: none;">
+            <h5 style="margin: 0 0 12px 0; font-size: 14px;">Время работы</h5>
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">С:</label>
+              <input type="time" id="startTime" value="09:00" step="600" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">До:</label>
+              <input type="time" id="endTime" value="18:00" step="600" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">Шаг времени (мин):</label>
+              <select id="timeStep" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="15">15 минут</option>
+                <option value="30">30 минут</option>
+              </select>
+            </div>
+            <div style="margin-bottom: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+              <h5 style="margin: 0 0 12px 0; font-size: 14px;">Перерывы</h5>
+              <div id="breaksList" style="margin-bottom: 12px;"></div>
+              <button class="btn secondary" onclick="addBreak()" style="width: 100%; padding: 8px; font-size: 12px;">+ Добавить перерыв</button>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="applyToSelected" style="margin-right: 8px;">
+                <span style="font-size: 12px;">Применить к выбранным датам</span>
+              </label>
+            </div>
+            <button class="btn primary" onclick="applyScheduleTime()" style="width: 100%; padding: 8px; font-size: 14px;">Применить</button>
+            <button class="btn secondary" onclick="clearScheduleTime()" style="width: 100%; padding: 8px; font-size: 14px; margin-top: 8px;">Очистить</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="margin-bottom: 12px;">Категории услуг</h4>
+        <div id="categoriesSettings">
+          ${categories.map(cat => `
+            <div style="margin-bottom: 8px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" class="category-checkbox" value="${cat.id}" style="margin-right: 8px;">
+                <span>${cat.name}</span>
+              </label>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h4 style="margin-bottom: 12px;">Услуги</h4>
+        <div id="servicesSettings">
+          ${services.map(svc => `
+            <div style="margin-bottom: 8px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" class="service-checkbox" value="${svc.id}" style="margin-right: 8px;">
+                <span>${svc.name} (${svc.duration} мин, ${svc.price} руб)</span>
+              </label>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    // Load existing settings into form
+    if (specialistSettings) {
+      // Load branch
+      if (specialistSettings.branchId) {
+        document.getElementById('specialistBranch').value = specialistSettings.branchId;
+      }
+
+      // Load categories
+      if (specialistSettings.categoryIds) {
+        specialistSettings.categoryIds.forEach(catId => {
+          const checkbox = document.querySelector(`.category-checkbox[value="${catId}"]`);
+          if (checkbox) checkbox.checked = true;
+        });
+      }
+
+      // Load services
+      if (specialistSettings.serviceIds) {
+        specialistSettings.serviceIds.forEach(svcId => {
+          const checkbox = document.querySelector(`.service-checkbox[value="${svcId}"]`);
+          if (checkbox) checkbox.checked = true;
+        });
+      }
+    }
+
+    // Initialize calendar
+    window.currentScheduleDate = new Date();
+    window.specialistScheduleData = specialistSettings?.schedule || {};
+    renderCalendar(window.currentScheduleDate, window.specialistScheduleData);
+  } catch (error) {
+    console.error('Error loading specialist settings:', error);
+    const content = document.getElementById('specialistSettingsContent');
+    if (content) {
+      content.innerHTML = '<p style="color: #e74c3c;">Ошибка загрузки настроек</p>';
+    }
+  }
+}
+
+// Helper function to select a day
+function selectDay(cell) {
+  // This is handled by the event listener above
+}
+
+// Render calendar for a specific month
+function renderCalendar(date, scheduleData) {
+  const container = document.getElementById('scheduleSettings');
+  const monthLabel = document.getElementById('currentMonth');
+  if (!container || !monthLabel) return;
+
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+  monthLabel.textContent = `${monthNames[month]} ${year}`;
+
+  // Get first day of month and total days
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const totalDays = lastDay.getDate();
+  const startDayOfWeek = firstDay.getDay();
+
+  // Generate calendar grid
+  let html = '';
+  
+  // Add empty cells for days before the 1st
+  for (let i = 0; i < (startDayOfWeek === 0 ? 6 : startDayOfWeek - 1); i++) {
+    html += '<div style="padding: 8px;"></div>';
+  }
+
+  // Add day cells
+  for (let day = 1; day <= totalDays; day++) {
+    const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const daySchedule = scheduleData[dateKey];
+    const timeText = daySchedule && daySchedule.enabled
+      ? `${daySchedule.startTime} - ${daySchedule.endTime}`
+      : '-';
+
+    html += `
+      <div class="day-cell" data-date="${dateKey}"
+           style="padding: 8px; border: 2px solid #e5e7eb; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; ${daySchedule && daySchedule.enabled ? 'border-color: #3b82f6; background-color: #eff6ff;' : ''}"
+           onclick="selectDay(this)">
+        <div style="font-weight: 600; font-size: 14px;">${day}</div>
+        <div class="day-time" style="font-size: 10px; color: #6b7280; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${timeText}</div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+
+  // Re-attach event listeners
+  container.querySelectorAll('.day-cell').forEach(cell => {
+    cell.addEventListener('click', function(e) {
+      // Handle multi-select with Ctrl/Cmd or "Apply to selected" checkbox
+      const applyToSelected = document.getElementById('applyToSelected').checked;
+      if (!e.ctrlKey && !e.metaKey && !applyToSelected) {
+        // Deselect all other cells
+        container.querySelectorAll('.day-cell.selected').forEach(c => {
+          if (c !== this) {
+            c.classList.remove('selected');
+            c.style.borderColor = c.dataset.timeEnabled ? '#3b82f6' : '#e5e7eb';
+            c.style.backgroundColor = c.dataset.timeEnabled ? '#eff6ff' : 'white';
+          }
+        });
+      }
+
+      // Toggle selection
+      this.classList.toggle('selected');
+      if (this.classList.contains('selected')) {
+        this.style.borderColor = '#3b82f6';
+        this.style.backgroundColor = '#eff6ff';
+      } else {
+        this.style.borderColor = this.dataset.timeEnabled ? '#3b82f6' : '#e5e7eb';
+        this.style.backgroundColor = this.dataset.timeEnabled ? '#eff6ff' : 'white';
+      }
+
+      // Show time panel if any day is selected
+      const selectedDays = container.querySelectorAll('.day-cell.selected');
+      const timePanel = document.getElementById('timeSettingsPanel');
+      if (selectedDays.length > 0) {
+        timePanel.style.display = 'block';
+
+        // Load time from first selected day
+        const timeDisplay = selectedDays[0].querySelector('.day-time');
+        if (timeDisplay && timeDisplay.textContent !== '-') {
+          const [start, end] = timeDisplay.textContent.split(' - ');
+          document.getElementById('startTime').value = start || '09:00';
+          document.getElementById('endTime').value = end || '18:00';
+          
+          // Load time step and breaks from schedule data
+          const dateKey = selectedDays[0].dataset.date;
+          if (window.specialistScheduleData[dateKey]) {
+            document.getElementById('timeStep').value = window.specialistScheduleData[dateKey].timeStep || 15;
+            
+            // Load breaks
+            const breaksList = document.getElementById('breaksList');
+            breaksList.innerHTML = '';
+            if (window.specialistScheduleData[dateKey].breaks) {
+              window.specialistScheduleData[dateKey].breaks.forEach(function(breakItem) {
+                const breakElement = document.createElement('div');
+                breakElement.className = 'break-item';
+                breakElement.style.marginBottom = '8px';
+                breakElement.style.display = 'flex';
+                breakElement.style.gap = '4px';
+                breakElement.style.alignItems = 'center';
+                breakElement.innerHTML = '<input type="time" class="break-start" value="' + breakItem.start + '" style="flex: 1; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;"><span>-</span><input type="time" class="break-end" value="' + breakItem.end + '" style="flex: 1; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;"><button onclick="this.parentElement.remove()" style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">×</button>';
+                breaksList.appendChild(breakElement);
+              });
+            }
+          }
+        }
+      } else {
+        timePanel.style.display = 'none';
+      }
+    });
+  });
+}
+
+// Change month
+function changeMonth(delta) {
+  if (!window.currentScheduleDate) return;
+  window.currentScheduleDate.setMonth(window.currentScheduleDate.getMonth() + delta);
+  // Use the global schedule data
+  renderCalendar(window.currentScheduleDate, window.specialistScheduleData || {});
+}
+
+// Apply schedule time to selected days
+async function applyScheduleTime() {
+  const startTime = document.getElementById('startTime').value;
+  const endTime = document.getElementById('endTime').value;
+  const timeStep = document.getElementById('timeStep').value;
+  const applyToSelected = document.getElementById('applyToSelected').checked;
+
+  // Get breaks from the breaks list
+  const breaks = [];
+  document.querySelectorAll('.break-item').forEach(function(breakItem) {
+    const start = breakItem.querySelector('.break-start').value;
+    const end = breakItem.querySelector('.break-end').value;
+    breaks.push({ start, end });
+  });
+
+  console.log('Applying schedule time with breaks:', breaks);
+
+  const selectedDays = document.querySelectorAll('.day-cell.selected');
+
+  if (selectedDays.length === 0) {
+    alert('Выберите хотя бы один день');
+    return;
+  }
+
+  selectedDays.forEach(dayCell => {
+    const dateKey = dayCell.dataset.date;
+    const timeDisplay = dayCell.querySelector('.day-time');
+    if (timeDisplay) {
+      timeDisplay.textContent = `${startTime} - ${endTime}`;
+      dayCell.style.borderColor = '#3b82f6';
+      dayCell.style.backgroundColor = '#eff6ff';
+      dayCell.dataset.timeEnabled = 'true';
+
+      // Update global schedule data
+      if (!window.specialistScheduleData) {
+        window.specialistScheduleData = {};
+      }
+      window.specialistScheduleData[dateKey] = {
+        enabled: true,
+        startTime: startTime,
+        endTime: endTime,
+        timeStep: parseInt(timeStep),
+        breaks: breaks
+      };
+
+      console.log('Schedule data updated for', dateKey, ':', window.specialistScheduleData[dateKey]);
+    }
+  });
+
+  // If applyToSelected is not checked, deselect all
+  if (!applyToSelected) {
+    selectedDays.forEach(dayCell => {
+      dayCell.classList.remove('selected');
+    });
+    document.getElementById('timeSettingsPanel').style.display = 'none';
+  }
+
+  // Save schedule data to server
+  try {
+    // Get current specialist ID - need to find the correct one
+    // Find which specialist is currently being edited by checking modal content
+    const modal = document.querySelector('.modal.active');
+    let specialistId = null;
+    
+    if (modal) {
+      // Try to find specialist ID in modal content
+      const modalContent = modal.innerHTML;
+      const specialistNameMatch = modalContent.match(/specialistName(\d+)/);
+      if (specialistNameMatch) {
+        const index = specialistNameMatch[1];
+        const nameInput = document.getElementById(`specialistName${index}`);
+        specialistId = nameInput?.dataset.specialistId;
+      }
+    }
+    
+    // Fallback: try to find the first specialist with an ID
+    if (!specialistId) {
+      const nameInputs = document.querySelectorAll('input[id^="specialistName"]');
+      for (const input of nameInputs) {
+        if (input.dataset.specialistId) {
+          specialistId = input.dataset.specialistId;
+          break;
+        }
+      }
+    }
+    
+    if (specialistId) {
+      const settingsData = {
+        specialistId,
+        branchId: document.getElementById('specialistBranch').value || null,
+        schedule: window.specialistScheduleData || {},
+        categoryIds: Array.from(document.querySelectorAll('.category-checkbox:checked')).map(cb => cb.value),
+        serviceIds: Array.from(document.querySelectorAll('.service-checkbox:checked')).map(cb => cb.value)
+      };
+
+      console.log('Auto-saving schedule after apply:', settingsData);
+      console.log('Specialist ID:', specialistId);
+
+      const response = await Bloknot.api(`/api/specialists/${specialistId}/settings`, {
+        method: 'POST',
+        body: JSON.stringify(settingsData)
+      });
+
+      console.log('Auto-save response:', response);
+    } else {
+      console.warn('No specialist ID found for auto-save');
+    }
+  } catch (error) {
+    console.error('Error auto-saving schedule:', error);
+  }
+
+  // Visual feedback on button
+  const applyButton = document.querySelector('button[onclick="applyScheduleTime()"]');
+  if (applyButton) {
+    applyButton.style.backgroundColor = '#10b981';
+    applyButton.textContent = 'Сохранено ✓';
+    setTimeout(function() {
+      applyButton.style.backgroundColor = '';
+      applyButton.textContent = 'Применить';
+    }, 2000);
+  }
+
+  // Also save the schedule to the server
+  if (window.currentSpecialistIndex !== undefined) {
+    saveSpecialistSettings(window.currentSpecialistIndex);
+  }
+}
+
+// Clear schedule time for selected days
+function clearScheduleTime() {
+  const selectedDays = document.querySelectorAll('.day-cell.selected');
+
+  if (selectedDays.length === 0) {
+    alert('Выберите хотя бы один день');
+    return;
+  }
+
+  selectedDays.forEach(dayCell => {
+    const dateKey = dayCell.dataset.date;
+    const timeDisplay = dayCell.querySelector('.day-time');
+    if (timeDisplay) {
+      timeDisplay.textContent = '-';
+      dayCell.style.borderColor = '#e5e7eb';
+      dayCell.style.backgroundColor = 'white';
+      delete dayCell.dataset.timeEnabled;
+
+      // Update global schedule data
+      if (window.specialistScheduleData && window.specialistScheduleData[dateKey]) {
+        delete window.specialistScheduleData[dateKey];
+      }
+    }
+    dayCell.classList.remove('selected');
+  });
+
+  document.getElementById('timeSettingsPanel').style.display = 'none';
+}
+
+// Add break to breaks list
+function addBreak() {
+  const breaksList = document.getElementById('breaksList');
+  const breakIndex = breaksList.children.length;
+  
+  const breakElement = document.createElement('div');
+  breakElement.className = 'break-item';
+  breakElement.style.marginBottom = '8px';
+  breakElement.style.display = 'flex';
+  breakElement.style.gap = '4px';
+  breakElement.style.alignItems = 'center';
+  breakElement.innerHTML = `
+    <input type="time" class="break-start" value="12:00" style="flex: 1; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+    <span>-</span>
+    <input type="time" class="break-end" value="13:00" style="flex: 1; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+    <button onclick="this.parentElement.remove()" style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">×</button>
+  `;
+  
+  breaksList.appendChild(breakElement);
+}
+
+async function saveSpecialistSettings(index) {
+  try {
+    const nameInput = document.getElementById(`specialistName${index}`);
+    const specialistId = nameInput?.dataset.specialistId;
+
+    if (!specialistId) {
+      alert('Сначала сохраните данные специалиста');
+      return;
+    }
+
+    // Start with existing schedule data from window.specialistScheduleData
+    const schedule = { ...window.specialistScheduleData } || {};
+
+    // Update/add schedule data from calendar cells that have timeEnabled
+    document.querySelectorAll('.day-cell[data-time-enabled="true"]').forEach(dayCell => {
+      const dateKey = dayCell.dataset.date;
+      const timeDisplay = dayCell.querySelector('.day-time');
+      if (timeDisplay && timeDisplay.textContent !== '-') {
+        const [start, end] = timeDisplay.textContent.split(' - ');
+        schedule[dateKey] = {
+          enabled: true,
+          startTime: start || '09:00',
+          endTime: end || '18:00',
+          timeStep: window.specialistScheduleData[dateKey]?.timeStep || 15,
+          breaks: window.specialistScheduleData[dateKey]?.breaks || []
+        };
+      }
+    });
+
+    console.log('Saving specialist settings for ID:', specialistId);
+    console.log('Schedule data being saved:', schedule);
+    console.log('Schedule keys:', Object.keys(schedule));
+
+    // Collect category IDs
+    const categoryIds = [];
+    document.querySelectorAll('.category-checkbox:checked').forEach(checkbox => {
+      categoryIds.push(checkbox.value);
+    });
+
+    // Collect service IDs
+    const serviceIds = [];
+    document.querySelectorAll('.service-checkbox:checked').forEach(checkbox => {
+      serviceIds.push(checkbox.value);
+    });
+
+    // Collect branch ID
+    const branchId = document.getElementById('specialistBranch').value || null;
+
+    const settingsData = {
+      specialistId,
+      branchId,
+      schedule,
+      categoryIds,
+      serviceIds
+    };
+
+    console.log('Sending settings data:', settingsData);
+
+    const response = await Bloknot.api(`/api/specialists/${specialistId}/settings`, {
+      method: 'POST',
+      body: JSON.stringify(settingsData)
+    });
+
+    console.log('Settings save response:', response);
+
+    alert('Настройки специалиста сохранены!');
+  } catch (error) {
+    console.error('Error saving specialist settings:', error);
+    alert('Ошибка сохранения настроек: ' + error.message);
+  }
+}
+
+async function handleAvatarSelect(index, input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+
+    // First check if specialist exists and get the actual ID
+    const nameInput = document.getElementById(`specialistName${index}`);
+    const emailInput = document.getElementById(`specialistEmail${index}`);
+
+    // Check if specialist data is saved (has specialistId)
+    let specialistId = nameInput?.dataset.specialistId;
+
+    // If not saved, save it first to get the ID
+    if (!specialistId) {
+      const name = nameInput?.value?.trim();
+      const email = emailInput?.value?.trim();
+
+      // For SOLO plan (1 specialist), email is not required
+      const isSoloPlan = window.maxSpecialistLimit === 1;
+      if (!name || (!isSoloPlan && !email)) {
+        if (isSoloPlan) {
+          alert('Сначала введите имя специалиста');
+        } else {
+          alert('Сначала введите имя и email специалиста');
+        }
+        return;
+      }
+
+      try {
+        const specialistData = {
+          name,
+          email: isSoloPlan ? null : email,
+          businessId: window.currentBusiness?.id
+        };
+
+        const response = await Bloknot.api('/api/specialists', {
+          method: 'POST',
+          body: JSON.stringify(specialistData)
+        });
+
+        specialistId = response.id;
+
+        // Store the specialist ID on the inputs
+        nameInput.dataset.specialistId = specialistId;
+        emailInput.dataset.specialistId = specialistId;
+
+        console.log(`Created specialist ${index} with ID: ${specialistId}`);
+      } catch (error) {
+        console.error(`Error creating specialist ${index}:`, error);
+        alert('Ошибка создания специалиста: ' + error.message);
+        return;
+      }
+    }
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+      console.log('[AVATAR] Uploading avatar for specialist ID:', specialistId);
+      
+      // Get token for authorization
+      let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+      
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`/api/upload/masters/${specialistId}/avatar`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('[AVATAR] Upload successful:', result);
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const avatarCircle = input.previousElementSibling;
+        avatarCircle.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+      };
+      reader.readAsDataURL(file);
+
+      alert('Аватар успешно загружен!');
+    } catch (error) {
+      console.error('[AVATAR] Upload error:', error);
+      alert('Ошибка загрузки аватара: ' + error.message);
+    }
+  }
+}
+
+async function handleLogoSelect(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('isLogo', 'true');
+
+    try {
+      console.log('[LOGO] Uploading logo...');
+      
+      // Get token for authorization
+      let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+      
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/upload/works', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('[LOGO] Upload successful:', result);
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const logoCircle = input.previousElementSibling;
+        logoCircle.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+      };
+      reader.readAsDataURL(file);
+
+      alert('Логотип успешно загружен!');
+    } catch (error) {
+      console.error('[LOGO] Upload error:', error);
+      alert('Ошибка загрузки логотипа: ' + error.message);
+    }
+  }
+}
+
+let isUploadingWork = false;
+
+async function handleAddWork() {
+  if (isUploadingWork) {
+    console.warn('[WORKS] Upload already in progress, ignoring duplicate click');
+    return;
+  }
+
+  isUploadingWork = true;
+  console.log('[WORKS] Starting file selection...');
+
+  const addWorkBtn = document.getElementById('addWorkBtn');
+  if (addWorkBtn) {
+    addWorkBtn.disabled = true;
+    addWorkBtn.textContent = 'Загрузка...';
+  }
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      isUploadingWork = false;
+      if (addWorkBtn) {
+        addWorkBtn.disabled = false;
+        addWorkBtn.textContent = '+ Добавить фото';
+      }
+      console.log('[WORKS] No file selected');
+      return;
+    }
+
+    console.log('[WORKS] File selected, starting upload...');
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      console.log('[WORKS] Uploading work...');
+      
+      // Get token for authorization
+      let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+      
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/upload/works', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('[WORKS] Upload successful:', result);
+
+      alert('Фото успешно загружено!');
+      // Reload works
+      loadWorks();
+    } catch (error) {
+      console.error('[WORKS] Upload error:', error);
+      alert('Ошибка загрузки фото: ' + error.message);
+    } finally {
+      isUploadingWork = false;
+      if (addWorkBtn) {
+        addWorkBtn.disabled = false;
+        addWorkBtn.textContent = '+ Добавить фото';
+      }
+      console.log('[WORKS] Upload completed');
+    }
+  };
+  input.click();
+}
+
+async function inviteSpecialist(index) {
+  const emailInput = document.getElementById(`specialistEmail${index}`);
+  if (!emailInput) {
+    alert('Email поле недоступно для этого тарифа');
+    return;
+  }
+  const email = emailInput.value;
+  const name = document.getElementById(`specialistName${index}`).value;
+
+  if (!email) {
+    alert('Пожалуйста, введите email специалиста');
+    return;
+  }
+
+  if (!name) {
+    alert('Пожалуйста, введите имя специалиста');
+    return;
+  }
+
+  // JWT Cookie Only - No localStorage check
+  // Authentication will be handled by server middleware
+
+  console.log(`[INVITE] Inviting: ${email}, Name: ${name}`);
+
+  try {
+    // Get current user and business info from API
+    const userResponse = await Bloknot.api('/api/auth/me');
+    const businessId = userResponse.user.businessId;
+    const companyName = document.getElementById('companyNameInput')?.value || userResponse.user.business?.name || 'Bloknot';
+
+    if (!businessId) {
+      alert('Ошибка: бизнес не найден');
+      return;
+    }
+
+    // Send invitation email with link to main page
+    const response = await Bloknot.api('/api/settings/invite-specialist', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: email,
+        name: name,
+        businessName: companyName,
+        businessId: businessId,
+        inviteLink: 'https://bloknotservis.ru',
+        message: 'Вас пригласили присоединиться к нашей команде в качестве специалиста. Пожалуйста, завершите регистрацию для доступа к настройкам бизнеса и появления в онлайн-записи.'
+      })
+    });
+
+    console.log(`Inviting specialist: ${email} for business ${businessId}`);
+
+    alert(`Приглашение отправлено на ${email}. Специалист получит письмо со ссылкой для регистрации.`);
+  } catch (error) {
+    console.error('[INVITE ERROR]', error);
+    alert(`Ошибка отправки приглашения: ${error.message}`);
+  }
+}
+
+async function deleteSpecialist(index) {
+  if (confirm('Вы уверены, что хотите удалить этого специалиста?')) {
+    try {
+      // Get the actual specialist ID from the dataset
+      const nameInput = document.getElementById(`specialistName${index}`);
+      const specialistId = nameInput?.dataset.specialistId;
+      
+      // Only delete from backend if specialist was actually saved (has real ID)
+      if (specialistId && specialistId !== String(index)) {
+        await Bloknot.api(`/api/specialists/${specialistId}`, {
+          method: 'DELETE'
+        });
+      }
+      
+      // Replace form with + button
+      const form = document.querySelector(`.specialist-form:nth-child(${index})`);
+      if (form) {
+        form.innerHTML = `
+          <div class="card">
+            <div class="card-body">
+              <div class="add-specialist-placeholder" onclick="createNewSpecialist(${index})" style="text-align: center; padding: 40px; cursor: pointer; border: 2px dashed #d1d5db; border-radius: 8px; background: #f9fafb;">
+                <div style="font-size: 24px; color: #9ca3af; margin-bottom: 8px;">+</div>
+                <div style="color: #9ca3af; font-size: 14px;">Добавить специалиста</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Clear the specialist ID from the input
+      if (nameInput) {
+        delete nameInput.dataset.specialistId;
+      }
+      const emailInput = document.getElementById(`specialistEmail${index}`);
+      if (emailInput) {
+        delete emailInput.dataset.specialistId;
+      }
+      
+      // Reload specialists to update UI
+      loadSpecialistsFromAPI();
+      
+    } catch (error) {
+      console.error('[DELETE ERROR]', error);
+      alert('Ошибка удаления специалиста: ' + error.message);
+    }
+  }
+}
+
+function createNewSpecialist(index) {
+  const form = document.querySelector(`.specialist-form:nth-child(${index})`);
+  if (form) {
+    form.innerHTML = createSpecialistForm(index, window.maxSpecialistLimit || 1).innerHTML;
+  }
+}
+
+// Modal functions
+function openModal(title, body) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modal').style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+}
+
+// Loading all data
+async function loadAllData() {
+  console.log('[LOAD ALL] Starting to load all data...');
+  try {
+    await Promise.all([
+      loadLogo(),
+      loadCompanyName(),
+      loadBranches(),
+      loadCategories(),
+      loadServices(),
+      loadMasters(),
+      loadSchedule(),
+      loadWorks(),
+      loadBranchDescription(),
+    ]);
+    console.log('[LOAD ALL] All data loaded successfully');
+  } catch (error) {
+    console.error('[LOAD ALL] Error loading data:', error);
+  }
+}
+
+// Placeholder functions for data loading
+async function loadLogo() {
+  try {
+    console.log('[LOAD LOGO] Fetching works...');
+    const works = await Bloknot.api('/api/upload/works');
+    console.log('[LOAD LOGO] Works:', works);
+    const logo = works.find(w => w.isLogo);
+    if (logo && logo.url) {
+      console.log('[LOAD LOGO] Found logo:', logo.url);
+      const logoCircle = document.querySelector('.logo-circle');
+      if (logoCircle) {
+        console.log('[LOAD LOGO] Updating logo circle');
+        logoCircle.innerHTML = `<img src="${logo.url}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="console.error('Failed to load logo image')">`;
+      } else {
+        console.warn('[LOAD LOGO] Logo circle element not found');
+      }
+    } else {
+      console.log('[LOAD LOGO] No logo found in works');
+    }
+  } catch (error) {
+    console.error('Error loading logo:', error);
+  }
+}
+
+async function loadCompanyName() {
+  try {
+    const businessData = await Bloknot.api('/api/settings/business');
+    const companyNameInput = document.getElementById('companyNameInput');
+    if (companyNameInput && businessData?.name) {
+      companyNameInput.value = businessData.name;
+    }
+  } catch (error) {
+    console.error('Error loading company name:', error);
+  }
+}
+
+async function saveCompanyName() {
+  try {
+    const companyNameInput = document.getElementById('companyNameInput');
+    const companyName = companyNameInput?.value;
+
+    if (!companyName || companyName.trim() === '') {
+      alert('Введите название компании');
+      return;
+    }
+
+    await Bloknot.api('/api/business/name', {
+      method: 'PATCH',
+      body: JSON.stringify({ name: companyName.trim() })
+    });
+
+    alert('Название компании сохранено!');
+  } catch (error) {
+    console.error('Error saving company name:', error);
+    alert('Ошибка сохранения названия компании: ' + error.message);
+  }
+}
+
+async function loadBranches() {
+  try {
+    const branches = await Bloknot.api('/api/settings/branches');
+    const branchesGrid = document.getElementById('branchesGrid');
+    if (branchesGrid && branches) {
+      branchesGrid.innerHTML = branches.map(branch => `
+        <div class="branch-item" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
+            <div style="flex: 1; min-width: 0; word-wrap: break-word;">
+              <div style="font-weight: 600; margin-bottom: 4px; word-break: break-word; overflow-wrap: break-word;">${branch.name}</div>
+              ${branch.city ? `<div style="font-size: 14px; color: #666; word-break: break-word;">${branch.city}</div>` : ''}
+              ${branch.address ? `<div style="font-size: 13px; color: #888; word-break: break-word;">${branch.address}</div>` : ''}
+              ${branch.directions ? `<div style="font-size: 12px; color: #999; margin-top: 4px; word-break: break-word;">${branch.directions}</div>` : ''}
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;">
+              <button class="btn secondary" onclick="editBranch(${branch.id})" style="padding: 4px 8px; font-size: 11px; white-space: nowrap;">Редактировать</button>
+              <button class="btn secondary" onclick="deleteBranch(${branch.id})" style="padding: 4px 8px; font-size: 11px; white-space: nowrap;">Удалить</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (error) {
+    console.error('Error loading branches:', error);
+  }
+}
+
+async function openBranchModal(branchId = null) {
+  let branch = null;
+  if (branchId) {
+    try {
+      const branches = await Bloknot.api('/api/settings/branches');
+      branch = branches.find(b => b.id === branchId);
+    } catch (error) {
+      console.error('Error loading branch:', error);
+    }
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>${branchId ? 'Редактировать филиал' : 'Добавить филиал'}</h3>
+        <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Город</label>
+          <input type="text" id="branchCity" value="${branch?.city || ''}" placeholder="Город" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Адрес</label>
+          <input type="text" id="branchAddress" value="${branch?.address || ''}" placeholder="Адрес" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Как пройти (опционально)</label>
+          <textarea id="branchDirections" placeholder="Как добраться..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; min-height: 80px;">${branch?.directions || ''}</textarea>
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">График работы</label>
+          <textarea id="branchSchedule" placeholder="Например: Работает с пн по пт с 9:00 до 18:00, выходные: сб-вс" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; min-height: 80px;">${branch?.schedule || ''}</textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" onclick="this.closest('.modal').remove()">Отмена</button>
+        <button class="btn primary" onclick="saveBranch(${branchId})">Сохранить</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+async function saveBranch(branchId = null) {
+  try {
+    const city = document.getElementById('branchCity')?.value;
+    const address = document.getElementById('branchAddress')?.value;
+    const directions = document.getElementById('branchDirections')?.value;
+    const schedule = document.getElementById('branchSchedule')?.value;
+
+    if (branchId) {
+      await Bloknot.api(`/api/settings/branches/${branchId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          city: city?.trim() || '',
+          address: address?.trim() || '',
+          directions: directions?.trim() || '',
+          schedule: schedule?.trim() || ''
+        })
+      });
+    } else {
+      await Bloknot.api('/api/settings/branches', {
+        method: 'POST',
+        body: JSON.stringify({
+          city: city?.trim() || '',
+          address: address?.trim() || '',
+          directions: directions?.trim() || '',
+          schedule: schedule?.trim() || ''
+        })
+      });
+    }
+
+    document.querySelector('.modal')?.remove();
+    await loadBranches();
+    alert(branchId ? 'Филиал обновлен!' : 'Филиал добавлен!');
+  } catch (error) {
+    console.error('Error saving branch:', error);
+    alert('Ошибка сохранения филиала: ' + error.message);
+  }
+}
+
+async function editBranch(branchId) {
+  await openBranchModal(branchId);
+}
+
+async function deleteBranch(branchId) {
+  if (!confirm('Вы уверены, что хотите удалить этот филиал?')) {
+    return;
+  }
+
+  try {
+    await Bloknot.api(`/api/settings/branches/${branchId}`, {
+      method: 'DELETE'
+    });
+    await loadBranches();
+    alert('Филиал удален!');
+  } catch (error) {
+    console.error('Error deleting branch:', error);
+    alert('Ошибка удаления филиала: ' + error.message);
+  }
+}
+
+async function loadCategories() {
+  try {
+    const categories = await Bloknot.api('/api/settings/categories');
+    const categoriesGrid = document.getElementById('categoriesGrid');
+    if (categoriesGrid && categories) {
+      categoriesGrid.innerHTML = categories.map(category => `
+        <div class="category-item" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-weight: 600;">${category.name}</div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn secondary" onclick="editCategory(${category.id})" style="padding: 4px 8px; font-size: 11px;">Редактировать</button>
+              <button class="btn secondary" onclick="deleteCategory(${category.id})" style="padding: 4px 8px; font-size: 11px;">Удалить</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (error) {
+    console.error('Error loading categories:', error);
+  }
+}
+
+async function openCategoryModal(categoryId = null) {
+  let category = null;
+  if (categoryId) {
+    try {
+      const categories = await Bloknot.api('/api/settings/categories');
+      category = categories.find(c => c.id === categoryId);
+    } catch (error) {
+      console.error('Error loading category:', error);
+    }
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3>${categoryId ? 'Редактировать категорию' : 'Добавить категорию'}</h3>
+        <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Название *</label>
+          <input type="text" id="categoryName" value="${category?.name || ''}" placeholder="Название категории" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" onclick="this.closest('.modal').remove()">Отмена</button>
+        <button class="btn primary" onclick="saveCategory(${categoryId})">Сохранить</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+async function saveCategory(categoryId = null) {
+  try {
+    const name = document.getElementById('categoryName')?.value;
+
+    if (!name || name.trim() === '') {
+      alert('Введите название категории');
+      return;
+    }
+
+    if (categoryId) {
+      await Bloknot.api(`/api/settings/categories/${categoryId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name: name.trim() })
+      });
+    } else {
+      await Bloknot.api('/api/settings/categories', {
+        method: 'POST',
+        body: JSON.stringify({ name: name.trim() })
+      });
+    }
+
+    document.querySelector('.modal')?.remove();
+    await loadCategories();
+    alert(categoryId ? 'Категория обновлена!' : 'Категория добавлена!');
+  } catch (error) {
+    console.error('Error saving category:', error);
+    alert('Ошибка сохранения категории: ' + error.message);
+  }
+}
+
+async function editCategory(categoryId) {
+  await openCategoryModal(categoryId);
+}
+
+async function deleteCategory(categoryId) {
+  if (!confirm('Вы уверены, что хотите удалить эту категорию?')) {
+    return;
+  }
+
+  try {
+    await Bloknot.api(`/api/settings/categories/${categoryId}`, {
+      method: 'DELETE'
+    });
+    await loadCategories();
+    alert('Категория удалена!');
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    alert('Ошибка удаления категории: ' + error.message);
+  }
+}
+
+async function loadServices() {
+  try {
+    const services = await Bloknot.api('/api/settings/services');
+    const categories = await Bloknot.api('/api/settings/categories');
+    const servicesGrid = document.getElementById('servicesGrid');
+    if (servicesGrid && services) {
+      servicesGrid.innerHTML = services.map(service => `
+        <div class="service-item" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; margin-bottom: 4px;">${service.name}</div>
+              <div style="font-size: 13px; color: #666;">${service.duration ? service.duration + ' мин' : ''} ${service.price ? '• ' + service.price + ' ₽' : ''}</div>
+              ${service.category ? `<div style="font-size: 12px; color: #999;">${service.category.name}</div>` : ''}
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn secondary" onclick="editService(${service.id})" style="padding: 4px 8px; font-size: 11px;">Редактировать</button>
+              <button class="btn secondary" onclick="deleteService(${service.id})" style="padding: 4px 8px; font-size: 11px;">Удалить</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (error) {
+    console.error('Error loading services:', error);
+  }
+}
+
+async function openServiceModal(serviceId = null) {
+  let service = null;
+  let categories = [];
+  if (serviceId) {
+    try {
+      const services = await Bloknot.api('/api/settings/services');
+      service = services.find(s => s.id === serviceId);
+    } catch (error) {
+      console.error('Error loading service:', error);
+    }
+  }
+
+  try {
+    categories = await Bloknot.api('/api/settings/categories');
+  } catch (error) {
+    console.error('Error loading categories:', error);
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3>${serviceId ? 'Редактировать услугу' : 'Добавить услугу'}</h3>
+        <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Название услуги *</label>
+          <input type="text" id="serviceName" value="${service?.name || ''}" placeholder="Название услуги" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Длительность (мин)</label>
+          <input type="number" id="serviceDuration" value="${service?.duration || ''}" placeholder="30" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Стоимость (₽)</label>
+          <input type="number" id="servicePrice" value="${service?.price || ''}" placeholder="1000" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">Категория</label>
+          <select id="serviceCategory" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="">Без категории</option>
+            ${categories.map(c => `<option value="${c.id}" ${service?.categoryId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" onclick="this.closest('.modal').remove()">Отмена</button>
+        <button class="btn primary" onclick="saveService(${serviceId})">Сохранить</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+async function saveService(serviceId = null) {
+  try {
+    const name = document.getElementById('serviceName')?.value;
+    const duration = document.getElementById('serviceDuration')?.value;
+    const price = document.getElementById('servicePrice')?.value;
+    const categoryId = document.getElementById('serviceCategory')?.value;
+
+    if (!name || name.trim() === '') {
+      alert('Введите название услуги');
+      return;
+    }
+
+    const data = {
+      name: name.trim(),
+      duration: duration ? parseInt(duration) : null,
+      price: price ? parseInt(price) : null,
+      categoryId: categoryId ? parseInt(categoryId) : null
+    };
+
+    if (serviceId) {
+      await Bloknot.api(`/api/settings/services/${serviceId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+      });
+    } else {
+      await Bloknot.api('/api/settings/services', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    }
+
+    document.querySelector('.modal')?.remove();
+    await loadServices();
+    alert(serviceId ? 'Услуга обновлена!' : 'Услуга добавлена!');
+  } catch (error) {
+    console.error('Error saving service:', error);
+    alert('Ошибка сохранения услуги: ' + error.message);
+  }
+}
+
+async function editService(serviceId) {
+  await openServiceModal(serviceId);
+}
+
+async function deleteService(serviceId) {
+  if (!confirm('Вы уверены, что хотите удалить эту услугу?')) {
+    return;
+  }
+
+  try {
+    await Bloknot.api(`/api/settings/services/${serviceId}`, {
+      method: 'DELETE'
+    });
+    await loadServices();
+    alert('Услуга удалена!');
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    alert('Ошибка удаления услуги: ' + error.message);
+  }
+}
+
+async function loadMasters() {
+  // Load masters from backend - this is already handled by loadAllSpecialistData()
+  // But we need to load avatars here
+  try {
+    console.log('[LOAD MASTERS] Fetching specialists...');
+    const specialists = await Bloknot.api('/api/specialists');
+    console.log('[LOAD MASTERS] Specialists:', specialists);
+    if (specialists && specialists.length > 0) {
+      console.log('[LOAD MASTERS] Processing', specialists.length, 'specialists');
+      specialists.forEach(specialist => {
+        console.log('[LOAD MASTERS] Processing specialist:', specialist.id, specialist.avatarUrl ? 'has avatar' : 'no avatar');
+        if (specialist.avatarUrl) {
+          // Find the form with this specialist's ID
+          const nameInput = document.querySelector(`input[data-specialist-id="${specialist.id}"]`);
+          console.log('[LOAD MASTERS] Name input found:', !!nameInput);
+          if (nameInput) {
+            const index = nameInput.id.replace('specialistName', '');
+            console.log('[LOAD MASTERS] Index:', index);
+            const avatarCircle = document.querySelector(`#specialistAvatar${index}`).previousElementSibling;
+            console.log('[LOAD MASTERS] Avatar circle found:', !!avatarCircle);
+            if (avatarCircle) {
+              avatarCircle.innerHTML = `<img src="${specialist.avatarUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+              console.log('[LOAD MASTERS] Avatar updated for specialist:', specialist.id);
+            }
+          }
+        }
+      });
+    } else {
+      console.log('[LOAD MASTERS] No specialists found');
+    }
+  } catch (error) {
+    console.error('Error loading masters avatars:', error);
+  }
+}
+
+async function loadSchedule() {
+  // Load schedule from backend
+}
+
+async function loadWorks() {
+  try {
+    const works = await Bloknot.api('/api/upload/works');
+    const worksGrid = document.getElementById('worksGrid');
+    if (worksGrid && works.length > 0) {
+      worksGrid.innerHTML = '';
+      // Filter out logos - only show work photos
+      const workPhotos = works.filter(work => !work.isLogo);
+      console.log('[WORKS] Total works:', works.length, 'Non-logo works:', workPhotos.length);
+      workPhotos.forEach(work => {
+        const workItem = document.createElement('div');
+        workItem.className = 'work-item';
+        workItem.innerHTML = `
+          <img src="${work.url}" alt="${work.description || ''}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;" loading="lazy">
+          ${work.description ? `<p style="margin-top: 8px; font-size: 14px;">${work.description}</p>` : ''}
+          <button onclick="deleteWork(${work.id})" style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">Удалить</button>
+        `;
+        worksGrid.appendChild(workItem);
+      });
+    }
+  } catch (error) {
+    console.error('Error loading works:', error);
+  }
+}
+
+async function loadBranchDescription() {
+  try {
+    const businessData = await Bloknot.api('/api/settings/business');
+    const branchDescription = document.getElementById('branchDescription');
+    if (branchDescription && businessData.description) {
+      branchDescription.value = businessData.description;
+    }
+  } catch (error) {
+    console.error('Error loading branch description:', error);
+  }
+}
+
+async function saveBranchDescription() {
+  try {
+    const branchDescription = document.getElementById('branchDescription');
+    const saveBtn = document.getElementById('saveBranchDescriptionBtn');
+    
+    if (!branchDescription) return;
+    
+    const description = branchDescription.value;
+    
+    // Show saving state
+    saveBtn.textContent = 'Сохранение...';
+    saveBtn.disabled = true;
+    
+    await Bloknot.api('/api/settings/business', {
+      method: 'PATCH',
+      body: JSON.stringify({ description })
+    });
+    
+    // Show success state
+    saveBtn.textContent = 'Сохранено ✓';
+    saveBtn.style.backgroundColor = '#10b981';
+    saveBtn.disabled = false;
+    
+    // Reset button after 2 seconds
+    setTimeout(() => {
+      saveBtn.textContent = 'Сохранить';
+      saveBtn.style.backgroundColor = '';
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Error saving branch description:', error);
+    alert('Ошибка сохранения описания: ' + error.message);
+    
+    const saveBtn = document.getElementById('saveBranchDescriptionBtn');
+    if (saveBtn) {
+      saveBtn.textContent = 'Сохранить';
+      saveBtn.disabled = false;
+    }
+  }
+}
+
+let deletingWorkIds = new Set();
+
+async function deleteWork(id) {
+  if (deletingWorkIds.has(id)) {
+    console.warn('[DELETE WORK] Already deleting work', id, 'ignoring duplicate click');
+    return;
+  }
+
+  deletingWorkIds.add(id);
+  console.log('[DELETE WORK] Starting deletion for work', id);
+
+  try {
+    await Bloknot.api(`/api/upload/works/${id}`, {
+      method: 'DELETE'
+    });
+    alert('Фото удалено');
+    loadWorks();
+  } catch (error) {
+    console.error('Error deleting work:', error);
+    alert('Ошибка удаления фото');
+  } finally {
+    deletingWorkIds.delete(id);
+    console.log('[DELETE WORK] Deletion completed for work', id);
+  }
+}
+
+// Phone formatting function
+function formatPhone(input) {
+  // Remove all non-digit characters
+  let digits = input.value.replace(/\D/g, '');
+  
+  // Ensure it starts with 7 (Russian country code)
+  if (digits.length > 0 && !digits.startsWith('7')) {
+    digits = '7' + digits;
+  }
+  
+  // Limit to 11 digits (7 + 10 digit number)
+  digits = digits.substring(0, 11);
+  
+  // Format as +7 (XXX) - XXX - XX - XX
+  let formatted = '+7';
+  if (digits.length > 1) {
+    formatted += ' (' + digits.substring(1, 4) + ')';
+  }
+  if (digits.length > 4) {
+    formatted += ' - ' + digits.substring(4, 7);
+  }
+  if (digits.length > 7) {
+    formatted += ' - ' + digits.substring(7, 9);
+  }
+  if (digits.length > 9) {
+    formatted += ' - ' + digits.substring(9, 11);
+  }
+  
+  input.value = formatted;
+}
+
+// Add phone formatting to specialist forms
+function addPhoneFormatting() {
+  document.querySelectorAll('input[type="tel"][id^="specialistPhone"]').forEach(input => {
+    input.addEventListener('input', (e) => {
+      formatPhone(e.target);
+    });
+    
+    input.addEventListener('focus', (e) => {
+      if (e.target.value === '+7') {
+        e.target.select();
+      }
+    });
+  });
+}
+
+// Open as Client Function
+function openAsClient() {
+  // Open online booking page in new window/tab
+  const bookingUrl = 'https://bloknotservis.ru/booking-new.html?slug=jhjhjh-mail-ru-1781770316471';
+  window.open(bookingUrl, '_blank');
+}
+
+// Open Video Instruction Function
+function openVideoInstruction() {
+  // Show video modal
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+  `;
+
+  const content = document.createElement('div');
+  content.style.cssText = `
+    position: relative;
+    width: 90%;
+    max-width: 1280px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+  `;
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 18px;
+    z-index: 1;
+  `;
+  closeBtn.onclick = () => document.body.removeChild(modal);
+
+  const iframe = document.createElement('iframe');
+  iframe.src = 'https://vkvideo.ru/video_ext.php?oid=-238506692&id=456239044&hash=aa9084882d307f8a&hd=3';
+  iframe.width = '100%';
+  iframe.height = '720';
+  iframe.style.cssText = `
+    border: none;
+    border-radius: 8px;
+  `;
+  iframe.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;');
+  iframe.setAttribute('allowfullscreen', '');
+
+  content.appendChild(closeBtn);
+  content.appendChild(iframe);
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+
+  // Close on background click
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      document.body.removeChild(modal);
+    }
+  };
+}
+
+// Process card payment (exact copy from pricing.html)
+async function processCardPayment() {
+  const modal = document.getElementById('paymentModal');
+  const tariff = modal.getAttribute('data-tariff');
+  const period = currentTariffPeriod === 1 ? 'monthly' : 'yearly';
+  
+  // Map tariff names to plan IDs
+  const planMap = {
+    'Solo': 'solo',
+    'Studio': 'studio',
+    'Pro': 'pro'
+  };
+  
+  const plan = planMap[tariff];
+  
+  try {
+    const data = await Bloknot.api('/api/payments/create', {
+      method: 'POST',
+      body: JSON.stringify({ plan, period })
+    });
+
+    if (data.success) {
+      // Test mode: CloudPayments credentials not configured
+      if (data.testMode) {
+        console.log('[TEST MODE] Payment successful:', data.message);
+        alert('Тестовый режим: Подписка активирована (CloudPayments не настроен)');
+        closePaymentModal();
+        window.location.href = '/dashboard.html';
+        return;
+      }
+
+      // Production mode: use CloudPayments widget
+      if (data.cloudPayments) {
+        const widget = new cp.CloudPayments();
+
+        const chargeOptions = {
+          publicId: data.cloudPayments.PublicId,
+          description: data.cloudPayments.Description,
+          amount: data.cloudPayments.Amount,
+          currency: data.cloudPayments.Currency,
+          invoiceId: data.cloudPayments.InvoiceId,
+          accountId: data.cloudPayments.AccountId,
+          email: data.cloudPayments.Email,
+          requireConfirmation: data.cloudPayments.RequireConfirmation,
+          trialPeriod: data.cloudPayments.TrialPeriod,
+          recurring: data.cloudPayments.Recurring
+        };
+
+        widget.charge(chargeOptions, function(options) {
+          // Success
+          console.log('Payment successful', options);
+          alert('Оплата успешно выполнена!');
+          closePaymentModal();
+          // Redirect to dashboard or reload
+          window.location.href = '/dashboard.html';
+        }, function(reason, options) {
+          // Fail
+          console.error('Payment failed', reason, options);
+          alert('Ошибка оплаты: ' + reason);
+        });
+      } else {
+        // Success without CloudPayments (subscription already created)
+        alert('Подписка активирована!');
+        closePaymentModal();
+        window.location.href = '/dashboard.html';
+      }
+    } else {
+      // Check for trial restriction error
+      if (data.error === 'TRIAL_RESTRICTION') {
+        alert(data.message);
+        return;
+      }
+      alert('Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка'));
+    }
+  } catch (error) {
+    console.error('Payment error:', error);
+    
+    // Check if it's an authorization error
+    if (error.message === 'Unauthorized' || error.message.includes('401')) {
+      alert('Для оплаты необходимо войти в аккаунт или зарегистрироваться');
+      window.location.href = '/login.html';
+      return;
+    }
+    
+    alert('Ошибка при обработке платежа');
+  }
+}
+
+// Функция processInvoicePayment удалена - оплата счетом больше не доступна
+
+// Event listeners for modal closing (from pricing.html)
+document.getElementById('paymentModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closePaymentModal();
+  }
+});
+
+document.getElementById('tariffModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeTariffModal();
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closePaymentModal();
+    closeTariffModal();
+  }
+});
+</script>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Контакты</h4>
+        <ul>
+          <li><span class="footer-email" onclick="copyEmail()">📧 info@bloknotservis.ru</span></li>
+          <li><a href="https://t.me/bloknotservis" class="footer-link" target="_blank">💬 Telegram</a></li>
+          <li><a href="https://wa.me/79024034242" class="footer-link" target="_blank">💚 WhatsApp</a></li>
+          <li><a href="https://max.ru/u/f9LHodD0cOKwzqbvzQfMIAZu-cdeUUBrdY4Bmo5aNpYnfD3UQPdSzeb_07k" class="footer-link" target="_blank">✍️ MAX</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <ul>
+          <li><a href="/about.html" class="footer-link">О нас</a></li>
+          <li><a href="/pricing.html" class="footer-link">Тарифы</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Для любого бизнеса</h4>
+        <ul>
+          <li><a href="/beauty.html" class="footer-link">Красота</a></li>
+          <li><a href="/medicine.html" class="footer-link">Медицина</a></li>
+          <li><a href="/sport.html" class="footer-link">Спорт</a></li>
+          <li><a href="/massage.html" class="footer-link">Массаж</a></li>
+          <li><a href="/leisure.html" class="footer-link">Досуг и отдых</a></li>
+          <li><a href="/education.html" class="footer-link">Образование</a></li>
+          <li><a href="/auto.html" class="footer-link">Авто</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Правовая информация</h4>
+        <ul>
+          <li><a href="/user-agreement.html" class="footer-link">Пользовательское соглашение</a></li>
+          <li><a href="/privacy.html" class="footer-link">Политика конфиденциальности</a></li>
+          <li><a href="/cookies.html" class="footer-link">Использование cookie</a></li>
+          <li><a href="/personal-data.html" class="footer-link">Согласие на обработку персональных данных</a></li>
+          <li><a href="/client-data-processing.html" class="footer-link">Обработка данных клиентов</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function copyEmail() {
+      const email = 'info@bloknotservis.ru';
+      navigator.clipboard.writeText(email).then(function() {
+        const emailElement = document.querySelector('.footer-email');
+        const originalText = emailElement.textContent;
+        emailElement.textContent = '📧 Email скопирован!';
+        emailElement.style.color = '#22c55e';
+
+        setTimeout(function() {
+          emailElement.textContent = originalText;
+          emailElement.style.color = '';
+        }, 2000);
+      }).catch(function(err) {
+        const textArea = document.createElement('textarea');
+        textArea.value = email;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+
+        const emailElement = document.querySelector('.footer-email');
+        const originalText = emailElement.textContent;
+        emailElement.textContent = '📧 Email скопирован!';
+        emailElement.style.color = '#22c55e';
+
+        setTimeout(function() {
+          emailElement.textContent = originalText;
+          emailElement.style.color = '';
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>

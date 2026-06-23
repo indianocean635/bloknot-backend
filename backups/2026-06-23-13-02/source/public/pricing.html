@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="version" content="3">
+  <title>Тарифы — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Cache control -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- FAVICON -->
+  <link rel="icon" href="/favicon.png?v=2" type="image/png">
+
+  <!-- CloudPayments Widget -->
+  <script src="https://widget.cloudpayments.ru/bundles/cloudpayments"></script>
+  
+  <!-- App.js for Bloknot API -->
+  <script src="/app.js?v=20260420-1&t=1713633600"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #ffffff;
+      min-height: 100vh;
+      color: #0b0f14;
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo img {
+      height: 32px;
+      transition: opacity 160ms ease;
+    }
+
+    .logo:hover img {
+      opacity: 0.8;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 80px 20px;
+    }
+
+    .hero-section {
+      text-align: center;
+      margin-bottom: 60px;
+      color: #0b0f14;
+    }
+
+    .hero-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-subtitle {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .billing-period-section {
+      margin-bottom: 40px;
+    }
+
+    .billing-period-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .period-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #0b0f14;
+    }
+
+    .period-buttons {
+      display: flex;
+      background: #f4f5f6;
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .period-btn {
+      background: transparent;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      gap: 6px;
+    }
+
+    .period-btn.active {
+      background: white;
+      color: #22c55e;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .period-btn:hover:not(.active) {
+      color: #0b0f14;
+    }
+
+    .discount-badge {
+      background: #22c55e;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 32px;
+      margin-bottom: 60px;
+    }
+
+    .pricing-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 6px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .pricing-card.featured {
+      border-color: #22c55e;
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: -8px;
+      right: 16px;
+      background: #22c55e;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .pricing-header {
+      margin-bottom: 12px;
+    }
+
+    .pricing-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #0b0f14;
+    }
+
+    .pricing-users {
+      color: #6b7280;
+      font-size: 10px;
+      margin-bottom: 8px;
+    }
+
+    .pricing-price {
+      margin-bottom: 12px;
+    }
+
+    .price-monthly {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0b0f14;
+      margin-bottom: 4px;
+    }
+
+    .price-period {
+      color: #6b7280;
+      font-size: 10px;
+    }
+
+    .pricing-features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 16px 0;
+    }
+
+    .pricing-features li {
+      display: flex;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 10px;
+    }
+
+    .pricing-features li:last-child {
+      border-bottom: none;
+    }
+
+    .feature-icon {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .feature-icon::before {
+      content: '✓';
+      color: white;
+      font-size: 5px;
+      font-weight: bold;
+    }
+
+    .toggle-features {
+      background: none;
+      border: none;
+      color: #22c55e;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px 0;
+      margin-bottom: 24px;
+      transition: color 0.2s ease;
+    }
+
+    .toggle-features:hover {
+      color: #16a34a;
+    }
+
+    .pricing-buttons {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .btn-primary {
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex: 1;
+    }
+
+    .btn-primary:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #22c55e;
+      border: 2px solid #22c55e;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #22c55e;
+      color: white;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #0b0f14;
+    }
+
+    .modal-price {
+      font-size: 32px;
+      font-weight: 700;
+      color: #22c55e;
+      margin-bottom: 16px;
+    }
+
+    .modal-subtitle {
+      color: #6b7280;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .footer {
+      background: #f8f9fa;
+      border-top: 1px solid #e5e7eb;
+      padding: 48px 0 24px;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 32px;
+    }
+
+    .footer-section h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #111;
+    }
+
+    .footer-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .footer-section li {
+      margin-bottom: 8px;
+    }
+
+    .footer-link {
+      color: #6b7280;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover {
+      color: #4c6fff;
+      text-decoration: underline;
+    }
+
+    .footer-email {
+      color: #6b7280;
+      font-size: 14px;
+      transition: color 0.2s;
+      cursor: pointer;
+    }
+
+    .footer-email:hover {
+      color: #4c6fff;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 40px 20px;
+      }
+
+      .hero-title {
+        font-size: 40px;
+      }
+
+      .hero-subtitle {
+        font-size: 18px;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .billing-period-toggle {
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .period-buttons {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <a href="/index.html">
+          <img src="/logo-wordmark.svg?v=10" alt="Bloknot">
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero-section">
+      <h1 class="hero-title">Тарифы</h1>
+      <p class="hero-subtitle">Все тарифы имеют полный функционал сервиса и поддержку, выбирайте подходящий по количеству пользователей</p>
+    </section>
+
+    <section class="billing-period-section">
+      <div class="billing-period-toggle">
+        <span class="period-label">Срок подписки</span>
+        <div class="period-buttons">
+          <button class="period-btn active" id="period-1" onclick="selectPeriod(1)">
+            1 месяц
+          </button>
+          <button class="period-btn" id="period-12" onclick="selectPeriod(12)">
+            12 месяцев
+            <span class="discount-badge">-20%</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-header">
+          <h3 class="pricing-name">Solo</h3>
+          <p class="pricing-users">1 пользователь</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" data-monthly="690" data-yearly="6624">690₽</div>
+          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('Solo', '690', '6624')">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Неограниченное количество записей</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Онлайн-запись клиентов</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Управление услугами</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Продвинутая аналитика</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Персональный менеджер</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Экспорт данных</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Кастомизация бренда</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Напомининие о записи в телеграм</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pricing-card featured">
+        <div class="popular-badge">Популярное</div>
+        <div class="pricing-header">
+          <h3 class="pricing-name">Studio</h3>
+          <p class="pricing-users">До 5 пользователей</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" data-monthly="990" data-yearly="9504">990₽</div>
+          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('Studio', '990', '9504')">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Неограниченное количество записей</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Онлайн-запись клиентов</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Управление услугами</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Продвинутая аналитика</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Персональный менеджер</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Экспорт данных</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Кастомизация бренда</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Напомининие о записи в телеграм</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pricing-header">
+          <h3 class="pricing-name">Pro</h3>
+          <p class="pricing-users">Более 5 пользователей</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" data-monthly="1490" data-yearly="14304">1 490₽</div>
+          <div class="price-period" data-monthly-text="в месяц" data-yearly-text="в год">в месяц</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('Pro', '1490', '14304')">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Неограниченное количество записей</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Онлайн-запись клиентов</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Управление услугами</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Продвинутая аналитика</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Персональный менеджер</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Экспорт данных</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Кастомизация бренда</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Напомининие о записи в телеграм</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section style="text-align: center; margin-bottom: 60px;">
+      <h3 style="margin-bottom: 16px;">Дополнительная информация</h3>
+      <div style="max-width: 600px; margin: 0 auto;">
+        <p style="color: #6b7280; line-height: 1.6;">
+        </p>
+        <ul style="list-style: none; padding: 0; margin-top: 24px; text-align: left;">
+          <li style="padding: 8px 0;">✓ 5 дней бесплатного тестового периода</li>
+          <li style="padding: 8px 0;">✓ Отмена подписки в любой момент</li>
+          <li style="padding: 8px 0;">✓ Скидка 20% при оплате на год вперед</li>
+          <li style="padding: 8px 0;">✓ Безопасная оплата через банковскую карту</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Контакты</h4>
+        <ul>
+          <li><span class="footer-email" onclick="copyEmail()">📧 info@bloknotservis.ru</span></li>
+          <li><a href="https://t.me/bloknotservis" class="footer-link" target="_blank">💬 Telegram</a></li>
+          <li><a href="https://wa.me/79024034242" class="footer-link" target="_blank">💚 WhatsApp</a></li>
+          <li><a href="https://max.ru/u/f9LHodD0cOKwzqbvzQfMIAZu-cdeUUBrdY4Bmo5aNpYnfD3UQPdSzeb_07k" class="footer-link" target="_blank">✍️ MAX</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <ul>
+          <li><a href="/about.html" class="footer-link">О нас</a></li>
+          <li><a href="/pricing.html" class="footer-link">Тарифы</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Для любого бизнеса</h4>
+        <ul>
+          <li><a href="/beauty.html" class="footer-link">Красота</a></li>
+          <li><a href="/medicine.html" class="footer-link">Медицина</a></li>
+          <li><a href="/sport.html" class="footer-link">Спорт</a></li>
+          <li><a href="/massage.html" class="footer-link">Массаж</a></li>
+          <li><a href="/leisure.html" class="footer-link">Досуг и отдых</a></li>
+          <li><a href="/education.html" class="footer-link">Образование</a></li>
+          <li><a href="/auto.html" class="footer-link">Авто</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Правовая информация</h4>
+        <ul>
+          <li><a href="/user-agreement.html" class="footer-link">Пользовательское соглашение</a></li>
+          <li><a href="/privacy.html" class="footer-link">Политика конфиденциальности</a></li>
+          <li><a href="/cookies.html" class="footer-link">Использование cookie</a></li>
+          <li><a href="/personal-data.html" class="footer-link">Согласие на обработку персональных данных</a></li>
+          <li><a href="/client-data-processing.html" class="footer-link">Обработка данных клиентов</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <div class="modal" id="paymentModal">
+    <div class="modal-content">
+      <h3 class="modal-title">Подтверждение оплаты</h3>
+      <div class="modal-price" id="modalPrice">690₽/мес</div>
+      <p class="modal-subtitle" id="modalSubtitle">Выберите способ оплаты для привязки карты и автоматического списания</p>
+      <div class="modal-buttons" id="modalButtons">
+        <button class="btn-primary" onclick="processCardPayment()">
+          💳 Оплатить картой
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Wait for DOM and Bloknot to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Wait a bit for app.js to load
+      setTimeout(function() {
+        if (typeof Bloknot === 'undefined') {
+          console.error('Bloknot API not loaded');
+          return;
+        }
+        
+        initializePricingPage();
+      }, 100);
+    });
+
+    function initializePricingPage() {
+      let currentPeriod = 1;
+
+      window.selectPeriod = function(period) {
+        currentPeriod = period;
+        
+        document.querySelectorAll('.period-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.getElementById(`period-${period}`).classList.add('active');
+        
+        updatePrices();
+      };
+
+      function updatePrices() {
+        const priceElements = document.querySelectorAll('.price-monthly');
+        const periodElements = document.querySelectorAll('.price-period');
+        
+        priceElements.forEach(element => {
+          const monthlyPrice = element.getAttribute('data-monthly');
+          const yearlyPrice = element.getAttribute('data-yearly');
+          
+          const formatNumber = (num) => {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+          };
+          
+          if (currentPeriod === 1) {
+            element.textContent = `${formatNumber(monthlyPrice)}₽`;
+          } else {
+            element.textContent = `${formatNumber(yearlyPrice)}₽`;
+          }
+        });
+        
+        periodElements.forEach(element => {
+          const monthlyText = element.getAttribute('data-monthly-text');
+          const yearlyText = element.getAttribute('data-yearly-text');
+          
+          if (currentPeriod === 1) {
+            element.textContent = monthlyText;
+          } else {
+            element.textContent = yearlyText;
+          }
+        });
+      };
+
+      window.openPaymentModal = function(tariff, monthlyPrice, yearlyPrice) {
+        const modal = document.getElementById('paymentModal');
+        const modalPrice = document.getElementById('modalPrice');
+        const modalSubtitle = document.getElementById('modalSubtitle');
+        const modalButtons = document.getElementById('modalButtons');
+        
+        const price = currentPeriod === 1 ? monthlyPrice : yearlyPrice;
+        const periodText = currentPeriod === 1 ? '/мес' : '/год';
+        
+        modalPrice.textContent = `${price}₽${periodText}`;
+        
+        if (currentPeriod === 1) {
+          modalSubtitle.textContent = 'Выберите способ оплаты для привязки карты и автоматического списания';
+          modalButtons.innerHTML = `
+            <button class="btn-primary" onclick="processCardPayment()">
+              💳 Оплатить картой
+            </button>
+          `;
+        } else {
+          modalSubtitle.textContent = 'Оплатите годовую подписку со скидкой 20%';
+          modalButtons.innerHTML = `
+            <button class="btn-primary" onclick="processCardPayment()">
+              💳 Оплатить картой
+            </button>
+          `;
+        }
+        
+        modal.setAttribute('data-tariff', tariff);
+        modal.setAttribute('data-monthly-price', monthlyPrice);
+        modal.setAttribute('data-yearly-price', yearlyPrice);
+        
+        modal.classList.add('active');
+      };
+
+      window.closePaymentModal = function() {
+        document.getElementById('paymentModal').classList.remove('active');
+      };
+
+      window.processCardPayment = async function() {
+        const modal = document.getElementById('paymentModal');
+        const tariff = modal.getAttribute('data-tariff');
+        const period = currentPeriod === 1 ? 'monthly' : 'yearly';
+        
+        // Map tariff names to plan IDs
+        const planMap = {
+          'Solo': 'solo',
+          'Studio': 'studio',
+          'Pro': 'pro'
+        };
+        
+        const plan = planMap[tariff];
+        
+        try {
+          // Show CloudPayments widget first to collect card data
+          const widget = new cp.CloudPayments();
+          
+          // Get payment data from backend first
+          const paymentData = await Bloknot.api('/api/payments/create', {
+            method: 'POST',
+            body: JSON.stringify({ plan, period })
+          });
+
+          if (paymentData.success) {
+            // Always use CloudPayments widget for payment processing
+            if (paymentData.cloudPayments) {
+              const chargeOptions = {
+                publicId: paymentData.cloudPayments.PublicId,
+                description: paymentData.cloudPayments.Description,
+                amount: paymentData.cloudPayments.Amount,
+                currency: paymentData.cloudPayments.Currency,
+                invoiceId: paymentData.cloudPayments.InvoiceId,
+                accountId: paymentData.cloudPayments.AccountId,
+                email: paymentData.cloudPayments.Email,
+                requireConfirmation: paymentData.cloudPayments.RequireConfirmation,
+                trialPeriod: paymentData.cloudPayments.TrialPeriod,
+                recurring: paymentData.cloudPayments.Recurring
+              };
+
+              const message = period === 'monthly' 
+                ? 'Привяжите карту для активации пробного периода на 5 дней. Первое списание через 5 дней.'
+                : 'Оплатите годовую подписку со скидкой 20%';
+
+              if (confirm(message)) {
+                if (period === 'monthly') {
+                  // For monthly plans - use auth for trial period
+                  widget.auth(chargeOptions, function(options) {
+                    // Success - card authorized for trial
+                    console.log('Card authorized for trial', options);
+                    
+                    // Save card attachment status immediately
+                    saveCardAttachmentStatus().then(() => {
+                      alert('Карта успешно привязана! Пробный период активирован на 5 дней.');
+                      window.closePaymentModal();
+                      window.location.href = '/dashboard.html';
+                    }).catch(error => {
+                      console.error('Error saving card attachment:', error);
+                      alert('Карта привязана, но произошла ошибка сохранения статуса.');
+                      window.closePaymentModal();
+                      window.location.href = '/dashboard.html';
+                    });
+                  }, function(reason, options) {
+                    // Fail
+                    console.error('Card authorization failed', reason, options);
+                    alert('Ошибка привязки карты: ' + reason);
+                  });
+                } else {
+                  // For yearly plans - use charge for immediate payment
+                  widget.charge(chargeOptions, function(options) {
+                    // Success - payment completed
+                    console.log('Payment successful', options);
+                    alert('Оплата успешно выполнена! Годовая подписка активирована.');
+                    window.closePaymentModal();
+                    window.location.href = '/dashboard.html';
+                  }, function(reason, options) {
+                    // Fail
+                    console.error('Payment failed', reason, options);
+                    alert('Ошибка оплаты: ' + reason);
+                  });
+                }
+              }
+            } else {
+              // Success without CloudPayments (subscription already created)
+              alert('Подписка активирована!');
+              window.closePaymentModal();
+              window.location.href = '/dashboard.html';
+            }
+          } else {
+            // Check for trial restriction error
+            if (paymentData.error === 'TRIAL_RESTRICTION') {
+              alert(paymentData.message);
+              return;
+            }
+            alert('Ошибка создания платежа: ' + (paymentData.error || 'Неизвестная ошибка'));
+          }
+        } catch (error) {
+          console.error('Payment error:', error);
+          
+          // Check if it's an authorization error
+          if (error.message === 'Unauthorized' || error.message.includes('401')) {
+            alert('Для оплаты необходимо войти в аккаунт или зарегистрироваться');
+            window.location.href = '/login.html';
+            return;
+          }
+          
+          // Check if it's a trial restriction error
+          if (error.message && error.message.includes('TRIAL_RESTRICTION')) {
+            const errorData = JSON.parse(error.message);
+            alert(errorData.message);
+            return;
+          }
+          
+          alert('Ошибка при обработке платежа');
+        }
+      };
+
+      // Функция processInvoicePayment удалена - оплата счетом больше не доступна
+
+      // Save card attachment status immediately after successful authorization
+async function saveCardAttachmentStatus() {
+  try {
+    console.log('[CARD ATTACHMENT] Starting card attachment save...');
+    console.log('[CARD ATTACHMENT] Current URL:', window.location.href);
+    console.log('[CARD ATTACHMENT] Bloknot.api available:', typeof Bloknot.api);
+    
+    // Check if user is authenticated
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    console.log('[CARD ATTACHMENT] Token exists:', !!token);
+    
+    if (!token) {
+      console.error('[CARD ATTACHMENT] No authentication token found');
+      throw new Error('No authentication token');
+    }
+
+    console.log('[CARD ATTACHMENT] Making API call to save card attachment...');
+    const response = await Bloknot.api('/api/payments/save-card-attachment', {
+      method: 'POST',
+      body: JSON.stringify({})
+    });
+    
+    console.log('[CARD ATTACHMENT] Status saved successfully:', response);
+    return response;
+  } catch (error) {
+    console.error('[CARD ATTACHMENT] Error saving status:', error);
+    console.error('[CARD ATTACHMENT] Error details:', error.message, error.stack);
+    throw error;
+  }
+}
+
+// Функции для работы со счетами удалены - оплата счетом больше не доступна
+
+      // Event listeners for modal closing
+      document.getElementById('paymentModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          window.closePaymentModal();
+        }
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          window.closePaymentModal();
+        }
+      });
+
+      // Copy email function
+      window.copyEmail = function() {
+        const email = 'info@bloknotservis.ru';
+        navigator.clipboard.writeText(email).then(function() {
+          const emailElement = document.querySelector('.footer-email');
+          const originalText = emailElement.textContent;
+          emailElement.textContent = '📧 Email скопирован!';
+          emailElement.style.color = '#22c55e';
+          
+          setTimeout(function() {
+            emailElement.textContent = originalText;
+            emailElement.style.color = '';
+          }, 2000);
+        }).catch(function(err) {
+          const textArea = document.createElement('textarea');
+          textArea.value = email;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          
+          const emailElement = document.querySelector('.footer-email');
+          const originalText = emailElement.textContent;
+          emailElement.textContent = '📧 Email скопирован!';
+          emailElement.style.color = '#22c55e';
+          
+          setTimeout(function() {
+            emailElement.textContent = originalText;
+            emailElement.style.color = '';
+          }, 2000);
+        });
+      };
+
+      console.log('Pricing page initialized');
+    }
+  </script>
+</body>
+</html>

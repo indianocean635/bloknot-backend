@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bloknot — сервис онлайн-записи клиентов</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f8f9fa;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .nav a {
+      margin: 0 10px;
+      color: #007bff;
+      text-decoration: none;
+      padding: 8px 16px;
+      border: 1px solid #007bff;
+      border-radius: 4px;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+    .video-container {
+      margin: 30px 0;
+      text-align: center;
+    }
+    video {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+    }
+    .features {
+      margin: 40px 0;
+    }
+    .feature {
+      padding: 20px;
+      margin: 10px 0;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav">
+      <a href="#" onclick="alert('Вход временно отключен'); return false;">Войти</a>
+      <a href="#" onclick="alert('Регистрация временно отключена'); return false;">Регистрация</a>
+    </div>
+
+    <div class="header">
+      <h1>Сервис онлайн-записи клиентов</h1>
+      <div class="subtitle">
+        Запуск за 5 минут.<br>
+        Клиенты записываются сами — без CRM и сложных систем.
+      </div>
+      <a href="#" class="btn" onclick="alert('Демо временно отключено'); return false;">Попробовать бесплатно</a>
+    </div>
+
+    <div class="video-container">
+      <iframe src="https://vkvideo.ru/video_ext.php?oid=-238506692&id=456239043&hash=cd7e992b804473d9&hd=3" 
+              width="100%" 
+              height="450" 
+              style="max-width: 800px; border-radius: 10px;"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;" 
+              frameborder="0" 
+              allowfullscreen>
+      </iframe>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <h3>🚀 Быстрый запуск</h3>
+        <p>Начните принимать записи через 5 минут после регистрации</p>
+      </div>
+      <div class="feature">
+        <h3>📱 Мобильное приложение</h3>
+        <p>Работайте с телефона где угодно и когда угодно</p>
+      </div>
+      <div class="feature">
+        <h3>💰 Бесплатный старт</h3>
+        <p>Попробуйте все возможности бесплатно в течение пробного периода</p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>© 2024 Bloknot. Все права защищены.</p>
+      <p>Email: info@bloknotservis.ru</p>
+    </div>
+  </div>
+
+  <script>
+    console.log('Минимальная версия загружена');
+    
+    // Минимальный JavaScript без сложных API
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM загружен');
+    });
+  </script>
+</body>
+</html>

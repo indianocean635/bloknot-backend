@@ -1,0 +1,2416 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Календарь — Bloknot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css?v=20260408" />
+  <style>
+    /* CRM Calendar Styles */
+    .crm-calendar {
+      display: flex;
+      height: calc(100vh - 72px);
+      background: #f8fafc;
+    }
+
+    .crm-sidebar {
+      width: 280px;
+      background: white;
+      border-right: 1px solid #e2e8f0;
+      padding: 20px;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .crm-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .crm-toolbar {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .crm-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .crm-toolbar-center {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .crm-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .crm-calendar-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      overflow: hidden;
+      background: #f7f8fa;
+    }
+
+    .crm-employee-headers {
+      grid-column: 2;
+      display: flex;
+      border-bottom: 1px solid #e2e8f0;
+      background: white;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .crm-employee-header {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 8px;
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: white;
+      transition: background 0.2s;
+      box-sizing: border-box;
+    }
+
+    .crm-employee-header:hover {
+      background: #f8fafc;
+    }
+
+    .crm-header-today {
+      background: #f0f9ff;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .crm-column-today {
+      background: #f0f9ff;
+    }
+
+    .crm-employee-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .crm-employee-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .crm-employee-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .crm-employee-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .crm-employee-role {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .crm-schedule-body {
+      grid-column: 1 / -1;
+      display: flex;
+      overflow: auto;
+    }
+
+    .crm-schedule-body::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .crm-schedule-body::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    .crm-schedule-body::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .crm-schedule-body::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .crm-time-column {
+      min-width: 60px;
+      background: white;
+      border-right: 1px solid #e2e8f0;
+      position: sticky;
+      left: 0;
+      z-index: 5;
+    }
+
+    .crm-employee-columns {
+      flex: 1;
+      display: flex;
+      position: relative;
+    }
+
+    .crm-employee-column {
+      flex: 1;
+      min-width: 0;
+      border-right: 1px solid #e2e8f0;
+      position: relative;
+      background: white;
+    }
+
+    .crm-time-slot-row {
+      height: 60px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background 0.15s;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .crm-time-slot {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 500;
+      border-bottom: 1px solid #f1f5f9;
+      box-sizing: border-box;
+    }
+
+    .crm-time-slot-row::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e2e8f0;
+      opacity: 0.5;
+    }
+
+    .crm-time-slot-row:hover {
+      background: #f8fafc;
+    }
+
+    .crm-time-slot-row.closed {
+      background: #f1f5f9;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .crm-time-slot-row.closed::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 5px,
+        #e2e8f0 5px,
+        #e2e8f0 10px
+      );
+    }
+
+    .crm-booking-card {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      border: 1px solid rgba(0,0,0,0.05);
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .crm-booking-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .crm-booking-card.dragging {
+      opacity: 0.8;
+      cursor: grabbing;
+      z-index: 1000;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .crm-booking-card.resizing {
+      cursor: ns-resize;
+      z-index: 1000;
+    }
+
+    .crm-booking-resize-handle {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      cursor: ns-resize;
+      background: linear-gradient(to top, rgba(0,0,0,0.1), transparent);
+      border-radius: 0 0 8px 8px;
+    }
+
+    .crm-booking-resize-handle:hover {
+      background: linear-gradient(to top, rgba(0,0,0,0.2), transparent);
+    }
+
+    .crm-booking-card.new {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      border-color: #6ee7b7;
+    }
+
+    .crm-booking-card.confirmed {
+      background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+      border-color: #c4b5fd;
+    }
+
+    .crm-booking-card.completed {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-color: #fcd34d;
+    }
+
+    .crm-booking-card.cancelled {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border-color: #fca5a5;
+      width: 50%;
+      left: 6px;
+    }
+
+    .crm-booking-card.green {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      border-color: #6ee7b7;
+    }
+
+    .crm-booking-card.purple {
+      background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+      border-color: #c4b5fd;
+    }
+
+    .crm-booking-card.yellow {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-color: #fcd34d;
+    }
+
+    .crm-booking-card.blue {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border-color: #93c5fd;
+    }
+
+    .crm-booking-card.pink {
+      background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+      border-color: #f9a8d4;
+    }
+
+    .footer {
+      background: #f8f9fa;
+      border-top: 1px solid #e5e7eb;
+      padding: 48px 0 24px;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 32px;
+    }
+
+    .footer-section h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #111;
+    }
+
+    .footer-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .footer-section li {
+      margin-bottom: 8px;
+    }
+
+    .footer-link {
+      color: #6b7280;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover {
+      color: #4c6fff;
+      text-decoration: underline;
+    }
+
+    .footer-email {
+      color: #6b7280;
+      font-size: 14px;
+      transition: color 0.2s;
+      cursor: pointer;
+    }
+
+    .footer-email:hover {
+      color: #4c6fff;
+    }
+
+    .crm-booking-time {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+      font-size: 11px;
+    }
+
+    .crm-booking-client {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 2px;
+      font-size: 13px;
+    }
+
+    .crm-booking-service {
+      color: #64748b;
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+
+    .crm-booking-phone {
+      color: #94a3b8;
+      font-size: 11px;
+    }
+
+    /* Current time line */
+    .crm-current-time-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #ef4444;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .crm-current-time-line::before {
+      content: '';
+      position: absolute;
+      left: -6px;
+      top: -4px;
+      width: 10px;
+      height: 10px;
+      background: #ef4444;
+      border-radius: 50%;
+    }
+
+    .crm-mini-calendar {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .crm-mini-calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .crm-mini-calendar-title {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .crm-mini-calendar-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .crm-mini-calendar-nav button {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .crm-mini-calendar-nav button:hover {
+      background: #f1f5f9;
+    }
+
+    .crm-mini-calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .crm-mini-calendar-day {
+      text-align: center;
+      padding: 8px 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.15s;
+    }
+
+    .crm-mini-calendar-day:hover {
+      background: #e2e8f0;
+    }
+
+    .crm-mini-calendar-day.today {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .crm-mini-calendar-day.selected {
+      background: #8b5cf6;
+      color: white;
+    }
+
+    .crm-mini-calendar-day.other-month {
+      color: #94a3b8;
+    }
+
+    .crm-sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .crm-sidebar-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .crm-sidebar-menu-item:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    .crm-sidebar-menu-item.active {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .crm-staff-dropdown {
+      margin-top: 8px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .crm-staff-dropdown.active {
+      display: block;
+    }
+
+    .crm-staff-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .crm-staff-item:hover {
+      background: #e2e8f0;
+    }
+
+    .crm-staff-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #cbd5e1;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .crm-staff-checkbox.checked {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .crm-staff-checkbox.checked::after {
+      content: '✓';
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .crm-staff-name {
+      font-size: 13px;
+      color: #475569;
+    }
+
+    .crm-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+      color: #1e293b;
+    }
+
+    .crm-btn:hover {
+      background: #f1f5f9;
+    }
+
+    .crm-btn-primary {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    .crm-btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .crm-dropdown {
+      position: relative;
+    }
+
+    .crm-dropdown select {
+      padding: 8px 32px 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      font-size: 14px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    .crm-dropdown select:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .crm-search {
+      position: relative;
+    }
+
+    .crm-search input {
+      padding: 8px 12px 8px 36px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      font-size: 14px;
+      width: 200px;
+    }
+
+    .crm-search input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .crm-search::before {
+      content: '🔍';
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+    }
+
+    .crm-date-display {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .crm-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .crm-modal.active {
+      display: flex;
+    }
+
+    .crm-modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      width: 500px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .crm-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .crm-modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .crm-modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #64748b;
+    }
+
+    .crm-form-group {
+      margin-bottom: 16px;
+    }
+
+    .crm-form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .crm-form-group input,
+    .crm-form-group select,
+    .crm-form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .crm-form-group input:focus,
+    .crm-form-group select:focus,
+    .crm-form-group textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .crm-color-picker {
+      display: flex;
+      gap: 8px;
+    }
+
+    .crm-color-option {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .crm-color-option:hover {
+      transform: scale(1.1);
+    }
+
+    .crm-color-option.selected {
+      border-color: #1e293b;
+    }
+
+    .crm-color-option.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .crm-color-option.purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+    .crm-color-option.yellow { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .crm-color-option.blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+    .crm-color-option.pink { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
+
+    .crm-modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .crm-modal-actions .crm-btn {
+      flex: 1;
+    }
+
+    .crm-modal-actions .crm-btn-danger {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: white;
+    }
+
+    .crm-modal-actions .crm-btn-danger:hover {
+      background: #dc2626;
+    }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+      .crm-calendar {
+        flex-direction: column;
+        height: calc(100vh - 56px);
+      }
+
+      .crm-sidebar {
+        display: none;
+      }
+
+      .crm-toolbar {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .crm-toolbar-left {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .crm-toolbar-center {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .crm-toolbar-right {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .crm-date-display {
+        font-size: 14px;
+      }
+
+      .crm-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .crm-toolbar-left > div {
+        flex-wrap: wrap;
+      }
+
+      .crm-calendar-grid {
+        grid-template-columns: 50px 1fr;
+      }
+
+      .crm-time-column {
+        min-width: 50px;
+      }
+
+      .crm-time-slot {
+        font-size: 10px;
+        height: 50px;
+      }
+
+      .crm-time-slot-row {
+        height: 50px;
+      }
+
+      .crm-employee-header {
+        padding: 8px 4px;
+      }
+
+      .crm-employee-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+      }
+
+      .crm-employee-name {
+        font-size: 12px;
+      }
+
+      .crm-employee-role {
+        font-size: 10px;
+      }
+
+      .crm-booking-card {
+        padding: 6px 8px;
+        font-size: 11px;
+        left: 4px;
+        right: 4px;
+      }
+
+      .crm-booking-time {
+        font-size: 10px;
+      }
+
+      .crm-booking-client {
+        font-size: 12px;
+      }
+
+      .crm-booking-service {
+        font-size: 10px;
+      }
+
+      .crm-booking-phone {
+        font-size: 10px;
+      }
+
+      .crm-dropdown select {
+        padding: 6px 28px 6px 10px;
+        font-size: 12px;
+      }
+
+      .crm-search input {
+        width: 100%;
+        font-size: 12px;
+        padding: 6px 10px 6px 32px;
+      }
+
+      .crm-modal-content {
+        width: 95%;
+        max-height: 90vh;
+        margin: 20px auto;
+      }
+
+      .crm-modal-header {
+        padding: 16px;
+      }
+
+      .crm-modal-body {
+        padding: 16px;
+      }
+
+      .crm-form-group {
+        margin-bottom: 16px;
+      }
+
+      .crm-form-group label {
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+
+      .crm-form-group input,
+      .crm-form-group select {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+
+      .crm-modal-actions {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .crm-modal-actions .crm-btn {
+        padding: 10px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app-header"></div>
+
+  <div class="crm-calendar">
+    <!-- Left Sidebar -->
+    <div class="crm-sidebar">
+      <div class="crm-mini-calendar">
+        <div class="crm-mini-calendar-header">
+          <div class="crm-mini-calendar-title" id="miniCalendarTitle">Май 2026</div>
+          <div class="crm-mini-calendar-nav">
+            <button id="miniCalendarPrev">←</button>
+            <button id="miniCalendarNext">→</button>
+          </div>
+        </div>
+        <div class="crm-mini-calendar-grid" id="miniCalendarGrid"></div>
+      </div>
+
+      <div class="crm-sidebar-menu">
+        <div class="crm-sidebar-menu-item">
+          <span>👥</span>
+          <span>Сотрудники</span>
+        </div>
+        <div id="staffList"></div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="crm-main">
+      <!-- Top Toolbar -->
+      <div class="crm-toolbar">
+        <div class="crm-toolbar-left">
+          <div class="crm-date-display" id="dateDisplay">Май 2026</div>
+          <div style="display: flex; gap: 8px;">
+            <button class="crm-btn" id="prevWeek">← Неделя</button>
+            <button class="crm-btn" id="todayBtn">Сегодня</button>
+            <button class="crm-btn" id="nextWeek">Неделя →</button>
+          </div>
+        </div>
+
+        <div class="crm-toolbar-center">
+          <button class="crm-btn crm-btn-primary" id="dayViewBtn">День</button>
+          <button class="crm-btn" id="weekViewBtn">Неделя</button>
+        </div>
+
+        <div class="crm-toolbar-right">
+          <div class="crm-dropdown">
+            <select id="masterFilter">
+              <option value="">Все мастера</option>
+            </select>
+          </div>
+          <button class="crm-btn" id="refreshBtn">🔄</button>
+        </div>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="crm-calendar-grid">
+        <div class="crm-employee-headers" id="employeeHeaders"></div>
+        <div class="crm-schedule-body">
+          <div class="crm-time-column" id="timeColumn"></div>
+          <div class="crm-employee-columns" id="scheduleColumns"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Booking Modal -->
+  <div class="crm-modal" id="bookingModal">
+    <div class="crm-modal-content">
+      <div class="crm-modal-header">
+        <div class="crm-modal-title" id="modalTitle">Новая запись</div>
+        <button class="crm-modal-close" id="modalClose">×</button>
+      </div>
+      <form id="bookingForm">
+        <div class="crm-form-group">
+          <label>Клиент</label>
+          <input type="text" id="bookingClient" required>
+        </div>
+        <div class="crm-form-group">
+          <label>Телефон</label>
+          <input type="tel" id="bookingPhone" value="+7">
+        </div>
+        <div class="crm-form-group">
+          <label>Услуга</label>
+          <select id="bookingService" required></select>
+        </div>
+        <div class="crm-form-group">
+          <label>Мастер</label>
+          <select id="bookingMaster" required></select>
+        </div>
+        <div class="crm-form-group">
+          <label>Дата</label>
+          <input type="date" id="bookingDate" required>
+        </div>
+        <div class="crm-form-group">
+          <label>Время</label>
+          <input type="time" id="bookingTime" required>
+        </div>
+        <div class="crm-form-group">
+          <label>Комментарий</label>
+          <textarea id="bookingComment" rows="3"></textarea>
+        </div>
+        <div class="crm-form-group">
+          <label>Статус</label>
+          <select id="bookingStatus">
+            <option value="CONFIRMED">Подтверждено</option>
+            <option value="COMPLETED">Состоялось</option>
+            <option value="CANCELLED">Отменено</option>
+          </select>
+        </div>
+        <div class="crm-modal-actions">
+          <button type="submit" class="crm-btn crm-btn-primary">Сохранить</button>
+          <button type="button" class="crm-btn crm-btn-danger" id="deleteBookingBtn" style="display: none;">Удалить</button>
+          <button type="button" class="crm-btn" id="cancelBookingBtn">Отменить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/app.js?v=20260420"></script>
+  <script>
+    Bloknot.renderHeader('calendar');
+
+    const state = {
+      view: 'day',
+      currentDate: new Date(),
+      miniCalendarDate: new Date(),
+      selectedMaster: null,
+      selectedBranch: null,
+      selectedStaffIds: [], // Array of selected staff IDs
+      bookings: [],
+      masters: [],
+      masterSchedules: {},
+      services: [],
+      selectedBooking: null,
+      selectedColor: 'green',
+      isDraggingCard: false // Flag to prevent re-render during drag
+    };
+
+    function ymd(d) {
+      const yy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yy}-${mm}-${dd}`;
+    }
+
+    function startOfWeek(d) {
+      const x = new Date(d);
+      const day = x.getDay();
+      const diff = x.getDate() - day + (day === 0 ? -6 : 1);
+      x.setDate(diff);
+      return startOfDay(x);
+    }
+
+    function startOfDay(d) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+    }
+
+    function endOfDay(d) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+    }
+
+    function addDays(d, n) {
+      const x = new Date(d);
+      x.setDate(x.getDate() + n);
+      return x;
+    }
+
+    function addWeeks(d, n) {
+      return addDays(d, n * 7);
+    }
+
+    function fmtDateRu(d) {
+      return d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+    }
+
+    function fmtDayRu(d) {
+      return d.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+
+    function fmtTime(iso, localIso) {
+      // Use startsAtLocal if available (local time without timezone conversion)
+      if (localIso) {
+        const match = localIso.match(/T(\d{2}):(\d{2})/);
+        if (match) {
+          return `${match[1]}:${match[2]}`;
+        }
+      }
+      // Fallback to UTC date
+      const d = new Date(iso);
+      const h = String(d.getHours()).padStart(2, '0');
+      const m = String(d.getMinutes()).padStart(2, '0');
+      return `${h}:${m}`;
+    }
+
+    function renderMiniCalendar() {
+      const grid = document.getElementById('miniCalendarGrid');
+      const title = document.getElementById('miniCalendarTitle');
+      const year = state.miniCalendarDate.getFullYear();
+      const month = state.miniCalendarDate.getMonth();
+
+      title.textContent = state.miniCalendarDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDay = firstDay.getDay() || 7;
+      const today = new Date();
+
+      let html = '';
+      
+      // Days of week
+      const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+      days.forEach(day => {
+        html += `<div class="crm-mini-calendar-day" style="font-weight: 600; color: #64748b;">${day}</div>`;
+      });
+
+      // Empty cells before first day
+      for (let i = 1; i < startDay; i++) {
+        html += `<div class="crm-mini-calendar-day other-month"></div>`;
+      }
+
+      // Days of month
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month, day);
+        const isToday = date.toDateString() === today.toDateString();
+        const isSelected = date.toDateString() === state.currentDate.toDateString();
+        const classes = ['crm-mini-calendar-day'];
+        if (isToday) classes.push('today');
+        if (isSelected) classes.push('selected');
+        html += `<div class="${classes.join(' ')}" data-date="${ymd(date)}">${day}</div>`;
+      }
+
+      grid.innerHTML = html;
+
+      grid.querySelectorAll('.crm-mini-calendar-day[data-date]').forEach(el => {
+        el.addEventListener('click', () => {
+          state.currentDate = new Date(el.dataset.date);
+          renderMiniCalendar();
+          renderCalendar();
+        });
+      });
+    }
+
+    function renderTimeColumn() {
+      const column = document.getElementById('timeColumn');
+      let html = '';
+      for (let hour = 9; hour <= 21; hour++) {
+        html += `<div class="crm-time-slot">${String(hour).padStart(2, '0')}:00</div>`;
+      }
+      column.innerHTML = html;
+    }
+
+    function renderEmployeeHeaders() {
+      const headers = document.getElementById('employeeHeaders');
+      
+      if (state.view === 'week') {
+        // Show day headers for week view
+        const weekStart = startOfWeek(state.currentDate);
+        const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+        
+        let html = '';
+        for (let i = 0; i < 7; i++) {
+          const day = addDays(weekStart, i);
+          const dayName = dayNames[i];
+          const dayDate = day.getDate();
+          const isToday = day.toDateString() === new Date().toDateString();
+          
+          html += `
+            <div class="crm-employee-header ${isToday ? 'crm-header-today' : ''}">
+              <div class="crm-employee-info">
+                <div class="crm-employee-name">${dayName}</div>
+                <div class="crm-employee-role">${dayDate}</div>
+              </div>
+            </div>
+          `;
+        }
+        headers.innerHTML = html;
+      } else {
+        // Show staff headers for day view
+        const visibleMasters = state.selectedMaster 
+          ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
+          : state.selectedStaffIds.length === 0 
+            ? []
+            : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
+
+        let html = '';
+        visibleMasters.forEach(master => {
+          const avatarHtml = master.avatar 
+            ? `<img src="${master.avatar}" alt="${master.name}" />`
+            : master.name.charAt(0);
+          
+          html += `
+            <div class="crm-employee-header">
+              <div class="crm-employee-avatar">${avatarHtml}</div>
+              <div class="crm-employee-info">
+                <div class="crm-employee-name">${master.name}</div>
+                <div class="crm-employee-role">${master.specializations || 'Мастер'}</div>
+              </div>
+            </div>
+          `;
+        });
+        headers.innerHTML = html;
+      }
+    }
+
+    function renderScheduleColumns() {
+      const container = document.getElementById('scheduleColumns');
+      
+      if (state.view === 'week') {
+        // Week view: show 7 day columns
+        const weekStart = startOfWeek(state.currentDate);
+        let html = '';
+        
+        for (let i = 0; i < 7; i++) {
+          const day = addDays(weekStart, i);
+          const isToday = day.toDateString() === new Date().toDateString();
+          html += `<div class="crm-employee-column ${isToday ? 'crm-column-today' : ''}" data-day="${day.toISOString()}">`;
+          
+          for (let hour = 9; hour <= 21; hour++) {
+            html += `<div class="crm-time-slot-row" data-hour="${hour}" data-day="${i}"></div>`;
+          }
+          html += '</div>';
+        }
+        container.innerHTML = html;
+
+        // Render bookings for each day
+        const visibleMasters = state.selectedMaster 
+          ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
+          : state.selectedStaffIds.length === 0 
+            ? []
+            : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
+
+        for (let i = 0; i < 7; i++) {
+          const day = addDays(weekStart, i);
+          const dayStr = ymd(day);
+          const dayStart = startOfDay(day);
+          const dayEnd = endOfDay(day);
+          const column = container.querySelector(`[data-day="${day.toISOString()}"]`);
+          
+          // Filter bookings for this day
+          const dayBookings = state.bookings.filter(b => {
+            const bookingDate = new Date(b.startsAt);
+            const matchesDate = bookingDate >= dayStart && bookingDate <= dayEnd;
+            const matchesMaster = state.selectedMaster 
+              ? String(b.masterId) === String(state.selectedMaster)
+              : state.selectedStaffIds.length > 0 
+                ? state.selectedStaffIds.includes(b.masterId)
+                : true;
+            return matchesDate && matchesMaster;
+          });
+
+          dayBookings.forEach(booking => {
+            // Use startsAtLocal for correct local time display
+            const timeToUse = booking.startsAtLocal || booking.startsAt;
+            const timeToUseEnd = booking.endsAtLocal || booking.endsAt;
+
+            let startHour, startMin, duration;
+
+            if (booking.startsAtLocal) {
+              // Parse local time string (format: 2026-05-26T09:00:00)
+              const startMatch = timeToUse.match(/T(\d{2}):(\d{2})/);
+              const endMatch = timeToUseEnd.match(/T(\d{2}):(\d{2})/);
+              startHour = parseInt(startMatch[1]);
+              startMin = parseInt(startMatch[2]);
+              const endHour = parseInt(endMatch[1]);
+              const endMin = parseInt(endMatch[2]);
+              duration = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+            } else {
+              // Fallback to UTC date
+              const startDate = new Date(timeToUse);
+              const endDate = new Date(timeToUseEnd);
+              startHour = startDate.getHours();
+              startMin = startDate.getMinutes();
+              duration = (endDate.getTime() - startDate.getTime()) / 60000;
+            }
+            
+            const slotHeight = 60;
+            const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
+            const height = (duration / 60) * slotHeight;
+
+            const service = state.services.find(s => String(s.id) === String(booking.serviceId));
+            const master = state.masters.find(m => String(m.id) === String(booking.masterId));
+            
+            // Determine color based on status
+            let colorClass = 'green';
+            if (booking.status === 'CONFIRMED') {
+              colorClass = 'confirmed';
+            } else if (booking.status === 'COMPLETED') {
+              colorClass = 'completed';
+            } else if (booking.status === 'CANCELLED') {
+              colorClass = 'cancelled';
+            } else if (booking.status === 'PENDING') {
+              colorClass = 'new';
+            } else {
+              colorClass = booking.color || 'green';
+            }
+
+            const card = document.createElement('div');
+            card.className = `crm-booking-card ${colorClass}`;
+            card.style.top = `${top}px`;
+            card.style.height = `${Math.max(height, 40)}px`;
+            card.dataset.bookingId = booking.id;
+            card.dataset.startsAt = booking.startsAt;
+            card.dataset.endsAt = booking.endsAt;
+            card.dataset.masterId = booking.masterId;
+            card.innerHTML = `
+              <div class="crm-booking-time">${fmtTime(booking.startsAt, booking.startsAtLocal)} – ${fmtTime(booking.endsAt, booking.endsAtLocal)}</div>
+              <div class="crm-booking-client">${booking.customerName}</div>
+              <div class="crm-booking-service">${service?.name || ''}</div>
+              <div class="crm-booking-phone">${master?.name || ''}</div>
+              <div class="crm-booking-resize-handle"></div>
+            `;
+            
+            // Add drag functionality
+            let isDragging = false;
+            let startY = 0;
+            let startX = 0;
+            let startTop = 0;
+            let startLeft = 0;
+            let startHeight = 0;
+            let isResizing = false;
+            let hasMoved = false;
+            let startColumn = null;
+            
+            card.addEventListener('mousedown', (e) => {
+              if (e.target.classList.contains('crm-booking-resize-handle')) {
+                // Start resize
+                isResizing = true;
+                isDragging = false;
+                hasMoved = false;
+                state.isDraggingCard = true;
+                startY = e.clientY;
+                startHeight = card.offsetHeight;
+                card.classList.add('resizing');
+                e.preventDefault();
+              } else {
+                // Start drag
+                isDragging = true;
+                isResizing = false;
+                hasMoved = false;
+                state.isDraggingCard = true;
+                startY = e.clientY;
+                startX = e.clientX;
+                startTop = card.offsetTop;
+                startLeft = card.offsetLeft;
+                startHeight = card.offsetHeight;
+                startColumn = card.parentElement;
+                card.classList.add('dragging');
+                e.preventDefault();
+              }
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+              if (isDragging) {
+                hasMoved = true;
+                const deltaY = e.clientY - startY;
+                const deltaX = e.clientX - startX;
+                const slotHeight = 60;
+                const newTop = startTop + deltaY;
+                const newLeft = startLeft + deltaX;
+                
+                // Snap to 15-minute intervals (15px = 15 minutes)
+                const snappedTop = Math.round(newTop / 15) * 15;
+                card.style.top = `${snappedTop}px`;
+                card.style.left = `${newLeft}px`;
+                card.style.position = 'absolute';
+                card.style.zIndex = '1000';
+                // Keep original height during drag
+                card.style.height = `${startHeight}px`;
+              } else if (isResizing) {
+                hasMoved = true;
+                const deltaY = e.clientY - startY;
+                const newHeight = Math.max(40, startHeight + deltaY);
+                
+                // Snap to 15-minute intervals
+                const snappedHeight = Math.round(newHeight / 15) * 15;
+                card.style.height = `${snappedHeight}px`;
+              }
+            });
+            
+            document.addEventListener('mouseup', async (e) => {
+              if (isDragging || isResizing) {
+                if (hasMoved) {
+                  const bookingId = card.dataset.bookingId;
+                  const masterId = card.dataset.masterId;
+                  const slotHeight = 60;
+                  
+                  // Find which column the card was dropped on
+                  const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+                  const targetColumn = dropTarget?.closest('.crm-employee-column');
+                  
+                  // Use target column's date if dropped on a different day, otherwise use original day
+                  let targetDay = day;
+                  if (targetColumn && targetColumn !== startColumn) {
+                    const targetDayIso = targetColumn.dataset.day;
+                    targetDay = new Date(targetDayIso);
+                  }
+                  
+                  // Calculate new start time
+                  const newTop = parseInt(card.style.top);
+                  const startHour = 9 + Math.floor(newTop / slotHeight);
+                  const startMin = Math.round((newTop % slotHeight) / slotHeight * 60);
+                  
+                  // Calculate new end time - use original height to preserve duration
+                  const duration = Math.round((startHeight / slotHeight) * 60);
+                  const endHour = startHour + Math.floor((startMin + duration) / 60);
+                  const endMin = (startMin + duration) % 60;
+                  
+                  // Create new date strings
+                  const dayStr = ymd(targetDay);
+                  const newStartsAt = new Date(`${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`).toISOString();
+                  const newEndsAt = new Date(`${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`).toISOString();
+                  
+                  // Update booking on server
+                  try {
+                    // Get token for authorization
+                    let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+                    const headers = {
+                      'Content-Type': 'application/json',
+                    };
+                    if (token) {
+                      headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
+                    const response = await fetch(`/api/appointments/${bookingId}`, {
+                      method: 'PUT',
+                      headers: headers,
+                      body: JSON.stringify({
+                        startsAt: newStartsAt,
+                        endsAt: newEndsAt,
+                        startsAtLocal: `${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`,
+                        endsAtLocal: `${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`,
+                      }),
+                      credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                      console.log('Booking updated successfully');
+                      // Update local booking data to prevent visual lag
+                      const bookingIndex = state.bookings.findIndex(b => b.id === parseInt(bookingId));
+                      if (bookingIndex !== -1) {
+                        state.bookings[bookingIndex].startsAt = newStartsAt;
+                        state.bookings[bookingIndex].endsAt = newEndsAt;
+                      }
+                      // If moved to different column, move the card DOM element
+                      if (targetColumn && targetColumn !== startColumn) {
+                        targetColumn.appendChild(card);
+                      }
+                      // Update card to new position visually
+                      card.style.height = `${startHeight}px`;
+                      card.style.left = '';
+                      card.style.position = '';
+                      card.style.zIndex = '';
+                    } else {
+                      const errorText = await response.text();
+                      console.error('Failed to update booking:', errorText);
+                      // Revert to original position
+                      card.style.top = `${top}px`;
+                      card.style.height = `${Math.max(height, 40)}px`;
+                      card.style.left = '';
+                      card.style.position = '';
+                      card.style.zIndex = '';
+                    }
+                  } catch (error) {
+                    console.error('Error updating booking:', error);
+                    // Revert to original position
+                    card.style.top = `${top}px`;
+                    card.style.height = `${Math.max(height, 40)}px`;
+                    card.style.left = '';
+                    card.style.position = '';
+                    card.style.zIndex = '';
+                  }
+                } else {
+                  // No movement, revert position
+                  card.style.top = `${top}px`;
+                  card.style.height = `${Math.max(height, 40)}px`;
+                  card.style.left = '';
+                  card.style.position = '';
+                  card.style.zIndex = '';
+                }
+                
+                isDragging = false;
+                isResizing = false;
+                hasMoved = false;
+                state.isDraggingCard = false;
+                card.classList.remove('dragging', 'resizing');
+                card.style.left = '';
+                card.style.position = '';
+                card.style.zIndex = '';
+              }
+            });
+            
+            card.addEventListener('click', (e) => {
+              if (!hasMoved && !isDragging && !isResizing) {
+                e.stopPropagation();
+                openBookingModal(booking);
+              }
+            });
+            column.appendChild(card);
+          });
+
+          // Render breaks for each master
+          visibleMasters.forEach(master => {
+            const schedule = state.masterSchedules[master.id] || {};
+            const daySchedule = schedule[dayStr];
+            
+            if (daySchedule && daySchedule.breaks && daySchedule.breaks.length > 0) {
+              daySchedule.breaks.forEach(breakItem => {
+                const breakStart = new Date(`${ymd(day)}T${breakItem.start}`);
+                const breakEnd = new Date(`${ymd(day)}T${breakItem.end}`);
+                const startHour = breakStart.getHours();
+                const startMin = breakStart.getMinutes();
+                const duration = (breakEnd.getTime() - breakStart.getTime()) / 60000;
+                
+                const slotHeight = 60;
+                const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
+                const height = (duration / 60) * slotHeight;
+
+                const breakCard = document.createElement('div');
+                breakCard.className = 'crm-booking-card break';
+                breakCard.style.top = `${top}px`;
+                breakCard.style.height = `${Math.max(height, 40)}px`;
+                breakCard.style.backgroundColor = '#e5e7eb';
+                breakCard.style.border = '1px solid #d1d5db';
+                breakCard.innerHTML = `
+                  <div class="crm-booking-time">${breakItem.start} – ${breakItem.end}</div>
+                  <div class="crm-booking-client">Перерыв</div>
+                `;
+                breakCard.style.pointerEvents = 'none';
+                column.appendChild(breakCard);
+              });
+            }
+          });
+        }
+
+        // Add click handlers for time slots and mark closed slots
+        for (let i = 0; i < 7; i++) {
+          const day = addDays(weekStart, i);
+          const dayStr = ymd(day);
+          const column = container.querySelector(`[data-day="${day.toISOString()}"]`);
+          
+          if (column) {
+            column.querySelectorAll('.crm-time-slot-row').forEach(slot => {
+              const hour = parseInt(slot.dataset.hour);
+              let isClosed = true;
+              
+              // Check if any specialist has this day enabled in their schedule
+              visibleMasters.forEach(master => {
+                const schedule = state.masterSchedules[master.id] || {};
+                const daySchedule = schedule[dayStr];
+                
+                if (daySchedule && daySchedule.enabled) {
+                  const startHour = parseInt(daySchedule.startTime.split(':')[0]);
+                  const endHour = parseInt(daySchedule.endTime.split(':')[0]);
+                  
+                  if (hour >= startHour && hour < endHour) {
+                    isClosed = false;
+                  }
+                }
+              });
+              
+              if (isClosed) {
+                slot.classList.add('closed');
+              } else {
+                slot.addEventListener('click', () => {
+                  openBookingModal(null, { date: day, hour });
+                });
+              }
+            });
+          }
+        }
+
+        // Add current time line for today
+        const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+        const todayColumn = container.querySelector(`[data-day="${addDays(weekStart, todayIndex).toISOString()}"]`);
+        if (todayColumn) {
+          renderCurrentTimeLine(todayColumn);
+        }
+      } else {
+        // Day view: show staff columns
+        const visibleMasters = state.selectedMaster 
+          ? state.masters.filter(m => String(m.id) === String(state.selectedMaster))
+          : state.selectedStaffIds.length === 0 
+            ? []
+            : state.masters.filter(m => state.selectedStaffIds.includes(m.id));
+
+        let html = '';
+        visibleMasters.forEach(master => {
+          html += `<div class="crm-employee-column" data-master-id="${master.id}">`;
+          for (let hour = 9; hour <= 21; hour++) {
+            html += `<div class="crm-time-slot-row" data-hour="${hour}" data-master="${master.id}"></div>`;
+          }
+          html += '</div>';
+        });
+        container.innerHTML = html;
+
+        // Render bookings
+        const currentDateStr = ymd(state.currentDate);
+        visibleMasters.forEach(master => {
+          const column = container.querySelector(`[data-master-id="${master.id}"]`);
+          const masterBookings = state.bookings.filter(b => {
+            const bookingDate = new Date(b.startsAt);
+            const currentDate = state.currentDate;
+            return bookingDate.toDateString() === currentDate.toDateString() &&
+                   String(b.masterId) === String(master.id);
+          });
+
+          masterBookings.forEach(booking => {
+            // Use startsAtLocal for correct local time display
+            const timeToUse = booking.startsAtLocal || booking.startsAt;
+            const timeToUseEnd = booking.endsAtLocal || booking.endsAt;
+
+            let startHour, startMin, duration;
+
+            if (booking.startsAtLocal) {
+              // Parse local time string (format: 2026-05-26T09:00:00)
+              const startMatch = timeToUse.match(/T(\d{2}):(\d{2})/);
+              const endMatch = timeToUseEnd.match(/T(\d{2}):(\d{2})/);
+              startHour = parseInt(startMatch[1]);
+              startMin = parseInt(startMatch[2]);
+              const endHour = parseInt(endMatch[1]);
+              const endMin = parseInt(endMatch[2]);
+              duration = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+            } else {
+              // Fallback to UTC date
+              const startDate = new Date(timeToUse);
+              const endDate = new Date(timeToUseEnd);
+              startHour = startDate.getHours();
+              startMin = startDate.getMinutes();
+              duration = (endDate.getTime() - startDate.getTime()) / 60000;
+            }
+            
+            const slotHeight = 60;
+            const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
+            const height = (duration / 60) * slotHeight;
+
+            const service = state.services.find(s => String(s.id) === String(booking.serviceId));
+            
+            // Determine color based on status
+            let colorClass = 'green';
+            if (booking.status === 'CONFIRMED') {
+              colorClass = 'confirmed';
+            } else if (booking.status === 'COMPLETED') {
+              colorClass = 'completed';
+            } else if (booking.status === 'CANCELLED') {
+              colorClass = 'cancelled';
+            } else if (booking.status === 'PENDING') {
+              colorClass = 'new';
+            } else {
+              colorClass = booking.color || 'green';
+            }
+
+            const card = document.createElement('div');
+            card.className = `crm-booking-card ${colorClass}`;
+            card.style.top = `${top}px`;
+            card.style.height = `${Math.max(height, 40)}px`;
+            card.dataset.bookingId = booking.id;
+            card.dataset.startsAt = booking.startsAt;
+            card.dataset.endsAt = booking.endsAt;
+            card.dataset.masterId = booking.masterId;
+            card.innerHTML = `
+              <div class="crm-booking-time">${fmtTime(booking.startsAt, booking.startsAtLocal)} – ${fmtTime(booking.endsAt, booking.endsAtLocal)}</div>
+              <div class="crm-booking-client">${booking.customerName}</div>
+              <div class="crm-booking-service">${service?.name || ''}</div>
+              ${booking.customerPhone ? `<div class="crm-booking-phone">${booking.customerPhone}</div>` : ''}
+              <div class="crm-booking-resize-handle"></div>
+            `;
+            
+            // Add drag functionality for day view
+            let isDragging = false;
+            let startY = 0;
+            let startTop = 0;
+            let startHeight = 0;
+            let isResizing = false;
+            let hasMoved = false;
+            
+            card.addEventListener('mousedown', (e) => {
+              if (e.target.classList.contains('crm-booking-resize-handle')) {
+                // Start resize
+                isResizing = true;
+                isDragging = false;
+                hasMoved = false;
+                state.isDraggingCard = true;
+                startY = e.clientY;
+                startHeight = card.offsetHeight;
+                card.classList.add('resizing');
+                e.preventDefault();
+              } else {
+                // Start drag
+                isDragging = true;
+                isResizing = false;
+                hasMoved = false;
+                state.isDraggingCard = true;
+                startY = e.clientY;
+                startTop = card.offsetTop;
+                startHeight = card.offsetHeight;
+                card.classList.add('dragging');
+                e.preventDefault();
+              }
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+              if (isDragging) {
+                hasMoved = true;
+                const deltaY = e.clientY - startY;
+                const slotHeight = 60;
+                const newTop = startTop + deltaY;
+                
+                // Snap to 15-minute intervals (15px = 15 minutes)
+                const snappedTop = Math.round(newTop / 15) * 15;
+                card.style.top = `${snappedTop}px`;
+                // Keep original height during drag
+                card.style.height = `${startHeight}px`;
+              } else if (isResizing) {
+                hasMoved = true;
+                const deltaY = e.clientY - startY;
+                const newHeight = Math.max(40, startHeight + deltaY);
+                
+                // Snap to 15-minute intervals
+                const snappedHeight = Math.round(newHeight / 15) * 15;
+                card.style.height = `${snappedHeight}px`;
+              }
+            });
+            
+            document.addEventListener('mouseup', async (e) => {
+              if (isDragging || isResizing) {
+                if (hasMoved) {
+                  const bookingId = card.dataset.bookingId;
+                  const masterId = card.dataset.masterId;
+                  const slotHeight = 60;
+                  
+                  // Calculate new start time
+                  const newTop = parseInt(card.style.top);
+                  const startHour = 9 + Math.floor(newTop / slotHeight);
+                  const startMin = Math.round((newTop % slotHeight) / slotHeight * 60);
+                  
+                  // Calculate new end time - use original height to preserve duration
+                  const duration = Math.round((startHeight / slotHeight) * 60);
+                  const endHour = startHour + Math.floor((startMin + duration) / 60);
+                  const endMin = (startMin + duration) % 60;
+                  
+                  // Create new date strings
+                  const dayStr = ymd(state.currentDate);
+                  const newStartsAt = new Date(`${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`).toISOString();
+                  const newEndsAt = new Date(`${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`).toISOString();
+                  
+                  // Update booking on server
+                  try {
+                    // Get token for authorization
+                    let token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+                    const headers = {
+                      'Content-Type': 'application/json',
+                    };
+                    if (token) {
+                      headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
+                    const response = await fetch(`/api/appointments/${bookingId}`, {
+                      method: 'PUT',
+                      headers: headers,
+                      body: JSON.stringify({
+                        startsAt: newStartsAt,
+                        endsAt: newEndsAt,
+                        startsAtLocal: `${dayStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`,
+                        endsAtLocal: `${dayStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`,
+                      }),
+                      credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                      console.log('Booking updated successfully');
+                      // Update local booking data to prevent visual lag
+                      const bookingIndex = state.bookings.findIndex(b => b.id === parseInt(bookingId));
+                      if (bookingIndex !== -1) {
+                        state.bookings[bookingIndex].startsAt = newStartsAt;
+                        state.bookings[bookingIndex].endsAt = newEndsAt;
+                      }
+                      // Update card to new position visually
+                      card.style.height = `${startHeight}px`;
+                    } else {
+                      const errorText = await response.text();
+                      console.error('Failed to update booking:', errorText);
+                      // Revert to original position
+                      card.style.top = `${top}px`;
+                      card.style.height = `${Math.max(height, 40)}px`;
+                    }
+                  } catch (error) {
+                    console.error('Error updating booking:', error);
+                    // Revert to original position
+                    card.style.top = `${top}px`;
+                    card.style.height = `${Math.max(height, 40)}px`;
+                  }
+                } else {
+                  // No movement, revert position
+                  card.style.top = `${top}px`;
+                  card.style.height = `${Math.max(height, 40)}px`;
+                }
+                
+                isDragging = false;
+                isResizing = false;
+                hasMoved = false;
+                state.isDraggingCard = false;
+                card.classList.remove('dragging', 'resizing');
+              }
+            });
+            
+            card.addEventListener('click', (e) => {
+              if (!hasMoved && !isDragging && !isResizing) {
+                e.stopPropagation();
+                openBookingModal(booking);
+              }
+            });
+            column.appendChild(card);
+          });
+
+          // Render breaks for this master
+          const schedule = state.masterSchedules[master.id] || {};
+          const daySchedule = schedule[currentDateStr];
+          
+          if (daySchedule && daySchedule.breaks && daySchedule.breaks.length > 0) {
+            daySchedule.breaks.forEach(breakItem => {
+              const breakStart = new Date(`${ymd(state.currentDate)}T${breakItem.start}`);
+              const breakEnd = new Date(`${ymd(state.currentDate)}T${breakItem.end}`);
+              const startHour = breakStart.getHours();
+              const startMin = breakStart.getMinutes();
+              const duration = (breakEnd.getTime() - breakStart.getTime()) / 60000;
+              
+              const slotHeight = 60;
+              const top = (startHour - 9) * slotHeight + (startMin / 60) * slotHeight;
+              const height = (duration / 60) * slotHeight;
+
+              const breakCard = document.createElement('div');
+              breakCard.className = 'crm-booking-card break';
+              breakCard.style.top = `${top}px`;
+              breakCard.style.height = `${Math.max(height, 40)}px`;
+              breakCard.style.backgroundColor = '#e5e7eb';
+              breakCard.style.border = '1px solid #d1d5db';
+              breakCard.innerHTML = `
+                <div class="crm-booking-time">${breakItem.start} – ${breakItem.end}</div>
+                <div class="crm-booking-client">Перерыв</div>
+              `;
+              breakCard.style.pointerEvents = 'none';
+              column.appendChild(breakCard);
+            });
+          }
+        });
+
+        // Mark closed slots based on schedule
+        container.querySelectorAll('.crm-time-slot-row').forEach(slot => {
+          const hour = parseInt(slot.dataset.hour);
+          const masterId = slot.dataset.master;
+          const schedule = state.masterSchedules[masterId] || {};
+          
+          // Check schedule for this specific date
+          const daySchedule = schedule[currentDateStr];
+          if (daySchedule && daySchedule.enabled) {
+            const startHour = parseInt(daySchedule.startTime.split(':')[0]);
+            const endHour = parseInt(daySchedule.endTime.split(':')[0]);
+            
+            // Mark slot as closed if outside working hours
+            if (hour < startHour || hour >= endHour) {
+              slot.classList.add('closed');
+            }
+          } else if (!daySchedule) {
+            // No schedule set for this day - mark as closed
+            slot.classList.add('closed');
+          }
+
+          if (!slot.classList.contains('closed')) {
+            slot.addEventListener('click', () => {
+              openBookingModal(null, { masterId, hour });
+            });
+          }
+        });
+
+        // Add current time line
+        renderCurrentTimeLine(container);
+      }
+    }
+
+    function renderCurrentTimeLine(container) {
+      // Remove existing time line
+      const existingLine = container.querySelector('.crm-current-time-line');
+      if (existingLine) {
+        existingLine.remove();
+      }
+
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMin = now.getMinutes();
+      
+      // Only show if within our time range (9-21)
+      if (currentHour >= 9 && currentHour <= 21) {
+        const slotHeight = 60;
+        const top = (currentHour - 9) * slotHeight + (currentMin / 60) * slotHeight;
+        
+        const timeLine = document.createElement('div');
+        timeLine.className = 'crm-current-time-line';
+        timeLine.style.top = `${top}px`;
+        container.appendChild(timeLine);
+      }
+    }
+
+    function renderCalendar() {
+      const dateDisplay = document.getElementById('dateDisplay');
+      
+      if (state.view === 'week') {
+        const weekStart = startOfWeek(state.currentDate);
+        const weekEnd = addDays(weekStart, 6);
+        dateDisplay.textContent = `${fmtDayRu(weekStart)} – ${fmtDayRu(weekEnd)}`;
+      } else {
+        dateDisplay.textContent = fmtDayRu(state.currentDate);
+      }
+
+      renderTimeColumn();
+      renderEmployeeHeaders();
+      renderScheduleColumns();
+    }
+
+    async function loadMasters() {
+      try {
+        state.masters = await Bloknot.api('/api/masters/masters');
+        
+        // Initially select all staff
+        state.selectedStaffIds = state.masters.map(m => m.id);
+
+        // Populate staff dropdown
+        const staffList = document.getElementById('staffList');
+        staffList.innerHTML = '';
+        state.masters.forEach(master => {
+          const item = document.createElement('div');
+          item.className = 'crm-staff-item';
+          item.dataset.staffId = master.id;
+          item.innerHTML = `
+            <div class="crm-staff-checkbox checked"></div>
+            <span class="crm-staff-name">${master.name}</span>
+          `;
+          item.addEventListener('click', () => toggleStaffSelection(master.id));
+          staffList.appendChild(item);
+        });
+
+        // Populate master filter dropdown
+        const masterFilter = document.getElementById('masterFilter');
+        masterFilter.innerHTML = '<option value="">Все мастера</option>';
+        state.masters.forEach(m => {
+          masterFilter.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+        });
+
+        // Load schedules for each master
+        for (const master of state.masters) {
+          try {
+            const scheduleData = await Bloknot.api(`/api/specialists/${master.id}/schedule`);
+            state.masterSchedules[master.id] = scheduleData.schedule || {};
+          } catch (e) {
+            console.error(`Failed to load schedule for master ${master.id}:`, e);
+            state.masterSchedules[master.id] = {};
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load masters:', e);
+      }
+    }
+
+    function toggleStaffSelection(staffId) {
+      const index = state.selectedStaffIds.indexOf(staffId);
+      
+      if (index > -1) {
+        state.selectedStaffIds.splice(index, 1);
+      } else {
+        state.selectedStaffIds.push(staffId);
+      }
+
+      // Update checkbox visual state
+      document.querySelector(`[data-staff-id="${staffId}"] .crm-staff-checkbox`).classList.toggle('checked');
+
+      // Update week button state based on selection
+      const weekViewBtn = document.getElementById('weekViewBtn');
+      if (state.selectedStaffIds.length > 1) {
+        weekViewBtn.disabled = true;
+        weekViewBtn.style.opacity = '0.5';
+        weekViewBtn.style.cursor = 'not-allowed';
+      } else {
+        weekViewBtn.disabled = false;
+        weekViewBtn.style.opacity = '1';
+        weekViewBtn.style.cursor = 'pointer';
+      }
+
+      renderCalendar();
+      loadBookings();
+    }
+
+    async function loadServices() {
+      try {
+        state.services = await Bloknot.api('/api/masters/services');
+        const select = document.getElementById('bookingService');
+        select.innerHTML = '';
+        state.services.forEach(s => {
+          select.innerHTML += `<option value="${s.id}">${s.name} · ${s.duration} мин</option>`;
+        });
+      } catch (e) {
+        console.error('Failed to load services:', e);
+      }
+    }
+
+    async function loadBookings() {
+      // Don't reload if a card is being dragged
+      if (state.isDraggingCard) {
+        return;
+      }
+      try {
+        const weekStart = state.view === 'week' ? startOfWeek(state.currentDate) : startOfDay(state.currentDate);
+        const weekEnd = addDays(weekStart, state.view === 'week' ? 7 : 1);
+        
+        const qs = new URLSearchParams({
+          from: weekStart.toISOString(),
+          to: weekEnd.toISOString()
+        });
+
+        if (state.selectedStaffIds.length > 0) {
+          qs.set('masterId', state.selectedStaffIds.join(','));
+        }
+
+        state.bookings = await Bloknot.api('/api/appointments?' + qs.toString());
+        renderCalendar();
+      } catch (e) {
+        console.error('Failed to load bookings:', e);
+      }
+    }
+
+    function openBookingModal(booking = null, slotInfo = null) {
+      const modal = document.getElementById('bookingModal');
+      const form = document.getElementById('bookingForm');
+      const title = document.getElementById('modalTitle');
+      const deleteBtn = document.getElementById('deleteBookingBtn');
+
+      state.selectedBooking = booking;
+
+      if (booking) {
+        title.textContent = 'Редактировать запись';
+        document.getElementById('bookingClient').value = booking.customerName;
+        document.getElementById('bookingPhone').value = booking.customerPhone || '';
+        document.getElementById('bookingService').value = booking.serviceId;
+        document.getElementById('bookingMaster').value = booking.masterId;
+        document.getElementById('bookingDate').value = ymd(new Date(booking.startsAt));
+        document.getElementById('bookingTime').value = fmtTime(new Date(booking.startsAt)).substring(0, 5);
+        document.getElementById('bookingComment').value = booking.comment || '';
+        document.getElementById('bookingStatus').value = booking.status || 'confirmed';
+        deleteBtn.style.display = 'block';
+      } else {
+        title.textContent = 'Новая запись';
+        form.reset();
+        if (slotInfo) {
+          document.getElementById('bookingMaster').value = slotInfo.masterId;
+          document.getElementById('bookingDate').value = ymd(state.currentDate);
+          document.getElementById('bookingTime').value = `${String(slotInfo.hour).padStart(2, '0')}:00`;
+        }
+        deleteBtn.style.display = 'none';
+      }
+
+      modal.classList.add('active');
+    }
+
+    function closeBookingModal() {
+      const modal = document.getElementById('bookingModal');
+      modal.classList.remove('active');
+      state.selectedBooking = null;
+    }
+
+    // Phone formatting function
+    function formatPhone(input) {
+      // Remove all non-digit characters
+      let digits = input.value.replace(/\D/g, '');
+      
+      // Ensure it starts with 7 (Russian country code)
+      if (digits.length > 0 && !digits.startsWith('7')) {
+        digits = '7' + digits;
+      }
+      
+      // Limit to 11 digits (7 + 10 digit number)
+      digits = digits.substring(0, 11);
+      
+      // Format as +7 (XXX) - XXX - XX - XX
+      let formatted = '+7';
+      if (digits.length > 1) {
+        formatted += ' (' + digits.substring(1, 4) + ')';
+      }
+      if (digits.length > 4) {
+        formatted += ' - ' + digits.substring(4, 7);
+      }
+      if (digits.length > 7) {
+        formatted += ' - ' + digits.substring(7, 9);
+      }
+      if (digits.length > 9) {
+        formatted += ' - ' + digits.substring(9, 11);
+      }
+      
+      input.value = formatted;
+    }
+
+    async function saveBooking(e) {
+      e.preventDefault();
+      
+      const status = document.getElementById('bookingStatus').value;
+      
+      // Set color based on status
+      let color;
+      if (status === 'CONFIRMED') {
+        color = 'purple';
+      } else if (status === 'COMPLETED') {
+        color = 'yellow';
+      } else if (status === 'CANCELLED') {
+        color = 'red';
+      } else {
+        color = 'green';
+      }
+      
+      const data = {
+        customerName: document.getElementById('bookingClient').value,
+        customerPhone: document.getElementById('bookingPhone').value,
+        serviceId: document.getElementById('bookingService').value,
+        masterId: document.getElementById('bookingMaster').value,
+        startsAt: new Date(`${document.getElementById('bookingDate').value}T${document.getElementById('bookingTime').value}`).toISOString(),
+        comment: document.getElementById('bookingComment').value,
+        color: color,
+        status: status
+      };
+
+      try {
+        if (state.selectedBooking) {
+          await Bloknot.api(`/api/appointments/${state.selectedBooking.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        } else {
+          await Bloknot.api('/api/appointments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        }
+        closeBookingModal();
+        await loadBookings();
+      } catch (err) {
+        alert('Ошибка сохранения: ' + err.message);
+      }
+    }
+
+    async function deleteBooking() {
+      if (!state.selectedBooking) return;
+      if (!confirm('Удалить запись?')) return;
+
+      try {
+        await Bloknot.api(`/api/appointments/${state.selectedBooking.id}`, { method: 'DELETE' });
+        closeBookingModal();
+        await loadBookings();
+      } catch (err) {
+        alert('Ошибка удаления: ' + err.message);
+      }
+    }
+
+    // Event listeners
+    document.getElementById('miniCalendarPrev').addEventListener('click', () => {
+      state.miniCalendarDate.setMonth(state.miniCalendarDate.getMonth() - 1);
+      renderMiniCalendar();
+    });
+
+    document.getElementById('miniCalendarNext').addEventListener('click', () => {
+      state.miniCalendarDate.setMonth(state.miniCalendarDate.getMonth() + 1);
+      renderMiniCalendar();
+    });
+
+    document.getElementById('prevWeek').addEventListener('click', () => {
+      state.currentDate = state.view === 'week' ? addWeeks(state.currentDate, -1) : addDays(state.currentDate, -1);
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('nextWeek').addEventListener('click', () => {
+      state.currentDate = state.view === 'week' ? addWeeks(state.currentDate, 1) : addDays(state.currentDate, 1);
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('todayBtn').addEventListener('click', () => {
+      state.currentDate = new Date();
+      state.miniCalendarDate = new Date();
+      renderMiniCalendar();
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('dayViewBtn').addEventListener('click', () => {
+      state.view = 'day';
+      document.getElementById('dayViewBtn').classList.add('crm-btn-primary');
+      document.getElementById('weekViewBtn').classList.remove('crm-btn-primary');
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('weekViewBtn').addEventListener('click', () => {
+      // Check if more than 1 staff is selected
+      if (state.selectedStaffIds.length > 1) {
+        alert('Режим "Неделя" доступен только при выборе одного специалиста');
+        return;
+      }
+      
+      state.view = 'week';
+      document.getElementById('weekViewBtn').classList.add('crm-btn-primary');
+      document.getElementById('dayViewBtn').classList.remove('crm-btn-primary');
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('masterFilter').addEventListener('change', (e) => {
+      state.selectedMaster = e.target.value || null;
+      renderCalendar();
+      loadBookings();
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      loadBookings();
+    });
+
+    // Auto-refresh bookings every 30 seconds to catch changes from Telegram
+    setInterval(() => {
+      loadBookings();
+    }, 30000);
+
+    document.getElementById('modalClose').addEventListener('click', closeBookingModal);
+    document.getElementById('cancelBookingBtn').addEventListener('click', closeBookingModal);
+    document.getElementById('deleteBookingBtn').addEventListener('click', deleteBooking);
+    document.getElementById('bookingForm').addEventListener('submit', saveBooking);
+
+    // Add phone formatting
+    const bookingPhoneInput = document.getElementById('bookingPhone');
+    if (bookingPhoneInput) {
+      bookingPhoneInput.addEventListener('input', (e) => {
+        formatPhone(e.target);
+      });
+      
+      bookingPhoneInput.addEventListener('focus', (e) => {
+        if (e.target.value === '+7') {
+          e.target.select();
+        }
+      });
+    }
+
+    document.querySelectorAll('.crm-color-option').forEach(option => {
+      option.addEventListener('click', () => {
+        document.querySelectorAll('.crm-color-option').forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+        state.selectedColor = option.dataset.color;
+      });
+    });
+
+    // Initialize
+    (async function init() {
+      await loadMasters();
+      await loadServices();
+      await loadBookings();
+      renderMiniCalendar();
+      renderCalendar();
+
+      // Populate master select in modal
+      const masterSelect = document.getElementById('bookingMaster');
+      state.masters.forEach(m => {
+        masterSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+      });
+    })();
+  </script>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Контакты</h4>
+        <ul>
+          <li><span class="footer-email" onclick="copyEmail()">📧 info@bloknotservis.ru</span></li>
+          <li><a href="https://t.me/bloknotservis" class="footer-link" target="_blank">💬 Telegram</a></li>
+          <li><a href="https://wa.me/79024034242" class="footer-link" target="_blank">💚 WhatsApp</a></li>
+          <li><a href="https://max.ru/u/f9LHodD0cOKwzqbvzQfMIAZu-cdeUUBrdY4Bmo5aNpYnfD3UQPdSzeb_07k" class="footer-link" target="_blank">✍️ MAX</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <ul>
+          <li><a href="/about.html" class="footer-link">О нас</a></li>
+          <li><a href="/pricing.html" class="footer-link">Тарифы</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Для любого бизнеса</h4>
+        <ul>
+          <li><a href="/beauty.html" class="footer-link">Красота</a></li>
+          <li><a href="/medicine.html" class="footer-link">Медицина</a></li>
+          <li><a href="/sport.html" class="footer-link">Спорт</a></li>
+          <li><a href="/massage.html" class="footer-link">Массаж</a></li>
+          <li><a href="/leisure.html" class="footer-link">Досуг и отдых</a></li>
+          <li><a href="/education.html" class="footer-link">Образование</a></li>
+          <li><a href="/auto.html" class="footer-link">Авто</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Правовая информация</h4>
+        <ul>
+          <li><a href="/user-agreement.html" class="footer-link">Пользовательское соглашение</a></li>
+          <li><a href="/privacy.html" class="footer-link">Политика конфиденциальности</a></li>
+          <li><a href="/cookies.html" class="footer-link">Использование cookie</a></li>
+          <li><a href="/personal-data.html" class="footer-link">Согласие на обработку персональных данных</a></li>
+          <li><a href="/client-data-processing.html" class="footer-link">Обработка данных клиентов</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function copyEmail() {
+      const email = 'info@bloknotservis.ru';
+      navigator.clipboard.writeText(email).then(function() {
+        const emailElement = document.querySelector('.footer-email');
+        const originalText = emailElement.textContent;
+        emailElement.textContent = '📧 Email скопирован!';
+        emailElement.style.color = '#22c55e';
+
+        setTimeout(function() {
+          emailElement.textContent = originalText;
+          emailElement.style.color = '';
+        }, 2000);
+      }).catch(function(err) {
+        const textArea = document.createElement('textarea');
+        textArea.value = email;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+
+        const emailElement = document.querySelector('.footer-email');
+        const originalText = emailElement.textContent;
+        emailElement.textContent = '📧 Email скопирован!';
+        emailElement.style.color = '#22c55e';
+
+        setTimeout(function() {
+          emailElement.textContent = originalText;
+          emailElement.style.color = '';
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>

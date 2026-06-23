@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bloknot — кабинет владельца</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css?v=20260408" />
+  <style>
+    .footer {
+      background: #f8f9fa;
+      border-top: 1px solid #e5e7eb;
+      padding: 48px 0 24px;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 32px;
+    }
+
+    .footer-section h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #111;
+    }
+
+    .footer-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .footer-section li {
+      margin-bottom: 8px;
+    }
+
+    .footer-link {
+      color: #6b7280;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover {
+      color: #4c6fff;
+      text-decoration: underline;
+    }
+
+    .footer-email {
+      color: #6b7280;
+      font-size: 14px;
+      transition: color 0.2s;
+      cursor: pointer;
+    }
+
+    .footer-email:hover {
+      color: #4c6fff;
+    }
+  </style>
+  <script>
+    console.log('DASHBOARD HTML: Page started loading at:', new Date().toISOString());
+  </script>
+</head>
+<body>
+
+ <div id="app-header"></div>
+
+ <!-- Password Creation Modal -->
+ <div id="passwordModal" class="modal" style="display: none;">
+   <div class="modal-content" style="max-width: 400px;">
+     <div class="modal-header">
+       <h3>Set Your Password</h3>
+       <button class="modal-close" onclick="closePasswordModal()">&times;</button>
+     </div>
+     <div class="modal-body">
+       <div style="margin-bottom: 20px;">
+         <label style="display: block; margin-bottom: 5px; font-weight: 500;">Email:</label>
+         <div id="modalUserEmail" style="padding: 8px; background: #f5f5f5; border-radius: 4px;"></div>
+       </div>
+       <div style="margin-bottom: 15px;">
+         <label for="newPassword" style="display: block; margin-bottom: 5px; font-weight: 500;">Password:</label>
+         <input type="password" id="newPassword" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Enter your password">
+       </div>
+       <div style="margin-bottom: 20px;">
+         <label for="confirmPassword" style="display: block; margin-bottom: 5px; font-weight: 500;">Confirm Password:</label>
+         <input type="password" id="confirmPassword" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Confirm your password">
+       </div>
+       <div id="passwordError" style="color: #e74c3c; margin-bottom: 10px; font-size: 14px;"></div>
+     </div>
+     <div class="modal-footer">
+       <button class="btn primary" onclick="setPassword()" style="width: 100%;">Set Password</button>
+     </div>
+   </div>
+ </div>
+
+ <main class="container">
+   <h1 class="page-title" style="font-size: 28px; margin-bottom: 8px;">Кабинет владельца</h1>
+   <p class="page-subtitle">Управляйте услугами, мастерами, фото работ и записями клиентов.</p>
+
+   <div class="card" style="margin-top:12px">
+     <div class="actions" style="justify-content:space-between">
+       <div>
+         <div class="item-title">Статистика</div>
+         <div class="item-meta">Быстрый обзор настроек бизнеса.</div>
+       </div>
+       <button class="btn secondary" id="refreshBtn" type="button">Обновить</button>
+     </div>
+
+     <div id="stats" class="row three" style="margin-top:12px">
+      <div class="item" style="display:flex; cursor: default;">
+        <div style="width: 100%;">
+          <div class="item-title">Ваш профиль</div>
+          <div class="item-meta" style="margin-bottom: 8px;">
+            <div id="userName" style="font-size: 14px; color: #666; font-weight: 500;">-</div>
+            <div id="userEmail" style="font-size: 14px; color: #666;">-</div>
+            <div id="userPhone" style="font-size: 14px; color: #666;">-</div>
+          </div>
+        </div>
+      </div>
+      <a class="item" href="/calendar.html" style="display:flex">
+        <div>
+          <div class="item-title">Записи сегодня</div>
+          <div class="item-meta" id="todayCount">—</div>
+        </div>
+      </a>
+      <a class="item" href="/clients.html" style="display:flex">
+        <div>
+          <div class="item-title">Список клиентов</div>
+          <div class="item-meta" id="clientsCount">—</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <a href="/income.html" class="item" style="display:flex; text-decoration: none; color: inherit;">
+        <div style="width: 100%;">
+          <div class="item-title">Доход</div>
+          <div class="item-meta">Посмотреть доход за период</div>
+        </div>
+        <div style="margin-left: auto;">
+          <div style="font-size: 20px;">→</div>
+        </div>
+      </a>
+    </div>
+    
+    <div class="card" style="margin-top:12px">
+      <a href="/subscription.html" class="item" style="display:flex; text-decoration: none; color: inherit;">
+        <div style="width: 100%;">
+          <div class="item-title">Подписка</div>
+          <div class="item-meta">Управление подпиской на сервис</div>
+        </div>
+        <div style="margin-left: auto;">
+          <div style="font-size: 20px;">→</div>
+        </div>
+      </a>
+    </div>
+
+     <div id="notice" class="notice" style="display:none; margin-top:10px"></div>
+   </div>
+
+   <div class="card" style="margin-top:12px">
+     <div class="actions" style="justify-content:space-between">
+       <div>
+         <div class="item-title">Ссылка на онлайн‑запись</div>
+         <div class="item-meta">Эту ссылку можно вставить в Instagram, 2ГИС, Яндекс, Googl, на Сайт, Whatsupp, Telegram</div>
+       </div>
+       <a class="badge" id="openBookingLink" target="_blank" rel="noopener">Открыть как клиент</a>
+     </div>
+
+     <div class="row two" style="margin-top:12px">
+       <div class="field">
+         <label for="bookingLink">Ваша ссылка</label>
+         <input id="bookingLink" readonly class="blurred" />
+       </div>
+       <div class="field">
+         <label>&nbsp;</label>
+         <button class="btn" id="copyBookingBtn" type="button" style="width:100%">Скопировать</button>
+       </div>
+     </div>
+     <div class="notice" style="margin-top:10px">Поделитесь этой ссылкой с клиентами для онлайн-записи</div>
+   </div>
+ </main>
+
+<script src="/app.js?v=20260425-data-isolation&t=1713633600"></script>
+ <script>
+  console.log('DASHBOARD: Page loaded, script executing');
+  
+  // JWT Cookie Only - No localStorage
+  // Authentication handled by server middleware
+  console.log('DASHBOARD: Bloknot object:', typeof Bloknot);
+  
+  if (typeof Bloknot !== 'undefined') {
+    console.log('DASHBOARD: Bloknot is available, calling renderHeader');
+    Bloknot.renderHeader("dashboard");
+  } else {
+    console.error('DASHBOARD: Bloknot is not available!');
+  }
+
+   const notice = Bloknot.qs("#notice");
+   function showNotice(text) {
+     if (!text) {
+       notice.style.display = "none";
+       notice.textContent = "";
+       return;
+     }
+     notice.style.display = "block";
+     notice.textContent = text;
+   }
+
+   function dayBoundsIso(d) {
+     const from = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
+     const to = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0);
+     return { from: from.toISOString(), to: to.toISOString() };
+   }
+
+   function fmtTime(iso) {
+     const dt = new Date(iso);
+     const h = String(dt.getHours()).padStart(2, "0");
+     const m = String(dt.getMinutes()).padStart(2, "0");
+     return h + ":" + m;
+   }
+
+   async function loadDashboard() {
+    showNotice("");
+
+    // Try to load user data first
+    console.log('DASHBOARD: Starting loadDashboard function');
+    console.log('DASHBOARD: Bloknot object available:', typeof Bloknot);
+    console.log('DASHBOARD: Bloknot.api function available:', typeof Bloknot.api);
+
+    // Load user profile information with timeout
+    let user = null;
+    try {
+       console.log('DASHBOARD: Calling /api/auth/me API');
+       const response = await Promise.race([
+         Bloknot.api("/api/auth/me"),
+         new Promise((_, reject) => setTimeout(() => reject(new Error('API timeout')), 10000))
+       ]);
+       console.log('DASHBOARD: API response received:', response);
+
+       // Handle both response formats (direct user object or wrapped in user property)
+       user = response.user || response;
+       console.log('Extracted user data:', user);
+       console.log('User email:', user.email);
+       console.log('User name:', user.name);
+       console.log('User phone:', user.phone);
+
+       // Validate user data
+       if (!user || !user.email) {
+         console.log('Invalid user data, but continuing for testing');
+         console.log('User object:', user);
+         console.log('User email:', user?.email);
+         // Temporarily disabled for testing
+         // window.location.href = '/';
+         return;
+       }
+
+       // Remove localStorage usage - data will be loaded from API
+       console.log('User authenticated via JWT cookie - no localStorage needed');
+
+       if (user.email) {
+         document.getElementById("userEmail").textContent = user.email;
+         document.getElementById("modalUserEmail").textContent = user.email;
+         console.log('Displaying email:', user.email);
+       } else {
+         document.getElementById("userEmail").textContent = "No email";
+         document.getElementById("modalUserEmail").textContent = "No email";
+         console.log('No email found in user data');
+       }
+
+       if (user.phone) {
+         document.getElementById("userPhone").textContent = user.phone;
+         console.log('Displaying phone:', user.phone);
+       } else {
+         document.getElementById("userPhone").textContent = "No phone";
+         console.log('No phone found in user data');
+       }
+
+       if (user.name) {
+         document.getElementById("userName").textContent = user.name;
+         console.log('Displaying name:', user.name);
+       } else {
+         document.getElementById("userName").textContent = "No name";
+         console.log('No name found in user data');
+       }
+    } catch (e) {
+       console.error('DASHBOARD: API call failed:', e);
+       showNotice('Ошибка загрузки данных: ' + e.message);
+       // Don't return - continue with default values
+    }
+
+    async function safeCount(label, fn) {
+       try {
+         const items = await fn();
+         return { ok: true, items };
+       } catch (e) {
+         return { ok: false, error: e };
+       }
+     }
+
+     const mastersR = await safeCount("masters", () => Bloknot.api("/api/specialists"));
+     if (mastersR.ok) {
+      const mastersEl = Bloknot.qs("#mastersCount");
+      if (mastersEl) mastersEl.textContent = mastersR.items.length + " шт";
+    }
+
+     const now = new Date();
+     const { from, to } = dayBoundsIso(now);
+
+     try {
+       const today = await Bloknot.api("/api/appointments?" + new URLSearchParams({ from, to }).toString());
+       const todayEl = Bloknot.qs("#todayCount");
+      if (todayEl) todayEl.textContent = today.length + " шт";
+       
+       const uniqueClients = new Set(today.map(a => a.customerName).filter(name => name));
+       const clientsEl = Bloknot.qs("#clientsCount");
+      if (clientsEl) clientsEl.textContent = uniqueClients.size + " чел";
+     } catch (e) {
+       Bloknot.qs("#todayCount").textContent = "—";
+       Bloknot.qs("#clientsCount").textContent = "—";
+     }
+
+     try {
+       const allAppointments = await Bloknot.api("/api/appointments");
+       const allUniqueClients = new Set(allAppointments.map(a => a.customerName).filter(name => name));
+       const clientsEl = Bloknot.qs("#clientsCount");
+      if (clientsEl) clientsEl.textContent = allUniqueClients.size + " чел";
+     } catch (e) {
+       // Keep today's count if all appointments fail
+     }
+   }
+
+   // Save user name function
+   async function saveUserName() {
+     const userName = document.getElementById("userName").value.trim();
+     const button = event.target;
+     
+     if (!userName) {
+       showNotice("Please enter your name");
+       return;
+     }
+     
+     button.disabled = true;
+     button.textContent = "Saving...";
+     
+     try {
+       const response = await Bloknot.api("/api/auth/update-profile", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({ name: userName })
+       });
+       
+       if (response.success) {
+         showNotice("Name saved successfully!");
+       } else {
+         throw new Error(response.error || "Failed to save name");
+       }
+     } catch (error) {
+       console.error("Save name error:", error);
+       showNotice("Failed to save name: " + error.message);
+     } finally {
+       button.disabled = false;
+       button.textContent = "Save Name";
+     }
+   }
+
+   const refreshBtn = Bloknot.qs("#refreshBtn");
+   if (refreshBtn) {
+     refreshBtn.addEventListener("click", () => {
+       loadDashboard().catch((e) => showNotice("Failed to load data: " + e.message));
+     });
+   } else {
+     console.log('Refresh button not found, skipping event listener');
+   }
+
+   (function initBookingLink() {
+    console.log('[BOOKING LINK] Initializing booking link...');
+    Bloknot.api('/api/business/slug')
+      .then(data => {
+        console.log('[BOOKING LINK] Response data:', data);
+        const slug = data.slug;
+        console.log('[BOOKING LINK] Slug:', slug);
+        
+        if (!slug || slug === 'undefined') {
+          console.error('[BOOKING LINK] Invalid slug received:', slug);
+          return;
+        }
+        
+        const link = String(location.origin || "").replace(/\/$/, "") + "/booking-new.html?slug=jhjhjh-mail-ru-1781770316471";
+        console.log('[BOOKING LINK] Generated link:', link);
+        
+        const input = Bloknot.qs("#bookingLink");
+        const isSubscribed = true; // Always allow access to booking link
+
+        const open = document.querySelector("#openBookingLink");
+        if (open) open.href = link;
+
+         function applyGate() {
+          const ok = isSubscribed;
+          if (ok) {
+            input.value = link;
+            input.classList.remove("blurred");
+            input.removeAttribute("aria-hidden");
+          } else {
+            input.value = "Подписка требуется";
+            input.classList.add("blurred");
+            input.setAttribute("aria-hidden", "true");
+          }
+        }
+
+         applyGate();
+
+         // Defensive: block manual copy/select when gated
+         ["copy", "cut", "paste", "contextmenu"].forEach((ev) => {
+           input.addEventListener(ev, (e) => {
+             if (!isSubscribed) e.preventDefault();
+           });
+         });
+         input.addEventListener("keydown", (e) => {
+           if (!isSubscribed && ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "a"))) e.preventDefault();
+         });
+
+         const copyBookingBtn = Bloknot.qs("#copyBookingBtn");
+         if (copyBookingBtn) {
+           copyBookingBtn.addEventListener("click", async () => {
+             try {
+               await navigator.clipboard.writeText(link);
+               showNotice("Ссылка скопирована.");
+             } catch (e) {
+               Bloknot.qs("#bookingLink").focus();
+               Bloknot.qs("#bookingLink").select();
+               showNotice("Не удалось скопировать автоматически. Выделил ссылку — нажмите Ctrl+C.");
+             }
+           });
+         }
+       })
+       .catch(err => {
+         console.error('[BOOKING LINK] Error getting slug:', err);
+         showNotice("Ошибка загрузки ссылки записи");
+       });
+   })();
+
+   // Password modal functions
+   function showPasswordModal(email) {
+     document.getElementById('userEmail').textContent = email;
+     document.getElementById('passwordModal').style.display = 'block';
+     document.getElementById('newPassword').focus();
+   }
+
+   function closePasswordModal() {
+     document.getElementById('passwordModal').style.display = 'none';
+     document.getElementById('newPassword').value = '';
+     document.getElementById('confirmPassword').value = '';
+     document.getElementById('passwordError').textContent = '';
+   }
+
+   async function setPassword() {
+     const password = document.getElementById('newPassword').value;
+     const confirmPassword = document.getElementById('confirmPassword').value;
+     const errorDiv = document.getElementById('passwordError');
+     
+     // Validation
+     if (!password) {
+       errorDiv.textContent = 'Password is required';
+       return;
+     }
+     
+     if (password.length < 6) {
+       errorDiv.textContent = 'Password must be at least 6 characters';
+       return;
+     }
+     
+     if (password !== confirmPassword) {
+       errorDiv.textContent = 'Passwords do not match';
+       return;
+     }
+     
+     try {
+       const response = await Bloknot.api('/api/auth/set-password', {
+         method: 'POST',
+         body: JSON.stringify({ password })
+       });
+       
+       if (response.success) {
+         closePasswordModal();
+         showNotice('Password set successfully!');
+         // Reload page to refresh auth state
+         setTimeout(() => location.reload(), 1000);
+       } else {
+         errorDiv.textContent = response.error || 'Failed to set password';
+       }
+     } catch (error) {
+       errorDiv.textContent = 'Error setting password: ' + error.message;
+     }
+   }
+
+   // Check if user needs to set password on page load
+   async function checkPasswordRequired() {
+     console.log('Checking password requirement...');
+     try {
+       const response = await Bloknot.api('/api/auth/me');
+       console.log('Auth response:', response);
+       console.log('Requires password:', response.requiresPassword);
+       
+       // Remove localStorage usage - email will be loaded from API
+       if (response.email) {
+         console.log('User email available from API:', response.email);
+       }
+       
+       if (response.requiresPassword) {
+         console.log('Showing password modal for:', response.email);
+         showPasswordModal(response.email);
+       } else {
+         console.log('Password not required');
+       }
+     } catch (error) {
+       console.error('Error checking password requirement:', error);
+     }
+   }
+
+   // Retry logic for auth with race condition protection
+  async function waitForAuth(retries = 3) {
+    // Prevent concurrent auth checks
+    if (window.authInProgress) {
+      console.log('[DASHBOARD] Auth already in progress, waiting...');
+      await new Promise(r => setTimeout(r, 500));
+      return window.lastAuthResult || null;
+    }
+    window.authInProgress = true;
+
+    for (let i = 0; i < retries; i++) {
+      try {
+        console.log(`Auth attempt ${i + 1}/${retries} at ${new Date().toISOString()}`);
+
+        // Use api function to include localStorage token
+        const res = await window.Bloknot.api('/api/auth/me', {
+          method: 'GET'
+        });
+
+        console.log(`Auth attempt ${i + 1} status: ${res.ok}`);
+
+        if (res) {
+          console.log('Auth success:', res);
+          window.lastAuthResult = res;
+          window.authInProgress = false;
+          return res;
+        }
+
+      } catch (e) {
+        console.error(`Auth attempt ${i + 1} error:`, e);
+      }
+
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    console.warn('Auth failed after all retries');
+    window.authInProgress = false;
+    return null;
+  }
+
+  // Unified dashboard initialization to prevent race conditions
+  async function initDashboard() {
+    // Prevent multiple initializations
+    if (window.dashboardInitialized) {
+      console.log('[DASHBOARD] Already initialized, skipping');
+      return;
+    }
+    window.dashboardInitialized = true;
+
+    const authData = await waitForAuth();
+
+    if (!authData || !authData.user) {
+      console.warn('Auth failed after retries');
+      // Don't auto-redirect - show error message instead
+      console.log('[DASHBOARD] Not authenticated - showing error');
+      showNotice('Ошибка авторизации. Пожалуйста, войдите снова.');
+      return;
+    }
+
+    const user = authData.user;
+
+    try {
+      await checkPasswordRequired();
+      await loadDashboard();
+
+    } catch (e) {
+      console.warn('Dashboard loading error:', e);
+      showNotice('Ошибка загрузки: ' + e.message);
+    }
+  }
+
+  // Initialize dashboard
+  initDashboard();
+ </script>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Контакты</h4>
+        <ul>
+          <li><span class="footer-email" onclick="copyEmail()">📧 info@bloknotservis.ru</span></li>
+          <li><a href="https://t.me/bloknotservis" class="footer-link" target="_blank">💬 Telegram</a></li>
+          <li><a href="https://wa.me/79024034242" class="footer-link" target="_blank">💚 WhatsApp</a></li>
+          <li><a href="https://max.ru/u/f9LHodD0cOKwzqbvzQfMIAZu-cdeUUBrdY4Bmo5aNpYnfD3UQPdSzeb_07k" class="footer-link" target="_blank">✍️ MAX</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Компания</h4>
+        <ul>
+          <li><a href="/about.html" class="footer-link">О нас</a></li>
+          <li><a href="/pricing.html" class="footer-link">Тарифы</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Для любого бизнеса</h4>
+        <ul>
+          <li><a href="/beauty.html" class="footer-link">Красота</a></li>
+          <li><a href="/medicine.html" class="footer-link">Медицина</a></li>
+          <li><a href="/sport.html" class="footer-link">Спорт</a></li>
+          <li><a href="/massage.html" class="footer-link">Массаж</a></li>
+          <li><a href="/leisure.html" class="footer-link">Досуг и отдых</a></li>
+          <li><a href="/education.html" class="footer-link">Образование</a></li>
+          <li><a href="/auto.html" class="footer-link">Авто</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Правовая информация</h4>
+        <ul>
+          <li><a href="/user-agreement.html" class="footer-link">Пользовательское соглашение</a></li>
+          <li><a href="/privacy.html" class="footer-link">Политика конфиденциальности</a></li>
+          <li><a href="/cookies.html" class="footer-link">Использование cookie</a></li>
+          <li><a href="/personal-data.html" class="footer-link">Согласие на обработку персональных данных</a></li>
+          <li><a href="/client-data-processing.html" class="footer-link">Обработка данных клиентов</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function copyEmail() {
+      const email = 'info@bloknotservis.ru';
+      navigator.clipboard.writeText(email).then(function() {
+        const emailElement = document.querySelector('.footer-email');
+        const originalText = emailElement.textContent;
+        emailElement.textContent = '📧 Email скопирован!';
+        emailElement.style.color = '#22c55e';
+
+        setTimeout(function() {
+          emailElement.textContent = originalText;
+          emailElement.style.color = '';
+        }, 2000);
+      }).catch(function(err) {
+        const textArea = document.createElement('textarea');
+        textArea.value = email;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+
+        const emailElement = document.querySelector('.footer-email');
+        const originalText = emailElement.textContent;
+        emailElement.textContent = '📧 Email скопирован!';
+        emailElement.style.color = '#22c55e';
+
+        setTimeout(function() {
+          emailElement.textContent = originalText;
+          emailElement.style.color = '';
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>
