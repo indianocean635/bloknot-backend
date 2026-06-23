@@ -40,14 +40,11 @@ if (!fs.existsSync(uploadsDir)) {
 // Middleware
 app.use(cookieParser());
 
-// Raw body middleware для webhook подписи CloudPayments
-app.use((req, res, next) => {
-  // Пропускаем GET, HEAD, OPTIONS запросы - у них нет тела
-  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-    req.rawBody = '';
-    return next();
-  }
-  
+// Express JSON middleware для обычных запросов
+app.use(express.json({ limit: '50mb' }));
+
+// Raw body middleware ТОЛЬКО для CloudPayments webhook
+app.use('/api/payments/cloudpayments/webhook', (req, res, next) => {
   let data = '';
   
   req.on('data', (chunk) => {
@@ -56,26 +53,14 @@ app.use((req, res, next) => {
   
   req.on('end', () => {
     req.rawBody = data;
-    
-    // Парсим JSON для express.json() совместимости
-    try {
-      if (data && req.headers['content-type']?.includes('application/json')) {
-        req.body = JSON.parse(data);
-      }
-    } catch (error) {
-      // Если парсинг не удался, express.json() обработает позже
-    }
-    
     next();
   });
   
   req.on('error', (err) => {
-    console.error('[RAW BODY MIDDLEWARE] Error:', err);
+    console.error('[WEBHOOK RAW BODY ERROR]', err);
     next(err);
   });
 });
-
-app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // CORS middleware for mobile devices
