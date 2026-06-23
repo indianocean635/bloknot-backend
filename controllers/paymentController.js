@@ -236,25 +236,59 @@ async function handleCloudPaymentsWebhook(req, res) {
     const eventData = req.body;
     console.log('[CLOUDPAYMENTS WEBHOOK]', JSON.stringify(eventData, null, 2));
 
-    // Verify signature
-    const signature = req.headers['x-signature'];
-    if (!verifyCloudPaymentsSignature(eventData, signature)) {
+    // Verify signature - CloudPayments sends signature in multiple possible headers
+    const signature = req.headers['content-hmac'] || 
+                    req.headers['x-content-hmac'] || 
+                    req.headers['Content-HMAC'] || 
+                    req.headers['X-Content-HMAC'] ||
+                    req.headers['x-signature'];
+    
+    console.log('[WEBHOOK] Signature headers:', {
+      'content-hmac': req.headers['content-hmac'],
+      'x-content-hmac': req.headers['x-content-hmac'],
+      'Content-HMAC': req.headers['Content-HMAC'],
+      'X-Content-HMAC': req.headers['X-Content-HMAC'],
+      'x-signature': req.headers['x-signature'],
+      'selected': signature
+    });
+    
+    if (!verifyCloudPaymentsSignature(req, signature)) {
       console.error('[WEBHOOK] Invalid signature');
       return res.status(401).json({ error: 'Invalid signature' });
     }
 
-    const eventType = eventData.Event;
+    // CloudPayments использует OperationType вместо Event
+    const eventType = eventData.OperationType || eventData.Event;
     const accountId = eventData.AccountId; // businessId
     const subscriptionId = eventData.SubscriptionId;
     const transactionId = eventData.TransactionId;
 
     // Protection against duplicate webhooks
-    const existingTransaction = await prisma.subscription.findFirst({
-      where: {
-        businessId: accountId,
-        cloudpaymentsSubscriptionId: subscriptionId
-      }
-    });
+    // For first payment (card verification), subscriptionId is empty, so check by businessId
+    let existingTransaction;
+    if (subscriptionId) {
+      // For recurring payments, check by subscription ID
+      existingTransaction = await prisma.subscription.findFirst({
+        where: {
+          businessId: accountId,
+          cloudpaymentsSubscriptionId: subscriptionId
+        }
+      });
+    } else {
+      // For first payment (card verification), check any active subscription for this business
+      existingTransaction = await prisma.subscription.findFirst({
+        where: {
+          businessId: accountId
+        }
+      });
+    }
+
+    // If no subscription exists for first payment, this is card verification - create trial
+    if (!existingTransaction && !subscriptionId && eventType === 'Payment') {
+      console.log('[WEBHOOK] First payment detected - creating trial subscription', { accountId, transactionId });
+      await handlePaymentConfirm(accountId, transactionId, eventData);
+      return res.json({ status: 'ok', message: 'Trial subscription created' });
+    }
 
     if (!existingTransaction) {
       console.error('[WEBHOOK] Subscription not found', { accountId, subscriptionId });
