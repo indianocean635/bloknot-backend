@@ -393,7 +393,7 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
         subscriptionStatus: 'ACTIVE',
         subscriptionEndsAt,
         billingPeriod: 'MONTHLY',
-        cloudpaymentsSubscriptionId: eventData.SubscriptionId,
+        cloudpaymentsSubscriptionId: eventData.SubscriptionId || null,
         nextPaymentDate: subscriptionEndsAt,
         isActive: true,
         cardAttachedAt: new Date(),
