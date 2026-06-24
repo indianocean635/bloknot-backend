@@ -473,12 +473,29 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
     });
     
     // Update cloudpayments subscription ID but keep TRIAL status
-    await prisma.subscription.update({
+    // Use upsert to handle duplicate cloudpaymentsSubscriptionId
+    await prisma.subscription.upsert({
       where: { businessId },
-      data: {
+      update: {
         cloudpaymentsSubscriptionId: eventData.SubscriptionId,
         lastPaymentAt: new Date(),
         cardAttachedAt: new Date()
+      },
+      create: {
+        businessId,
+        plan: 'SOLO', // Default plan, will be updated by webhook with correct amount
+        maxUsers: 1,
+        usersLimit: 1,
+        subscriptionStatus: 'TRIAL',
+        trialEndsAt: subscription.trialEndsAt,
+        subscriptionEndsAt: subscription.subscriptionEndsAt,
+        billingPeriod: 'MONTHLY',
+        cloudpaymentsSubscriptionId: eventData.SubscriptionId,
+        nextPaymentDate: subscription.trialEndsAt,
+        isActive: true,
+        cardAttachedAt: new Date(),
+        lastPaymentAt: new Date(),
+        autoRenewal: true
       }
     });
   }
