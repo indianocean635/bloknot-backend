@@ -235,11 +235,31 @@ class CloudPaymentsService {
                 }
             });
 
-            if (!user || !user.cloudPaymentsSubscriptionId) {
-                throw new Error('Subscription not found');
+            if (!user) {
+                throw new Error('User not found');
             }
 
-            // Отменяем в CloudPayments
+            // Для TRIAL статуса или отсутствия cloudpaymentsSubscriptionId - отменяем только в базе
+            if (!user.cloudPaymentsSubscriptionId || user.subscriptionStatus === 'TRIAL') {
+                console.log('[CLOUDPAYMENTS] Cancelling trial/local subscription without CloudPayments API call');
+                
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: {
+                        subscriptionStatus: 'CANCELLED'
+                    }
+                });
+
+                return {
+                    success: true,
+                    message: 'Подписка отменена. Доступ останется активным до ' + 
+                           (user.subscriptionEndsAt ? user.subscriptionEndsAt.toLocaleDateString('ru-RU') : 'окончания периода')
+                };
+            }
+
+            // Для активных подписок с cloudpaymentsSubscriptionId - отменяем в CloudPayments
+            console.log('[CLOUDPAYMENTS] Cancelling CloudPayments subscription:', { cloudPaymentsSubscriptionId: user.cloudPaymentsSubscriptionId });
+            
             const response = await this.makeRequest('/subscriptions/cancel', {
                 Id: user.cloudPaymentsSubscriptionId
             });
@@ -251,7 +271,7 @@ class CloudPaymentsService {
                 await prisma.user.update({
                     where: { id: userId },
                     data: {
-                        subscriptionStatus: 'cancelled'
+                        subscriptionStatus: 'CANCELLED'
                     }
                 });
 
