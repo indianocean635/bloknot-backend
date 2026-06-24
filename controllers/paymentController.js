@@ -381,10 +381,11 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
       message: 'Creating subscription from successful payment'
     });
     
-    // Determine plan and maxUsers based on payment amount
+    // Determine plan and maxUsers based on payment amount OR description
     let plan = 'SOLO';
     let maxUsers = 1;
     
+    // First try to determine from amount (for real payments)
     if (eventData.Amount >= 1490) {
       plan = 'PRO';
       maxUsers = 15;
@@ -392,11 +393,26 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
       plan = 'STUDIO';
       maxUsers = 5;
     } else {
-      plan = 'SOLO';
-      maxUsers = 1;
+      // For test payments (Amount = 1.00), determine from Description
+      if (eventData.Description && eventData.Description.includes('STUDIO')) {
+        plan = 'STUDIO';
+        maxUsers = 5;
+      } else if (eventData.Description && eventData.Description.includes('PRO')) {
+        plan = 'PRO';
+        maxUsers = 15;
+      } else {
+        plan = 'SOLO';
+        maxUsers = 1;
+      }
     }
     
-    console.log('[PAYMENT] Determined plan:', { plan, maxUsers, amount: eventData.Amount });
+    console.log('[PAYMENT] Determined plan:', { 
+      plan, 
+      maxUsers, 
+      amount: eventData.Amount,
+      description: eventData.Description,
+      method: parseFloat(eventData.Amount) >= 990 ? 'amount' : 'description'
+    });
     
     // Set trial period for 5 days
     const trialEndsAt = new Date();
