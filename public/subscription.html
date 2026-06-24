@@ -616,7 +616,7 @@
         </div>
     `;
 
-    if (data.nextPaymentDate) {
+    if (data.nextPaymentDate && normalizedStatus !== 'trial') {
       const nextPaymentDate = new Date(data.nextPaymentDate);
       html += `
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -638,7 +638,7 @@
       `;
     }
 
-    if (data.subscriptionEndsAt) {
+    if (data.subscriptionEndsAt && normalizedStatus !== 'trial') {
       const subscriptionEndDate = new Date(data.subscriptionEndsAt);
       html += `
         <div style="display: flex; justify-content: space-between; align-items: center;">
