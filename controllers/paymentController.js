@@ -381,8 +381,13 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
       message: 'Creating subscription from successful payment'
     });
     
-    const subscriptionEndsAt = new Date();
-    subscriptionEndsAt.setMonth(subscriptionEndsAt.getMonth() + 1); // Monthly by default
+    // Set trial period for 5 days
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 5);
+    
+    // Set next payment date after trial ends (monthly billing)
+    const nextPaymentDate = new Date(trialEndsAt);
+    nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
     
     await prisma.subscription.create({
       data: {
@@ -390,11 +395,12 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
         plan: 'SOLO',
         maxUsers: 1,
         usersLimit: 1,
-        subscriptionStatus: 'ACTIVE',
-        subscriptionEndsAt,
+        subscriptionStatus: 'TRIAL',
+        trialEndsAt,
+        subscriptionEndsAt: nextPaymentDate,
         billingPeriod: 'MONTHLY',
         cloudpaymentsSubscriptionId: eventData.SubscriptionId || null,
-        nextPaymentDate: subscriptionEndsAt,
+        nextPaymentDate,
         isActive: true,
         cardAttachedAt: new Date(),
         lastPaymentAt: new Date(),
@@ -402,13 +408,14 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
       }
     });
 
-    console.log('[SUBSCRIPTION ACTIVATED]', { 
+    console.log('[TRIAL SUBSCRIPTION ACTIVATED]', { 
       businessId, 
-      subscriptionEndsAt,
+      trialEndsAt,
+      nextPaymentDate,
       amount: eventData.Amount,
       subscriptionId: eventData.SubscriptionId,
       plan: 'SOLO',
-      message: 'Monthly SOLO subscription activated successfully'
+      message: '5-day trial subscription activated successfully'
     });
     
     return;
