@@ -154,9 +154,9 @@ async function requireAuth(req, res, next) {
   next();
 }
 
-async function getBusinessBySlug(req, res, next) {
+async function getBusinessBySlugMiddleware(req, res, next) {
   const slug = req.params.slug || req.query.slug;
-  console.log('getBusinessBySlug called with slug:', slug);
+  console.log('getBusinessBySlugMiddleware called with slug:', slug);
   console.log('req.params:', req.params);
   console.log('req.query:', req.query);
   
@@ -183,7 +183,7 @@ async function requireAdminOrSalesStaff(req, res, next) {
 
 module.exports = {
   requireAuth,
-  getBusinessBySlug,
+  getBusinessBySlug: getBusinessBySlugMiddleware,
   getAuthUser,
   requireAdminOrSalesStaff
 };
