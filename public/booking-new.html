@@ -835,11 +835,11 @@
         }
 
         // Update business info
-        const businessName = businessData.business?.name || businessData.name || 'ТЕСТ ЕБАНА';
+        const businessName = businessData.business?.name || businessData.name || '';
         console.log('Setting business name:', businessName);
         document.getElementById('business-name').textContent = businessName;
         const branches = businessData.branches || [];
-        const businessAddress = branches.length > 0 ? branches[0].address : 'Ворвского, Сочи';
+        const businessAddress = branches.length > 0 ? branches[0].address : '';
         console.log('Setting business address:', businessAddress);
         document.getElementById('business-address').textContent = businessAddress;
 

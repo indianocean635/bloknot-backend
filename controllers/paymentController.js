@@ -381,6 +381,23 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
       message: 'Creating subscription from successful payment'
     });
     
+    // Determine plan and maxUsers based on payment amount
+    let plan = 'SOLO';
+    let maxUsers = 1;
+    
+    if (eventData.Amount >= 1490) {
+      plan = 'PRO';
+      maxUsers = 15;
+    } else if (eventData.Amount >= 990) {
+      plan = 'STUDIO';
+      maxUsers = 5;
+    } else {
+      plan = 'SOLO';
+      maxUsers = 1;
+    }
+    
+    console.log('[PAYMENT] Determined plan:', { plan, maxUsers, amount: eventData.Amount });
+    
     // Set trial period for 5 days
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + 5);
@@ -392,9 +409,9 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
     await prisma.subscription.create({
       data: {
         businessId,
-        plan: 'SOLO',
-        maxUsers: 1,
-        usersLimit: 1,
+        plan,
+        maxUsers,
+        usersLimit: maxUsers,
         subscriptionStatus: 'TRIAL',
         trialEndsAt,
         subscriptionEndsAt: nextPaymentDate,
@@ -414,7 +431,8 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
       nextPaymentDate,
       amount: eventData.Amount,
       subscriptionId: eventData.SubscriptionId,
-      plan: 'SOLO',
+      plan,
+      maxUsers,
       message: '5-day trial subscription activated successfully'
     });
     
