@@ -1275,6 +1275,19 @@ async function loadSpecialistLimitFromAPI() {
 
     updateSpecialistForms(specialistLimit);
 
+    // Hide tariff selection for users with active subscription
+    const tariffSelection = document.getElementById('tariffSelection');
+    if (tariffSelection) {
+      const hasActiveSubscription = subscription.plan && subscription.plan !== 'FREE' && subscription.plan !== 'free';
+      if (hasActiveSubscription) {
+        tariffSelection.style.display = 'none';
+        console.log('[TARIFF] Hidden tariff selection for user with active subscription:', subscription.plan);
+      } else {
+        tariffSelection.style.display = 'block';
+        console.log('[TARIFF] Showing tariff selection for user without active subscription');
+      }
+    }
+
   } catch (error) {
     console.error('Error loading specialist limit:', error);
     showNoBusinessUI();
