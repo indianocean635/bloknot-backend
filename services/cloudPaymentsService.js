@@ -143,7 +143,7 @@ class CloudPaymentsService {
                 Currency: 'RUB',
                 RequireConfirmation: false,
                 StartDate: now, // Немедленная активация
-                TrialPeriod: ['solo', 'studio', 'pro', 'monthly'].includes(subscriptionType) ? 5 : null, // 5 дней trial только для месячных тарифов
+                TrialPeriod: ['solo', 'studio', 'pro'].includes(planId) ? 5 : null, // 5 дней trial только для месячных тарифов
                 CustomerReceipt: firstPaymentReceipt, //чек для первого платежа
                 CloudPayments: {
                     recurrent: {
