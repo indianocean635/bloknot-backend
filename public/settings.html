@@ -1585,8 +1585,8 @@ async function processPayment() {
       body: JSON.stringify({
         subscriptionType: period, // 'monthly'
         cardToken: null, // Will be set after widget success
-        userEmail: currentUser?.email,
-        userName: currentUser?.name,
+        userEmail: user?.email,
+        userName: user?.name,
         planId: plan,
         planName: planId.toUpperCase(),
         planAmount: period === 'monthly' ? (plan === 'solo' ? 690 : plan === 'studio' ? 990 : 1490) : (plan === 'solo' ? 6624 : plan === 'studio' ? 9504 : 14304)
@@ -3704,8 +3704,8 @@ async function processCardPayment() {
       body: JSON.stringify({
         subscriptionType: period, // 'monthly' or 'yearly'
         cardToken: null, // Will be set after widget success
-        userEmail: currentUser?.email,
-        userName: currentUser?.name,
+        userEmail: user?.email,
+        userName: user?.name,
         planId: plan,
         planName: tariff,
         planAmount: period === 'monthly' ? (plan === 'solo' ? 690 : plan === 'studio' ? 990 : 1490) : (plan === 'solo' ? 6624 : plan === 'studio' ? 9504 : 14304)
