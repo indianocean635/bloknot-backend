@@ -3768,15 +3768,36 @@ async function processCardPayment() {
         }
         
         console.log('[CLOUDPAYMENTS] 🚀 Calling widget.pay()...');
-        widget.pay(chargeOptions, function(options) {
-          // Success - call handlePaymentSuccess to create subscription in CloudPayments
-          console.log('[SUBSCRIPTION] Payment successful, calling handlePaymentSuccess:', options);
-          handlePaymentSuccess(options, { id: plan, name: tariff, amount: data.cloudPayments.Amount });
-        }, function(reason, options) {
-          // Fail
-          console.error('Payment failed', reason, options);
-          alert('Ошибка оплаты: ' + reason);
-        });
+        
+        try {
+          widget.pay(chargeOptions, function(options) {
+            // Success - call handlePaymentSuccess to create subscription in CloudPayments
+            console.log('[SUBSCRIPTION] Payment successful, calling handlePaymentSuccess:', options);
+            handlePaymentSuccess(options, { id: plan, name: tariff, amount: data.cloudPayments.Amount });
+          }, function(reason, options) {
+            // Fail
+            console.error('Payment failed', reason, options);
+            alert('Ошибка оплаты: ' + reason);
+          });
+        } catch (error) {
+          console.error('[CLOUDPAYMENTS] widget.pay() failed:', error);
+          console.log('[CLOUDPAYMENTS] 🔄 Trying widget.charge() as fallback...');
+          
+          try {
+            widget.charge(chargeOptions, function(options) {
+              // Success - call handlePaymentSuccess to create subscription in CloudPayments
+              console.log('[SUBSCRIPTION] Payment successful with widget.charge(), calling handlePaymentSuccess:', options);
+              handlePaymentSuccess(options, { id: plan, name: tariff, amount: data.cloudPayments.Amount });
+            }, function(reason, options) {
+              // Fail
+              console.error('Payment failed with widget.charge()', reason, options);
+              alert('Ошибка оплаты: ' + reason);
+            });
+          } catch (chargeError) {
+            console.error('[CLOUDPAYMENTS] widget.charge() also failed:', chargeError);
+            alert('Критическая ошибка виджета CloudPayments. Пожалуйста, свяжитесь с поддержкой.');
+          }
+        }
       } else {
         // Success without CloudPayments (subscription already created)
         alert('Подписка активирована!');
