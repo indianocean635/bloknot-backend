@@ -17,12 +17,15 @@ class CloudPaymentsService {
     /**
      * Создание подписки с правильной логикой Trial
      */
-    async createSubscription(userId, cardToken, subscriptionType, userEmail, userName) {
+    async createSubscription(userId, cardToken, subscriptionType, userEmail, userName, planId, planName, planAmount) {
         try {
             console.log('[CLOUDPAYMENTS] Creating subscription:', {
                 userId,
                 subscriptionType,
                 userEmail,
+                planId,
+                planName,
+                planAmount,
                 hasCardToken: !!cardToken
             });
 
@@ -43,8 +46,8 @@ class CloudPaymentsService {
                 where: { businessId: user.businessId }
             });
 
-            // Определяем параметры подписки
-            const subscriptionConfig = this.getSubscriptionConfig(subscriptionType);
+            // Определяем параметры подписки на основе planId
+            const subscriptionConfig = this.getSubscriptionConfig(planId);
             const now = new Date();
             
             let trialEndsAt = null;
@@ -58,7 +61,7 @@ class CloudPaymentsService {
                                   new Date(existingSubscription.trialEndsAt) > now;
 
             // Для подписок с пробным периодом (только месячные тарифы)
-            if (['solo', 'studio', 'pro', 'monthly'].includes(subscriptionType)) {
+            if (['solo', 'studio', 'pro'].includes(planId)) {
                 if (hasActiveTrial) {
                     // Если есть активный Trial, используем существующие даты
                     trialEndsAt = existingSubscription.trialEndsAt;
@@ -170,11 +173,11 @@ class CloudPaymentsService {
                     await prisma.subscription.update({
                         where: { businessId: user.businessId },
                         data: {
-                            plan: subscriptionType.replace('-yearly', '').toUpperCase(),
+                            plan: planId.toUpperCase(),
                             maxUsers: subscriptionConfig.maxUsers,
                             usersLimit: subscriptionConfig.maxUsers,
                             subscriptionStatus: trialEndsAt ? 'TRIAL' : 'ACTIVE',
-                            billingPeriod: ['solo-yearly', 'studio-yearly', 'pro-yearly'].includes(subscriptionType) ? 'YEARLY' : 'MONTHLY',
+                            billingPeriod: subscriptionType === 'yearly' ? 'YEARLY' : 'MONTHLY',
                             trialEndsAt,
                             subscriptionEndsAt,
                             cloudpaymentsSubscriptionId: response.Model.Id.toString(),
@@ -190,11 +193,11 @@ class CloudPaymentsService {
                     await prisma.subscription.create({
                         data: {
                             businessId: user.businessId,
-                            plan: subscriptionType.replace('-yearly', '').toUpperCase(),
+                            plan: planId.toUpperCase(),
                             maxUsers: subscriptionConfig.maxUsers,
                             usersLimit: subscriptionConfig.maxUsers,
                             subscriptionStatus: trialEndsAt ? 'TRIAL' : 'ACTIVE',
-                            billingPeriod: ['solo-yearly', 'studio-yearly', 'pro-yearly'].includes(subscriptionType) ? 'YEARLY' : 'MONTHLY',
+                            billingPeriod: subscriptionType === 'yearly' ? 'YEARLY' : 'MONTHLY',
                             trialEndsAt,
                             subscriptionEndsAt,
                             cloudpaymentsSubscriptionId: response.Model.Id.toString(),
@@ -212,7 +215,7 @@ class CloudPaymentsService {
                     where: { id: userId },
                     data: {
                         subscriptionStatus: trialEndsAt ? 'trial' : 'active',
-                        subscriptionType,
+                        subscriptionType: planId,
                         trialEndsAt,
                         subscriptionEndsAt,
                         cloudPaymentsSubscriptionId: response.Model.Id.toString(),

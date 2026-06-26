@@ -1185,10 +1185,13 @@
       const result = await Bloknot.api('/api/cloudpayments/subscription/create', {
         method: 'POST',
         body: JSON.stringify({
-          subscriptionType: plan.id,
+          subscriptionType: 'monthly',
           cardToken: options.token,
           userEmail: currentUser?.email,
-          userName: currentUser?.name
+          userName: currentUser?.name,
+          planId: plan.id,
+          planName: plan.name,
+          planAmount: plan.amount
         })
       });
 

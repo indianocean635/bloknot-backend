@@ -43,7 +43,7 @@ async function createSubscription(req, res) {
             hasCardToken: !!req.body.cardToken
         });
 
-        const { subscriptionType, cardToken, userEmail, userName } = req.body;
+        const { subscriptionType, cardToken, userEmail, userName, planId, planName, planAmount } = req.body;
 
         if (!subscriptionType || !['monthly', 'yearly'].includes(subscriptionType)) {
             return res.status(400).json({
@@ -67,7 +67,10 @@ async function createSubscription(req, res) {
             cardToken,
             subscriptionType,
             userEmailToUse,
-            userNameToUse
+            userNameToUse,
+            planId,
+            planName,
+            planAmount
         );
 
         console.log('[SUBSCRIPTION] Subscription created successfully:', {
