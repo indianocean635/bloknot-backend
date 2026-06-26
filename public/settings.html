@@ -3735,7 +3735,7 @@ async function processCardPayment() {
           recurring: data.cloudPayments.Recurring
         };
 
-        widget.charge(chargeOptions, function(options) {
+        widget.pay(chargeOptions, function(options) {
           // Success - call handlePaymentSuccess to create subscription in CloudPayments
           console.log('[SUBSCRIPTION] Payment successful, calling handlePaymentSuccess:', options);
           handlePaymentSuccess(options, { id: plan, name: tariff, amount: data.cloudPayments.Amount });
