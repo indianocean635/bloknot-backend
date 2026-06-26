@@ -3773,10 +3773,10 @@ async function processCardPayment() {
           console.log('[CLOUDPAYMENTS] ✅ All required parameters present');
         }
         
-        console.log('[CLOUDPAYMENTS] 🚀 Calling widget.pay() with correct syntax...');
+        console.log('[CLOUDPAYMENTS] 🚀 Calling widget.auth() with correct syntax...');
         
         // Используем правильный синтаксис согласно документации CloudPayments
-        widget.pay('auth', cleanChargeOptions, 
+        widget.auth(cleanChargeOptions, 
           function(options) {
             // Success - call handlePaymentSuccess to create subscription in CloudPayments
             console.log('[SUBSCRIPTION] Payment successful, calling handlePaymentSuccess:', options);
