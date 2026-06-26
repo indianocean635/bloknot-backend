@@ -3723,6 +3723,7 @@ async function processCardPayment() {
         const widget = new cp.CloudPayments();
 
         const chargeOptions = {
+          type: 'charge',
           publicId: data.cloudPayments.PublicId,
           description: data.cloudPayments.Description,
           amount: data.cloudPayments.Amount,
