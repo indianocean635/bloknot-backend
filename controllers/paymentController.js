@@ -491,7 +491,7 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
     // Update cloudpayments subscription ID but keep TRIAL status
     // Use upsert to handle duplicate cloudpaymentsSubscriptionId
     await prisma.subscription.upsert({
-      where: { businessId },
+      where: { cloudpaymentsSubscriptionId: eventData.SubscriptionId },
       update: {
         cloudpaymentsSubscriptionId: eventData.SubscriptionId,
         lastPaymentAt: new Date(),
