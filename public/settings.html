@@ -3741,6 +3741,32 @@ async function processCardPayment() {
 
         console.log('[CLOUDPAYMENTS] chargeOptions:', chargeOptions);
         console.log('[CLOUDPAYMENTS] TIMESTAMP:', new Date().toISOString());
+        
+        // Детальная проверка каждого параметра
+        console.log('[CLOUDPAYMENTS] PARAMETER CHECK:');
+        console.log('  ✅ publicId:', chargeOptions.publicId ? 'PRESENT' : 'MISSING', chargeOptions.publicId);
+        console.log('  ✅ description:', chargeOptions.description ? 'PRESENT' : 'MISSING', chargeOptions.description);
+        console.log('  ✅ amount:', chargeOptions.amount ? 'PRESENT' : 'MISSING', chargeOptions.amount);
+        console.log('  ✅ currency:', chargeOptions.currency ? 'PRESENT' : 'MISSING', chargeOptions.currency);
+        console.log('  ✅ invoiceId:', chargeOptions.invoiceId ? 'PRESENT' : 'MISSING', chargeOptions.invoiceId);
+        console.log('  ✅ accountId:', chargeOptions.accountId ? 'PRESENT' : 'MISSING', chargeOptions.accountId);
+        console.log('  ✅ email:', chargeOptions.email ? 'PRESENT' : 'MISSING', chargeOptions.email);
+        console.log('  ✅ requireConfirmation:', chargeOptions.requireConfirmation !== undefined ? 'PRESENT' : 'MISSING', chargeOptions.requireConfirmation);
+        console.log('  ✅ trialPeriod:', chargeOptions.trialPeriod !== undefined ? 'PRESENT' : 'MISSING', chargeOptions.trialPeriod);
+        console.log('  ✅ recurring:', chargeOptions.recurring ? 'PRESENT' : 'MISSING', chargeOptions.recurring);
+        console.log('  ❌ type:', chargeOptions.type ? 'PRESENT' : 'MISSING', chargeOptions.type);
+        
+        // Проверка обязательных параметров по документации CloudPayments
+        const requiredParams = ['publicId', 'description', 'amount', 'currency'];
+        const missingRequired = requiredParams.filter(param => !chargeOptions[param]);
+        
+        if (missingRequired.length > 0) {
+          console.error('[CLOUDPAYMENTS] MISSING REQUIRED PARAMETERS:', missingRequired);
+        } else {
+          console.log('[CLOUDPAYMENTS] ✅ All required parameters present');
+        }
+        
+        console.log('[CLOUDPAYMENTS] 🚀 Calling widget.pay()...');
         widget.pay(chargeOptions, function(options) {
           // Success - call handlePaymentSuccess to create subscription in CloudPayments
           console.log('[SUBSCRIPTION] Payment successful, calling handlePaymentSuccess:', options);
