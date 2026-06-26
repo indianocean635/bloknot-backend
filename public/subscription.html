@@ -1007,7 +1007,7 @@
   }
 
   
-  // Process card payment (exact copy from pricing.html)
+  // Process card payment - updated to use correct subscription endpoint
   async function processCardPayment() {
     const modal = document.getElementById('paymentModal');
     const tariff = modal.getAttribute('data-tariff');
@@ -1023,9 +1023,20 @@
     const plan = planMap[tariff];
     
     try {
-      const data = await Bloknot.api('/api/payments/create', {
+      console.log('[SUBSCRIPTION] Processing card payment with new endpoint:', { plan, period, tariff });
+      
+      // Use the correct subscription creation endpoint
+      const data = await Bloknot.api('/api/cloudpayments/subscription/create', {
         method: 'POST',
-        body: JSON.stringify({ plan, period })
+        body: JSON.stringify({
+          subscriptionType: period, // 'monthly' or 'yearly'
+          cardToken: null, // Will be set after widget success
+          userEmail: currentUser?.email,
+          userName: currentUser?.name,
+          planId: plan,
+          planName: tariff,
+          planAmount: period === 'monthly' ? (plan === 'solo' ? 690 : plan === 'studio' ? 990 : 1490) : (plan === 'solo' ? 6624 : plan === 'studio' ? 9504 : 14304)
+        })
       });
 
       if (data.success) {
@@ -1052,13 +1063,9 @@
 
           if (confirm(message)) {
             widget.pay(chargeOptions, function(options) {
-              // Success
-              console.log('Payment successful', options);
-              alert('Оплата успешно выполнена!');
-              closePaymentModal();
-              closeSubscriptionPlansModal();
-              // Redirect to dashboard or reload
-              window.location.href = '/dashboard.html';
+              // Success - call handlePaymentSuccess with proper data
+              console.log('[SUBSCRIPTION] Payment successful, calling handlePaymentSuccess:', options);
+              handlePaymentSuccess(options, { id: plan, name: tariff, amount: data.cloudPayments.Amount });
             }, function(reason, options) {
               // Fail
               console.error('Payment failed', reason, options);
@@ -1078,10 +1085,10 @@
           alert(data.message);
           return;
         }
-        alert('Ошибка создания платежа: ' + (data.error || 'Неизвестная ошибка'));
+        alert('Ошибка создания подписки: ' + (data.error || 'Неизвестная ошибка'));
       }
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('[SUBSCRIPTION] Payment error:', error);
       
       // Check if it's an authorization error
       if (error.message === 'Unauthorized' || error.message.includes('401')) {
