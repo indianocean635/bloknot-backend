@@ -3769,6 +3769,48 @@ async function processCardPayment() {
         
         console.log('[CLOUDPAYMENTS] 🚀 Calling widget.pay()...');
         
+        // Добавляем глобальный обработчик для unhandled rejections
+        const originalHandler = window.onunhandledrejection;
+        let cloudPaymentsErrorHandled = false;
+        
+        window.onunhandledrejection = function(event) {
+          console.error('[CLOUDPAYMENTS] Unhandled Promise Rejection:', event.reason);
+          
+          // Проверяем что это ошибка CloudPayments
+          if (event.reason && event.reason.message && 
+              event.reason.message.includes('Option \'type\' must be \'auth\' or \'charge\'')) {
+            
+            if (!cloudPaymentsErrorHandled) {
+              cloudPaymentsErrorHandled = true;
+              console.log('[CLOUDPAYMENTS] 🔄 Detected CloudPayments type error, trying widget.charge() as fallback...');
+              
+              // Предотвращаем показ ошибки в консоли
+              event.preventDefault();
+              
+              // Пробуем widget.charge() как fallback
+              widget.charge(chargeOptions, function(options) {
+                // Success - call handlePaymentSuccess to create subscription in CloudPayments
+                console.log('[SUBSCRIPTION] Payment successful with widget.charge(), calling handlePaymentSuccess:', options);
+                handlePaymentSuccess(options, { id: plan, name: tariff, amount: data.cloudPayments.Amount });
+              }, function(reason, options) {
+                // Fail
+                console.error('Payment failed with widget.charge()', reason, options);
+                alert('Ошибка оплаты: ' + reason);
+              });
+              
+              // Восстанавливаем оригинальный обработчик
+              setTimeout(() => {
+                window.onunhandledrejection = originalHandler;
+              }, 1000);
+            }
+          } else {
+            // Для других ошибок вызываем оригинальный обработчик
+            if (originalHandler) {
+              originalHandler(event);
+            }
+          }
+        };
+        
         // Используем Promise для правильной обработки ошибок
         const payPromise = new Promise((resolve, reject) => {
           widget.pay(chargeOptions, function(options) {
