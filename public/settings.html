@@ -3688,6 +3688,10 @@ async function processCardPayment() {
   const tariff = modal.getAttribute('data-tariff');
   const period = currentTariffPeriod === 1 ? 'monthly' : 'yearly';
   
+  // Get current user data
+  const userResponse = await Bloknot.api('/api/auth/me');
+  const user = userResponse.user;
+  
   // Map tariff names to plan IDs
   const planMap = {
     'Solo': 'solo',
