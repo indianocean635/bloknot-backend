@@ -3740,6 +3740,7 @@ async function processCardPayment() {
         };
 
         console.log('[CLOUDPAYMENTS] chargeOptions:', chargeOptions);
+        console.log('[CLOUDPAYMENTS] TIMESTAMP:', new Date().toISOString());
         widget.pay(chargeOptions, function(options) {
           // Success - call handlePaymentSuccess to create subscription in CloudPayments
           console.log('[SUBSCRIPTION] Payment successful, calling handlePaymentSuccess:', options);
