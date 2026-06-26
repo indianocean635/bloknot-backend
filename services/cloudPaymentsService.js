@@ -100,6 +100,37 @@ class CloudPaymentsService {
             }
 
             // Создаем подписку в CloudPayments с правильными параметрами
+            // Чек для первого платежа
+            const firstPaymentReceipt = {
+                Items: [{
+                    Label: subscriptionConfig.name,
+                    Price: subscriptionConfig.amount * 100, // РЕАЛЬНАЯ ЦЕНА в копейках (99000 копеек)
+                    Quantity: 1,
+                    Amount: firstPaymentAmount * 100, // 1 рубль для месячных, полная стоимость для годовых
+                    Vat: 20,
+                    PaymentMethodType: 1,
+                    PaymentObject: 1
+                }],
+                TaxationSystem: 2,
+                Email: userEmail
+            };
+
+            // Чек для регулярных платежей
+            const recurrentPaymentReceipt = {
+                Items: [{
+                    Label: subscriptionConfig.name,
+                    Price: subscriptionConfig.amount * 100, // РЕАЛЬНАЯ ЦЕНА в копейках
+                    Quantity: 1,
+                    Amount: subscriptionConfig.amount * 100, // Полная стоимость для регулярных платежей
+                    Vat: 20,
+                    PaymentMethodType: 1,
+                    PaymentObject: 1
+                }],
+                TaxationSystem: 2,
+                Email: userEmail
+            };
+
+            // Создаем подписку в CloudPayments с правильным форматом согласно документации
             const cloudPaymentsData = {
                 Token: cardToken,
                 AccountId: userId,
@@ -109,24 +140,15 @@ class CloudPaymentsService {
                 Currency: 'RUB',
                 RequireConfirmation: false,
                 StartDate: now, // Немедленная активация
-                Period: ['solo', 'studio', 'pro', 'monthly'].includes(subscriptionType) ? 1 : 12, // 1 месяц или 12 месяцев
-                Interval: 'Month', // Правильный интервал
-                MaxPeriods: ['solo', 'studio', 'pro', 'monthly'].includes(subscriptionType) ? 12 : 1,
                 TrialPeriod: ['solo', 'studio', 'pro', 'monthly'].includes(subscriptionType) ? 5 : null, // 5 дней trial только для месячных тарифов
-                // ВАЖНО: Amount для рекуррентных платежей берется из конфигурации тарифа
-                CustomerReceipt: {
-                    Items: [{
-                        Label: subscriptionConfig.name,
-                        Price: subscriptionConfig.amount * 100, // РЕАЛЬНАЯ ЦЕНА в копейках (99000 копеек)
-                        Quantity: 1,
-                        Amount: firstPaymentAmount * 100, // 1 рубль для месячных, полная стоимость для годовых
-                        Vat: 20,
-                        PaymentMethodType: 1,
-                        PaymentObject: 1
-                    }],
-                    TaxationSystem: 2,
-                    Email: userEmail
-                }
+                CustomerReceipt: firstPaymentReceipt, //чек для первого платежа
+                CloudPayments: {
+                    recurrent: {
+                        interval: 'Month',
+                        period: 1, 
+                        customerReceipt: recurrentPaymentReceipt //чек для регулярных платежей
+                    }
+                } //создание ежемесячной подписки
             };
 
             console.log('[CLOUDPAYMENTS] Sending subscription request:', {
