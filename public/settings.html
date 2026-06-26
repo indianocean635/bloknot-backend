@@ -3736,12 +3736,9 @@ async function processCardPayment() {
         };
 
         widget.charge(chargeOptions, function(options) {
-          // Success
-          console.log('Payment successful', options);
-          alert('Оплата успешно выполнена!');
-          closePaymentModal();
-          // Redirect to dashboard or reload
-          window.location.href = '/dashboard.html';
+          // Success - call handlePaymentSuccess to create subscription in CloudPayments
+          console.log('[SUBSCRIPTION] Payment successful, calling handlePaymentSuccess:', options);
+          handlePaymentSuccess(options, { id: plan, name: tariff, amount: data.cloudPayments.Amount });
         }, function(reason, options) {
           // Fail
           console.error('Payment failed', reason, options);
@@ -3877,6 +3874,43 @@ document.addEventListener('keydown', function(e) {
       });
     }
   </script>
+
+  // Handle payment success
+  async function handlePaymentSuccess(options, plan) {
+    try {
+      console.log('[SUBSCRIPTION] Processing successful payment...');
+      
+      // Get current user data
+      const userResponse = await Bloknot.api('/api/auth/me');
+      const user = userResponse.user;
+      
+      // Send payment data to backend to create subscription in CloudPayments
+      const result = await Bloknot.api('/api/cloudpayments/subscription/create', {
+        method: 'POST',
+        body: JSON.stringify({
+          subscriptionType: 'monthly',
+          cardToken: options.token,
+          userEmail: user?.email,
+          userName: user?.name,
+          planId: plan.id,
+          planName: plan.name,
+          planAmount: plan.amount
+        })
+      });
+
+      if (result.success) {
+        alert('Подписка успешно оформлена! Рекуррентные платежи активированы.');
+        closePaymentModal();
+        // Redirect to dashboard or reload
+        window.location.href = '/dashboard.html';
+      } else {
+        alert('Ошибка оформления подписки: ' + result.error);
+      }
+    } catch (error) {
+      console.error('[SUBSCRIPTION] Error processing payment success:', error);
+      alert('Ошибка обработки платежа');
+    }
+  }
 
 </body>
 </html>
