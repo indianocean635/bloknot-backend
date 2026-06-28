@@ -3949,8 +3949,8 @@ document.addEventListener('keydown', function(e) {
       if (result.success) {
         alert('Подписка успешно оформлена! Рекуррентные платежи активированы.');
         closePaymentModal();
-        // Redirect to dashboard or reload
-        window.location.href = '/dashboard.html';
+        // Redirect to settings page with tariff opened
+        window.location.href = '/settings.html#tariff';
       } else {
         alert('Ошибка оформления подписки: ' + result.error);
       }
