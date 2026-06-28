@@ -3748,7 +3748,8 @@ async function processCardPayment() {
           invoiceId: data.cloudPayments.InvoiceId,
           accountId: data.cloudPayments.AccountId,
           email: data.cloudPayments.Email,
-          recurrent: data.cloudPayments.Recurrent
+          recurrent: data.cloudPayments.Recurrent,
+          type: 'auth'
         };
 
         console.log('[CLOUDPAYMENTS] chargeOptions (clean):', cleanChargeOptions);
@@ -3764,6 +3765,7 @@ async function processCardPayment() {
         console.log('  ✅ accountId:', cleanChargeOptions.accountId ? 'PRESENT' : 'MISSING', cleanChargeOptions.accountId);
         console.log('  ✅ email:', cleanChargeOptions.email ? 'PRESENT' : 'MISSING', cleanChargeOptions.email);
         console.log('  ✅ recurrent:', cleanChargeOptions.recurrent ? 'PRESENT' : 'MISSING', cleanChargeOptions.recurrent);
+        console.log('  ✅ type:', cleanChargeOptions.type ? 'PRESENT' : 'MISSING', cleanChargeOptions.type);
         
         // Проверка обязательных параметров по документации CloudPayments
         const requiredParams = ['publicId', 'description', 'amount', 'currency'];

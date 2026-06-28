@@ -102,7 +102,7 @@ async function createPayment(req, res) {
       Email: user.email,
       RequireConfirmation: period === 'monthly', // Require confirmation for recurring
       TrialPeriod: period === 'monthly' ? TRIAL_DAYS : null,
-      Recurring: period === 'monthly' ? {
+      Recurrent: period === 'monthly' ? {
         Interval: 'Month',
         Period: 1
       } : {
@@ -135,7 +135,7 @@ async function createPayment(req, res) {
       Email: user.email,
       RequireConfirmation: cloudPaymentsData.RequireConfirmation,
       TrialPeriod: cloudPaymentsData.TrialPeriod,
-      Recurring: cloudPaymentsData.Recurring
+      Recurrent: cloudPaymentsData.Recurrent
     };
 
     console.log('[CLOUDPAYMENTS] Data prepared for widget:', cloudPaymentsDataForWidget);
