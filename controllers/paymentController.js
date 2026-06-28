@@ -104,10 +104,14 @@ async function createPayment(req, res) {
       TrialPeriod: period === 'monthly' ? TRIAL_DAYS : null,
       Recurrent: period === 'monthly' ? {
         Interval: 'Month',
-        Period: 1
+        Period: 1,
+        amount: price,  // Сумма тарифа для рекуррентных списаний
+        startDate: new Date(Date.now() + (TRIAL_DAYS * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]  // Через 5 дней
       } : {
         Interval: 'Year',
-        Period: 1
+        Period: 1,
+        amount: price,  // Сумма тарифа для рекуррентных списаний
+        startDate: new Date(Date.now() + (TRIAL_DAYS * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]  // Через 5 дней
       }
     };
 
