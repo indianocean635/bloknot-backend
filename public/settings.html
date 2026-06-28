@@ -3739,7 +3739,7 @@ async function processCardPayment() {
           recurrent: data.cloudPayments.Recurrent
         };
 
-        // Создаем чистые опции с recurrent параметром для создания подписки
+        // Создаем чистые опции с recurrent параметром в data.CloudPayments.recurrent
         const cleanChargeOptions = {
           publicId: data.cloudPayments.PublicId,
           description: data.cloudPayments.Description,
@@ -3748,7 +3748,11 @@ async function processCardPayment() {
           invoiceId: data.cloudPayments.InvoiceId,
           accountId: data.cloudPayments.AccountId,
           email: data.cloudPayments.Email,
-          recurrent: data.cloudPayments.Recurrent
+          data: {
+            CloudPayments: {
+              recurrent: data.cloudPayments.Recurrent
+            }
+          }
         };
 
         console.log('[CLOUDPAYMENTS] chargeOptions (clean):', cleanChargeOptions);
@@ -3763,7 +3767,7 @@ async function processCardPayment() {
         console.log('  ✅ invoiceId:', cleanChargeOptions.invoiceId ? 'PRESENT' : 'MISSING', cleanChargeOptions.invoiceId);
         console.log('  ✅ accountId:', cleanChargeOptions.accountId ? 'PRESENT' : 'MISSING', cleanChargeOptions.accountId);
         console.log('  ✅ email:', cleanChargeOptions.email ? 'PRESENT' : 'MISSING', cleanChargeOptions.email);
-        console.log('  ✅ recurrent:', cleanChargeOptions.recurrent ? 'PRESENT' : 'MISSING', cleanChargeOptions.recurrent);
+        console.log('  ✅ data.CloudPayments.recurrent:', cleanChargeOptions.data?.CloudPayments?.recurrent ? 'PRESENT' : 'MISSING', cleanChargeOptions.data?.CloudPayments?.recurrent);
         console.log('  ✅ type: auth (passed as first parameter)');
         
         // Проверка обязательных параметров по документации CloudPayments
