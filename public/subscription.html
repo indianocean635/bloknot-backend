@@ -300,7 +300,6 @@
     <div id="subscriptionActions" style="display: none;">
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <button class="btn secondary" id="changePlanBtn" style="font-size: 12px; padding: 6px 12px; height: auto;">Сменить тариф</button>
-        <button class="btn secondary" id="cancelSubscriptionBtn" style="font-size: 12px; padding: 6px 12px; height: auto;">Отменить подписку</button>
       </div>
     </div>
   </div>
@@ -314,6 +313,21 @@
       <h3>Выберите тариф</h3>
       <button class="modal-close" onclick="closeSubscriptionPlansModal()">&times;</button>
     </div>
+    
+    <!-- Cancel Subscription Section -->
+    <section style="padding: 16px 24px; border-bottom: 1px solid #e5e7eb;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h4 style="margin: 0; font-size: 16px; color: #374151;">Управление подпиской</h4>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: #6b7280;">Отменить текущую подписку</p>
+        </div>
+        <button class="btn secondary" id="cancelSubscriptionBtn" style="font-size: 14px; padding: 8px 16px; height: auto; background: #ef4444; color: white; border: none;" 
+                onmouseover="this.style.background='#dc2626'" 
+                onmouseout="this.style.background='#ef4444'">
+          Отменить подписку
+        </button>
+      </div>
+    </section>
     
     <!-- Billing Period Toggle -->
     <section class="billing-period-section" style="padding: 24px 24px 0;">
