@@ -3791,6 +3791,10 @@ async function processCardPayment() {
           // Fail
           console.error('Payment failed', reason, options);
           alert('Ошибка оплаты: ' + reason);
+        }, function() {
+          // Close - обновляем страницу настроек при закрытии виджета
+          console.log('[WIDGET] Widget closed, refreshing settings page...');
+          window.location.href = '/settings.html#tariff';
         });
       } else {
         // Success without CloudPayments (subscription already created)
