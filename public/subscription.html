@@ -314,21 +314,6 @@
       <button class="modal-close" onclick="closeSubscriptionPlansModal()">&times;</button>
     </div>
     
-    <!-- Cancel Subscription Section -->
-    <section style="padding: 16px 24px; border-bottom: 1px solid #e5e7eb;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h4 style="margin: 0; font-size: 16px; color: #374151;">Управление подпиской</h4>
-          <p style="margin: 4px 0 0 0; font-size: 14px; color: #6b7280;">Отменить текущую подписку</p>
-        </div>
-        <button class="btn secondary" id="cancelSubscriptionBtn" style="font-size: 14px; padding: 8px 16px; height: auto; background: #ef4444; color: white; border: none;" 
-                onmouseover="this.style.background='#dc2626'" 
-                onmouseout="this.style.background='#ef4444'">
-          Отменить подписку
-        </button>
-      </div>
-    </section>
-    
     <!-- Billing Period Toggle -->
     <section class="billing-period-section" style="padding: 24px 24px 0;">
       <div class="billing-period-toggle">
@@ -505,6 +490,19 @@
             <span>Напомининие о записи в телеграм</span>
           </li>
         </ul>
+      </div>
+    </section>
+    
+    <!-- Cancel Subscription Section -->
+    <section style="padding: 24px; border-top: 1px solid #e5e7eb; background: #f9fafb;">
+      <div style="text-align: center;">
+        <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">Хотите отменить текущую подписку?</p>
+        <button class="btn secondary" id="cancelSubscriptionBtn" 
+                style="font-size: 12px; padding: 6px 12px; height: auto; background: #e5e7eb; color: #6b7280; border: 1px solid #d1d5db;" 
+                onmouseover="this.style.background='#d1d5db'; this.style.color='#4b5563'" 
+                onmouseout="this.style.background='#e5e7eb'; this.style.color='#6b7280'">
+          Отменить подписку
+        </button>
       </div>
     </section>
   </div>
