@@ -158,7 +158,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     // First find the specialist to ensure it belongs to the user's business
     const specialist = await prisma.master.findFirst({
       where: {
-        id: parseInt(id),
+        id: Number(id),
         businessId: req.user.businessId
       }
     });
@@ -168,7 +168,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     }
     
     const updatedSpecialist = await prisma.master.update({
-      where: { id: parseInt(id) },
+      where: { id: Number(id) },
       data: {
         name: name || specialist.name,
         email: email || specialist.email,
@@ -191,7 +191,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
     // First find the specialist to ensure it belongs to the user's business
     const specialist = await prisma.master.findFirst({
       where: {
-        id: parseInt(id),
+        id: Number(id),
         businessId: req.user.businessId
       },
       include: {
@@ -206,13 +206,13 @@ router.delete('/:id', requireAuth, async (req, res) => {
     // Delete all appointments associated with this specialist
     if (specialist.appointments.length > 0) {
       await prisma.appointment.deleteMany({
-        where: { masterId: parseInt(id) }
+        where: { masterId: Number(id) }
       });
     }
     
     // Delete the specialist
     await prisma.master.delete({
-      where: { id: parseInt(id) }
+      where: { id: Number(id) }
     });
     
     res.json({ 
@@ -233,7 +233,7 @@ router.get('/:id/schedule', requireAuth, async (req, res) => {
     // First find the specialist to ensure it belongs to the user's business
     const specialist = await prisma.master.findFirst({
       where: {
-        id: parseInt(id),
+        id: Number(id),
         businessId: req.user.businessId
       }
     });
@@ -259,7 +259,7 @@ router.post('/:id/schedule', requireAuth, async (req, res) => {
     // First find the specialist to ensure it belongs to the user's business
     const specialist = await prisma.master.findFirst({
       where: {
-        id: parseInt(id),
+        id: Number(id),
         businessId: req.user.businessId
       }
     });
@@ -270,7 +270,7 @@ router.post('/:id/schedule', requireAuth, async (req, res) => {
 
     // Update the specialist's schedule
     const updatedSpecialist = await prisma.master.update({
-      where: { id: parseInt(id) },
+      where: { id: Number(id) },
       data: { schedule: schedule || {} }
     });
 
@@ -289,7 +289,7 @@ router.get('/:id/settings', requireAuth, async (req, res) => {
     // First find the specialist to ensure it belongs to the user's business
     const specialist = await prisma.master.findFirst({
       where: {
-        id: parseInt(id),
+        id: Number(id),
         businessId: req.user.businessId
       }
     });
@@ -319,7 +319,7 @@ router.post('/:id/settings', requireAuth, async (req, res) => {
     // First find the specialist to ensure it belongs to the user's business
     const specialist = await prisma.master.findFirst({
       where: {
-        id: parseInt(id),
+        id: Number(id),
         businessId: req.user.businessId
       }
     });
@@ -356,16 +356,16 @@ router.post('/:id/settings', requireAuth, async (req, res) => {
     }
     
     if (categoryIds !== undefined) {
-      updateData.categoryIds = categoryIds ? categoryIds.map(id => parseInt(id)) : [];
+      updateData.categoryIds = categoryIds ? categoryIds.map(id => Number(id)) : [];
     }
     
     if (serviceIds !== undefined) {
-      updateData.serviceIds = serviceIds ? serviceIds.map(id => parseInt(id)) : [];
+      updateData.serviceIds = serviceIds ? serviceIds.map(id => Number(id)) : [];
     }
 
     // Update specialist settings with only the provided fields
     const updatedSpecialist = await prisma.master.update({
-      where: { id: parseInt(id) },
+      where: { id: Number(id) },
       data: updateData
     });
 
