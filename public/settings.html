@@ -3736,10 +3736,10 @@ async function processCardPayment() {
           email: data.cloudPayments.Email,
           requireConfirmation: data.cloudPayments.RequireConfirmation,
           trialPeriod: data.cloudPayments.TrialPeriod,
-          recurring: data.cloudPayments.Recurring
+          recurrent: data.cloudPayments.Recurrent
         };
 
-        // Создаем чистые опции без неподдерживаемых параметров для widget.pay()
+        // Создаем чистые опции с recurrent параметром для создания подписки
         const cleanChargeOptions = {
           publicId: data.cloudPayments.PublicId,
           description: data.cloudPayments.Description,
@@ -3747,7 +3747,8 @@ async function processCardPayment() {
           currency: data.cloudPayments.Currency,
           invoiceId: data.cloudPayments.InvoiceId,
           accountId: data.cloudPayments.AccountId,
-          email: data.cloudPayments.Email
+          email: data.cloudPayments.Email,
+          recurrent: data.cloudPayments.Recurrent
         };
 
         console.log('[CLOUDPAYMENTS] chargeOptions (clean):', cleanChargeOptions);
@@ -3762,6 +3763,7 @@ async function processCardPayment() {
         console.log('  ✅ invoiceId:', cleanChargeOptions.invoiceId ? 'PRESENT' : 'MISSING', cleanChargeOptions.invoiceId);
         console.log('  ✅ accountId:', cleanChargeOptions.accountId ? 'PRESENT' : 'MISSING', cleanChargeOptions.accountId);
         console.log('  ✅ email:', cleanChargeOptions.email ? 'PRESENT' : 'MISSING', cleanChargeOptions.email);
+        console.log('  ✅ recurrent:', cleanChargeOptions.recurrent ? 'PRESENT' : 'MISSING', cleanChargeOptions.recurrent);
         
         // Проверка обязательных параметров по документации CloudPayments
         const requiredParams = ['publicId', 'description', 'amount', 'currency'];
