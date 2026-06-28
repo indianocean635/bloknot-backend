@@ -108,6 +108,7 @@
          <div class="item-meta">Быстрый обзор настроек бизнеса.</div>
        </div>
        <button class="btn secondary" id="refreshBtn" type="button">Обновить</button>
+      <button class="btn secondary" id="logoutBtn" type="button">Выход</button>
      </div>
 
      <div id="stats" class="row three" style="margin-top:12px">
@@ -675,6 +676,23 @@
         }, 2000);
       });
     }
+
+  // Add logout button handler
+  const logoutBtn = Bloknot.qs("#logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      // Clear all storage locations
+      localStorage.clear();
+      sessionStorage.clear();
+      document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      
+      // Redirect to main page
+      window.location.href = "/index.html";
+    });
+  } else {
+    console.log('Logout button not found, skipping event listener');
+  }
   </script>
 
 </body>
