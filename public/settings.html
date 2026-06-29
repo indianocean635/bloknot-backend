@@ -3237,7 +3237,6 @@ async function saveCategory(categoryId = null) {
 
     document.querySelector('.modal')?.remove();
     await loadCategories();
-    alert(categoryId ? 'Категория обновлена!' : 'Категория добавлена!');
   } catch (error) {
     console.error('Error saving category:', error);
     alert('Ошибка сохранения категории: ' + error.message);
@@ -3382,7 +3381,6 @@ async function saveService(serviceId = null) {
 
     document.querySelector('.modal')?.remove();
     await loadServices();
-    alert(serviceId ? 'Услуга обновлена!' : 'Услуга добавлена!');
   } catch (error) {
     console.error('Error saving service:', error);
     alert('Ошибка сохранения услуги: ' + error.message);
