@@ -103,9 +103,9 @@
         clearForm();
         await loadCategories();
         
-        // Закрываем виджет после успешного сохранения
+        // Закрываем модальное окно после успешного сохранения
         setTimeout(() => {
-          window.close();
+          document.querySelector('.modal')?.remove();
         }, 500);
       } catch (e) {
         showNotice("Не удалось добавить категорию: " + e.message);
