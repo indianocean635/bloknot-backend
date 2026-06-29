@@ -89,8 +89,11 @@
         return;
       }
 
-      showNotice("");
-      Bloknot.qs("#addBtn").disabled = true;
+      const addBtn = Bloknot.qs("#addBtn");
+      addBtn.disabled = true;
+      addBtn.style.backgroundColor = "#22c55e";
+      addBtn.textContent = "Сохранено";
+      
       try {
         await Bloknot.api("/api/categories", {
           method: "POST",
@@ -99,10 +102,16 @@
         });
         clearForm();
         await loadCategories();
+        
+        // Закрываем виджет после успешного сохранения
+        setTimeout(() => {
+          window.close();
+        }, 500);
       } catch (e) {
         showNotice("Не удалось добавить категорию: " + e.message);
-      } finally {
-        Bloknot.qs("#addBtn").disabled = false;
+        addBtn.disabled = false;
+        addBtn.style.backgroundColor = "";
+        addBtn.textContent = "Добавить";
       }
     }
 
