@@ -105,17 +105,16 @@ async function uploadWork(req, res) {
 
     console.log('[UPLOAD] S3 upload successful:', imageUrl);
 
-    // Если это логотип, сначала убираем старый логотип
+    // Если это логотип, сначала удаляем старые логотипы
     if (isLogo === "true") {
-      console.log('[UPLOAD] Removing old logo...');
-      const updateResult = await prisma.workPhoto.updateMany({
+      console.log('[UPLOAD] Removing old logos...');
+      const deleteResult = await prisma.workPhoto.deleteMany({
         where: {
           businessId: user.businessId,
           isLogo: true,
         },
-        data: { isLogo: false },
       });
-      console.log('[UPLOAD] Old logos removed:', updateResult);
+      console.log('[UPLOAD] Old logos deleted:', deleteResult);
     }
 
     console.log('[UPLOAD] Creating WorkPhoto record...');
