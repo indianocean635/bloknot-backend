@@ -302,6 +302,19 @@
         <button class="btn secondary" id="changePlanBtn" style="font-size: 12px; padding: 6px 12px; height: auto;">Сменить тариф</button>
       </div>
     </div>
+
+    <!-- Cancel Subscription Section - Always Visible -->
+    <div id="cancelSubscriptionSection" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+      <div style="text-align: center;">
+        <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">Хотите отменить текущую подписку?</p>
+        <button class="btn secondary" id="cancelSubscriptionBtn" 
+                style="font-size: 12px; padding: 6px 12px; height: auto; background: #e5e7eb; color: #6b7280; border: 1px solid #d1d5db;" 
+                onmouseover="this.style.background='#d1d5db'; this.style.color='#4b5563'" 
+                onmouseout="this.style.background='#e5e7eb'; this.style.color='#6b7280'">
+          Отменить подписку
+        </button>
+      </div>
+    </div>
   </div>
 
   </main>
@@ -493,19 +506,7 @@
       </div>
     </section>
     
-    <!-- Cancel Subscription Section -->
-    <section style="padding: 24px; border-top: 1px solid #e5e7eb; background: #f9fafb;">
-      <div style="text-align: center;">
-        <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">Хотите отменить текущую подписку?</p>
-        <button class="btn secondary" id="cancelSubscriptionBtn" 
-                style="font-size: 12px; padding: 6px 12px; height: auto; background: #e5e7eb; color: #6b7280; border: 1px solid #d1d5db;" 
-                onmouseover="this.style.background='#d1d5db'; this.style.color='#4b5563'" 
-                onmouseout="this.style.background='#e5e7eb'; this.style.color='#6b7280'">
-          Отменить подписку
-        </button>
-      </div>
-    </section>
-  </div>
+    </div>
 </div>
 
 <!-- Payment Modal (exact copy from pricing.html) -->
