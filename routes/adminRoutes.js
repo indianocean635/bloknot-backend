@@ -863,7 +863,63 @@ router.get('/return', requireAuth, async (req, res) => {
     }
     
     console.log('[ADMIN RETURN] Redirecting to admin panel');
-    res.redirect('/admin.html');
+    
+    // Send HTML with localStorage cleanup script
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Exiting Impersonation...</title>
+        <meta http-equiv="refresh" content="2;url=/admin.html">
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            background: #f5f5f5; 
+          }
+          .message { 
+            text-align: center; 
+            padding: 20px; 
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+          }
+        </style>
+      </head>
+      <body>
+        <div class="message">
+          <h2>🔄 Exiting impersonation mode...</h2>
+          <p>Cleaning up data and returning to admin panel...</p>
+        </div>
+        <script>
+          // AGGRESSIVE CLEANUP: Remove all cached data
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          // Remove specific keys that might cause cross-user contamination
+          const keysToRemove = [
+            'cached_logo', 'cached_photos', 'cached_works', 
+            'cached_masters', 'cached_services', 'cached_categories',
+            'business_data', 'user_data', 'auth_token'
+          ];
+          
+          keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+          });
+          
+          // Force reload without cache
+          setTimeout(() => {
+            window.location.href = '/admin.html?v=' + Date.now();
+          }, 1500);
+        </script>
+      </body>
+      </html>
+    `);
   } catch (error) {
     console.error('[ADMIN RETURN] Error during cleanup:', error);
     // Still redirect even if cleanup fails
