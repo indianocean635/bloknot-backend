@@ -844,22 +844,32 @@ router.get('/return', requireAuth, async (req, res) => {
     if (req.user.isImpersonated && req.user.businessId) {
       console.log('[ADMIN RETURN] Cleaning up data for business:', req.user.businessId);
       
-      // Delete all logo uploads for this business
-      await prisma.workPhoto.deleteMany({
-        where: {
-          businessId: req.user.businessId,
-          isLogo: true
-        }
-      });
+      // Create Prisma client instance for cleanup
+      const { PrismaClient } = require('@prisma/client');
+      const cleanupPrisma = new PrismaClient();
       
-      // Delete all specialists (masters) that were added during impersonation
-      await prisma.master.deleteMany({
-        where: {
-          businessId: req.user.businessId
-        }
-      });
-      
-      console.log('[ADMIN RETURN] Data cleanup completed for business:', req.user.businessId);
+      try {
+        // Delete all logo uploads for this business
+        await cleanupPrisma.workPhoto.deleteMany({
+          where: {
+            businessId: req.user.businessId,
+            isLogo: true
+          }
+        });
+        
+        // Delete all specialists (masters) that were added during impersonation
+        await cleanupPrisma.master.deleteMany({
+          where: {
+            businessId: req.user.businessId
+          }
+        });
+        
+        console.log('[ADMIN RETURN] Data cleanup completed for business:', req.user.businessId);
+      } catch (cleanupError) {
+        console.error('[ADMIN RETURN] Error during cleanup:', cleanupError);
+      } finally {
+        await cleanupPrisma.$disconnect();
+      }
     }
     
     console.log('[ADMIN RETURN] Redirecting to admin panel');
