@@ -524,6 +524,35 @@ async function createPublicAppointment(req, res) {
     }
 
     console.log('[STEP 8] Sending response to client');
+    
+    // Send push notification about new public appointment
+    try {
+      const { sendPushNotification } = require('../routes/pushRoutes');
+      
+      const notificationTitle = '📅 Новая онлайн-запись';
+      const notificationBody = `${customerName} записал(ась) на "${appointment.service.name}" через онлайн-форму`;
+      const notificationData = {
+        appointmentId: appointment.id,
+        customerName: customerName,
+        serviceName: appointment.service.name,
+        masterName: appointment.master.name,
+        startsAt: appointment.startsAt,
+        isPublicBooking: true
+      };
+      
+      await sendPushNotification(
+        businessId,
+        notificationTitle,
+        notificationBody,
+        notificationData
+      );
+      
+      console.log('🔔 Push notification sent for public appointment:', appointment.id);
+    } catch (pushError) {
+      console.error('❌ Failed to send push notification for public appointment:', pushError);
+      // Don't fail the request if push notification fails
+    }
+    
     res.json(appointment);
     console.log('[STEP 8] ✅ Response sent successfully');
   } catch (error) {
@@ -687,6 +716,34 @@ async function createAppointment(req, res) {
     });
     
     console.log('✅ Appointment created in DB:', appointment.id);
+    
+    // Send push notification about new appointment
+    try {
+      const { sendPushNotification } = require('../routes/pushRoutes');
+      
+      const notificationTitle = '📅 Новая запись';
+      const notificationBody = `${customerName} записал(ась) на "${appointmentWithRelations.service.name}"`;
+      const notificationData = {
+        appointmentId: appointment.id,
+        customerName: customerName,
+        serviceName: appointmentWithRelations.service.name,
+        masterName: appointmentWithRelations.master.name,
+        startsAt: appointment.startsAt
+      };
+      
+      await sendPushNotification(
+        user.businessId,
+        notificationTitle,
+        notificationBody,
+        notificationData
+      );
+      
+      console.log('🔔 Push notification sent for appointment:', appointment.id);
+    } catch (pushError) {
+      console.error('❌ Failed to send push notification:', pushError);
+      // Don't fail the request if push notification fails
+    }
+    
     res.json(appointmentWithRelations);
   } catch (error) {
     console.error('❌ createAppointment error:', error);

@@ -36,6 +36,7 @@ model User {
   staffProfile Staff?
   loginTokens  LoginToken[]
   salesStaffAssignments SalesStaffAssignment[]
+  pushSubscriptions PushSubscription[]
 }
 
 model Business {
@@ -59,6 +60,7 @@ model Business {
   schedules    Schedule[]
   branches     Branch[]
   appointments Appointment[]
+  pushSubscriptions PushSubscription[]
   subscription Subscription?
 }
 
@@ -264,4 +266,22 @@ model SalesStaffAssignment {
 
   @@unique([salesStaffId, clientEmail])
   @@index([clientEmail])
+}
+
+model PushSubscription {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  userId      String?
+  businessId  String?
+  userAgent   String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  lastActive  DateTime @default(now())
+
+  user    User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, isActive])
+  @@index([userId, isActive])
+  @@index([token])
 }

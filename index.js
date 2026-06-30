@@ -89,6 +89,7 @@ app.use((req, res, next) => {
 
 // Import missing routes
 const appointmentRoutes = require('./routes/appointmentRoutes');
+const { router: pushRoutes, sendPushNotification } = require('./routes/pushRoutes');
 
 // API routes
 app.use('/api/auth', authRoutes);
@@ -103,6 +104,7 @@ app.use('/api/specialists', specialistsRoutes);
 app.use('/api/masters', settingsRoutes); // Masters endpoints are in settingsRoutes
 app.use('/api/telegram', telegramRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/push', pushRoutes);
 app.use('/api', appointmentRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api/vk-community', vkCommunityRoutes);
