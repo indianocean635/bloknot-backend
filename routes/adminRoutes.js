@@ -832,9 +832,36 @@ router.post('/login', async (req, res) => {
 });
 
 // Return from impersonation
-router.get('/return', requireAuth, (req, res) => {
-  res.clearCookie('impersonate');
-  res.redirect('/admin.html');
+router.get('/return', requireAuth, async (req, res) => {
+  try {
+    console.log('[ADMIN RETURN] Returning from impersonation, cleaning up...');
+    
+    // Clear impersonation cookie
+    res.clearCookie('impersonate');
+    
+    // CRITICAL: Remove logo that was set during impersonation
+    // This prevents cross-user data contamination
+    if (req.user.isImpersonated && req.user.businessId) {
+      console.log('[ADMIN RETURN] Cleaning up logo for business:', req.user.businessId);
+      
+      // Delete all logo uploads for this business
+      await prisma.work.deleteMany({
+        where: {
+          businessId: req.user.businessId,
+          isLogo: true
+        }
+      });
+      
+      console.log('[ADMIN RETURN] Logo cleanup completed for business:', req.user.businessId);
+    }
+    
+    console.log('[ADMIN RETURN] Redirecting to admin panel');
+    res.redirect('/admin.html');
+  } catch (error) {
+    console.error('[ADMIN RETURN] Error during cleanup:', error);
+    // Still redirect even if cleanup fails
+    res.redirect('/admin.html');
+  }
 });
 
 // SALES STAFF MANAGEMENT

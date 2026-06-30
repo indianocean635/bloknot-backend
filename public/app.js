@@ -280,16 +280,35 @@
     }
     // Clear all localStorage data (for cross-user contamination prevention)
     try {
-      // Clear only app-related data, not everything
+      // AGGRESSIVE CLEAR: Remove ALL potentially problematic keys
       const keysToRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (key.includes('logo') || key.includes('specialist') || key.includes('employee') || key.includes('settings') || key.includes('business'))) {
+        if (key && (
+          key.includes('logo') || 
+          key.includes('specialist') || 
+          key.includes('employee') || 
+          key.includes('settings') || 
+          key.includes('business') ||
+          key.includes('image') ||
+          key.includes('avatar') ||
+          key.includes('photo') ||
+          key.includes('picture') ||
+          key.includes('data') ||
+          key.includes('cache') ||
+          key.includes('temp') ||
+          key.includes('upload')
+        )) {
           keysToRemove.push(key);
         }
       }
       keysToRemove.forEach(key => localStorage.removeItem(key));
-      console.log('[CLEAR TOKEN] Cleared business data from localStorage:', keysToRemove);
+      console.log('[CLEAR TOKEN] AGGRESSIVE CLEAR - Removed keys:', keysToRemove);
+      
+      // Also clear sessionStorage completely
+      sessionStorage.clear();
+      console.log('[CLEAR TOKEN] SessionStorage cleared completely');
+      
     } catch (e) {
       console.log('[CLEAR TOKEN] localStorage clear failed:', e);
     }
