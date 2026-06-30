@@ -330,16 +330,30 @@ router.post('/:id/settings', requireAuth, async (req, res) => {
 
     // Validate branchId if provided
     if (branchId) {
+      console.log('[SPECIALIST SETTINGS] Validating branchId:', branchId);
+      console.log('[SPECIALIST SETTINGS] User businessId:', req.user.businessId);
+      console.log('[SPECIALIST SETTINGS] Is impersonated:', req.user.isImpersonated);
+      
+      // For impersonated users, allow any branch (super admin mode)
+      // For regular users, validate branch belongs to their business
+      const whereClause = {
+        id: parseInt(branchId)
+      };
+      
+      if (!req.user.isImpersonated) {
+        whereClause.businessId = req.user.businessId;
+      }
+      
       const branch = await prisma.branch.findFirst({
-        where: {
-          id: parseInt(branchId),
-          businessId: req.user.businessId
-        }
+        where: whereClause
       });
 
       if (!branch) {
+        console.log('[SPECIALIST SETTINGS] Branch not found with whereClause:', whereClause);
         return res.status(400).json({ error: 'Invalid branch' });
       }
+      
+      console.log('[SPECIALIST SETTINGS] Branch found:', branch.id, branch.name);
     }
 
     // Build update data object - only update fields that are provided
