@@ -12,15 +12,15 @@ const {
   createVKLinkCodeByToken
 } = require("../controllers/appointmentController");
 const { getBusinessBySlug } = require("../controllers/businessController");
-const { requireMagicAuth, getBusinessFromUser } = require("../middleware/magicAuthMiddleware");
+const { requireAuth } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 // Protected endpoints
-router.get("/appointments", requireMagicAuth, getBusinessFromUser, getAppointments);
-router.post("/appointments", requireMagicAuth, getBusinessFromUser, createAppointment);
-router.delete("/appointments/:id", requireMagicAuth, getBusinessFromUser, deleteAppointment);
-router.put("/appointments/:id", requireMagicAuth, getBusinessFromUser, updateAppointment);
+router.get("/appointments", requireAuth, getAppointments);
+router.post("/appointments", requireAuth, createAppointment);
+router.delete("/appointments/:id", requireAuth, deleteAppointment);
+router.put("/appointments/:id", requireAuth, updateAppointment);
 
 // Публичные эндпоинты
 router.get("/public/business/:slug", getBusinessBySlug);

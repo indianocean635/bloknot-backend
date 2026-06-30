@@ -7,7 +7,7 @@ const {
   getVKStatus 
 } = require('../controllers/vkAuthController');
 const { sendBookingConfirmation } = require('../services/vkNotificationService');
-const { requireMagicAuth } = require('../middleware/magicAuthMiddleware');
+const { requireAuth } = require('../middleware/authMiddleware');
 
 // Get VK config (public endpoint)
 router.get('/config', (req, res) => {
@@ -137,16 +137,16 @@ router.post('/callback', async (req, res) => {
 });
 
 // Link VK account to existing user (requires auth)
-router.post('/link', requireMagicAuth, linkVKAccount);
+router.post('/link', requireAuth, linkVKAccount);
 
 // Unlink VK account (requires auth)
-router.post('/unlink', requireMagicAuth, unlinkVKAccount);
+router.post('/unlink', requireAuth, unlinkVKAccount);
 
 // Get VK connection status (requires auth)
-router.get('/status', requireMagicAuth, getVKStatus);
+router.get('/status', requireAuth, getVKStatus);
 
 // Test VK message endpoint (requires auth)
-router.post('/test-message', requireMagicAuth, async (req, res) => {
+router.post('/test-message', requireAuth, async (req, res) => {
   try {
     const { vkUserId } = req.body;
 
