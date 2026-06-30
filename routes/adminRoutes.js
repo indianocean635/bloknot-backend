@@ -839,37 +839,11 @@ router.get('/return', requireAuth, async (req, res) => {
     // Clear impersonation cookie
     res.clearCookie('impersonate');
     
-    // CRITICAL: Remove data that was set during impersonation
-    // This prevents cross-user data contamination
-    if (req.user.isImpersonated && req.user.businessId) {
-      console.log('[ADMIN RETURN] Cleaning up data for business:', req.user.businessId);
-      
-      // Create Prisma client instance for cleanup
-      const { PrismaClient } = require('@prisma/client');
-      const cleanupPrisma = new PrismaClient();
-      
-      try {
-        // Delete all logo uploads for this business
-        await cleanupPrisma.workPhoto.deleteMany({
-          where: {
-            businessId: req.user.businessId,
-            isLogo: true
-          }
-        });
-        
-        // Delete all specialists (masters) that were added during impersonation
-        await cleanupPrisma.master.deleteMany({
-          where: {
-            businessId: req.user.businessId
-          }
-        });
-        
-        console.log('[ADMIN RETURN] Data cleanup completed for business:', req.user.businessId);
-      } catch (cleanupError) {
-        console.error('[ADMIN RETURN] Error during cleanup:', cleanupError);
-      } finally {
-        await cleanupPrisma.$disconnect();
-      }
+    // DISABLED: Automatic cleanup removed to prevent data loss
+    // The cleanup logic was deleting ALL data including real user data
+    // TODO: Implement smarter cleanup that only removes test data
+    if (false && req.user.isImpersonated && req.user.businessId) {
+      console.log('[ADMIN RETURN] WARNING: Cleanup disabled to prevent data loss');
     }
     
     console.log('[ADMIN RETURN] Redirecting to admin panel');
