@@ -839,10 +839,10 @@ router.get('/return', requireAuth, async (req, res) => {
     // Clear impersonation cookie
     res.clearCookie('impersonate');
     
-    // CRITICAL: Remove logo that was set during impersonation
+    // CRITICAL: Remove data that was set during impersonation
     // This prevents cross-user data contamination
     if (req.user.isImpersonated && req.user.businessId) {
-      console.log('[ADMIN RETURN] Cleaning up logo for business:', req.user.businessId);
+      console.log('[ADMIN RETURN] Cleaning up data for business:', req.user.businessId);
       
       // Delete all logo uploads for this business
       await prisma.work.deleteMany({
@@ -852,7 +852,14 @@ router.get('/return', requireAuth, async (req, res) => {
         }
       });
       
-      console.log('[ADMIN RETURN] Logo cleanup completed for business:', req.user.businessId);
+      // Delete all specialists (masters) that were added during impersonation
+      await prisma.master.deleteMany({
+        where: {
+          businessId: req.user.businessId
+        }
+      });
+      
+      console.log('[ADMIN RETURN] Data cleanup completed for business:', req.user.businessId);
     }
     
     console.log('[ADMIN RETURN] Redirecting to admin panel');
