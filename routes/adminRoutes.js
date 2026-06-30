@@ -845,7 +845,7 @@ router.get('/return', requireAuth, async (req, res) => {
       console.log('[ADMIN RETURN] Cleaning up data for business:', req.user.businessId);
       
       // Delete all logo uploads for this business
-      await prisma.work.deleteMany({
+      await prisma.workPhoto.deleteMany({
         where: {
           businessId: req.user.businessId,
           isLogo: true
