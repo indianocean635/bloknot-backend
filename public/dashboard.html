@@ -98,6 +98,22 @@
  </div>
 
  <main class="container">
+   <!-- Impersonation Warning Banner -->
+   <div id="impersonationBanner" style="display: none; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+     <div style="display: flex; align-items: center; justify-content: space-between;">
+       <div style="display: flex; align-items: center; gap: 8px;">
+         <span style="font-size: 20px;">⚠️</span>
+         <div>
+           <div style="font-weight: 600; color: #92400e; font-size: 14px;">Режим супервизора</div>
+           <div style="color: #78350f; font-size: 12px;">Вы работаете в аккаунте пользователя: <span id="impersonatedUserEmail" style="font-weight: 500;"></span></div>
+         </div>
+       </div>
+       <button onclick="window.location.href='/api/admin/return'" style="background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+         Выйти из режима
+       </button>
+     </div>
+   </div>
+
    <h1 class="page-title" style="font-size: 28px; margin-bottom: 8px;">Кабинет владельца</h1>
    <p class="page-subtitle">Управляйте услугами, мастерами, фото работ и записями клиентов.</p>
 
@@ -645,6 +661,45 @@
   </footer>
 
   <script>
+    // Check for impersonation mode and show banner
+    function checkImpersonationMode() {
+      // Check for impersonation cookie
+      const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        acc[key] = value;
+        return acc;
+      }, {});
+      
+      const impersonatedEmail = cookies.impersonate;
+      
+      if (impersonatedEmail) {
+        console.log('[IMPERSONATION] Detected impersonation mode for:', decodeURIComponent(impersonatedEmail));
+        
+        // Show impersonation banner
+        const banner = document.getElementById('impersonationBanner');
+        const emailSpan = document.getElementById('impersonatedUserEmail');
+        
+        if (banner && emailSpan) {
+          banner.style.display = 'block';
+          emailSpan.textContent = decodeURIComponent(impersonatedEmail);
+          
+          // Add warning styles to logout button
+          const logoutBtn = document.getElementById('logoutBtn');
+          if (logoutBtn) {
+            logoutBtn.style.background = '#dc2626';
+            logoutBtn.textContent = 'Выйти из режима';
+          }
+        }
+      } else {
+        console.log('[IMPERSONATION] Normal user mode');
+      }
+    }
+    
+    // Check impersonation mode on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      checkImpersonationMode();
+    });
+
     function copyEmail() {
       const email = 'info@bloknotservis.ru';
       navigator.clipboard.writeText(email).then(function() {
@@ -680,12 +735,23 @@
   // Add logout button handler
   const logoutBtn = Bloknot.qs("#logoutBtn");
   if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      // Clear all storage locations
-      localStorage.clear();
-      sessionStorage.clear();
-      document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    logoutBtn.addEventListener("click", async () => {
+      console.log('[LOGOUT] Starting logout process...');
+      
+      // Use the enhanced clearAuthToken function that handles impersonation
+      if (typeof Bloknot.clearAuthToken === 'function') {
+        await Bloknot.clearAuthToken();
+      } else {
+        // Fallback to manual clearing
+        console.log('[LOGOUT] Using fallback clear method');
+        localStorage.clear();
+        sessionStorage.clear();
+        document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie = "impersonate=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      }
+      
+      console.log('[LOGOUT] All storage cleared, redirecting to main page');
       
       // Redirect to main page
       window.location.href = "/index.html";

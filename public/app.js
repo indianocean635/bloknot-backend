@@ -263,12 +263,35 @@
     } catch (e) {
       console.log('[CLEAR TOKEN] IndexedDB clear failed:', e);
     }
-    // Clear cookie
+    // Clear impersonation cookie (CRITICAL for security)
+    try {
+      document.cookie = 'impersonate=; path=/; max-age=0; SameSite=Lax; Secure';
+      console.log('[CLEAR TOKEN] Cleared impersonation cookie');
+    } catch (e) {
+      console.log('[CLEAR TOKEN] Impersonation cookie clear failed:', e);
+    }
+    // Clear auth cookies
     try {
       document.cookie = 'auth=; path=/; max-age=0; SameSite=Lax; Secure';
-      console.log('[CLEAR TOKEN] Cleared cookie');
+      document.cookie = 'auth_token=; path=/; max-age=0; SameSite=Lax; Secure';
+      console.log('[CLEAR TOKEN] Cleared auth cookies');
     } catch (e) {
-      console.log('[CLEAR TOKEN] Cookie clear failed:', e);
+      console.log('[CLEAR TOKEN] Auth cookies clear failed:', e);
+    }
+    // Clear all localStorage data (for cross-user contamination prevention)
+    try {
+      // Clear only app-related data, not everything
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('logo') || key.includes('specialist') || key.includes('employee') || key.includes('settings') || key.includes('business'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      console.log('[CLEAR TOKEN] Cleared business data from localStorage:', keysToRemove);
+    } catch (e) {
+      console.log('[CLEAR TOKEN] localStorage clear failed:', e);
     }
     console.log('[CLEAR TOKEN] Token cleared successfully');
   }
