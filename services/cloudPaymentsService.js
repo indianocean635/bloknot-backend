@@ -571,6 +571,66 @@ class CloudPaymentsService {
 
         return config;
     }
+
+    /**
+     * Получение данных для оплаты без создания подписки
+     */
+    async getPaymentData(subscriptionType, options = {}) {
+        try {
+            console.log('[CLOUDPAYMENTS] Getting payment data:', {
+                subscriptionType,
+                planId: options.planId,
+                planName: options.planName,
+                planAmount: options.planAmount,
+                userEmail: options.userEmail
+            });
+
+            const config = this.getSubscriptionConfig(options.planId);
+            
+            // Определяем сумму и период триала
+            const amount = options.planAmount || config.amount;
+            const trialPeriod = config.trialPeriod || 5; // 5 дней по умолчанию
+            const isTrial = trialPeriod > 0;
+
+            // Формируем данные для CloudPayments виджета
+            const cloudPaymentsData = {
+                PublicId: this.publicId,
+                Description: `Подписка ${options.planName} (${subscriptionType})`,
+                Amount: amount, // 1 рубль для активации, реальная сумма в recurrent
+                Currency: 'RUB',
+                InvoiceId: `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                AccountId: options.userEmail,
+                Email: options.userEmail,
+                RequireConfirmation: true,
+                TrialPeriod: isTrial ? trialPeriod : 0,
+                Recurring: {
+                    Amount: config.amount, // Реальная сумма подписки
+                    Period: subscriptionType === 'monthly' ? 'Month' : 'Year',
+                    CustomerReceipt: {
+                        Items: [{
+                            Label: `Подписка ${options.planName}`,
+                            Price: config.amount * 100, // в копейках
+                            Quantity: 1,
+                            Amount: config.amount * 100,
+                            Vat: 20
+                        }],
+                        TaxationSystem: 2
+                    }
+                }
+            };
+
+            console.log('[CLOUDPAYMENTS] Payment data prepared:', {
+                amount: cloudPaymentsData.Amount,
+                trialPeriod: cloudPaymentsData.TrialPeriod,
+                recurringAmount: cloudPaymentsData.Recurring.Amount
+            });
+
+            return cloudPaymentsData;
+        } catch (error) {
+            console.error('[CLOUDPAYMENTS] Error getting payment data:', error);
+            throw error;
+        }
+    }
 }
 
 // Создаем singleton экземпляр

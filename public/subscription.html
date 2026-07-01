@@ -617,10 +617,6 @@
     let html = `
       <div style="display: grid; gap: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-weight: 500; color: #374151;">Тариф:</span>
-          <span style="color: #1f2937;">${getPlanName(data.type)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-weight: 500; color: #374151;">Статус:</span>
           <span style="color: ${statusColors[normalizedStatus]}; font-weight: 500;">${statusTexts[normalizedStatus] || data.status}</span>
         </div>
@@ -1039,7 +1035,7 @@
     try {
       console.log('[SUBSCRIPTION] Processing card payment with new endpoint:', { plan, period, tariff });
       
-      // Use the correct subscription creation endpoint
+      // Get CloudPayments data without creating subscription first
       const data = await Bloknot.api('/api/cloudpayments/subscription/create', {
         method: 'POST',
         body: JSON.stringify({
@@ -1049,7 +1045,8 @@
           userName: currentUser?.name,
           planId: plan,
           planName: tariff,
-          planAmount: period === 'monthly' ? (plan === 'solo' ? 690 : plan === 'studio' ? 990 : 1490) : (plan === 'solo' ? 6624 : plan === 'studio' ? 9504 : 14304)
+          planAmount: period === 'monthly' ? (plan === 'solo' ? 690 : plan === 'studio' ? 990 : 1490) : (plan === 'solo' ? 6624 : plan === 'studio' ? 9504 : 14304),
+          getDataOnly: true // Flag to get payment data without creating subscription
         })
       });
 
@@ -1079,7 +1076,7 @@
             widget.pay(chargeOptions, function(options) {
               // Success - call handlePaymentSuccess with proper data
               console.log('[SUBSCRIPTION] Payment successful, calling handlePaymentSuccess:', options);
-              handlePaymentSuccess(options, { id: plan, name: tariff, amount: data.cloudPayments.Amount });
+              handlePaymentSuccess(options, { id: plan, name: tariff, amount: data.cloudPayments.Amount, period: period });
             }, function(reason, options) {
               // Fail
               console.error('Payment failed', reason, options);
@@ -1202,11 +1199,11 @@
     try {
       console.log('[SUBSCRIPTION] Processing successful payment...');
       
-      // Send payment data to backend
+      // Send payment data to backend to create actual subscription
       const result = await Bloknot.api('/api/cloudpayments/subscription/create', {
         method: 'POST',
         body: JSON.stringify({
-          subscriptionType: 'monthly',
+          subscriptionType: plan.period || 'monthly',
           cardToken: options.token,
           userEmail: currentUser?.email,
           userName: currentUser?.name,

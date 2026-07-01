@@ -40,15 +40,34 @@ async function createSubscription(req, res) {
         console.log('[SUBSCRIPTION] Creating subscription request:', {
             userId: req.user?.id,
             subscriptionType: req.body.subscriptionType,
-            hasCardToken: !!req.body.cardToken
+            hasCardToken: !!req.body.cardToken,
+            getDataOnly: req.body.getDataOnly
         });
 
-        const { subscriptionType, cardToken, userEmail, userName, planId, planName, planAmount } = req.body;
+        const { subscriptionType, cardToken, userEmail, userName, planId, planName, planAmount, getDataOnly } = req.body;
 
         if (!subscriptionType || !['monthly', 'yearly'].includes(subscriptionType)) {
             return res.status(400).json({
                 success: false,
                 error: 'Invalid subscription type. Must be monthly or yearly'
+            });
+        }
+
+        // If getDataOnly flag is set, return payment data without creating subscription
+        if (getDataOnly) {
+            console.log('[SUBSCRIPTION] Getting payment data only, not creating subscription');
+            
+            const cloudPaymentsData = await cloudPaymentsService.getPaymentData(subscriptionType, {
+                planId,
+                planName,
+                planAmount,
+                userEmail: userEmail || req.user.email,
+                userName: userName || req.user.name || 'User'
+            });
+
+            return res.json({
+                success: true,
+                cloudPayments: cloudPaymentsData
             });
         }
 
