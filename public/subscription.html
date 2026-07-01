@@ -618,7 +618,7 @@
       <div style="display: grid; gap: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-weight: 500; color: #374151;">Тариф:</span>
-          <span style="color: #1f2937;">${data.trialEndsAt ? 'Пробный период' : getPlanName(data.type)}</span>
+          <span style="color: #1f2937;">${data.trialEndsAt && new Date(data.trialEndsAt) > new Date() ? 'Пробный период' : getPlanName(data.type)}</span>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-weight: 500; color: #374151;">Статус:</span>
@@ -626,7 +626,7 @@
         </div>
     `;
 
-    if (data.nextPaymentDate && !data.trialEndsAt) {
+    if (data.nextPaymentDate && (!data.trialEndsAt || new Date(data.trialEndsAt) <= new Date())) {
       const nextPaymentDate = new Date(data.nextPaymentDate);
       html += `
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -636,7 +636,7 @@
       `;
     }
 
-    if (data.trialEndsAt) {
+    if (data.trialEndsAt && new Date(data.trialEndsAt) > new Date()) {
       const trialEndDate = new Date(data.trialEndsAt);
       const daysLeft = Math.floor((trialEndDate - new Date()) / (1000 * 60 * 60 * 24));
       const dayWord = getDayWord(daysLeft);
