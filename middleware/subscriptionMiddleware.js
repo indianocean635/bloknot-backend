@@ -138,6 +138,14 @@ async function updateSubscriptionStatusIfNeeded(subscription) {
         needsUpdate = true;
     }
 
+    // Проверяем случай когда статус EXPIRED но подписка активна (исправление некорректного статуса)
+    if (subscription.subscriptionStatus === 'EXPIRED' && 
+        subscription.subscriptionEndsAt && now < subscription.subscriptionEndsAt) {
+        console.log('[SUBSCRIPTION] Incorrect EXPIRED status - activating subscription');
+        updatedSubscription.subscriptionStatus = 'ACTIVE';
+        needsUpdate = true;
+    }
+
     // Проверяем истечение подписки
     if ((subscription.subscriptionStatus === 'ACTIVE' || subscription.subscriptionStatus === 'CANCELLED') && 
         subscription.subscriptionEndsAt && now > subscription.subscriptionEndsAt) {
