@@ -133,8 +133,8 @@ async function updateSubscriptionStatusIfNeeded(subscription) {
 
     // Проверяем истечение trial периода
     if (subscription.subscriptionStatus === 'TRIAL' && subscription.trialEndsAt && now > subscription.trialEndsAt) {
-        console.log('[SUBSCRIPTION] Trial period expired');
-        updatedSubscription.subscriptionStatus = 'EXPIRED';
+        console.log('[SUBSCRIPTION] Trial period expired - activating subscription');
+        updatedSubscription.subscriptionStatus = 'ACTIVE';
         needsUpdate = true;
     }
 
