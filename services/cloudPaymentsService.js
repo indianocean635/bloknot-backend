@@ -323,12 +323,11 @@ class CloudPaymentsService {
                     Description: `Подписка ${planName} (${subscriptionType === 'yearly' ? 'годовая' : 'месячная'})`,
                     Amount: realAmount, // Реальная сумма тарифа
                     Currency: 'RUB',
-                    CloudPayments: {
-                        recurrent: {
-                            interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
-                            period: 1,
-                            customerReceipt: this.createCustomerReceipt(planName, realAmount, userEmail)
-                        }
+                    Recurrent: {
+                        Interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
+                        Period: 1,
+                        Amount: realAmount, // Сумма для рекуррентных платежей
+                        customerReceipt: this.createCustomerReceipt(planName, realAmount, userEmail)
                     }
                 };
 
