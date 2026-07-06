@@ -316,7 +316,7 @@ class CloudPaymentsService {
             if (planAmount === 'getDataOnly') {
                 // Данные для виджета - БЕЗ создания подписки
                 const widgetData = {
-                    PublicId: process.env.CLOUDPAYMENTS_PUBLIC_ID || 'pk_...',
+                    PublicId: process.env.CLOUDPAYMENTS_PUBLIC_ID || 'pk_f654dc1994fa0991f144094dca99d',
                     Description: `Подписка ${planName} (${subscriptionType === 'yearly' ? 'годовая' : 'месячная'})`,
                     Amount: 99000, // Временная сумма для виджета
                     Currency: 'RUB',
