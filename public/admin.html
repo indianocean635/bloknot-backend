@@ -136,7 +136,6 @@
       <button class="btn secondary" id="tabUsers" onclick="switchTab('users')" style="padding:8px 16px; border-radius:10px">Пользователи</button>
       <button class="btn secondary" id="tabSalesStaff" onclick="switchTab('sales-staff')" style="padding:8px 16px; border-radius:10px; display:none;">Сотрудники отдела продаж</button>
       <button class="btn secondary" id="tabMyClients" onclick="switchTab('my-clients')" style="padding:8px 16px; border-radius:10px; display:none;">Мои клиенты</button>
-      <button class="btn secondary" onclick="goToManagerResults()" style="padding:8px 16px; border-radius:10px">Результаты по менеджерам</button>
     </div>
 
     <!-- Staff Navigation (ADMIN_STAFF only) -->
@@ -577,6 +576,18 @@
       if (role === 'SUPER_ADMIN') {
         document.getElementById('tabSalesStaff').style.display = 'inline-block';
         document.getElementById('tabMyClients').style.display = 'none';
+        
+        // Add manager results button for super admin
+        const navContainer = document.querySelector('.actions[style*="margin-top:20px; gap:10px;"]');
+        if (navContainer && !navContainer.querySelector('.manager-results-btn')) {
+          const managerResultsBtn = document.createElement('button');
+          managerResultsBtn.className = 'btn secondary manager-results-btn';
+          managerResultsBtn.onclick = () => goToManagerResults();
+          managerResultsBtn.style.cssText = 'padding:8px 16px; border-radius:10px';
+          managerResultsBtn.textContent = 'Результаты по менеджерам';
+          navContainer.appendChild(managerResultsBtn);
+        }
+        
         switchTab('users');
       } else if (role === 'SALES_STAFF') {
         document.getElementById('tabUsers').style.display = 'inline-block';
@@ -958,7 +969,6 @@
 
       if (delSalesStaffBtn) {
         const id = delSalesStaffBtn.getAttribute('data-id');
-        showNotice('');
         delSalesStaffBtn.disabled = true;
         try {
           const confirmDelete = window.confirm('Удалить сотрудника отдела продаж? Все закрепленные клиенты будут откреплены.');
@@ -976,10 +986,10 @@
           if (!response.ok) {
             throw new Error('Failed to delete staff');
           }
-          showNotice('Сотрудник удален');
+          alert('Сотрудник удален');
           loadSalesStaff();
         } catch (err) {
-          showNotice('Ошибка удаления: ' + (err && err.message ? err.message : ''));
+          alert('Ошибка удаления: ' + (err && err.message ? err.message : ''));
         } finally {
           delSalesStaffBtn.disabled = false;
         }

@@ -109,6 +109,13 @@ exports.deleteAdminStaff = async (req, res) => {
       return res.status(404).json({ error: 'Сотрудник не найден' });
     }
 
+    // Удаляем все закрепления клиентов за этим сотрудником
+    await prisma.salesStaffAssignment.deleteMany({
+      where: {
+        salesStaffId: id
+      }
+    });
+
     // Удаляем сотрудника
     await prisma.user.delete({
       where: { id }
@@ -116,7 +123,7 @@ exports.deleteAdminStaff = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Сотрудник успешно удален'
+      message: 'Сотрудник и все связанные данные успешно удалены'
     });
   } catch (error) {
     console.error('Error deleting admin staff:', error);
