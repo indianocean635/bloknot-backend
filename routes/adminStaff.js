@@ -23,4 +23,10 @@ router.get('/search-clients', requireAuth, adminStaffController.searchClients);
 // Закрепление клиента за сотрудником
 router.post('/assign-client', requireAuth, adminStaffController.assignClientToStaff);
 
+// Получение закрепленных клиентов
+router.get('/assigned-clients', requireAuth, adminStaffController.getAssignedClients);
+
+// Открепление клиента
+router.delete('/unassign-client/:assignmentId', requireAuth, adminStaffController.unassignClient);
+
 module.exports = router;

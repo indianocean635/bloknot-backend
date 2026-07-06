@@ -187,6 +187,41 @@
       </div>
     </div>
 
+    <!-- Staff Assigned Clients Section (ADMIN_STAFF only) -->
+    <div id="staffAssignedClients" style="display:none; margin-top:20px;">
+      <div class="card">
+        <div class="actions" style="justify-content:space-between">
+          <div>
+            <div class="item-title">Мои клиенты</div>
+            <div class="item-meta">Клиенты, закрепленные за вами</div>
+          </div>
+          <button class="btn secondary" onclick="loadAssignedClients()" style="padding:6px 12px; font-size:12px">Обновить</button>
+        </div>
+
+        <div style="overflow:auto; margin-top:15px;">
+          <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:13px">
+            <thead>
+              <tr>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:25%">Email</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:20%">Name</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Phone</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Registration</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Закреплен</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:10%">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="assignedClientsTable">
+              <tr>
+                <td colspan="6" style="padding:20px; text-align:center; color:#666;">
+                  Загрузка списка клиентов...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- Users Section -->
     <div id="section-users">
       <div class="row three" style="margin-top:14px">
@@ -617,8 +652,12 @@
         // Show client search section
         document.getElementById('staffClientSearch').style.display = 'block';
         
-        // Load staff data
+        // Show assigned clients section
+        document.getElementById('staffAssignedClients').style.display = 'block';
+        
+        // Load staff data and assigned clients
         loadStaffData();
+        loadAssignedClients();
       } else {
         switchTab('users');
       }
@@ -868,12 +907,101 @@
               </td>
             </tr>
           `;
+          // Обновить список закрепленных клиентов
+          loadAssignedClients();
         } else {
           alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
         }
       } catch (error) {
         console.error('Assignment error:', error);
         alert('Ошибка при закреплении клиента');
+      }
+    }
+
+    // Load assigned clients for staff
+    async function loadAssignedClients() {
+      try {
+        const response = await fetch('/api/admin-staff/assigned-clients', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth')}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load assigned clients');
+        }
+
+        const data = await response.json();
+        displayAssignedClients(data.clients || []);
+      } catch (error) {
+        console.error('Error loading assigned clients:', error);
+        document.getElementById('assignedClientsTable').innerHTML = `
+          <tr>
+            <td colspan="6" style="padding:20px; text-align:center; color:#dc3545;">
+              Ошибка загрузки: ${error.message}
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Display assigned clients
+    function displayAssignedClients(clients) {
+      const table = document.getElementById('assignedClientsTable');
+
+      if (clients.length === 0) {
+        table.innerHTML = `
+          <tr>
+            <td colspan="6" style="padding:20px; text-align:center; color:#666;">
+              У вас пока нет закрепленных клиентов
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      table.innerHTML = clients.map(assignment => `
+        <tr>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${esc(assignment.client.email)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${esc(assignment.client.name || '-')}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${esc(assignment.client.phone || '-')}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${fmtDate(assignment.client.createdAt)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${fmtDate(assignment.assignedAt)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">
+            <button class="btn danger" onclick="unassignClient('${esc(assignment.id)}', '${esc(assignment.client.email)}')" style="padding:4px 8px; font-size:11px">
+              Открепить
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Unassign client
+    async function unassignClient(assignmentId, clientEmail) {
+      try {
+        const confirmUnassign = window.confirm(`Открепить клиента ${clientEmail} от вас?`);
+        if (!confirmUnassign) {
+          return;
+        }
+
+        const response = await fetch(`/api/admin-staff/unassign-client/${assignmentId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth')}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`Клиент ${clientEmail} откреплен`);
+          loadAssignedClients(); // Обновить список
+        } else {
+          alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+      } catch (error) {
+        console.error('Unassign error:', error);
+        alert('Ошибка при откреплении клиента');
       }
     }
 

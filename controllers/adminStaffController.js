@@ -266,12 +266,10 @@ exports.assignClientToStaff = async (req, res) => {
     }
 
     // Проверяем, не закреплен ли клиент уже за этим сотрудником
-    const existingAssignment = await prisma.salesStaffAssignment.findUnique({
+    const existingAssignment = await prisma.salesStaffAssignment.findFirst({
       where: {
-        salesStaffId_clientEmail: {
-          salesStaffId: staffId,
-          clientEmail: client.email
-        }
+        salesStaffId: staffId,
+        clientEmail: client.email
       }
     });
 
@@ -295,5 +293,110 @@ exports.assignClientToStaff = async (req, res) => {
   } catch (error) {
     console.error('Error assigning client:', error);
     res.status(500).json({ error: 'Ошибка при закреплении клиента' });
+  }
+};
+
+// Получение закрепленных клиентов сотрудника
+exports.getAssignedClients = async (req, res) => {
+  try {
+    // Проверяем, что текущий пользователь - сотрудник или супер админ
+    if (req.user.role !== 'ADMIN_STAFF' && req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Доступ запрещен' });
+    }
+
+    const staffId = req.user.id;
+
+    // Получаем все закрепления для этого сотрудника
+    const assignments = await prisma.salesStaffAssignment.findMany({
+      where: {
+        salesStaffId: staffId
+      },
+      include: {
+        salesStaff: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        }
+      },
+      orderBy: { assignedAt: 'desc' }
+    });
+
+    // Получаем информацию о клиентах по email
+    const clientEmails = assignments.map(a => a.clientEmail);
+    const clients = await prisma.user.findMany({
+      where: {
+        email: {
+          in: clientEmails
+        }
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        createdAt: true
+      }
+    });
+
+    // Объединяем данные
+    const assignedClients = assignments.map(assignment => {
+      const client = clients.find(c => c.email === assignment.clientEmail);
+      return {
+        id: assignment.id,
+        client: client || null,
+        assignedAt: assignment.assignedAt,
+        assignedBy: assignment.assignedBy
+      };
+    }).filter(ac => ac.client !== null);
+
+    res.json({
+      success: true,
+      clients: assignedClients
+    });
+  } catch (error) {
+    console.error('Error getting assigned clients:', error);
+    res.status(500).json({ error: 'Ошибка при получении закрепленных клиентов' });
+  }
+};
+
+// Открепление клиента от сотрудника
+exports.unassignClient = async (req, res) => {
+  try {
+    // Проверяем, что текущий пользователь - сотрудник или супер админ
+    if (req.user.role !== 'ADMIN_STAFF' && req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Доступ запрещен' });
+    }
+
+    const { assignmentId } = req.params;
+    const staffId = req.user.id;
+
+    // Проверяем, существует ли закрепление
+    const assignment = await prisma.salesStaffAssignment.findUnique({
+      where: { id: assignmentId }
+    });
+
+    if (!assignment) {
+      return res.status(404).json({ error: 'Закрепление не найдено' });
+    }
+
+    // Проверяем, что закрепление принадлежит текущему сотруднику
+    if (assignment.salesStaffId !== staffId && req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Вы можете открепить только своих клиентов' });
+    }
+
+    // Удаляем закрепление
+    await prisma.salesStaffAssignment.delete({
+      where: { id: assignmentId }
+    });
+
+    res.json({
+      success: true,
+      message: 'Клиент успешно откреплен'
+    });
+  } catch (error) {
+    console.error('Error unassigning client:', error);
+    res.status(500).json({ error: 'Ошибка при откреплении клиента' });
   }
 };
