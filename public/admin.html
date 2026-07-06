@@ -319,19 +319,19 @@
         <form id="addStaffForm">
           <div style="margin-bottom:15px;">
             <label style="display:block; margin-bottom:5px; font-weight:bold;">Имя:</label>
-            <input type="text" id="staffName" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+            <input type="text" id="newStaffName" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
           </div>
           <div style="margin-bottom:15px;">
             <label style="display:block; margin-bottom:5px; font-weight:bold;">Email:</label>
-            <input type="email" id="staffEmail" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+            <input type="email" id="newStaffEmail" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
           </div>
           <div style="margin-bottom:15px;">
             <label style="display:block; margin-bottom:5px; font-weight:bold;">Телефон:</label>
-            <input type="tel" id="staffPhone" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+            <input type="tel" id="newStaffPhone" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
           </div>
           <div style="margin-bottom:15px;">
             <label style="display:block; margin-bottom:5px; font-weight:bold;">Пароль:</label>
-            <input type="password" id="staffPassword" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+            <input type="password" id="newStaffPassword" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
           </div>
           <div style="text-align:right;">
             <button type="button" onclick="closeAddStaffModal()" style="margin-right:10px; padding:8px 16px; border:1px solid #ddd; background:white; border-radius:4px; cursor:pointer;">Отмена</button>
@@ -771,10 +771,10 @@
         e.preventDefault();
         
         // Проверим существование элементов перед получением значений
-        const nameElement = document.getElementById('staffName');
-        const emailElement = document.getElementById('staffEmail');
-        const phoneElement = document.getElementById('staffPhone');
-        const passwordElement = document.getElementById('staffPassword');
+        const nameElement = document.getElementById('newStaffName');
+        const emailElement = document.getElementById('newStaffEmail');
+        const phoneElement = document.getElementById('newStaffPhone');
+        const passwordElement = document.getElementById('newStaffPassword');
 
         console.log('Elements found:', {
           nameElement: !!nameElement,
