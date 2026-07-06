@@ -350,12 +350,11 @@ class CloudPaymentsService {
                 StartDate: now, // Немедленная активация
                 TrialPeriod: null, // НЕТ trial периода
                 CustomerReceipt: paymentReceipt,
-                CloudPayments: {
-                    recurrent: {
-                        interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
-                        period: 1,
-                        customerReceipt: paymentReceipt
-                    }
+                Recurrent: { // Рекуррентные платежи в корне объекта
+                    Interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
+                    Period: 1,
+                    Amount: planAmount, // Сумма для рекуррентных платежей
+                    customerReceipt: paymentReceipt
                 }
             };
 
