@@ -123,3 +123,63 @@ exports.deleteAdminStaff = async (req, res) => {
     res.status(500).json({ error: 'Ошибка при удалении сотрудника' });
   }
 };
+
+// Получение результатов по менеджерам
+exports.getManagerResults = async (req, res) => {
+  try {
+    // Проверяем, что текущий пользователь - супер админ или сотрудник
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'ADMIN_STAFF') {
+      return res.status(403).json({ error: 'Доступ запрещен' });
+    }
+
+    // Получаем всех сотрудников с ролью ADMIN_STAFF
+    const managers = await prisma.user.findMany({
+      where: {
+        role: 'ADMIN_STAFF'
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        createdAt: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Получаем данные о клиентах для каждого менеджера
+    // В реальном приложении здесь должна быть логика подсчета клиентов
+    // Пока используем заглушки для демонстрации
+    const managersWithStats = managers.map(manager => {
+      // Заглушка: в реальном приложении здесь будет подсчет клиентов
+      const totalClients = Math.floor(Math.random() * 20) + 5; // 5-25 клиентов
+      const clientsWithCards = Math.floor(Math.random() * totalClients); // 0 до totalClients
+      const clientsWithoutCards = totalClients - clientsWithCards;
+
+      return {
+        ...manager,
+        totalClients,
+        clientsWithCards,
+        clientsWithoutCards
+      };
+    });
+
+    // Считаем общую статистику
+    const totalManagers = managersWithStats.length;
+    const totalClients = managersWithStats.reduce((sum, m) => sum + m.totalClients, 0);
+    const totalWithCards = managersWithStats.reduce((sum, m) => sum + m.clientsWithCards, 0);
+    const totalWithoutCards = managersWithStats.reduce((sum, m) => sum + m.clientsWithoutCards, 0);
+
+    res.json({
+      success: true,
+      totalManagers,
+      totalClients,
+      totalWithCards,
+      totalWithoutCards,
+      managers: managersWithStats
+    });
+  } catch (error) {
+    console.error('Error getting manager results:', error);
+    res.status(500).json({ error: 'Ошибка при получении результатов' });
+  }
+};

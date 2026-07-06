@@ -14,4 +14,7 @@ router.get('/', requireAuth, adminStaffController.getAdminStaffList);
 // Удаление сотрудника
 router.delete('/:id', requireAuth, adminStaffController.deleteAdminStaff);
 
+// Получение результатов по менеджерам
+router.get('/results', requireAuth, adminStaffController.getManagerResults);
+
 module.exports = router;

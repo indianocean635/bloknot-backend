@@ -138,6 +138,12 @@
       <button class="btn secondary" id="tabMyClients" onclick="switchTab('my-clients')" style="padding:8px 16px; border-radius:10px; display:none;">Мои клиенты</button>
     </div>
 
+    <!-- Staff Navigation (ADMIN_STAFF only) -->
+    <div id="staffNavigation" class="actions" style="margin-top:20px; gap:10px; display:none;">
+      <button class="btn secondary" onclick="goToMainPage()" style="padding:8px 16px; border-radius:10px">Клиенты</button>
+      <button class="btn secondary" onclick="goToManagerResults()" style="padding:8px 16px; border-radius:10px">Результаты по менеджерам</button>
+    </div>
+
     <!-- Users Section -->
     <div id="section-users">
       <div class="row three" style="margin-top:14px">
@@ -542,14 +548,15 @@
         document.getElementById('tabUsers').style.display = 'none';
         document.getElementById('section-users').style.display = 'none';
         
-        // Show staff management (read-only)
-        document.getElementById('tabSalesStaff').style.display = 'inline-block';
-        document.getElementById('tabMyClients').style.display = 'none';
-        document.getElementById('addSalesStaffBtn').style.display = 'none';
+        // Hide staff management tab
+        document.getElementById('tabSalesStaff').style.display = 'none';
+        document.getElementById('section-sales-staff').style.display = 'none';
+        
+        // Show custom staff navigation
+        document.getElementById('staffNavigation').style.display = 'flex';
         
         // Load staff data
         loadStaffData();
-        switchTab('sales-staff');
       } else {
         switchTab('users');
       }
@@ -691,6 +698,17 @@
         alert('Ошибка при создании сотрудника');
       }
     });
+
+    // Staff navigation functions
+    function goToMainPage() {
+      // Переход на главную страницу (можно настроить URL)
+      window.location.href = '/';
+    }
+
+    function goToManagerResults() {
+      // Переход на страницу результатов по менеджерам
+      window.location.href = '/staff-manager-results.html';
+    }
 
     // Delete sales staff
     document.getElementById('refreshSalesStaffBtn').addEventListener('click', () => {
