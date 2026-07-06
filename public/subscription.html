@@ -1142,10 +1142,7 @@
           </div>
         `;
 
-        // Show payment modal
-        document.getElementById('cloudPaymentsModal').style.display = 'block';
-
-        // Initialize CloudPayments widget
+        // Initialize CloudPayments widget directly (no custom modal)
         const widget = new cp.CloudPayments();
 
         const authOptions = {
@@ -1174,12 +1171,10 @@
         });
       } else {
         alert('Ошибка подготовки платежа: ' + (data.error || 'Unknown error'));
-        document.getElementById('cloudPaymentsModal').style.display = 'none';
       }
     } catch (error) {
       console.error('[SUBSCRIPTION] Error starting payment:', error);
       alert('Ошибка запуска платежа');
-      document.getElementById('cloudPaymentsModal').style.display = 'none';
     }
   }
 

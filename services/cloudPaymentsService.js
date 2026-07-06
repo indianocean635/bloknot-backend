@@ -314,17 +314,20 @@ class CloudPaymentsService {
 
             // Если запрашиваются только данные (getDataOnly), возвращаем их
             if (planAmount === 'getDataOnly') {
+                // Получаем реальную сумму тарифа из плана
+                const realAmount = this.getPlanAmount(planId, subscriptionType);
+                
                 // Данные для виджета - БЕЗ создания подписки
                 const widgetData = {
                     PublicId: process.env.CLOUDPAYMENTS_PUBLIC_ID || 'pk_f654dc1994fa0991f144094dca99d',
                     Description: `Подписка ${planName} (${subscriptionType === 'yearly' ? 'годовая' : 'месячная'})`,
-                    Amount: 990, // Правильная сумма в рублях
+                    Amount: realAmount, // Реальная сумма тарифа
                     Currency: 'RUB',
                     CloudPayments: {
                         recurrent: {
                             interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
                             period: 1,
-                            customerReceipt: paymentReceipt
+                            customerReceipt: this.createCustomerReceipt(planName, realAmount, userEmail)
                         }
                     }
                 };
@@ -690,6 +693,43 @@ class CloudPaymentsService {
             });
             throw error;
         }
+    }
+
+    /**
+     * Получить сумму тарифа по ID и типу подписки
+     */
+    getPlanAmount(planId, subscriptionType) {
+        const configs = {
+            solo: { amount: 690 },
+            studio: { amount: 990 },
+            pro: { amount: 1490 },
+            'solo-yearly': { amount: 6624 },
+            'studio-yearly': { amount: 9504 },
+            'pro-yearly': { amount: 14304 }
+        };
+
+        const configKey = subscriptionType === 'yearly' ? `${planId}-yearly` : planId;
+        const config = configs[configKey] || configs.studio; // fallback to studio
+        
+        return config.amount;
+    }
+
+    /**
+     * Создать чек для CloudPayments
+     */
+    createCustomerReceipt(planName, amount, userEmail) {
+        return {
+            Items: [{
+                Name: `${planName} подписка`,
+                Price: amount,
+                Quantity: 1,
+                Amount: amount,
+                Tax: 'none',
+                Ean13: ''
+            }],
+            taxationSystem: 'patent',
+            email: userEmail
+        };
     }
 
     /**
