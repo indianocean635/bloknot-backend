@@ -29,6 +29,12 @@ model User {
   cloudPaymentsSubscriptionId String?
   cloudPaymentsCardToken     String?
   nextPaymentDate           DateTime?
+  
+  // Payment tracking fields
+  lastPaymentStatus         String?   // success, failed, pending
+  lastPaymentAmount         Int?      // amount in kopecks
+  lastPaymentDate           DateTime?
+  lastPaymentTransactionId  String?
 
   business Business? @relation("BusinessUsers", fields: [businessId], references: [id])
   ownedBusiness Business? @relation("BusinessOwner")

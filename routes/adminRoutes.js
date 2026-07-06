@@ -134,7 +134,11 @@ router.get('/users', requireAuth, async (req, res) => {
       password: user.password,
       hasPassword: user.hasPassword,
       staffUsers: user.business?.users || [],
-      subscription: user.business?.subscription || null
+      subscription: user.business?.subscription || null,
+      lastPaymentStatus: user.lastPaymentStatus,
+      lastPaymentAmount: user.lastPaymentAmount,
+      lastPaymentDate: user.lastPaymentDate,
+      lastPaymentTransactionId: user.lastPaymentTransactionId
     }));
 
     res.json(usersWithStaff);

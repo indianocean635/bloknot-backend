@@ -271,6 +271,7 @@
               <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:8%">Paid (RUB)</th>
               <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:8%">Next billing</th>
               <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:6%">Карта</th>
+              <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:8%">Оплата</th>
               <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:8%">Staff</th>
               <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:11%">Actions</th>
             </tr>
@@ -510,6 +511,14 @@
               ${u.subscription && u.subscription.cardAttachedAt ? 
                 `<span style="color: #10b981; font-weight: bold;">✓ Привязана</span><br><span style="font-size: 10px; color: #666;">${fmtDate(u.subscription.cardAttachedAt)}</span>` : 
                 `<span style="color: #ef4444;">✗ Не привязана</span>`
+              }
+            </td>
+            <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
+              ${u.lastPaymentStatus === 'success' ? 
+                `<span class="status-badge status-card">Прошла</span><br><span style="font-size: 10px; color: #666;">${u.lastPaymentAmount || 0} ₽</span>` : 
+                u.lastPaymentStatus === 'failed' ? 
+                `<span class="status-badge status-no-card">Не прошла</span><br><span style="font-size: 10px; color: #666;">${u.lastPaymentAmount || 0} ₽</span>` :
+                `<span style="color: #666; font-size: 11px;">Нет данных</span>`
               }
             </td>
             <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
