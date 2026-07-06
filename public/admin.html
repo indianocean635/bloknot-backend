@@ -710,7 +710,7 @@
         loadSalesStaff();
       } else if (tabName === 'my-clients') {
         document.getElementById('tabMyClients').classList.add('primary');
-        loadAssignedClients();
+        loadAdminAssignedClients();
       }
     }
 
@@ -1010,8 +1010,8 @@
       loadSalesStaff();
     });
 
-    // Load assigned clients
-    async function loadAssignedClients() {
+    // Load assigned clients for super admin
+    async function loadAdminAssignedClients() {
       try {
         const clients = await api('/api/admin/assigned-clients');
         const clientsTbody = document.getElementById('clientsTbody');
@@ -1072,7 +1072,7 @@
             showNotice('Клиент закреплен');
             searchResult.style.display = 'none';
             document.getElementById('clientSearch').value = '';
-            loadAssignedClients();
+            loadAdminAssignedClients();
           } catch (error) {
             showNotice('Ошибка закрепления: ' + error.message);
           }
@@ -1085,7 +1085,7 @@
 
     // Refresh clients
     document.getElementById('refreshClientsBtn').addEventListener('click', () => {
-      loadAssignedClients();
+      loadAdminAssignedClients();
     });
 
     document.addEventListener('click', async (e) => {
@@ -1131,7 +1131,7 @@
         try {
           await api(`/api/admin/assign-client?clientEmail=${encodeURIComponent(email)}&salesStaffId=${window.currentUser.id}`, { method: 'DELETE' });
           showNotice('Клиент откреплен');
-          loadAssignedClients();
+          loadAdminAssignedClients();
         } catch (err) {
           showNotice('Ошибка открепления: ' + (err && err.message ? err.message : ''));
         } finally {
