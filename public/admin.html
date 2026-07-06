@@ -83,8 +83,8 @@
   </style>
   
   <main class="container admin-container">
-    <h1 class="page-title">Супер Админ</h1>
-    <p class="page-subtitle">Статистика и пользователи</p>
+    <h1 class="page-title" id="pageTitle">Супер Админ</h1>
+    <p class="page-subtitle" id="pageSubtitle">Статистика и пользователи</p>
 
     <div style="text-align: center; margin-top: 20px;">
       <div id="adminImageContainer">
@@ -136,6 +136,7 @@
       <button class="btn secondary" id="tabUsers" onclick="switchTab('users')" style="padding:8px 16px; border-radius:10px">Пользователи</button>
       <button class="btn secondary" id="tabSalesStaff" onclick="switchTab('sales-staff')" style="padding:8px 16px; border-radius:10px; display:none;">Сотрудники отдела продаж</button>
       <button class="btn secondary" id="tabMyClients" onclick="switchTab('my-clients')" style="padding:8px 16px; border-radius:10px; display:none;">Мои клиенты</button>
+      <button class="btn secondary" onclick="goToManagerResults()" style="padding:8px 16px; border-radius:10px">Результаты по менеджерам</button>
     </div>
 
     <!-- Staff Navigation (ADMIN_STAFF only) -->
@@ -540,6 +541,10 @@
         document.getElementById('tabMyClients').style.display = 'inline-block';
         switchTab('my-clients');
       } else if (role === 'ADMIN_STAFF') {
+        // Update page title for staff
+        document.getElementById('pageTitle').textContent = 'Личный кабинет';
+        document.getElementById('pageSubtitle').textContent = 'Управление';
+        
         // Show staff info
         document.getElementById('staffInfo').style.display = 'block';
         document.getElementById('returnToAdminBtn').style.display = 'none';
