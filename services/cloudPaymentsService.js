@@ -318,11 +318,8 @@ class CloudPaymentsService {
                 const widgetData = {
                     PublicId: process.env.CLOUDPAYMENTS_PUBLIC_ID || 'pk_f654dc1994fa0991f144094dca99d',
                     Description: `Подписка ${planName} (${subscriptionType === 'yearly' ? 'годовая' : 'месячная'})`,
-                    Amount: 99000, // Временная сумма для виджета
+                    Amount: 990, // Правильная сумма в рублях
                     Currency: 'RUB',
-                    RequireConfirmation: false,
-                    TrialPeriod: null, // НЕТ trial периода
-                    CustomerReceipt: paymentReceipt,
                     CloudPayments: {
                         recurrent: {
                             interval: subscriptionType === 'yearly' ? 'Year' : 'Month',

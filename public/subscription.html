@@ -1153,37 +1153,25 @@
           description: data.cloudPayments.Description,
           amount: data.cloudPayments.Amount,
           currency: data.cloudPayments.Currency,
-          accountId: data.cloudPayments.AccountId,
-          email: data.cloudPayments.Email,
-          requireConfirmation: data.cloudPayments.RequireConfirmation,
-          trialPeriod: data.cloudPayments.TrialPeriod,
           recurring: data.cloudPayments.CloudPayments.recurrent
         };
 
-        const message = isPlanChange 
-          ? `Оплатите новый тариф ${plan.name}. Сумма: ${plan.price}`
-          : (plan.period === 'monthly' 
-            ? 'Привяжите карту для активации пробного периода на 5 дней. Первое списание через 5 дней.'
-            : 'Оплатите годовую подписку со скидкой 20%');
-
-        if (confirm(message)) {
-          // Use auth for card token, then create subscription on backend
-          widget.auth(authOptions, function(options) {
-            // Success - got card token, now create subscription
-            console.log('[SUBSCRIPTION] Card auth successful, creating subscription:', options);
-            handlePaymentSuccess(options, { 
-              id: plan.id, 
-              name: plan.name, 
-              amount: data.cloudPayments.Amount, 
-              period: plan.period || 'monthly',
-              billingType: plan.period || 'monthly'
-            });
-          }, function(reason, options) {
-            // Fail
-            console.error('Card auth failed', reason, options);
-            handlePaymentFailure(reason, options);
+        // Use auth for card token, then create subscription on backend (no confirmation needed)
+        widget.auth(authOptions, function(options) {
+          // Success - got card token, now create subscription
+          console.log('[SUBSCRIPTION] Card auth successful, creating subscription:', options);
+          handlePaymentSuccess(options, { 
+            id: plan.id, 
+            name: plan.name, 
+            amount: data.cloudPayments.Amount, 
+            period: plan.period || 'monthly',
+            billingType: plan.period || 'monthly'
           });
-        }
+        }, function(reason, options) {
+          // Fail
+          console.error('Card auth failed', reason, options);
+          handlePaymentFailure(reason, options);
+        });
       } else {
         alert('Ошибка подготовки платежа: ' + (data.error || 'Unknown error'));
         document.getElementById('cloudPaymentsModal').style.display = 'none';
