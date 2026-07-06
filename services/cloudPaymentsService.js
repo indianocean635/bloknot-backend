@@ -328,28 +328,26 @@ class CloudPaymentsService {
                 Email: userEmail
             };
 
-            // Создаем подписку в CloudPayments с ТОЧНО такой же структурой как в регистрации
-            // Используем 1 рубль для первого платежа как в регистрации для Тинькова
-            const firstPaymentAmount = 1; // 1 рубль для первого платежа как в регистрации
-            
+            // Создаем подписку в CloudPayments с полной суммой для первого платежа
+            // Для Тинькова важно чтобы первый платеж был на полную сумму рекуррентных платежей
             const cloudPaymentsData = {
                 Token: cardToken,
                 AccountId: userId,
                 Email: userEmail,
                 Description: `Подписка ${planName} для ${user.business?.name || userName}`,
-                Amount: firstPaymentAmount, // 1 рубль для первого платежа (как в регистрации)
+                Amount: planAmount, // Полная сумма для первого платежа
                 Currency: 'RUB',
                 RequireConfirmation: false,
                 StartDate: now, // Немедленная активация
                 TrialPeriod: null, // НЕТ trial периода (убрали 5 дней)
-                CustomerReceipt: firstPaymentReceipt,
+                CustomerReceipt: recurrentPaymentReceipt, // Используем чек для рекуррентных платежей
                 CloudPayments: {
                     recurrent: {
                         interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
                         period: 1, 
                         customerReceipt: recurrentPaymentReceipt //чек для регулярных платежей
                     }
-                } //создание ежемесячной подписки - ТОЧНО как в регистрации
+                } //создание ежемесячной подписки
             };
 
             console.log('[CLOUDPAYMENTS] Creating subscription for plan change (based on registration code):', {
