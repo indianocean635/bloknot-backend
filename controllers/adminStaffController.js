@@ -8,8 +8,19 @@ exports.createAdminStaff = async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
+    // Добавим отладочную информацию
+    console.log('Received data:', { name, email, phone, password });
+    console.log('Name check:', !name, typeof name, name?.length);
+    console.log('Email check:', !email, typeof email, email?.length);
+    console.log('Password check:', !password, typeof password, password?.length);
+
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Имя, email и пароль обязательны' });
+    }
+
+    // Дополнительная проверка на пустые строки
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      return res.status(400).json({ error: 'Имя, email и пароль обязательны (проверка на пустые строки)' });
     }
 
     // Проверяем, что текущий пользователь - супер админ

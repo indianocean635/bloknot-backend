@@ -770,8 +770,20 @@
       const phone = document.getElementById('staffPhone').value;
       const password = document.getElementById('staffPassword').value;
 
+      // Добавим отладочную информацию
+      console.log('Form values:', { name, email, phone, password });
+      console.log('Name trim:', name?.trim());
+      console.log('Email trim:', email?.trim());
+      console.log('Password trim:', password?.trim());
+
       if (!name || !email || !password) {
         alert('Имя, email и пароль обязательны');
+        return;
+      }
+
+      // Дополнительная проверка на пустые строки после trim
+      if (!name.trim() || !email.trim() || !password.trim()) {
+        alert('Имя, email и пароль обязательны (проверка на пустые строки)');
         return;
       }
 
