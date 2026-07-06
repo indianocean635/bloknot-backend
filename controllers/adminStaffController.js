@@ -183,3 +183,110 @@ exports.getManagerResults = async (req, res) => {
     res.status(500).json({ error: 'Ошибка при получении результатов' });
   }
 };
+
+// Поиск клиентов
+exports.searchClients = async (req, res) => {
+  try {
+    // Проверяем, что текущий пользователь - супер админ или сотрудник
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'ADMIN_STAFF') {
+      return res.status(403).json({ error: 'Доступ запрещен' });
+    }
+
+    const { q } = req.query;
+
+    if (!q || q.length < 3) {
+      return res.json({ clients: [] });
+    }
+
+    // Ищем пользователей по email (только обычные пользователи, не админы)
+    const clients = await prisma.user.findMany({
+      where: {
+        email: {
+          contains: q,
+          mode: 'insensitive'
+        },
+        role: 'OWNER' // Только обычные пользователи
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        createdAt: true
+      },
+      take: 10,
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Добавляем информацию о картах (заглушка, в реальном приложении здесь будет проверка карт)
+    const clientsWithCardInfo = clients.map(client => ({
+      ...client,
+      hasCard: Math.random() > 0.5 // Заглушка: 50% клиентов имеют карты
+    }));
+
+    res.json({
+      success: true,
+      clients: clientsWithCardInfo
+    });
+  } catch (error) {
+    console.error('Error searching clients:', error);
+    res.status(500).json({ error: 'Ошибка при поиске клиентов' });
+  }
+};
+
+// Закрепление клиента за сотрудником
+exports.assignClientToStaff = async (req, res) => {
+  try {
+    // Проверяем, что текущий пользователь - сотрудник
+    if (req.user.role !== 'ADMIN_STAFF' && req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Доступ запрещен' });
+    }
+
+    const { clientId } = req.body;
+    const staffId = req.user.id;
+
+    if (!clientId) {
+      return res.status(400).json({ error: 'ID клиента обязателен' });
+    }
+
+    // Проверяем, существует ли клиент
+    const client = await prisma.user.findUnique({
+      where: { id: clientId }
+    });
+
+    if (!client) {
+      return res.status(404).json({ error: 'Клиент не найден' });
+    }
+
+    // Проверяем, не закреплен ли клиент уже за этим сотрудником
+    const existingAssignment = await prisma.salesStaffAssignment.findUnique({
+      where: {
+        salesStaffId_clientEmail: {
+          salesStaffId: staffId,
+          clientEmail: client.email
+        }
+      }
+    });
+
+    if (existingAssignment) {
+      return res.status(400).json({ error: 'Клиент уже закреплен за вами' });
+    }
+
+    // Закрепляем клиента за сотрудником
+    await prisma.salesStaffAssignment.create({
+      data: {
+        salesStaffId: staffId,
+        clientEmail: client.email,
+        assignedBy: staffId
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Клиент успешно закреплен'
+    });
+  } catch (error) {
+    console.error('Error assigning client:', error);
+    res.status(500).json({ error: 'Ошибка при закреплении клиента' });
+  }
+};

@@ -17,4 +17,10 @@ router.delete('/:id', requireAuth, adminStaffController.deleteAdminStaff);
 // Получение результатов по менеджерам
 router.get('/results', requireAuth, adminStaffController.getManagerResults);
 
+// Поиск клиентов
+router.get('/search-clients', requireAuth, adminStaffController.searchClients);
+
+// Закрепление клиента за сотрудником
+router.post('/assign-client', requireAuth, adminStaffController.assignClientToStaff);
+
 module.exports = router;

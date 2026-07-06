@@ -141,8 +141,51 @@
 
     <!-- Staff Navigation (ADMIN_STAFF only) -->
     <div id="staffNavigation" class="actions" style="margin-top:20px; gap:10px; display:none;">
-      <button class="btn secondary" onclick="goToMainPage()" style="padding:8px 16px; border-radius:10px">Клиенты</button>
       <button class="btn secondary" onclick="goToManagerResults()" style="padding:8px 16px; border-radius:10px">Результаты по менеджерам</button>
+    </div>
+
+    <!-- Staff Client Search Section (ADMIN_STAFF only) -->
+    <div id="staffClientSearch" style="display:none; margin-top:20px;">
+      <div class="card">
+        <div class="actions" style="justify-content:space-between">
+          <div>
+            <div class="item-title">Поиск клиентов</div>
+            <div class="item-meta">Найдите и закрепите клиентов за собой</div>
+          </div>
+        </div>
+
+        <div style="margin-top:15px;">
+          <input 
+            type="text" 
+            id="clientSearchInput" 
+            placeholder="Введите email для поиска клиента..." 
+            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:14px;"
+            onkeyup="searchClients(event)"
+          />
+        </div>
+
+        <div style="overflow:auto; margin-top:15px;">
+          <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:13px">
+            <thead>
+              <tr>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:25%">Email</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:20%">Name</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Phone</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Registration</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Карта</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:10%">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="clientSearchResults">
+              <tr>
+                <td colspan="6" style="padding:20px; text-align:center; color:#666;">
+                  Начните вводить email для поиска клиентов
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- Users Section -->
@@ -560,6 +603,9 @@
         // Show custom staff navigation
         document.getElementById('staffNavigation').style.display = 'flex';
         
+        // Show client search section
+        document.getElementById('staffClientSearch').style.display = 'block';
+        
         // Load staff data
         loadStaffData();
       } else {
@@ -705,14 +751,119 @@
     });
 
     // Staff navigation functions
-    function goToMainPage() {
-      // Переход на главную страницу (можно настроить URL)
-      window.location.href = '/';
-    }
-
     function goToManagerResults() {
       // Переход на страницу результатов по менеджерам
       window.location.href = '/staff-manager-results.html';
+    }
+
+    // Search clients function
+    async function searchClients(event) {
+      const searchValue = event.target.value.trim();
+      const resultsTable = document.getElementById('clientSearchResults');
+
+      if (searchValue.length < 3) {
+        resultsTable.innerHTML = `
+          <tr>
+            <td colspan="6" style="padding:20px; text-align:center; color:#666;">
+              Введите минимум 3 символа для поиска
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/admin-staff/search-clients?q=${encodeURIComponent(searchValue)}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth')}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Search failed');
+        }
+
+        const data = await response.json();
+        displaySearchResults(data.clients || []);
+      } catch (error) {
+        console.error('Search error:', error);
+        resultsTable.innerHTML = `
+          <tr>
+            <td colspan="6" style="padding:20px; text-align:center; color:#dc3545;">
+              Ошибка поиска: ${error.message}
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Display search results
+    function displaySearchResults(clients) {
+      const resultsTable = document.getElementById('clientSearchResults');
+
+      if (clients.length === 0) {
+        resultsTable.innerHTML = `
+          <tr>
+            <td colspan="6" style="padding:20px; text-align:center; color:#666;">
+              Клиенты не найдены
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      resultsTable.innerHTML = clients.map(client => `
+        <tr>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${esc(client.email)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${esc(client.name || '-')}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${esc(client.phone || '-')}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${fmtDate(client.createdAt)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">
+            <span class="status-badge ${client.hasCard ? 'status-card' : 'status-no-card'}">
+              ${client.hasCard ? 'Есть карта' : 'Нет карты'}
+            </span>
+          </td>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">
+            <button class="btn primary" onclick="assignClientToStaff('${esc(client.id)}', '${esc(client.email)}')" style="padding:4px 8px; font-size:11px">
+              Закрепить
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Assign client to staff
+    async function assignClientToStaff(clientId, clientEmail) {
+      try {
+        const response = await fetch('/api/admin-staff/assign-client', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth')}`
+          },
+          body: JSON.stringify({ clientId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`Клиент ${clientEmail} успешно закреплен за вами!`);
+          // Очистить поиск
+          document.getElementById('clientSearchInput').value = '';
+          document.getElementById('clientSearchResults').innerHTML = `
+            <tr>
+              <td colspan="6" style="padding:20px; text-align:center; color:#666;">
+                Начните вводить email для поиска клиентов
+              </td>
+            </tr>
+          `;
+        } else {
+          alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+      } catch (error) {
+        console.error('Assignment error:', error);
+        alert('Ошибка при закреплении клиента');
+      }
     }
 
     // Delete sales staff
