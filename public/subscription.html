@@ -526,7 +526,7 @@
     <div class="modal-price" id="modalPrice">690₽/мес</div>
     <p class="modal-subtitle" id="modalSubtitle">Выберите способ оплаты для привязки карты и автоматического списания</p>
     <div class="modal-buttons" id="modalButtons">
-      <button class="btn-primary" onclick="processCardPayment()">
+      <button class="btn-primary" onclick="processPaymentFromModal()">
         💳 Оплатить картой
       </button>
     </div>
@@ -773,14 +773,14 @@
     if (currentPeriod === 1) {
       modalSubtitle.textContent = 'Выберите способ оплаты для привязки карты и автоматического списания';
       modalButtons.innerHTML = `
-        <button class="btn-primary" onclick="processCardPayment()">
+        <button class="btn-primary" onclick="processPaymentFromModal()">
           💳 Оплатить картой
         </button>
       `;
     } else {
       modalSubtitle.textContent = 'Оплатите годовую подписку со скидкой 20%';
       modalButtons.innerHTML = `
-        <button class="btn-primary" onclick="processCardPayment()">
+        <button class="btn-primary" onclick="processPaymentFromModal()">
           💳 Оплатить картой
         </button>
       `;
@@ -1031,8 +1031,8 @@
   }
 
   
-  // Process card payment - updated to use correct subscription endpoint
-  async function processCardPayment() {
+  // Process payment from modal - uses new logic
+  async function processPaymentFromModal() {
     const modal = document.getElementById('paymentModal');
     const tariff = modal.getAttribute('data-tariff');
     const period = currentPeriod === 1 ? 'monthly' : 'yearly';
@@ -1046,83 +1046,32 @@
     
     const plan = planMap[tariff];
     
+    // Create plan object for startCloudPaymentsPayment
+    const planObject = {
+      id: plan,
+      name: tariff,
+      description: `${tariff} тариф`,
+      price: period === 'monthly' 
+        ? (plan === 'solo' ? '690' : plan === 'studio' ? '990' : '1490')
+        : (plan === 'solo' ? '6624' : plan === 'studio' ? '9504' : '14304'),
+      period: period,
+      amount: period === 'monthly' 
+        ? (plan === 'solo' ? 69000 : plan === 'studio' ? 99000 : 149000) // in kopecks
+        : (plan === 'solo' ? 662400 : plan === 'studio' ? 950400 : 1430400)
+    };
+    
     try {
-      console.log('[SUBSCRIPTION] Processing card payment with new endpoint:', { plan, period, tariff });
+      console.log('[SUBSCRIPTION] Processing payment with new logic:', { planObject, tariff, period });
       
-      // Get CloudPayments data without creating subscription first
-      const data = await Bloknot.api('/api/cloudpayments/subscription/create', {
-        method: 'POST',
-        body: JSON.stringify({
-          subscriptionType: period, // 'monthly' or 'yearly'
-          cardToken: null, // Will be set after widget success
-          userEmail: currentUser?.email,
-          userName: currentUser?.name,
-          planId: plan,
-          planName: tariff,
-          planAmount: period === 'monthly' ? (plan === 'solo' ? 690 : plan === 'studio' ? 990 : 1490) : (plan === 'solo' ? 6624 : plan === 'studio' ? 9504 : 14304),
-          getDataOnly: true // Flag to get payment data without creating subscription
-        })
-      });
-
-      if (data.success) {
-        // Always use CloudPayments widget for payment processing
-        if (data.cloudPayments) {
-          const widget = new cp.CloudPayments();
-
-          const chargeOptions = {
-            publicId: data.cloudPayments.PublicId,
-            description: data.cloudPayments.Description,
-            amount: data.cloudPayments.Amount,
-            currency: data.cloudPayments.Currency,
-            invoiceId: data.cloudPayments.InvoiceId,
-            accountId: data.cloudPayments.AccountId,
-            email: data.cloudPayments.Email,
-            requireConfirmation: data.cloudPayments.RequireConfirmation,
-            trialPeriod: data.cloudPayments.TrialPeriod,
-            recurring: data.cloudPayments.Recurring
-          };
-
-          const message = period === 'monthly' 
-            ? 'Привяжите карту для активации пробного периода на 5 дней. Первое списание через 5 дней.'
-            : 'Оплатите годовую подписку со скидкой 20%';
-
-          if (confirm(message)) {
-            widget.pay(chargeOptions, function(options) {
-              // Success - call handlePaymentSuccess with proper data
-              console.log('[SUBSCRIPTION] Payment successful, calling handlePaymentSuccess:', options);
-              handlePaymentSuccess(options, { id: plan, name: tariff, amount: data.cloudPayments.Amount, period: period });
-            }, function(reason, options) {
-              // Fail
-              console.error('Payment failed', reason, options);
-              alert('Ошибка оплаты: ' + reason);
-            });
-          }
-        } else {
-          // Success without CloudPayments (subscription already created)
-          alert('Подписка активирована!');
-          closePaymentModal();
-          closeSubscriptionPlansModal();
-          window.location.href = '/dashboard.html';
-        }
-      } else {
-        // Check for trial restriction error
-        if (data.error === 'TRIAL_RESTRICTION') {
-          alert(data.message);
-          return;
-        }
-        alert('Ошибка создания подписки: ' + (data.error || 'Неизвестная ошибка'));
-      }
+      // Close payment modal and start CloudPayments payment
+      closePaymentModal();
+      
+      // Start payment using the new function
+      await startCloudPaymentsPayment(planObject);
+      
     } catch (error) {
-      console.error('[SUBSCRIPTION] Payment error:', error);
-      
-      // Check if it's an authorization error
-      if (error.message === 'Unauthorized' || error.message.includes('401')) {
-        alert('Для оплаты необходимо войти в аккаунт или зарегистрироваться');
-        window.location.href = '/login.html';
-        return;
-      }
-      
-      alert('Ошибка при обработке платежа');
+      console.error('[SUBSCRIPTION] Error processing payment:', error);
+      alert('Ошибка обработки платежа');
     }
   }
 
