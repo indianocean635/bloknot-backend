@@ -1163,7 +1163,7 @@
           handlePaymentSuccess(options, { 
             id: plan.id, 
             name: plan.name, 
-            amount: data.cloudPayments.Amount, 
+            amount: data.cloudPayments.Amount * 100, // Конвертируем рубли в копейки
             period: plan.period || 'monthly',
             billingType: plan.period || 'monthly'
           });
