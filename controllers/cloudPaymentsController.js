@@ -374,8 +374,18 @@ async function changeSubscriptionPlan(req, res) {
         console.log('[SUBSCRIPTION] Plan change successful:', {
             userId: req.user.id,
             newPlan: planName,
-            subscriptionId: result.subscriptionId
+            subscriptionId: result.subscriptionId,
+            hasCloudPayments: !!result.cloudPayments
         });
+
+        // Для getDataOnly возвращаем данные для виджета
+        if (planAmount === 'getDataOnly' && result.cloudPayments) {
+            return res.json({
+                success: true,
+                cloudPayments: result.cloudPayments,
+                message: result.message
+            });
+        }
 
         res.json({
             success: true,
