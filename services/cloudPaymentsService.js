@@ -328,7 +328,7 @@ class CloudPaymentsService {
                 Email: userEmail
             };
 
-            // Создаем подписку в CloudPayments на основе рабочего кода из регистрации
+            // Создаем подписку в CloudPayments с ТОЧНО такой же структурой как в регистрации
             const cloudPaymentsData = {
                 Token: cardToken,
                 AccountId: userId,
@@ -343,10 +343,10 @@ class CloudPaymentsService {
                 CloudPayments: {
                     recurrent: {
                         interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
-                        period: 1,
-                        customerReceipt: recurrentPaymentReceipt
+                        period: 1, 
+                        customerReceipt: recurrentPaymentReceipt //чек для регулярных платежей
                     }
-                }
+                } //создание ежемесячной подписки - ТОЧНО как в регистрации
             };
 
             console.log('[CLOUDPAYMENTS] Creating subscription for plan change (based on registration code):', {
