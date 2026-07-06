@@ -298,13 +298,13 @@ class CloudPaymentsService {
             // Получаем конфигурацию тарифа
             const subscriptionConfig = this.getSubscriptionConfig(planId);
             
-            // Создаем чек для первого платежа (полная стоимость, без 1 рубля)
+            // Создаем чек для первого платежа (1 рубль как в регистрации)
             const firstPaymentReceipt = {
                 Items: [{
                     Label: `${planName} ${subscriptionType === 'yearly' ? 'годовая' : 'месячная'} подписка`,
-                    Price: planAmount, // Уже в копейках
+                    Price: 1, // 1 рубль
                     Quantity: 1,
-                    Amount: planAmount, // Полная стоимость (без 1 рубля)
+                    Amount: 1, // 1 рубль для первого платежа
                     Vat: 20,
                     PaymentMethodType: 1,
                     PaymentObject: 1
@@ -329,12 +329,15 @@ class CloudPaymentsService {
             };
 
             // Создаем подписку в CloudPayments с ТОЧНО такой же структурой как в регистрации
+            // Используем 1 рубль для первого платежа как в регистрации для Тинькова
+            const firstPaymentAmount = 1; // 1 рубль для первого платежа как в регистрации
+            
             const cloudPaymentsData = {
                 Token: cardToken,
                 AccountId: userId,
                 Email: userEmail,
                 Description: `Подписка ${planName} для ${user.business?.name || userName}`,
-                Amount: planAmount, // Полная стоимость (без 1 рубля)
+                Amount: firstPaymentAmount, // 1 рубль для первого платежа (как в регистрации)
                 Currency: 'RUB',
                 RequireConfirmation: false,
                 StartDate: now, // Немедленная активация
