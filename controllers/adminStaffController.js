@@ -157,25 +157,63 @@ exports.getManagerResults = async (req, res) => {
     // Получаем данные о клиентах для каждого менеджера
     // В реальном приложении здесь должна быть логика подсчета клиентов
     // Пока используем заглушки для демонстрации
-    const managersWithStats = managers.map(manager => {
-      // Заглушка: в реальном приложении здесь будет подсчет клиентов
-      const totalClients = Math.floor(Math.random() * 20) + 5; // 5-25 клиентов
-      const clientsWithCards = Math.floor(Math.random() * totalClients); // 0 до totalClients
-      const clientsWithoutCards = totalClients - clientsWithCards;
+    const managersWithStats = await Promise.all(managers.map(async (manager) => {
+      // Получаем закрепленных клиентов для этого менеджера
+      const assignments = await prisma.salesStaffAssignment.findMany({
+        where: {
+          salesStaffId: manager.id
+        }
+      });
+
+      const clientEmails = assignments.map(a => a.clientEmail);
+      
+      // Получаем информацию о клиентах
+      const clients = await prisma.user.findMany({
+        where: {
+          email: {
+            in: clientEmails
+          }
+        },
+        select: {
+          email: true,
+          totalPaid: true,
+          isPaying: true,
+          subscriptionStatus: true,
+          subscriptionType: true
+        }
+      });
+
+      // Считаем статистику
+      const totalClients = clients.length;
+      const clientsWithCards = Math.floor(Math.random() * totalClients); // Заглушка для карт
+      
+      // Считаем сумму подписок (заглушка - в реальном приложении будет логика подсчета)
+      const subscriptionSum = clients.reduce((sum, client) => {
+        if (client.isPaying && client.subscriptionType === 'monthly') {
+          return sum + 500; // Заглушка: 500₽ в месяц
+        } else if (client.isPaying && client.subscriptionType === 'yearly') {
+          return sum + 5000; // Заглушка: 5000₽ в год
+        }
+        return sum;
+      }, 0);
+
+      // Считаем общие оплаты
+      const totalPayments = clients.reduce((sum, client) => sum + (client.totalPaid || 0), 0);
 
       return {
         ...manager,
         totalClients,
         clientsWithCards,
-        clientsWithoutCards
+        subscriptionSum,
+        totalPayments
       };
-    });
+    }));
 
     // Считаем общую статистику
     const totalManagers = managersWithStats.length;
     const totalClients = managersWithStats.reduce((sum, m) => sum + m.totalClients, 0);
     const totalWithCards = managersWithStats.reduce((sum, m) => sum + m.clientsWithCards, 0);
-    const totalWithoutCards = managersWithStats.reduce((sum, m) => sum + m.clientsWithoutCards, 0);
+    const totalWithoutCards = totalClients - totalWithCards;
 
     res.json({
       success: true,

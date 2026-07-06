@@ -169,17 +169,15 @@
                 <thead>
                     <tr>
                         <th>Имя менеджера</th>
-                        <th>Email</th>
-                        <th>Телефон</th>
                         <th>Всего клиентов</th>
                         <th>С картами</th>
-                        <th>Без карт</th>
-                        <th>Статус</th>
+                        <th>Сумма подписок</th>
+                        <th>Оплаты</th>
                     </tr>
                 </thead>
                 <tbody id="managersTableBody">
                     <tr>
-                        <td colspan="7" class="loading">Загрузка данных...</td>
+                        <td colspan="5" class="loading">Загрузка данных...</td>
                     </tr>
                 </tbody>
             </table>
@@ -264,16 +262,10 @@
             tbody.innerHTML = data.managers.map(manager => `
                 <tr>
                     <td>${manager.name || '-'}</td>
-                    <td>${manager.email}</td>
-                    <td>${manager.phone || '-'}</td>
                     <td>${manager.totalClients || 0}</td>
                     <td>${manager.clientsWithCards || 0}</td>
-                    <td>${manager.clientsWithoutCards || 0}</td>
-                    <td>
-                        <span class="status-badge ${manager.clientsWithCards > 0 ? 'status-card' : 'status-no-card'}">
-                            ${manager.clientsWithCards > 0 ? 'Есть карты' : 'Нет карт'}
-                        </span>
-                    </td>
+                    <td>${manager.subscriptionSum || 0} ₽</td>
+                    <td>${manager.totalPayments || 0} ₽</td>
                 </tr>
             `).join('');
         }
