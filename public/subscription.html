@@ -1158,60 +1158,98 @@
   }
 
   // Start CloudPayments payment
-  function startCloudPaymentsPayment(plan) {
+  async function startCloudPaymentsPayment(plan) {
     console.log('[SUBSCRIPTION] Starting CloudPayments payment for plan:', plan);
     
-    // Display selected plan info
-    document.getElementById('selectedPlanInfo').innerHTML = `
-      <div style="text-align: center; margin-bottom: 20px;">
-        <h4 style="margin: 0 0 8px 0; color: #1f2937;">${plan.name}</h4>
-        <p style="margin: 0; color: #6b7280;">${plan.description}</p>
-        <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-top: 12px;">${plan.price}</div>
-      </div>
-    `;
+    try {
+      // Check if this is a plan change
+      const isPlanChange = window.currentSubscription && window.currentSubscription.status !== 'trial';
+      const endpoint = isPlanChange ? '/api/cloudpayments/subscription/change' : '/api/cloudpayments/subscription/create';
+      
+      console.log('[SUBSCRIPTION] Using endpoint:', endpoint, 'isPlanChange:', isPlanChange);
+      
+      // Get payment data from backend
+      const data = await Bloknot.api(endpoint, {
+        method: 'POST',
+        body: JSON.stringify({
+          subscriptionType: plan.period || 'monthly',
+          cardToken: null, // Will be set after widget success
+          userEmail: currentUser?.email,
+          userName: currentUser?.name,
+          planId: plan.id,
+          planName: plan.name,
+          planAmount: plan.amount || (plan.price.replace(/[^\d]/g, '') * 100), // Convert to kopecks
+          getDataOnly: true // Get payment data only
+        })
+      });
 
-    // Show payment modal
-    document.getElementById('cloudPaymentsModal').style.display = 'block';
+      if (data.success && data.cloudPayments) {
+        // Display selected plan info
+        document.getElementById('selectedPlanInfo').innerHTML = `
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h4 style="margin: 0 0 8px 0; color: #1f2937;">${plan.name}</h4>
+            <p style="margin: 0; color: #6b7280;">${plan.description}</p>
+            <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-top: 12px;">${plan.price}</div>
+          </div>
+        `;
 
-    // Initialize CloudPayments widget
-    const widget = new cp.CloudPayments({
-      language: 'ru',
-      skin: 'modern'
-    });
+        // Show payment modal
+        document.getElementById('cloudPaymentsModal').style.display = 'block';
 
-    // Get user data
-    const userEmail = currentUser?.email || '';
-    const userName = currentUser?.name || '';
+        // Initialize CloudPayments widget
+        const widget = new cp.CloudPayments();
 
-    widget.charge({
-      publicId: 'pk_...', // Will be set from environment
-      description: `Подписка ${plan.name} для ${userName}`,
-      amount: plan.price.replace(/[^\d]/g, ''), // Remove non-digit characters
-      currency: 'RUB',
-      accountId: currentUser?.id,
-      email: userEmail,
-      skin: 'modern',
-      data: {
-        planType: plan.id,
-        userId: currentUser?.id,
-        userEmail: userEmail,
-        userName: userName
+        const chargeOptions = {
+          publicId: data.cloudPayments.PublicId,
+          description: data.cloudPayments.Description,
+          amount: data.cloudPayments.Amount,
+          currency: data.cloudPayments.Currency,
+          invoiceId: data.cloudPayments.InvoiceId,
+          accountId: data.cloudPayments.AccountId,
+          email: data.cloudPayments.Email,
+          requireConfirmation: data.cloudPayments.RequireConfirmation,
+          trialPeriod: data.cloudPayments.TrialPeriod,
+          recurring: data.cloudPayments.Recurring
+        };
+
+        const message = isPlanChange 
+          ? `Оплатите новый тариф ${plan.name}. Сумма: ${plan.price}`
+          : (plan.period === 'monthly' 
+            ? 'Привяжите карту для активации пробного периода на 5 дней. Первое списание через 5 дней.'
+            : 'Оплатите годовую подписку со скидкой 20%');
+
+        if (confirm(message)) {
+          widget.pay(chargeOptions, function(options) {
+            // Success - call handlePaymentSuccess with proper data
+            console.log('[SUBSCRIPTION] Payment successful, calling handlePaymentSuccess:', options);
+            handlePaymentSuccess(options, { 
+              id: plan.id, 
+              name: plan.name, 
+              amount: data.cloudPayments.Amount, 
+              period: plan.period || 'monthly',
+              billingType: plan.period || 'monthly'
+            });
+          }, function(reason, options) {
+            // Fail
+            console.error('Payment failed', reason, options);
+            handlePaymentFailure(reason, options);
+          });
+        }
+      } else {
+        alert('Ошибка подготовки платежа: ' + (data.error || 'Unknown error'));
+        document.getElementById('cloudPaymentsModal').style.display = 'none';
       }
-    }, function(options) {
-      // onSuccess callback
-      console.log('[SUBSCRIPTION] Payment successful:', options);
-      handlePaymentSuccess(options, plan);
-    }, function(reason, options) {
-      // onFail callback
-      console.log('[SUBSCRIPTION] Payment failed:', reason, options);
-      handlePaymentFailure(reason, options);
-    });
+    } catch (error) {
+      console.error('[SUBSCRIPTION] Error starting payment:', error);
+      alert('Ошибка запуска платежа');
+      document.getElementById('cloudPaymentsModal').style.display = 'none';
+    }
   }
 
   // Handle payment success
   async function handlePaymentSuccess(options, plan) {
     try {
-      console.log('[SUBSCRIPTION] Processing successful payment...');
+      console.log('[SUBSCRIPTION] Processing successful payment...', options);
       
       // Check if this is a plan change (user already has subscription)
       const isPlanChange = window.currentSubscription && window.currentSubscription.status !== 'trial';
@@ -1223,11 +1261,11 @@
       
       console.log('[SUBSCRIPTION] Using endpoint:', endpoint, 'isPlanChange:', isPlanChange);
       
-      // Send payment data to backend
+      // Send payment data to backend to finalize subscription
       const result = await Bloknot.api(endpoint, {
         method: 'POST',
         body: JSON.stringify({
-          subscriptionType: plan.period || 'monthly',
+          subscriptionType: plan.period || plan.billingType || 'monthly',
           cardToken: options.token,
           userEmail: currentUser?.email,
           userName: currentUser?.name,
