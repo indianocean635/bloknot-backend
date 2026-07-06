@@ -243,7 +243,7 @@ class CloudPaymentsService {
     }
 
     /**
-     * Смена тарифа для существующего клиента (без демо периода)
+     * Смена тарифа для существующего клиента (на основе рабочего кода из регистрации)
      */
     async changeSubscriptionPlan(userId, cardToken, subscriptionType, userEmail, userName, planId, planName, planAmount) {
         try {
@@ -257,15 +257,21 @@ class CloudPaymentsService {
 
             const { prisma } = require('../services/prismaService');
             
-            // Проверяем, что пользователь уже платил 1 рубль
+            // Получаем данные пользователя и бизнеса
             const user = await prisma.user.findUnique({
                 where: { id: userId },
                 select: {
+                    businessId: true,
                     cloudPaymentsSubscriptionId: true,
                     subscriptionStatus: true,
                     subscriptionEndsAt: true,
                     cloudPaymentsCardToken: true,
-                    totalPaid: true
+                    totalPaid: true,
+                    business: {
+                        select: {
+                            name: true
+                        }
+                    }
                 }
             });
 
@@ -273,16 +279,7 @@ class CloudPaymentsService {
                 throw new Error('User not found');
             }
 
-            // Проверяем, что пользователь уже платил (totalPaid > 0 или есть карта)
-            // Временно разрешаем для супер админов или если totalPaid > 0 или есть карта
-            if (user.totalPaid === 0 && !user.cloudPaymentsCardToken) {
-                console.log('[CLOUDPAYMENTS] User has no payments, checking if SUPER_ADMIN for testing...');
-                // Для тестирования разрешаем смену тарифа
-                // TODO: Убрать это после тестирования
-                // throw new Error('User has not made any payments yet');
-            }
-
-            console.log('[CLOUDPAYMENTS] User confirmed as existing paying customer:', {
+            console.log('[CLOUDPAYMENTS] User confirmed for plan change:', {
                 hasSubscription: !!user.cloudPaymentsSubscriptionId,
                 totalPaid: user.totalPaid,
                 hasCardToken: !!user.cloudPaymentsCardToken
@@ -298,67 +295,61 @@ class CloudPaymentsService {
                 subscriptionEndsAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 365 дней
             }
 
-            // Чек для платежа
-            const paymentReceipt = {
+            // Получаем конфигурацию тарифа
+            const subscriptionConfig = this.getSubscriptionConfig(planId);
+            
+            // Создаем чек для первого платежа (полная стоимость, без 1 рубля)
+            const firstPaymentReceipt = {
                 Items: [{
-                    Name: `${planName} ${subscriptionType === 'yearly' ? 'годовая' : 'месячная'} подписка`,
-                    Price: planAmount / 100, // Конвертируем из копеек в рубли
+                    Label: `${planName} ${subscriptionType === 'yearly' ? 'годовая' : 'месячная'} подписка`,
+                    Price: planAmount, // Уже в копейках
                     Quantity: 1,
-                    Amount: planAmount / 100,
-                    Tax: 'none',
-                    Ean13: ''
+                    Amount: planAmount, // Полная стоимость (без 1 рубля)
+                    Vat: 20,
+                    PaymentMethodType: 1,
+                    PaymentObject: 1
                 }],
-                taxationSystem: 'patent',
-                email: userEmail
+                TaxationSystem: 2,
+                Email: userEmail
             };
 
-            // Если запрашиваются только данные (getDataOnly), возвращаем их
-            if (planAmount === 'getDataOnly') {
-                // Получаем реальную сумму тарифа из плана
-                const realAmount = this.getPlanAmount(planId, subscriptionType);
-                
-                // Данные для виджета - БЕЗ создания подписки
-                const widgetData = {
-                    PublicId: process.env.CLOUDPAYMENTS_PUBLIC_ID || 'pk_f654dc1994fa0991f144094dca99d',
-                    Description: `Подписка ${planName} (${subscriptionType === 'yearly' ? 'годовая' : 'месячная'})`,
-                    Amount: realAmount, // Реальная сумма тарифа
-                    Currency: 'RUB',
-                    Recurrent: {
-                        Interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
-                        Period: 1,
-                        Amount: realAmount, // Сумма для рекуррентных платежей
-                        customerReceipt: this.createCustomerReceipt(planName, realAmount, userEmail)
-                    }
-                };
+            // Создаем чек для регулярных платежей
+            const recurrentPaymentReceipt = {
+                Items: [{
+                    Label: `${planName} ${subscriptionType === 'yearly' ? 'годовая' : 'месячная'} подписка`,
+                    Price: planAmount, // Уже в копейках
+                    Quantity: 1,
+                    Amount: planAmount, // Полная стоимость для регулярных платежей
+                    Vat: 20,
+                    PaymentMethodType: 1,
+                    PaymentObject: 1
+                }],
+                TaxationSystem: 2,
+                Email: userEmail
+            };
 
-                return {
-                    success: true,
-                    cloudPayments: widgetData,
-                    message: 'Данные для виджета получены'
-                };
-            }
-
-            // Данные для CloudPayments - БЕЗ TRIAL периода
+            // Создаем подписку в CloudPayments на основе рабочего кода из регистрации
             const cloudPaymentsData = {
                 Token: cardToken,
                 AccountId: userId,
                 Email: userEmail,
-                Description: `Подписка ${planName} (${subscriptionType === 'yearly' ? 'годовая' : 'месячная'})`,
-                Amount: planAmount, // Полная стоимость тарифа
+                Description: `Подписка ${planName} для ${user.business?.name || userName}`,
+                Amount: planAmount, // Полная стоимость (без 1 рубля)
                 Currency: 'RUB',
                 RequireConfirmation: false,
                 StartDate: now, // Немедленная активация
-                TrialPeriod: null, // НЕТ trial периода
-                CustomerReceipt: paymentReceipt,
-                Recurrent: { // Рекуррентные платежи в корне объекта
-                    Interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
-                    Period: 1,
-                    Amount: planAmount, // Сумма для рекуррентных платежей
-                    customerReceipt: paymentReceipt
+                TrialPeriod: null, // НЕТ trial периода (убрали 5 дней)
+                CustomerReceipt: firstPaymentReceipt,
+                CloudPayments: {
+                    recurrent: {
+                        interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
+                        period: 1,
+                        customerReceipt: recurrentPaymentReceipt
+                    }
                 }
             };
 
-            console.log('[CLOUDPAYMENTS] Creating subscription for plan change (no trial):', {
+            console.log('[CLOUDPAYMENTS] Creating subscription for plan change (based on registration code):', {
                 ...cloudPaymentsData,
                 Token: cardToken ? 'SET' : 'MISSING'
             });
@@ -390,15 +381,26 @@ class CloudPaymentsService {
                     }
                 });
 
+                // Обновляем данные подписки в бизнесе
+                await prisma.subscription.update({
+                    where: { businessId: user.businessId },
+                    data: {
+                        plan: planId.toUpperCase(),
+                        subscriptionStatus: 'ACTIVE',
+                        subscriptionEndsAt: subscriptionEndsAt,
+                        nextPaymentDate: subscriptionEndsAt,
+                        cloudPaymentsSubscriptionId: response.Model.Id.toString()
+                    }
+                });
+
                 return {
                     success: true,
                     subscriptionId: response.Model.Id,
-                    message: `Тариф изменен на ${planName}`,
-                    nextPaymentDate: subscriptionEndsAt
+                    cloudPayments: response.Model
                 };
             } else {
-                console.error('[CLOUDPAYMENTS] Plan change subscription creation failed:', response);
-                throw new Error(response.Message || 'Failed to change subscription plan');
+                console.error('[CLOUDPAYMENTS] Failed to create subscription for plan change:', response);
+                throw new Error(response.Message || 'Failed to create subscription');
             }
         } catch (error) {
             console.error('[CLOUDPAYMENTS] Error changing subscription plan:', error);

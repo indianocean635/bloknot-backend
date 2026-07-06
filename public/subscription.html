@@ -1113,68 +1113,94 @@
     try {
       // Check if this is a plan change
       const isPlanChange = window.currentSubscription && window.currentSubscription.status !== 'trial';
-      const endpoint = isPlanChange ? '/api/cloudpayments/subscription/change' : '/api/cloudpayments/subscription/create';
       
-      console.log('[SUBSCRIPTION] Using endpoint:', endpoint, 'isPlanChange:', isPlanChange);
+      console.log('[SUBSCRIPTION] Using direct payment for plan change:', isPlanChange);
       
-      // Get payment data from backend for widget
-      const data = await Bloknot.api(endpoint, {
-        method: 'POST',
-        body: JSON.stringify({
-          subscriptionType: plan.period || 'monthly',
-          cardToken: null, // Will be set after widget success
-          userEmail: currentUser?.email,
-          userName: currentUser?.name,
+      // Display selected plan info
+      document.getElementById('selectedPlanInfo').innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 8px 0; color: #1f2937;">${plan.name}</h4>
+          <p style="margin: 0; color: #6b7280;">${plan.description}</p>
+          <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-top: 12px;">${plan.price}</div>
+        </div>
+      `;
+
+      // Initialize CloudPayments widget directly (like in registration)
+      const widget = new cp.CloudPayments();
+
+      // Use direct payment like in registration - create subscription immediately
+      const paymentOptions = {
+        publicId: 'pk_f654dc1994fa0991f144094dca99d',
+        description: `Подписка ${plan.name} (${plan.period === 'yearly' ? 'годовая' : 'месячная'})`,
+        amount: plan.amount / 100, // Конвертируем копейки в рубли для виджета
+        currency: 'RUB',
+        requireConfirmation: false,
+        // Рекуррентные платежи как в регистрации
+        recurrent: {
+          interval: plan.period === 'yearly' ? 'Year' : 'Month',
+          period: 1,
+          customerReceipt: {
+            Items: [{
+              Label: `${plan.name} ${plan.period === 'yearly' ? 'годовая' : 'месячная'} подписка`,
+              Price: plan.amount, // В копейках
+              Quantity: 1,
+              Amount: plan.amount, // В копейках
+              Vat: 20,
+              PaymentMethodType: 1,
+              PaymentObject: 1
+            }],
+            TaxationSystem: 2,
+            Email: currentUser?.email
+          }
+        },
+        customerReceipt: {
+          Items: [{
+            Label: `${plan.name} ${plan.period === 'yearly' ? 'годовая' : 'месячная'} подписка`,
+            Price: plan.amount, // В копейках
+            Quantity: 1,
+            Amount: plan.amount, // В копейках
+            Vat: 20,
+            PaymentMethodType: 1,
+            PaymentObject: 1
+          }],
+          TaxationSystem: 2,
+          Email: currentUser?.email
+        },
+        // Данные для создания подписки
+        accountId: currentUser?.id,
+        email: currentUser?.email,
+        skin: 'classic',
+        // Данные для бэкенда после успешной оплаты
+        data: {
           planId: plan.id,
           planName: plan.name,
-          planAmount: 'getDataOnly', // Get widget data only
-          getDataOnly: true // Get payment data only
-        })
-      });
+          planAmount: plan.amount, // В копейках
+          subscriptionType: plan.period || 'monthly',
+          userEmail: currentUser?.email,
+          userName: currentUser?.name,
+          isPlanChange: isPlanChange
+        }
+      };
 
-      if (data.success && data.cloudPayments) {
-        // Display selected plan info
-        document.getElementById('selectedPlanInfo').innerHTML = `
-          <div style="text-align: center; margin-bottom: 20px;">
-            <h4 style="margin: 0 0 8px 0; color: #1f2937;">${plan.name}</h4>
-            <p style="margin: 0; color: #6b7280;">${plan.description}</p>
-            <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-top: 12px;">${plan.price}</div>
-          </div>
-        `;
-
-        // Initialize CloudPayments widget directly (no custom modal)
-        const widget = new cp.CloudPayments();
-
-        const authOptions = {
-          publicId: data.cloudPayments.PublicId,
-          description: data.cloudPayments.Description,
-          amount: data.cloudPayments.Amount,
-          currency: data.cloudPayments.Currency
-        };
-
-        // Debug logging
-        console.log('[SUBSCRIPTION] authOptions:', authOptions);
-        console.log('[SUBSCRIPTION] data.cloudPayments.Recurrent:', data.cloudPayments.Recurrent);
-        
-        // Use auth for card token, then create subscription on backend (no confirmation needed)
-        widget.auth(authOptions, function(options) {
-          // Success - got card token, now create subscription
-          console.log('[SUBSCRIPTION] Card auth successful, creating subscription:', options);
-          handlePaymentSuccess(options, { 
-            id: plan.id, 
-            name: plan.name, 
-            amount: data.cloudPayments.Amount * 100, // Конвертируем рубли в копейки
-            period: plan.period || 'monthly',
-            billingType: plan.period || 'monthly'
-          });
-        }, function(reason, options) {
-          // Fail
-          console.error('[SUBSCRIPTION] Card auth failed', reason, options);
-          handlePaymentFailure(reason, options);
+      console.log('[SUBSCRIPTION] Direct payment options:', paymentOptions);
+      
+      // Запускаем прямой платеж как в регистрации
+      widget.charge(paymentOptions, function(options) {
+        // Success - payment completed, subscription created automatically
+        console.log('[SUBSCRIPTION] Direct payment successful:', options);
+        handlePaymentSuccess(options, {
+          id: plan.id,
+          name: plan.name,
+          amount: plan.amount, // Уже в копейках
+          period: plan.period || 'monthly',
+          billingType: plan.period || 'monthly'
         });
-      } else {
-        alert('Ошибка подготовки платежа: ' + (data.error || 'Unknown error'));
-      }
+      }, function(reason, options) {
+        // Fail
+        console.error('[SUBSCRIPTION] Direct payment failed', reason, options);
+        handlePaymentFailure(reason, options);
+      });
+      
     } catch (error) {
       console.error('[SUBSCRIPTION] Error starting payment:', error);
       alert('Ошибка запуска платежа');
@@ -1186,42 +1212,15 @@
     try {
       console.log('[SUBSCRIPTION] Processing successful payment...', options);
       
-      // Check if this is a plan change (user already has subscription)
-      const isPlanChange = window.currentSubscription && window.currentSubscription.status !== 'trial';
-      
-      // Use different endpoint for plan changes vs new subscriptions
-      const endpoint = isPlanChange 
-        ? '/api/cloudpayments/subscription/change' 
-        : '/api/cloudpayments/subscription/create';
-      
-      console.log('[SUBSCRIPTION] Using endpoint:', endpoint, 'isPlanChange:', isPlanChange);
-      
-      // Send payment data to backend to finalize subscription
-      const result = await Bloknot.api(endpoint, {
-        method: 'POST',
-        body: JSON.stringify({
-          subscriptionType: plan.period || plan.billingType || 'monthly',
-          cardToken: options.token,
-          userEmail: currentUser?.email,
-          userName: currentUser?.name,
-          planId: plan.id,
-          planName: plan.name,
-          planAmount: plan.amount // plan.amount уже в копейках
-        })
-      });
-
-      if (result.success) {
-        const message = isPlanChange ? 'Тариф успешно изменен!' : 'Подписка успешно оформлена!';
-        alert(message);
-        loadSubscriptionInfo(); // Reload subscription info
-        closeSubscriptionPlansModal(); // Close plans modal
-      } else {
-        const errorMessage = isPlanChange ? 'Ошибка изменения тарифа: ' : 'Ошибка оформления подписки: ';
-        alert(errorMessage + result.error);
-      }
+      // При прямом платеже подписка уже создана в CloudPayments через вебхук
+      // Нужно только обновить данные в интерфейсе
+      const message = 'Подписка успешно оформлена! Тариф изменен.';
+      alert(message);
+      loadSubscriptionInfo(); // Reload subscription info
+      closeSubscriptionPlansModal(); // Close plans modal
     } catch (error) {
       console.error('[SUBSCRIPTION] Error processing payment success:', error);
-      alert('Ошибка обработки платежа');
+      alert('Ошибка обработки платежа: ' + error.message);
     }
   }
 

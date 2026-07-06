@@ -353,10 +353,10 @@ async function changeSubscriptionPlan(req, res) {
 
         const { subscriptionType, cardToken, planId, planName, planAmount } = req.body;
 
-        if (!subscriptionType || !planId || !planName || !planAmount) {
+        if (!subscriptionType || !cardToken || !planId || !planName || !planAmount) {
             return res.status(400).json({
                 success: false,
-                error: 'Missing required fields: subscriptionType, planId, planName, planAmount'
+                error: 'Missing required fields: subscriptionType, cardToken, planId, planName, planAmount'
             });
         }
 
@@ -378,19 +378,10 @@ async function changeSubscriptionPlan(req, res) {
             hasCloudPayments: !!result.cloudPayments
         });
 
-        // Для getDataOnly возвращаем данные для виджета
-        if (planAmount === 'getDataOnly' && result.cloudPayments) {
-            return res.json({
-                success: true,
-                cloudPayments: result.cloudPayments,
-                message: result.message
-            });
-        }
-
         res.json({
             success: true,
             data: result,
-            message: result.message
+            message: `Тариф успешно изменен на ${planName}`
         });
     } catch (error) {
         console.error('[SUBSCRIPTION] Error changing subscription plan:', error);
