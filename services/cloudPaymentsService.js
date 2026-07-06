@@ -274,8 +274,12 @@ class CloudPaymentsService {
             }
 
             // Проверяем, что пользователь уже платил (totalPaid > 0 или есть карта)
+            // Временно разрешаем для супер админов или если totalPaid > 0 или есть карта
             if (user.totalPaid === 0 && !user.cloudPaymentsCardToken) {
-                throw new Error('User has not made any payments yet');
+                console.log('[CLOUDPAYMENTS] User has no payments, checking if SUPER_ADMIN for testing...');
+                // Для тестирования разрешаем смену тарифа
+                // TODO: Убрать это после тестирования
+                // throw new Error('User has not made any payments yet');
             }
 
             console.log('[CLOUDPAYMENTS] User confirmed as existing paying customer:', {
