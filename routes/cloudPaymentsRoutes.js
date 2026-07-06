@@ -4,6 +4,7 @@ const { checkSubscriptionStatus } = require('../middleware/subscriptionMiddlewar
 const {
     getCloudSubscriptionInfo,
     createSubscription,
+    changeSubscriptionPlan,
     cancelSubscription,
     getSubscriptionPlans,
     updatePaymentMethod,
@@ -36,6 +37,11 @@ router.get('/plans', getSubscriptionPlans);
  * Создание подписки
  */
 router.post('/subscription/create', createSubscription);
+
+/**
+ * Смена тарифа для существующего клиента
+ */
+router.post('/subscription/change', changeSubscriptionPlan);
 
 /**
  * Отмена подписки

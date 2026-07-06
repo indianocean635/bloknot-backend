@@ -243,6 +243,141 @@ class CloudPaymentsService {
     }
 
     /**
+     * Смена тарифа для существующего клиента (без демо периода)
+     */
+    async changeSubscriptionPlan(userId, cardToken, subscriptionType, userEmail, userName, planId, planName, planAmount) {
+        try {
+            console.log('[CLOUDPAYMENTS] Changing subscription plan for existing user:', {
+                userId,
+                subscriptionType,
+                userEmail,
+                planId,
+                planAmount
+            });
+
+            const { prisma } = require('../services/prismaService');
+            
+            // Проверяем, что пользователь уже платил 1 рубль
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: {
+                    cloudPaymentsSubscriptionId: true,
+                    subscriptionStatus: true,
+                    subscriptionEndsAt: true,
+                    cloudPaymentsCardToken: true,
+                    totalPaid: true
+                }
+            });
+
+            if (!user) {
+                throw new Error('User not found');
+            }
+
+            // Проверяем, что пользователь уже платил (totalPaid > 0 или есть карта)
+            if (user.totalPaid === 0 && !user.cloudPaymentsCardToken) {
+                throw new Error('User has not made any payments yet');
+            }
+
+            console.log('[CLOUDPAYMENTS] User confirmed as existing paying customer:', {
+                hasSubscription: !!user.cloudPaymentsSubscriptionId,
+                totalPaid: user.totalPaid,
+                hasCardToken: !!user.cloudPaymentsCardToken
+            });
+
+            const now = new Date();
+            let subscriptionEndsAt;
+
+            // Расчет даты окончания подписки
+            if (['solo-monthly', 'studio-monthly', 'pro-monthly'].includes(subscriptionType)) {
+                subscriptionEndsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 дней
+            } else if (['solo-yearly', 'studio-yearly', 'pro-yearly'].includes(subscriptionType)) {
+                subscriptionEndsAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 365 дней
+            }
+
+            // Чек для платежа
+            const paymentReceipt = {
+                Items: [{
+                    Name: `${planName} ${subscriptionType === 'yearly' ? 'годовая' : 'месячная'} подписка`,
+                    Price: planAmount / 100, // Конвертируем из копеек в рубли
+                    Quantity: 1,
+                    Amount: planAmount / 100,
+                    Tax: 'none',
+                    Ean13: ''
+                }],
+                taxationSystem: 'patent',
+                email: userEmail
+            };
+
+            // Данные для CloudPayments - БЕЗ TRIAL периода
+            const cloudPaymentsData = {
+                Token: cardToken,
+                AccountId: userId,
+                Email: userEmail,
+                Description: `Подписка ${planName} (${subscriptionType === 'yearly' ? 'годовая' : 'месячная'})`,
+                Amount: planAmount, // Полная стоимость тарифа
+                Currency: 'RUB',
+                RequireConfirmation: false,
+                StartDate: now, // Немедленная активация
+                TrialPeriod: null, // НЕТ trial периода
+                CustomerReceipt: paymentReceipt,
+                CloudPayments: {
+                    recurrent: {
+                        interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
+                        period: 1,
+                        customerReceipt: paymentReceipt
+                    }
+                }
+            };
+
+            console.log('[CLOUDPAYMENTS] Creating subscription for plan change (no trial):', {
+                ...cloudPaymentsData,
+                Token: cardToken ? 'SET' : 'MISSING'
+            });
+
+            const response = await this.makeRequest('/subscriptions/create', cloudPaymentsData);
+
+            if (response.Success) {
+                console.log('[CLOUDPAYMENTS] Plan change subscription created successfully:', {
+                    subscriptionId: response.Model.Id,
+                    status: response.Model.Status
+                });
+
+                // Обновляем данные пользователя
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: {
+                        subscriptionType: planId,
+                        subscriptionStatus: 'active',
+                        subscriptionEndsAt: subscriptionEndsAt,
+                        cloudPaymentsSubscriptionId: response.Model.Id.toString(),
+                        cloudPaymentsCardToken: cardToken,
+                        nextPaymentDate: subscriptionEndsAt,
+                        isPaying: true,
+                        // Обновляем данные о последнем платеже
+                        lastPaymentAmount: planAmount,
+                        lastPaymentDate: new Date(),
+                        lastPaymentStatus: 'success',
+                        lastPaymentTransactionId: response.Model.TransactionId?.toString() || null
+                    }
+                });
+
+                return {
+                    success: true,
+                    subscriptionId: response.Model.Id,
+                    message: `Тариф изменен на ${planName}`,
+                    nextPaymentDate: subscriptionEndsAt
+                };
+            } else {
+                console.error('[CLOUDPAYMENTS] Plan change subscription creation failed:', response);
+                throw new Error(response.Message || 'Failed to change subscription plan');
+            }
+        } catch (error) {
+            console.error('[CLOUDPAYMENTS] Error changing subscription plan:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Отмена подписки
      */
     async cancelSubscription(userId) {

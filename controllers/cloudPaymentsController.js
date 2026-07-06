@@ -344,9 +344,57 @@ async function getPaymentHistory(req, res) {
     }
 }
 
+/**
+ * Смена тарифа для существующего клиента
+ */
+async function changeSubscriptionPlan(req, res) {
+    try {
+        console.log('[SUBSCRIPTION] Changing subscription plan for user:', req.user?.id);
+
+        const { subscriptionType, cardToken, planId, planName, planAmount } = req.body;
+
+        if (!subscriptionType || !planId || !planName || !planAmount) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: subscriptionType, planId, planName, planAmount'
+            });
+        }
+
+        const result = await cloudPaymentsService.changeSubscriptionPlan(
+            req.user.id,
+            cardToken,
+            subscriptionType,
+            req.user.email,
+            req.user.name,
+            planId,
+            planName,
+            planAmount
+        );
+
+        console.log('[SUBSCRIPTION] Plan change successful:', {
+            userId: req.user.id,
+            newPlan: planName,
+            subscriptionId: result.subscriptionId
+        });
+
+        res.json({
+            success: true,
+            data: result,
+            message: result.message
+        });
+    } catch (error) {
+        console.error('[SUBSCRIPTION] Error changing subscription plan:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to change subscription plan'
+        });
+    }
+}
+
 module.exports = {
     getCloudSubscriptionInfo,
     createSubscription,
+    changeSubscriptionPlan,
     cancelSubscription,
     getSubscriptionPlans,
     updatePaymentMethod,

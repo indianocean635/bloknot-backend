@@ -593,6 +593,7 @@
 
       if (result.success) {
         subscriptionData = result.data;
+        window.currentSubscription = result.data; // Save for plan change logic
         displaySubscriptionInfo(subscriptionData);
       } else {
         console.error('[SUBSCRIPTION] Failed to load subscription info:', result.error);
@@ -1212,8 +1213,18 @@
     try {
       console.log('[SUBSCRIPTION] Processing successful payment...');
       
-      // Send payment data to backend to create actual subscription
-      const result = await Bloknot.api('/api/cloudpayments/subscription/create', {
+      // Check if this is a plan change (user already has subscription)
+      const isPlanChange = window.currentSubscription && window.currentSubscription.status !== 'trial';
+      
+      // Use different endpoint for plan changes vs new subscriptions
+      const endpoint = isPlanChange 
+        ? '/api/cloudpayments/subscription/change' 
+        : '/api/cloudpayments/subscription/create';
+      
+      console.log('[SUBSCRIPTION] Using endpoint:', endpoint, 'isPlanChange:', isPlanChange);
+      
+      // Send payment data to backend
+      const result = await Bloknot.api(endpoint, {
         method: 'POST',
         body: JSON.stringify({
           subscriptionType: plan.period || 'monthly',
@@ -1227,11 +1238,14 @@
       });
 
       if (result.success) {
-        alert('Подписка успешно оформлена!');
+        const message = isPlanChange ? 'Тариф успешно изменен!' : 'Подписка успешно оформлена!';
+        alert(message);
         document.getElementById('cloudPaymentsModal').style.display = 'none';
         loadSubscriptionInfo(); // Reload subscription info
+        closeSubscriptionPlansModal(); // Close plans modal
       } else {
-        alert('Ошибка оформления подписки: ' + result.error);
+        const errorMessage = isPlanChange ? 'Ошибка изменения тарифа: ' : 'Ошибка оформления подписки: ';
+        alert(errorMessage + result.error);
       }
     } catch (error) {
       console.error('[SUBSCRIPTION] Error processing payment success:', error);
