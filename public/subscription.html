@@ -1203,14 +1203,13 @@
           userName: currentUser?.name,
           planId: plan.id,
           planName: plan.name,
-          planAmount: plan.amount
+          planAmount: plan.amount * 100 // Конвертируем рубли в копейки для CloudPayments
         })
       });
 
       if (result.success) {
         const message = isPlanChange ? 'Тариф успешно изменен!' : 'Подписка успешно оформлена!';
         alert(message);
-        document.getElementById('cloudPaymentsModal').style.display = 'none';
         loadSubscriptionInfo(); // Reload subscription info
         closeSubscriptionPlansModal(); // Close plans modal
       } else {
