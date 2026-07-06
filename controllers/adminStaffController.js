@@ -190,13 +190,14 @@ exports.getManagerResults = async (req, res) => {
           totalPaid: true,
           isPaying: true,
           subscriptionStatus: true,
-          subscriptionType: true
+          subscriptionType: true,
+          cloudPaymentsCardToken: true
         }
       });
 
-      // Считаем статистику
+      // Считаем статистику на основе реальных данных
       const totalClients = clients.length;
-      const clientsWithCards = Math.floor(Math.random() * totalClients); // Заглушка для карт
+      const clientsWithCards = clients.filter(client => !!client.cloudPaymentsCardToken).length;
       
       // Считаем сумму подписок (заглушка - в реальном приложении будет логика подсчета)
       const subscriptionSum = clients.reduce((sum, client) => {
@@ -389,7 +390,8 @@ exports.getAssignedClients = async (req, res) => {
         totalPaid: true,
         isPaying: true,
         subscriptionStatus: true,
-        subscriptionType: true
+        subscriptionType: true,
+        cloudPaymentsCardToken: true
       }
     });
 
@@ -397,8 +399,8 @@ exports.getAssignedClients = async (req, res) => {
     const assignedClients = assignments.map(assignment => {
       const client = clients.find(c => c.email === assignment.clientEmail);
       
-      // Определяем статус карты (заглушка - в реальном приложении здесь будет проверка карт)
-      const hasCard = client && client.isPaying && client.subscriptionStatus === 'active';
+      // Определяем статус карты на основе реальных данных из CloudPayments
+      const hasCard = client && !!client.cloudPaymentsCardToken;
       
       return {
         id: assignment.id,

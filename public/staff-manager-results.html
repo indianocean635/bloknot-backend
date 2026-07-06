@@ -171,13 +171,12 @@
                         <th>Имя менеджера</th>
                         <th>Всего клиентов</th>
                         <th>С картами</th>
-                        <th>Карта</th>
                         <th>Оплаты</th>
                     </tr>
                 </thead>
                 <tbody id="managersTableBody">
                     <tr>
-                        <td colspan="5" class="loading">Загрузка данных...</td>
+                        <td colspan="4" class="loading">Загрузка данных...</td>
                     </tr>
                 </tbody>
             </table>
@@ -232,7 +231,7 @@
                 console.error('Error loading manager results:', error);
                 document.getElementById('managersTableBody').innerHTML = `
                     <tr>
-                        <td colspan="5" class="error">Ошибка загрузки данных: ${error.message}</td>
+                        <td colspan="4" class="error">Ошибка загрузки данных: ${error.message}</td>
                     </tr>
                 `;
             }
@@ -251,7 +250,7 @@
             if (!data.managers || data.managers.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                        <td colspan="4" style="text-align: center; padding: 40px; color: #666;">
                             Нет данных для отображения
                         </td>
                     </tr>
@@ -264,11 +263,6 @@
                     <td>${manager.name || '-'}</td>
                     <td>${manager.totalClients || 0}</td>
                     <td>${manager.clientsWithCards || 0}</td>
-                    <td>
-                        <span class="status-badge ${manager.clientsWithCards > 0 ? 'status-card' : 'status-no-card'}">
-                            ${manager.clientsWithCards > 0 ? 'Привязана' : 'Не привязана'}
-                        </span>
-                    </td>
                     <td>${manager.totalPayments || 0} ₽</td>
                 </tr>
             `).join('');
