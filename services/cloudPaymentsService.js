@@ -431,20 +431,42 @@ class CloudPaymentsService {
             return;
         }
 
-        // Обновляем общую сумму платежей
+        // Обновляем общую сумму платежей и данные о последнем платеже
         if (reason === 'Success') {
             await prisma.user.update({
                 where: { id: accountId },
                 data: {
                     totalPaid: { increment: amount },
-                    isPaying: true
+                    isPaying: true,
+                    lastPaymentAmount: amount,
+                    lastPaymentDate: new Date(),
+                    lastPaymentStatus: 'success',
+                    lastPaymentTransactionId: model.TransactionId?.toString() || null
                 }
             });
 
             console.log('[CLOUDPAYMENTS] Payment successful, updated totals:', {
                 accountId,
                 amount,
-                totalPaid: amount
+                totalPaid: amount,
+                lastPaymentAmount: amount,
+                lastPaymentStatus: 'success'
+            });
+        } else if (reason === 'Fail') {
+            await prisma.user.update({
+                where: { id: accountId },
+                data: {
+                    lastPaymentAmount: amount,
+                    lastPaymentDate: new Date(),
+                    lastPaymentStatus: 'failed',
+                    lastPaymentTransactionId: model.TransactionId?.toString() || null
+                }
+            });
+
+            console.log('[CLOUDPAYMENTS] Payment failed, updated status:', {
+                accountId,
+                amount,
+                lastPaymentStatus: 'failed'
             });
         }
     }
