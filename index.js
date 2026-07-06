@@ -90,11 +90,13 @@ app.use((req, res, next) => {
 // Import missing routes
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const { router: pushRoutes, sendPushNotification } = require('./routes/pushRoutes');
+const adminStaffRoutes = require('./routes/adminStaff');
 
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin', adminAuth, adminRoutes); // Add protected routes after public ones
+app.use('/api/admin-staff', adminStaffRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/upload', uploadRoutes);

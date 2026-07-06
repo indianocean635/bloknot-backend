@@ -41,7 +41,7 @@
 
         const data = await response.json();
 
-        if (!data.success || (data.user.role !== 'SUPER_ADMIN' && data.user.role !== 'SALES_STAFF')) {
+        if (!data.success || (data.user.role !== 'SUPER_ADMIN' && data.user.role !== 'SALES_STAFF' && data.user.role !== 'ADMIN_STAFF')) {
           throw new Error('Not authorized');
         }
 
@@ -217,6 +217,35 @@
             <tbody id="salesStaffTbody"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- Modal for adding staff -->
+    <div id="addStaffModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+      <div style="background:white; padding:20px; border-radius:8px; max-width:500px; width:90%;">
+        <h3 style="margin-top:0;">Добавить сотрудника</h3>
+        <form id="addStaffForm">
+          <div style="margin-bottom:15px;">
+            <label style="display:block; margin-bottom:5px; font-weight:bold;">Имя:</label>
+            <input type="text" id="staffName" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+          </div>
+          <div style="margin-bottom:15px;">
+            <label style="display:block; margin-bottom:5px; font-weight:bold;">Email:</label>
+            <input type="email" id="staffEmail" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+          </div>
+          <div style="margin-bottom:15px;">
+            <label style="display:block; margin-bottom:5px; font-weight:bold;">Телефон:</label>
+            <input type="tel" id="staffPhone" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+          </div>
+          <div style="margin-bottom:15px;">
+            <label style="display:block; margin-bottom:5px; font-weight:bold;">Пароль:</label>
+            <input type="password" id="staffPassword" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+          </div>
+          <div style="text-align:right;">
+            <button type="button" onclick="closeAddStaffModal()" style="margin-right:10px; padding:8px 16px; border:1px solid #ddd; background:white; border-radius:4px; cursor:pointer;">Отмена</button>
+            <button type="submit" style="padding:8px 16px; background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer;">Создать</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -532,10 +561,20 @@
     // Load sales staff
     async function loadSalesStaff() {
       try {
-        const salesStaff = await api('/api/admin/sales-staff');
+        const response = await fetch('/api/admin-staff', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth')}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to load staff');
+        }
+        
+        const data = await response.json();
         const salesStaffTbody = document.getElementById('salesStaffTbody');
 
-        salesStaffTbody.innerHTML = salesStaff.map(staff => `
+        salesStaffTbody.innerHTML = data.staff.map(staff => `
           <tr>
             <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${esc(staff.email)}</td>
             <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${esc(staff.name || '-')}</td>
@@ -554,23 +593,51 @@
 
     // Add sales staff
     document.getElementById('addSalesStaffBtn').addEventListener('click', async () => {
-      const email = prompt('Введите email сотрудника:');
-      if (!email) return;
+      document.getElementById('addStaffModal').style.display = 'flex';
+    });
 
-      const name = prompt('Введите имя сотрудника (опционально):') || null;
-      const password = prompt('Введите пароль сотрудника:');
-      if (!password) return;
+    // Close modal
+    function closeAddStaffModal() {
+      document.getElementById('addStaffModal').style.display = 'none';
+      document.getElementById('addStaffForm').reset();
+    }
+
+    // Handle form submission
+    document.getElementById('addStaffForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const name = document.getElementById('staffName').value;
+      const email = document.getElementById('staffEmail').value;
+      const phone = document.getElementById('staffPhone').value;
+      const password = document.getElementById('staffPassword').value;
+
+      if (!name || !email || !password) {
+        alert('Имя, email и пароль обязательны');
+        return;
+      }
 
       try {
-        await api('/api/admin/sales-staff', {
+        const response = await fetch('/api/admin-staff', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, name, password })
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth')}`
+          },
+          body: JSON.stringify({ name, email, phone, password })
         });
-        showNotice('Сотрудник добавлен');
-        loadSalesStaff();
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Сотрудник успешно создан!');
+          closeAddStaffModal();
+          loadSalesStaff(); // Обновить список
+        } else {
+          alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
       } catch (error) {
-        showNotice('Ошибка добавления сотрудника: ' + error.message);
+        console.error('Error creating staff:', error);
+        alert('Ошибка при создании сотрудника');
       }
     });
 
@@ -674,7 +741,16 @@
             delSalesStaffBtn.disabled = false;
             return;
           }
-          await api(`/api/admin/sales-staff/${id}`, { method: 'DELETE' });
+          const response = await fetch(`/api/admin-staff/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('auth')}`
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to delete staff');
+          }
           showNotice('Сотрудник удален');
           loadSalesStaff();
         } catch (err) {

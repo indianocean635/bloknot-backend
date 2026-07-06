@@ -763,7 +763,7 @@ router.get('/me', requireAuth, async (req, res) => {
       }
     });
 
-    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'SALES_STAFF')) {
+    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'SALES_STAFF' && user.role !== 'ADMIN_STAFF')) {
       return res.status(403).json({ error: 'Access denied. Admin or Sales Staff only.' });
     }
 
@@ -791,7 +791,7 @@ router.post('/login', async (req, res) => {
       where: { email }
     });
 
-    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'SALES_STAFF')) {
+    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'SALES_STAFF' && user.role !== 'ADMIN_STAFF')) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
