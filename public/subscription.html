@@ -1206,7 +1206,7 @@
           userName: currentUser?.name,
           planId: plan.id,
           planName: plan.name,
-          planAmount: plan.amount * 100 // Конвертируем рубли в копейки для CloudPayments
+          planAmount: plan.amount // plan.amount уже в копейках
         })
       });
 
