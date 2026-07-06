@@ -312,6 +312,33 @@ class CloudPaymentsService {
                 email: userEmail
             };
 
+            // Если запрашиваются только данные (getDataOnly), возвращаем их
+            if (planAmount === 'getDataOnly') {
+                // Данные для виджета - БЕЗ создания подписки
+                const widgetData = {
+                    PublicId: process.env.CLOUDPAYMENTS_PUBLIC_ID || 'pk_...',
+                    Description: `Подписка ${planName} (${subscriptionType === 'yearly' ? 'годовая' : 'месячная'})`,
+                    Amount: 99000, // Временная сумма для виджета
+                    Currency: 'RUB',
+                    RequireConfirmation: false,
+                    TrialPeriod: null, // НЕТ trial периода
+                    CustomerReceipt: paymentReceipt,
+                    CloudPayments: {
+                        recurrent: {
+                            interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
+                            period: 1,
+                            customerReceipt: paymentReceipt
+                        }
+                    }
+                };
+
+                return {
+                    success: true,
+                    cloudPayments: widgetData,
+                    message: 'Данные для виджета получены'
+                };
+            }
+
             // Данные для CloudPayments - БЕЗ TRIAL периода
             const cloudPaymentsData = {
                 Token: cardToken,

@@ -1117,7 +1117,7 @@
       
       console.log('[SUBSCRIPTION] Using endpoint:', endpoint, 'isPlanChange:', isPlanChange);
       
-      // Get payment data from backend
+      // Get payment data from backend for widget
       const data = await Bloknot.api(endpoint, {
         method: 'POST',
         body: JSON.stringify({
@@ -1127,7 +1127,7 @@
           userName: currentUser?.name,
           planId: plan.id,
           planName: plan.name,
-          planAmount: plan.amount || (plan.price.replace(/[^\d]/g, '') * 100), // Convert to kopecks
+          planAmount: 'getDataOnly', // Get widget data only
           getDataOnly: true // Get payment data only
         })
       });
