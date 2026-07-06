@@ -334,6 +334,12 @@ async function handleCloudPaymentsWebhook(req, res) {
     switch (eventType) {
       case 'Pay':
       case 'Payment':  // CloudPayments отправляет "Payment"
+        // Если AccountId пустой, это оплата через widget.auth для смены тарифа
+        // Подписка создается через changeSubscriptionPlan, здесь только обновляем платеж
+        if (!accountId) {
+          console.log('[WEBHOOK] Payment without AccountId - likely plan change, skipping subscription creation');
+          break;
+        }
         await handlePaymentSuccess(accountId, transactionId, eventData);
         break;
 
