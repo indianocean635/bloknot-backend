@@ -514,10 +514,8 @@
               }
             </td>
             <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
-              ${u.lastPaymentStatus === 'success' ? 
-                `<span class="status-badge status-card">Прошла</span><br><span style="font-size: 10px; color: #666;">${u.lastPaymentAmount || 0} ₽</span>` : 
-                u.lastPaymentStatus === 'failed' ? 
-                `<span class="status-badge status-no-card">Не прошла</span><br><span style="font-size: 10px; color: #666;">${u.lastPaymentAmount || 0} ₽</span>` :
+              ${u.lastPaymentAmount ? 
+                `<span style="font-weight: 500; color: #10b981;">${(u.lastPaymentAmount / 100).toFixed(2)} ₽</span>` : 
                 `<span style="color: #666; font-size: 11px;">Нет данных</span>`
               }
             </td>
