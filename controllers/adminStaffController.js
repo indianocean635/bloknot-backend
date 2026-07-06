@@ -61,8 +61,8 @@ exports.createAdminStaff = async (req, res) => {
 // Получение списка сотрудников админ панели
 exports.getAdminStaffList = async (req, res) => {
   try {
-    // Проверяем, что текущий пользователь - супер админ
-    if (req.user.role !== 'SUPER_ADMIN') {
+    // Проверяем, что текущий пользователь - супер админ или сотрудник
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'ADMIN_STAFF') {
       return res.status(403).json({ error: 'Доступ запрещен' });
     }
 

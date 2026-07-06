@@ -120,7 +120,15 @@
     </div>
 
     <div class="actions" style="margin-top:10px">
-      <a class="btn secondary" href="/api/admin/return" style="padding:8px 10px; border-radius:10px">Вернуться в админ</a>
+      <a class="btn secondary" href="/api/admin/return" id="returnToAdminBtn" style="padding:8px 10px; border-radius:10px; display:none;">Вернуться в админ</a>
+    </div>
+
+    <!-- Staff Info (ADMIN_STAFF only) -->
+    <div id="staffInfo" style="display:none; margin-top:10px; padding:15px; background:#f8f9fa; border-radius:8px;">
+      <div style="font-weight:bold; margin-bottom:8px;">Мои данные:</div>
+      <div id="staffEmail" style="margin-bottom:4px; font-size:14px;"></div>
+      <div id="staffName" style="margin-bottom:4px; font-size:14px;"></div>
+      <div id="staffPhone" style="margin-bottom:4px; font-size:14px;"></div>
     </div>
 
     <!-- Tab Navigation -->
@@ -525,8 +533,48 @@
         document.getElementById('tabSalesStaff').style.display = 'none';
         document.getElementById('tabMyClients').style.display = 'inline-block';
         switchTab('my-clients');
+      } else if (role === 'ADMIN_STAFF') {
+        // Show staff info
+        document.getElementById('staffInfo').style.display = 'block';
+        document.getElementById('returnToAdminBtn').style.display = 'none';
+        
+        // Hide users section (statistics)
+        document.getElementById('tabUsers').style.display = 'none';
+        document.getElementById('section-users').style.display = 'none';
+        
+        // Show staff management (read-only)
+        document.getElementById('tabSalesStaff').style.display = 'inline-block';
+        document.getElementById('tabMyClients').style.display = 'none';
+        document.getElementById('addSalesStaffBtn').style.display = 'none';
+        
+        // Load staff data
+        loadStaffData();
+        switchTab('sales-staff');
       } else {
         switchTab('users');
+      }
+    }
+
+    // Load staff data
+    async function loadStaffData() {
+      try {
+        const response = await fetch('/api/admin/me', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth')}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const user = data.user;
+          
+          // Display staff info
+          document.getElementById('staffEmail').textContent = `Email: ${user.email}`;
+          document.getElementById('staffName').textContent = `Имя: ${user.name || 'Не указано'}`;
+          document.getElementById('staffPhone').textContent = `Телефон: ${user.phone || 'Не указан'}`;
+        }
+      } catch (error) {
+        console.error('Error loading staff data:', error);
       }
     }
 
@@ -574,6 +622,9 @@
         const data = await response.json();
         const salesStaffTbody = document.getElementById('salesStaffTbody');
 
+        const currentUserRole = window.currentUser?.role;
+        const canDelete = currentUserRole === 'SUPER_ADMIN';
+        
         salesStaffTbody.innerHTML = data.staff.map(staff => `
           <tr>
             <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${esc(staff.email)}</td>
@@ -582,7 +633,7 @@
             <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${fmtDate(staff.createdAt)}</td>
             <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">${staff._count?.salesStaffAssignments || 0}</td>
             <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
-              <button class="btn danger" data-action="delete-sales-staff" data-id="${esc(staff.id)}" type="button" style="padding:4px 8px; font-size:11px">Delete</button>
+              ${canDelete ? `<button class="btn danger" data-action="delete-sales-staff" data-id="${esc(staff.id)}" type="button" style="padding:4px 8px; font-size:11px">Delete</button>` : ''}
             </td>
           </tr>
         `).join('');
