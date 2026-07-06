@@ -202,17 +202,18 @@
           <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:13px">
             <thead>
               <tr>
-                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:25%">Email</th>
-                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:20%">Name</th>
-                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Phone</th>
-                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Registration</th>
-                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Закреплен</th>
-                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:10%">Actions</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:20%">Email</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:15%">Name</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:12%">Phone</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:12%">Registration</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:12%">Закреплен</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:10%">Карта</th>
+                <th style="text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); font-size:12px; width:9%">Actions</th>
               </tr>
             </thead>
             <tbody id="assignedClientsTable">
               <tr>
-                <td colspan="6" style="padding:20px; text-align:center; color:#666;">
+                <td colspan="7" style="padding:20px; text-align:center; color:#666;">
                   Загрузка списка клиентов...
                 </td>
               </tr>
@@ -985,7 +986,7 @@
       if (clients.length === 0) {
         table.innerHTML = `
           <tr>
-            <td colspan="6" style="padding:20px; text-align:center; color:#666;">
+            <td colspan="7" style="padding:20px; text-align:center; color:#666;">
               У вас пока нет закрепленных клиентов
             </td>
           </tr>
@@ -1000,6 +1001,11 @@
           <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${esc(assignment.client.phone || '-')}</td>
           <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${fmtDate(assignment.client.createdAt)}</td>
           <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">${fmtDate(assignment.assignedAt)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">
+            <span class="status-badge ${assignment.client.hasCard ? 'status-card' : 'status-no-card'}">
+              ${assignment.client.hasCard ? 'Привязана' : 'Не привязана'}
+            </span>
+          </td>
           <td style="padding:8px; border-bottom:1px solid #eee; font-size:12px">
             <button class="btn danger" onclick="unassignClient('${esc(assignment.id)}', '${esc(assignment.client.email)}')" style="padding:4px 8px; font-size:11px">
               Открепить

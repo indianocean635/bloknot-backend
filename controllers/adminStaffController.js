@@ -385,16 +385,27 @@ exports.getAssignedClients = async (req, res) => {
         email: true,
         name: true,
         phone: true,
-        createdAt: true
+        createdAt: true,
+        totalPaid: true,
+        isPaying: true,
+        subscriptionStatus: true,
+        subscriptionType: true
       }
     });
 
     // Объединяем данные
     const assignedClients = assignments.map(assignment => {
       const client = clients.find(c => c.email === assignment.clientEmail);
+      
+      // Определяем статус карты (заглушка - в реальном приложении здесь будет проверка карт)
+      const hasCard = client && client.isPaying && client.subscriptionStatus === 'active';
+      
       return {
         id: assignment.id,
-        client: client || null,
+        client: client ? {
+          ...client,
+          hasCard: hasCard
+        } : null,
         assignedAt: assignment.assignedAt,
         assignedBy: assignment.assignedBy
       };
