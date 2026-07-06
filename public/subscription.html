@@ -1150,9 +1150,17 @@
           description: data.cloudPayments.Description,
           amount: data.cloudPayments.Amount,
           currency: data.cloudPayments.Currency,
-          recurrent: data.cloudPayments.Recurrent
+          data: {
+            CloudPayments: {
+              recurrent: data.cloudPayments.Recurrent
+            }
+          }
         };
 
+        // Debug logging
+        console.log('[SUBSCRIPTION] authOptions:', authOptions);
+        console.log('[SUBSCRIPTION] data.cloudPayments.Recurrent:', data.cloudPayments.Recurrent);
+        
         // Use auth for card token, then create subscription on backend (no confirmation needed)
         widget.auth(authOptions, function(options) {
           // Success - got card token, now create subscription
@@ -1166,7 +1174,7 @@
           });
         }, function(reason, options) {
           // Fail
-          console.error('Card auth failed', reason, options);
+          console.error('[SUBSCRIPTION] Card auth failed', reason, options);
           handlePaymentFailure(reason, options);
         });
       } else {
