@@ -962,6 +962,7 @@
     // Load assigned clients for staff
     async function loadAssignedClients() {
       try {
+        console.log('[FRONTEND] Loading assigned clients...');
         const response = await fetch('/api/admin-staff/assigned-clients', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('auth')}`
@@ -973,6 +974,15 @@
         }
 
         const data = await response.json();
+        console.log('[FRONTEND] Assigned clients loaded:', {
+          success: data.success,
+          clientsCount: data.clients?.length || 0,
+          clients: data.clients?.map(c => ({
+            email: c.client?.email,
+            hasCard: c.client?.hasCard,
+            cloudPaymentsCardToken: c.client?.cloudPaymentsCardToken ? 'PRESENT' : 'MISSING'
+          }))
+        });
         displayAssignedClients(data.clients || []);
       } catch (error) {
         console.error('Error loading assigned clients:', error);

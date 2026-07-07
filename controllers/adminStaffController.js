@@ -356,6 +356,11 @@ exports.getAssignedClients = async (req, res) => {
     }
 
     const staffId = req.user.id;
+    console.log('[ADMIN-STAFF] Loading assigned clients for staff:', { 
+      staffId, 
+      staffEmail: req.user.email,
+      role: req.user.role 
+    });
 
     // Получаем все закрепления для этого сотрудника
     const assignments = await prisma.salesStaffAssignment.findMany({
@@ -403,6 +408,13 @@ exports.getAssignedClients = async (req, res) => {
       // Определяем статус карты на основе реальных данных из CloudPayments
       const hasCard = client && !!client.cloudPaymentsCardToken;
       
+      console.log('[ADMIN-STAFF] Client card status:', {
+        clientEmail: assignment.clientEmail,
+        clientId: client?.id,
+        cloudPaymentsCardToken: client?.cloudPaymentsCardToken ? 'PRESENT' : 'MISSING',
+        hasCard: hasCard
+      });
+      
       return {
         id: assignment.id,
         client: client ? {
@@ -413,6 +425,8 @@ exports.getAssignedClients = async (req, res) => {
         assignedBy: assignment.assignedBy
       };
     }).filter(ac => ac.client !== null);
+
+    console.log('[ADMIN-STAFF] Final assigned clients count:', assignedClients.length);
 
     res.json({
       success: true,
