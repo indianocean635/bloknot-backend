@@ -1191,31 +1191,29 @@
         closeSubscriptionPlansModal(); // Close plans modal
       } else {
         console.error('[SUBSCRIPTION] Subscription creation failed:', result);
-        const errorMessage = isPlanChange ? 'Ошибка изменения тарифа: ' : 'Ошибка оформления подписки: ';
-        alert(errorMessage + (result.error || 'Unknown error'));
+        // Если платеж прошел но есть проблема с обработкой, показываем более мягкое сообщение
+        const errorMessage = isPlanChange ? 
+          'Тариф изменен, но возникла проблема с обновлением данных. Пожалуйста, обновите страницу.' : 
+          'Подписка оформлена, но возникла проблема с обновлением данных. Пожалуйста, обновите страницу.';
+        alert(errorMessage);
+        // Все равно закрываем модальное окно и обновляем данные, т.к. платеж прошел
+        loadSubscriptionInfo();
+        closeSubscriptionPlansModal();
       }
     } catch (error) {
       console.error('[SUBSCRIPTION] Error creating subscription on backend:', error);
-      alert('Ошибка создания подписки: ' + error.message);
+      // Если ошибка после успешного платежа, показываем более мягкое сообщение
+      const errorMessage = isPlanChange ? 
+        'Тариф изменен, но возникла проблема с обновлением данных. Пожалуйста, обновите страницу.' : 
+        'Подписка оформлена, но возникла проблема с обновлением данных. Пожалуйста, обновите страницу.';
+      alert(errorMessage);
+      // Все равно закрываем модальное окно и обновляем данные, т.к. платеж прошел
+      loadSubscriptionInfo();
+      closeSubscriptionPlansModal();
     }
   }
 
-  // Handle payment success
-  async function handlePaymentSuccess(options, plan) {
-    try {
-      console.log('[SUBSCRIPTION] Processing successful payment...', options);
-      
-      // При прямом платеже подписка уже создана в CloudPayments через вебхук
-      // Нужно только обновить данные в интерфейсе
-      const message = 'Подписка успешно оформлена! Тариф изменен.';
-      alert(message);
-      loadSubscriptionInfo(); // Reload subscription info
-      closeSubscriptionPlansModal(); // Close plans modal
-    } catch (error) {
-      console.error('[SUBSCRIPTION] Error processing payment success:', error);
-      alert('Ошибка обработки платежа: ' + error.message);
-    }
-  }
+  // Handle payment success function removed - now handled in createSubscriptionOnBackend
 
   // Handle payment failure
   function handlePaymentFailure(reason, options) {
