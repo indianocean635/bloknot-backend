@@ -1353,6 +1353,68 @@
         showNotice('Error: ' + (e && e.message ? e.message : ''));
       }
     })();
+
+    // Auto-refresh assigned clients for staff
+    let assignedClientsInterval = null;
+    let isStaffView = false;
+
+    // Start auto-refresh when staff view is active
+    function startAssignedClientsAutoRefresh() {
+      if (isStaffView && !assignedClientsInterval) {
+        // Refresh every 30 seconds
+        assignedClientsInterval = setInterval(() => {
+          if (document.getElementById('staffAssignedClients').style.display !== 'none') {
+            loadAssignedClients();
+          }
+        }, 30000);
+      }
+    }
+
+    // Stop auto-refresh
+    function stopAssignedClientsAutoRefresh() {
+      if (assignedClientsInterval) {
+        clearInterval(assignedClientsInterval);
+        assignedClientsInterval = null;
+      }
+    }
+
+    // Override switchTab to handle auto-refresh
+    const originalSwitchTab = switchTab;
+    switchTab = function(tabName) {
+      originalSwitchTab(tabName);
+      
+      // Check if this is staff view and my clients tab is active
+      if (window.currentUser?.role === 'ADMIN_STAFF' && 
+          document.getElementById('staffAssignedClients')?.style.display !== 'none') {
+        isStaffView = true;
+        startAssignedClientsAutoRefresh();
+        // Also refresh immediately when switching to staff view
+        loadAssignedClients();
+      } else {
+        isStaffView = false;
+        stopAssignedClientsAutoRefresh();
+      }
+    };
+
+    // Update staff initialization to start auto-refresh
+    const originalSetupStaffView = setupStaffView;
+    setupStaffView = function() {
+      originalSetupStaffView();
+      isStaffView = true;
+      startAssignedClientsAutoRefresh();
+    };
+
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+      stopAssignedClientsAutoRefresh();
+    });
+
+    // Add visibility change listener to refresh when page becomes visible
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && isStaffView) {
+        loadAssignedClients();
+      }
+    });
   </script>
 </body>
 </html>
