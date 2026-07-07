@@ -269,16 +269,17 @@ exports.searchClients = async (req, res) => {
         email: true,
         name: true,
         phone: true,
-        createdAt: true
+        createdAt: true,
+        cloudPaymentsCardToken: true // Добавляем токен карты для проверки статуса
       },
       take: 10,
       orderBy: { createdAt: 'desc' }
     });
 
-    // Добавляем информацию о картах (заглушка, в реальном приложении здесь будет проверка карт)
+    // Добавляем информацию о картах на основе реальных данных
     const clientsWithCardInfo = clients.map(client => ({
       ...client,
-      hasCard: Math.random() > 0.5 // Заглушка: 50% клиентов имеют карты
+      hasCard: !!client.cloudPaymentsCardToken // Реальная проверка наличия привязанной карты
     }));
 
     res.json({
