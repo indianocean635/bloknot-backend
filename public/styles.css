@@ -786,3 +786,22 @@ a:hover {
 .muted {
   color: var(--muted);
 }
+
+/* Status badges for card attachment status */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-card {
+  background: #28a745;
+  color: white;
+}
+
+.status-no-card {
+  background: #dc3545;
+  color: white;
+}
