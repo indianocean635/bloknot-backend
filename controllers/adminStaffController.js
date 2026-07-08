@@ -379,7 +379,7 @@ exports.getAssignedClients = async (req, res) => {
       orderBy: { assignedAt: 'desc' }
     });
 
-    // Получаем информацию о клиентах по email
+    // Получаем информацию о клиентах по email (как в супер админ панели)
     const clientEmails = assignments.map(a => a.clientEmail);
     const clients = await prisma.user.findMany({
       where: {
@@ -387,31 +387,28 @@ exports.getAssignedClients = async (req, res) => {
           in: clientEmails
         }
       },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        createdAt: true,
-        totalPaid: true,
-        isPaying: true,
-        subscriptionStatus: true,
-        subscriptionType: true,
-        cloudPaymentsCardToken: true
-      }
+      include: {
+        business: {
+          include: {
+            subscription: true // Получаем subscription как в супер админ панели
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
     });
 
-    // Объединяем данные
+    // Объединяем данные (как в супер админ панели)
     const assignedClients = assignments.map(assignment => {
       const client = clients.find(c => c.email === assignment.clientEmail);
       
-      // Определяем статус карты на основе реальных данных из CloudPayments
-      const hasCard = client && !!client.cloudPaymentsCardToken;
+      // Определяем статус карты на основе subscription.cardAttachedAt как в супер админ панели
+      const hasCard = client && client.business?.subscription?.cardAttachedAt;
       
-      console.log('[ADMIN-STAFF] Client card status:', {
+      console.log('[ADMIN-STAFF] Client card status (using subscription.cardAttachedAt):', {
         clientEmail: assignment.clientEmail,
         clientId: client?.id,
-        cloudPaymentsCardToken: client?.cloudPaymentsCardToken ? 'PRESENT' : 'MISSING',
+        subscriptionId: client?.business?.subscription?.id,
+        cardAttachedAt: client?.business?.subscription?.cardAttachedAt,
         hasCard: hasCard
       });
       
@@ -419,7 +416,8 @@ exports.getAssignedClients = async (req, res) => {
         id: assignment.id,
         client: client ? {
           ...client,
-          hasCard: hasCard
+          hasCard: hasCard,
+          subscription: client.business?.subscription // Добавляем subscription как в супер админ панели
         } : null,
         assignedAt: assignment.assignedAt,
         assignedBy: assignment.assignedBy
