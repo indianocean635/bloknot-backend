@@ -675,8 +675,9 @@
     html += '</div>';
     detailsDiv.innerHTML = html;
 
-    // Show actions only for active subscriptions
-    if (normalizedStatus === 'active' || normalizedStatus === 'trial') {
+    // Show actions only for active subscriptions (not trial)
+    // Кнопка "сменить тариф" должна появляться только после окончания демо периода
+    if (normalizedStatus === 'active') {
       actionsDiv.style.display = 'block';
     } else {
       actionsDiv.style.display = 'none';
