@@ -337,7 +337,16 @@ async function handleCloudPaymentsWebhook(req, res) {
         // Если AccountId пустой, это оплата через widget.auth для смены тарифа
         // Подписка создается через changeSubscriptionPlan, здесь только обновляем платеж
         if (!accountId) {
-          console.log('[WEBHOOK] Payment without AccountId - likely plan change, skipping subscription creation');
+          console.log('[WEBHOOK] Payment without AccountId - likely plan change, but we need to find user and update token');
+          
+          // Пытаемся найти пользователя по email из Description или других полей
+          const userEmail = extractUserEmailFromEventData(eventData);
+          if (userEmail) {
+            console.log('[WEBHOOK] Found user email in payment data:', userEmail);
+            await handlePaymentSuccessForPlanChange(userEmail, transactionId, eventData);
+          } else {
+            console.log('[WEBHOOK] Could not find user email in payment data, skipping');
+          }
           break;
         }
         await handlePaymentSuccess(accountId, transactionId, eventData);
@@ -371,6 +380,70 @@ async function handleCloudPaymentsWebhook(req, res) {
   } catch (error) {
     console.error('[WEBHOOK ERROR]', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+// Извлечь email из данных вебхука
+function extractUserEmailFromEventData(eventData) {
+  // Проверяем разные поля где может быть email
+  if (eventData.Email) return eventData.Email;
+  if (eventData.Description) {
+    // Ищем email в описании (формат: "Подписка Studio для user@example.com")
+    const emailMatch = eventData.Description.match(/[\w\.-]+@[\w\.-]+\.\w+/);
+    if (emailMatch) return emailMatch[0];
+  }
+  if (eventData.CustomerReceipt?.Email) return eventData.CustomerReceipt.Email;
+  if (eventData.Receipt?.Email) return eventData.Receipt.Email;
+  
+  return null;
+}
+
+// Обработка успешного платежа для смены тарифа (когда AccountId пустой)
+async function handlePaymentSuccessForPlanChange(userEmail, transactionId, eventData) {
+  console.log('[PAYMENT SUCCESS FOR PLAN CHANGE]', { userEmail, transactionId, eventData });
+
+  try {
+    // Находим пользователя по email
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail },
+      select: {
+        id: true,
+        email: true,
+        cloudPaymentsCardToken: true,
+        cloudPaymentsSubscriptionId: true
+      }
+    });
+
+    if (!user) {
+      console.log('[PLAN CHANGE] User not found by email:', userEmail);
+      return;
+    }
+
+    console.log('[PLAN CHANGE] Found user:', {
+      userId: user.id,
+      email: user.email,
+      hasCardToken: !!user.cloudPaymentsCardToken,
+      subscriptionId: user.cloudPaymentsSubscriptionId
+    });
+
+    // Если у пользователя уже есть токен карты, не обновляем его
+    if (user.cloudPaymentsCardToken) {
+      console.log('[PLAN CHANGE] User already has card token, skipping update');
+      return;
+    }
+
+    // Пытаемся получить токен карты из других данных
+    // В идеале токен должен был сохраниться в changeSubscriptionPlan
+    // Но если нет, то можем попробовать получить из других источников
+    
+    console.log('[PLAN CHANGE] User does not have card token, but payment was successful');
+    console.log('[PLAN CHANGE] This might indicate an issue with token saving during plan change');
+    
+    // Здесь можно добавить дополнительную логику для восстановления токена
+    // или уведомления администратора о проблеме
+    
+  } catch (error) {
+    console.error('[PLAN CHANGE] Error processing payment success:', error);
   }
 }
 
