@@ -298,17 +298,13 @@ class CloudPaymentsService {
             // Получаем конфигурацию тарифа
             const subscriptionConfig = this.getSubscriptionConfig(planId);
             
-            // Для смены тарифа используем ту же логику что и в регистрации
-            // 1 рубль для первого платежа, рекуррентный платеж в тот же день
-            const firstPaymentAmount = 1; // 1 рубль для первого платежа
-            
-            // Создаем чек для первого платежа (1 рубль как в регистрации)
+            // Создаем чек для первого платежа (полная сумма для смены тарифа)
             const firstPaymentReceipt = {
                 Items: [{
                     Label: `${planName} ${subscriptionType === 'yearly' ? 'годовая' : 'месячная'} подписка`,
-                    Price: subscriptionConfig.amount * 100, // РЕАЛЬНАЯ ЦЕНА в копейках
+                    Price: planAmount, // Уже в копейках
                     Quantity: 1,
-                    Amount: firstPaymentAmount * 100, // 1 рубль для первого платежа
+                    Amount: planAmount, // Полная сумма для первого платежа
                     Vat: 20,
                     PaymentMethodType: 1,
                     PaymentObject: 1
@@ -321,9 +317,9 @@ class CloudPaymentsService {
             const recurrentPaymentReceipt = {
                 Items: [{
                     Label: `${planName} ${subscriptionType === 'yearly' ? 'годовая' : 'месячная'} подписка`,
-                    Price: subscriptionConfig.amount * 100, // РЕАЛЬНАЯ ЦЕНА в копейках
+                    Price: planAmount, // Уже в копейках
                     Quantity: 1,
-                    Amount: subscriptionConfig.amount * 100, // Полная стоимость для регулярных платежей
+                    Amount: planAmount, // Полная стоимость для регулярных платежей
                     Vat: 20,
                     PaymentMethodType: 1,
                     PaymentObject: 1
@@ -332,19 +328,19 @@ class CloudPaymentsService {
                 Email: userEmail
             };
 
-            // Создаем подписку в CloudPayments как в регистрации
-            // 1 рубль для первого платежа, рекуррентный платеж в тот же день
+            // Создаем подписку в CloudPayments с полной суммой для первого платежа
+            // Для смены тарифа сразу списываем полную сумму
             const cloudPaymentsData = {
                 Token: cardToken,
                 AccountId: userId,
                 Email: userEmail,
                 Description: `Подписка ${planName} для ${user.business?.name || userName}`,
-                Amount: firstPaymentAmount, // 1 рубль для первого платежа
+                Amount: planAmount, // Полная сумма для первого платежа
                 Currency: 'RUB',
                 RequireConfirmation: false,
                 StartDate: now, // Немедленная активация
                 TrialPeriod: null, // НЕТ trial периода для смены тарифа
-                CustomerReceipt: firstPaymentReceipt, // чек для первого платежа (1 рубль)
+                CustomerReceipt: recurrentPaymentReceipt, // Используем чек для рекуррентных платежей
                 CloudPayments: {
                     recurrent: {
                         interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
