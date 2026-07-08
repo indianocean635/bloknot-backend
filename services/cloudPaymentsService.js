@@ -671,15 +671,34 @@ class CloudPaymentsService {
     async makeRequest(endpoint, data) {
         try {
             const auth = Buffer.from(`${this.publicId}:${this.privateKey}`).toString('base64');
+            const url = `${this.apiBaseUrl}${endpoint}`;
             
-            const response = await axios.post(`${this.apiBaseUrl}${endpoint}`, data, {
+            // Логирование полного запроса для поддержки CloudPayments
+            console.log('[CLOUDPAYMENTS] ===== HTTP REQUEST LOG =====');
+            console.log('[CLOUDPAYMENTS] Request URL:', url);
+            console.log('[CLOUDPAYMENTS] Request Method: POST');
+            console.log('[CLOUDPAYMENTS] Request Headers:', {
+                'Authorization': `Basic ${auth}`,
+                'Content-Type': 'application/json'
+            });
+            console.log('[CLOUDPAYMENTS] Request Body:', JSON.stringify(data, null, 2));
+            console.log('[CLOUDPAYMENTS] ======================================');
+            
+            const response = await axios.post(url, data, {
                 headers: {
                     'Authorization': `Basic ${auth}`,
                     'Content-Type': 'application/json'
                 }
             });
 
-            console.log('[CLOUDPAYMENTS] API response:', {
+            // Логирование полного ответа для поддержки CloudPayments
+            console.log('[CLOUDPAYMENTS] ===== HTTP RESPONSE LOG =====');
+            console.log('[CLOUDPAYMENTS] Response Status:', response.status);
+            console.log('[CLOUDPAYMENTS] Response Headers:', response.headers);
+            console.log('[CLOUDPAYMENTS] Response Body:', JSON.stringify(response.data, null, 2));
+            console.log('[CLOUDPAYMENTS] =====================================');
+
+            console.log('[CLOUDPAYMENTS] API response summary:', {
                 endpoint,
                 success: response.data.Success,
                 status: response.status
@@ -687,6 +706,15 @@ class CloudPaymentsService {
 
             return response.data;
         } catch (error) {
+            // Логирование ошибки для поддержки CloudPayments
+            console.log('[CLOUDPAYMENTS] ===== HTTP ERROR LOG =====');
+            console.log('[CLOUDPAYMENTS] Error Request URL:', `${this.apiBaseUrl}${endpoint}`);
+            console.log('[CLOUDPAYMENTS] Error Request Body:', JSON.stringify(data, null, 2));
+            console.log('[CLOUDPAYMENTS] Error Status:', error.response?.status);
+            console.log('[CLOUDPAYMENTS] Error Headers:', error.response?.headers);
+            console.log('[CLOUDPAYMENTS] Error Response Body:', JSON.stringify(error.response?.data, null, 2));
+            console.log('[CLOUDPAYMENTS] ================================');
+            
             console.error('[CLOUDPAYMENTS] API request error:', {
                 endpoint,
                 status: error.response?.status,
