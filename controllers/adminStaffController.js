@@ -178,26 +178,25 @@ exports.getManagerResults = async (req, res) => {
 
       const clientEmails = assignments.map(a => a.clientEmail);
       
-      // Получаем информацию о клиентах
+      // Получаем информацию о клиентах (как в супер админ панели)
       const clients = await prisma.user.findMany({
         where: {
           email: {
             in: clientEmails
           }
         },
-        select: {
-          email: true,
-          totalPaid: true,
-          isPaying: true,
-          subscriptionStatus: true,
-          subscriptionType: true,
-          cloudPaymentsCardToken: true
+        include: {
+          business: {
+            include: {
+              subscription: true // Получаем subscription как в супер админ панели
+            }
+          }
         }
       });
 
-      // Считаем статистику на основе реальных данных
+      // Считаем статистику на основе subscription.cardAttachedAt как в супер админ панели
       const totalClients = clients.length;
-      const clientsWithCards = clients.filter(client => !!client.cloudPaymentsCardToken).length;
+      const clientsWithCards = clients.filter(client => client.business?.subscription?.cardAttachedAt).length;
       
       // Считаем сумму подписок (заглушка - в реальном приложении будет логика подсчета)
       const subscriptionSum = clients.reduce((sum, client) => {
