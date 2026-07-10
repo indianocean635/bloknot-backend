@@ -1130,13 +1130,20 @@
       // Initialize CloudPayments widget
       const widget = new cp.CloudPayments();
 
+      // Get current user from localStorage or global variable
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const businessId = currentUser.businessId || '75845752-c80e-4f5e-9d3d-3a8f5b4124e3'; // Fallback to hardcoded ID
+      
+      console.log('[SUBSCRIPTION] Current user:', currentUser);
+      console.log('[SUBSCRIPTION] Using businessId as accountId:', businessId);
+
       // Use auth for plan change with minimal supported parameters
       const payOptions = {
         publicId: 'pk_f654dc1994fa0991f144094dca99d',
         description: `Подписка ${plan.name} (${plan.period === 'yearly' ? 'годовая' : 'месячная'})`,
         amount: plan.amount / 100, // Конвертируем копейки в рубли для виджета
         currency: 'RUB',
-        accountId: '75845752-c80e-4f5e-9d3d-3a8f5b4124e3' // Используем конкретный ID пользователя
+        accountId: businessId // Используем правильный businessId
       };
 
       console.log('[SUBSCRIPTION] Pay options:', payOptions);
