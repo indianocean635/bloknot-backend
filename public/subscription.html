@@ -1137,7 +1137,8 @@
         currency: 'RUB',
         accountId: '75845752-c80e-4f5e-9d3d-3a8f5b4124e3', // Используем конкретный ID пользователя
         savecard: true, // Сохраняем карту для рекуррентных платежей
-        requireConfirmation: false // Не требовать подтверждения
+        requireConfirmation: false, // Не требовать подтверждения
+        type: 'charge' // Обязательный параметр для widget.pay
       };
 
       console.log('[SUBSCRIPTION] Pay options:', payOptions);
