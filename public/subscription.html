@@ -1134,7 +1134,9 @@
         publicId: 'pk_f654dc1994fa0991f144094dca99d',
         description: `Подписка ${plan.name} (${plan.period === 'yearly' ? 'годовая' : 'месячная'})`,
         amount: plan.amount / 100, // Конвертируем копейки в рубли для виджета
-        currency: 'RUB'
+        currency: 'RUB',
+        accountId: currentUser?.id, // Добавляем accountId для создания подписки
+        savecard: true // Сохраняем карту для рекуррентных платежей
       };
 
       console.log('[SUBSCRIPTION] Auth options:', authOptions);

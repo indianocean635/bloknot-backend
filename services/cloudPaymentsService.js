@@ -355,6 +355,29 @@ class CloudPaymentsService {
                 Token: cardToken ? 'SET' : 'MISSING'
             });
 
+            console.log('[CLOUDPAYMENTS] Full request data being sent to CloudPayments API:', {
+                url: '/subscriptions/create',
+                data: {
+                    Token: cardToken ? 'SET' : 'MISSING',
+                    AccountId: userId,
+                    Email: userEmail,
+                    Description: `Подписка ${planName} для ${user.business?.name || userName}`,
+                    Amount: planAmount,
+                    Currency: 'RUB',
+                    RequireConfirmation: false,
+                    StartDate: now,
+                    TrialPeriod: null,
+                    CustomerReceipt: recurrentPaymentReceipt,
+                    CloudPayments: {
+                        recurrent: {
+                            interval: subscriptionType === 'yearly' ? 'Year' : 'Month',
+                            period: 1,
+                            customerReceipt: recurrentPaymentReceipt
+                        }
+                    }
+                }
+            });
+
             const response = await this.makeRequest('/subscriptions/create', cloudPaymentsData);
 
             if (response.Success) {
