@@ -1130,20 +1130,16 @@
       // Initialize CloudPayments widget
       const widget = new cp.CloudPayments();
 
-      // Use pay for plan change with recurrent payments (supports accountId and savecard)
+      // Use auth for plan change with minimal supported parameters
       const payOptions = {
         publicId: 'pk_f654dc1994fa0991f144094dca99d',
         description: `Подписка ${plan.name} (${plan.period === 'yearly' ? 'годовая' : 'месячная'})`,
         amount: plan.amount / 100, // Конвертируем копейки в рубли для виджета
         currency: 'RUB',
-        accountId: '75845752-c80e-4f5e-9d3d-3a8f5b4124e3', // Используем конкретный ID пользователя
-        savecard: true, // Сохраняем карту для рекуррентных платежей
-        requireConfirmation: false, // Не требовать подтверждения
-        type: 'charge' // Обязательный параметр для widget.pay
+        accountId: '75845752-c80e-4f5e-9d3d-3a8f5b4124e3' // Используем конкретный ID пользователя
       };
 
       console.log('[SUBSCRIPTION] Pay options:', payOptions);
-      console.log('[SUBSCRIPTION] Type parameter:', payOptions.type);
       console.log('[SUBSCRIPTION] Full options JSON:', JSON.stringify(payOptions, null, 2));
       
       // Try using auth instead of pay for plan change
