@@ -1146,8 +1146,8 @@
       console.log('[SUBSCRIPTION] Type parameter:', payOptions.type);
       console.log('[SUBSCRIPTION] Full options JSON:', JSON.stringify(payOptions, null, 2));
       
-      // Use pay for plan change with recurrent payments
-      widget.pay(payOptions, function(options) {
+      // Try using auth instead of pay for plan change
+      widget.auth(payOptions, function(options) {
         // Success - payment completed, subscription created
         console.log('[SUBSCRIPTION] Payment successful, subscription created:', options);
         
