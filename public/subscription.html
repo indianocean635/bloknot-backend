@@ -1135,10 +1135,9 @@
         description: `Подписка ${plan.name} (${plan.period === 'yearly' ? 'годовая' : 'месячная'})`,
         amount: plan.amount / 100, // Конвертируем копейки в рубли для виджета
         currency: 'RUB',
-        accountId: currentUser?.id, // Добавляем accountId для создания подписки
+        accountId: '75845752-c80e-4f5e-9d3d-3a8f5b4124e3', // Используем конкретный ID пользователя
         savecard: true, // Сохраняем карту для рекуррентных платежей
-        requireConfirmation: false, // Не требовать подтверждения
-        type: 'charge' // Обязательный параметр для рекуррентных платежей
+        requireConfirmation: false // Не требовать подтверждения
       };
 
       console.log('[SUBSCRIPTION] Pay options:', payOptions);
