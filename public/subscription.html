@@ -1129,29 +1129,34 @@
       // Initialize CloudPayments widget
       const widget = new cp.CloudPayments();
 
-      // Use auth to get card token, then create subscription on backend (like in registration)
-      const authOptions = {
+      // Use pay for plan change with recurrent payments (supports accountId and savecard)
+      const payOptions = {
         publicId: 'pk_f654dc1994fa0991f144094dca99d',
         description: `Подписка ${plan.name} (${plan.period === 'yearly' ? 'годовая' : 'месячная'})`,
         amount: plan.amount / 100, // Конвертируем копейки в рубли для виджета
         currency: 'RUB',
         accountId: currentUser?.id, // Добавляем accountId для создания подписки
-        savecard: true // Сохраняем карту для рекуррентных платежей
+        savecard: true, // Сохраняем карту для рекуррентных платежей
+        requireConfirmation: false, // Не требовать подтверждения
+        type: 'charge' // Обязательный параметр для рекуррентных платежей
       };
 
-      console.log('[SUBSCRIPTION] Auth options:', authOptions);
+      console.log('[SUBSCRIPTION] Pay options:', payOptions);
       
-      // Use auth for card token, then create subscription on backend
-      widget.auth(authOptions, function(options) {
-        // Success - got card token, now create subscription
-        console.log('[SUBSCRIPTION] Card auth successful, creating subscription:', options);
+      // Use pay for plan change with recurrent payments
+      widget.pay(payOptions, function(options) {
+        // Success - payment completed, subscription created
+        console.log('[SUBSCRIPTION] Payment successful, subscription created:', options);
         
-        // Send payment data to backend to create subscription
-        createSubscriptionOnBackend(options.token, plan, isPlanChange);
+        // Show success message
+        alert('Подписка успешно изменена!');
+        
+        // Reload page to update subscription info
+        window.location.reload();
         
       }, function(reason, options) {
         // Fail
-        console.error('[SUBSCRIPTION] Card auth failed', reason, options);
+        console.error('[SUBSCRIPTION] Payment failed', reason, options);
         handlePaymentFailure(reason, options);
       });
       
