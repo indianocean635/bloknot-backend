@@ -1142,7 +1142,7 @@
         
         if (response.ok) {
           const userData = await response.json();
-          businessId = userData.businessId || businessId;
+          businessId = userData.user?.businessId || businessId;
           console.log('[SUBSCRIPTION] Current user from API:', userData);
         } else {
           console.log('[SUBSCRIPTION] Failed to get user from API, using fallback');
