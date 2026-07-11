@@ -1153,20 +1153,27 @@
       
       console.log('[SUBSCRIPTION] Using businessId as accountId:', businessId);
 
-      // Use auth for plan change with minimal supported parameters
+      // Use pay with recurrent parameters for subscription
       const payOptions = {
         publicId: 'pk_f654dc1994fa0991f144094dca99d',
         description: `Подписка ${plan.name} (${plan.period === 'yearly' ? 'годовая' : 'месячная'})`,
         amount: plan.amount / 100, // Конвертируем копейки в рубли для виджета
         currency: 'RUB',
-        accountId: businessId // Используем правильный businessId
+        accountId: businessId, // Используем правильный businessId
+        requireConfirmation: false,
+        cloudPayments: {
+          recurrent: {
+            interval: plan.period === 'yearly' ? 'Year' : 'Month',
+            period: 1
+          }
+        }
       };
 
       console.log('[SUBSCRIPTION] Pay options:', payOptions);
       console.log('[SUBSCRIPTION] Full options JSON:', JSON.stringify(payOptions, null, 2));
       
-      // Try using auth instead of pay for plan change
-      widget.auth(payOptions, function(options) {
+      // Use widget.pay for subscription creation with recurrent parameters
+      widget.pay(payOptions, function(options) {
         // Success - payment completed, subscription created
         console.log('[SUBSCRIPTION] Payment successful, subscription created:', options);
         
