@@ -1130,11 +1130,27 @@
       // Initialize CloudPayments widget
       const widget = new cp.CloudPayments();
 
-      // Get current user from localStorage or global variable
-      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      const businessId = currentUser.businessId || '75845752-c80e-4f5e-9d3d-3a8f5b4124e3'; // Fallback to hardcoded ID
+      // Get current user from API call
+      let businessId = '75845752-c80e-4f5e-9d3d-3a8f5b4124e3'; // Fallback to hardcoded ID
       
-      console.log('[SUBSCRIPTION] Current user:', currentUser);
+      try {
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
+          businessId = userData.businessId || businessId;
+          console.log('[SUBSCRIPTION] Current user from API:', userData);
+        } else {
+          console.log('[SUBSCRIPTION] Failed to get user from API, using fallback');
+        }
+      } catch (error) {
+        console.log('[SUBSCRIPTION] Error getting user from API:', error);
+      }
+      
       console.log('[SUBSCRIPTION] Using businessId as accountId:', businessId);
 
       // Use auth for plan change with minimal supported parameters
