@@ -1163,10 +1163,13 @@
         accountId: businessId, // Используем правильный businessId
         requireConfirmation: false,
         type: 'charge', // Добавляем обязательный параметр type
-        cloudPayments: {
-          recurrent: {
-            interval: plan.period === 'yearly' ? 'Year' : 'Month',
-            period: 1
+        savecard: true, // Сохранить карту для рекуррентных платежей
+        data: {
+          CloudPayments: {
+            recurrent: {
+              interval: plan.period === 'yearly' ? 'Year' : 'Month',
+              period: 1
+            }
           }
         }
       };
