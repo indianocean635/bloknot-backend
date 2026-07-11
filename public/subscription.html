@@ -1161,6 +1161,7 @@
         currency: 'RUB',
         accountId: businessId, // Используем правильный businessId
         requireConfirmation: false,
+        type: 'charge', // Добавляем обязательный параметр type
         cloudPayments: {
           recurrent: {
             interval: plan.period === 'yearly' ? 'Year' : 'Month',
