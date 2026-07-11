@@ -1162,7 +1162,16 @@
         currency: 'RUB',
         accountId: businessId, // Используем правильный businessId
         requireConfirmation: false,
-        type: 'charge' // Только обязательные параметры
+        type: 'charge', // Добавляем обязательный параметр type
+        savecard: true, // Сохранить карту для рекуррентных платежей
+        data: {
+          CloudPayments: {
+            recurrent: {
+              interval: plan.period === 'yearly' ? 'Year' : 'Month',
+              period: 1
+            }
+          }
+        }
       };
 
       console.log('[SUBSCRIPTION] Pay options:', payOptions);
