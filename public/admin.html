@@ -454,7 +454,7 @@
       const s = await api('/api/admin/stats');
       document.getElementById('statTotal').textContent = String(s.totalUsers ?? '—');
       document.getElementById('statPaying').textContent = String(s.payingUsers ?? '—');
-      document.getElementById('statPaid').textContent = String(s.totalPaid ?? '—');
+      document.getElementById('statPaid').textContent = s.totalPaid !== undefined ? (s.totalPaid / 100).toFixed(2) + ' ₽' : '—';
     }
 
     async function loadUsers() {
@@ -502,7 +502,7 @@
               </label>
             </td>
             <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
-              <input data-id="${esc(u.id)}" data-field="totalPaid" value="${Number(u.totalPaid||0)}" style="width:100px; padding:4px 6px; border-radius:8px; border:1px solid var(--border); font-size:12px" />
+              <input data-id="${esc(u.id)}" data-field="totalPaid" value="${(Number(u.totalPaid||0)/100).toFixed(2)}" title="Всего оплачено в рублях" style="width:100px; padding:4px 6px; border-radius:8px; border:1px solid var(--border); font-size:12px" />
             </td>
             <td style="padding:6px 8px; border-bottom:1px solid rgba(229,231,235,0.7); font-size:12px">
               <input data-id="${esc(u.id)}" data-field="nextBillingAt" value="${u.nextBillingAt ? new Date(u.nextBillingAt).toISOString().slice(0,10) : ''}" placeholder="YYYY-MM-DD" style="width:120px; padding:4px 6px; border-radius:8px; border:1px solid var(--border); font-size:12px" />
@@ -543,7 +543,7 @@
 
       const payload = {
         isPaying: !!(isPayingEl && isPayingEl.checked),
-        totalPaid: Number(totalPaidEl && totalPaidEl.value ? totalPaidEl.value : 0) || 0,
+        totalPaid: Math.round((Number(totalPaidEl && totalPaidEl.value ? totalPaidEl.value : 0) || 0) * 100),
         nextBillingAt: nextBillingAtEl && nextBillingAtEl.value ? nextBillingAtEl.value : "",
       };
 
