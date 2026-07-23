@@ -398,6 +398,29 @@ function extractUserEmailFromEventData(eventData) {
   return null;
 }
 
+// Resolve user by AccountId (which can be user.id or businessId) or by email
+async function resolveUserFromAccountId(accountId, eventData) {
+  let user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { id: accountId },
+        { businessId: accountId }
+      ]
+    }
+  });
+
+  if (!user && eventData) {
+    const email = extractUserEmailFromEventData(eventData);
+    if (email) {
+      user = await prisma.user.findUnique({
+        where: { email }
+      });
+    }
+  }
+
+  return user;
+}
+
 // Обработка успешного платежа для смены тарифа (когда AccountId пустой)
 async function handlePaymentSuccessForPlanChange(userEmail, transactionId, eventData) {
   console.log('[PAYMENT SUCCESS FOR PLAN CHANGE]', { userEmail, transactionId, eventData });
@@ -448,8 +471,44 @@ async function handlePaymentSuccessForPlanChange(userEmail, transactionId, event
 }
 
 // Handle successful payment
-async function handlePaymentSuccess(businessId, transactionId, eventData) {
-  console.log('[PAYMENT SUCCESS]', { businessId, transactionId, eventData });
+async function handlePaymentSuccess(accountId, transactionId, eventData) {
+  console.log('[PAYMENT SUCCESS]', { accountId, transactionId, eventData });
+
+  // AccountId may be user.id (cloudPaymentsService flow) or user.businessId (createPayment flow)
+  const user = await resolveUserFromAccountId(accountId, eventData);
+  if (!user) {
+    console.error('[PAYMENT SUCCESS] User not found for accountId:', accountId);
+    return;
+  }
+
+  const businessId = user.businessId;
+  if (!businessId) {
+    console.error('[PAYMENT SUCCESS] User has no businessId:', user.id);
+    return;
+  }
+
+  // CloudPayments sends Amount in rubles as string (e.g. "690.00")
+  // Admin panel divides by 100, so store in kopecks
+  const amountKopecks = Math.round(parseFloat(eventData.Amount || eventData.PaymentAmount || 0) * 100);
+
+  // Update user payment stats so admin panel can display totals
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      totalPaid: { increment: amountKopecks },
+      isPaying: true,
+      lastPaymentAmount: amountKopecks,
+      lastPaymentDate: new Date(),
+      lastPaymentStatus: 'success',
+      lastPaymentTransactionId: transactionId?.toString() || null
+    }
+  });
+
+  console.log('[PAYMENT SUCCESS] Updated user payment stats:', {
+    userId: user.id,
+    businessId,
+    amountKopecks
+  });
 
   const subscription = await prisma.subscription.findUnique({
     where: { businessId }
@@ -601,8 +660,16 @@ async function handlePaymentSuccess(businessId, transactionId, eventData) {
 }
 
 // Handle payment confirmation
-async function handlePaymentConfirm(businessId, transactionId, eventData) {
-  console.log('[PAYMENT CONFIRM]', { businessId, transactionId });
+async function handlePaymentConfirm(accountId, transactionId, eventData) {
+  console.log('[PAYMENT CONFIRM]', { accountId, transactionId });
+
+  const user = await resolveUserFromAccountId(accountId, eventData);
+  if (!user || !user.businessId) {
+    console.error('[PAYMENT CONFIRM] User not found for accountId:', accountId);
+    return;
+  }
+
+  const businessId = user.businessId;
 
   const subscription = await prisma.subscription.findUnique({
     where: { businessId }
@@ -669,8 +736,25 @@ async function handlePaymentConfirm(businessId, transactionId, eventData) {
 }
 
 // Handle payment failure
-async function handlePaymentFail(businessId, transactionId, eventData) {
-  console.log('[PAYMENT FAILED]', { businessId, transactionId });
+async function handlePaymentFail(accountId, transactionId, eventData) {
+  console.log('[PAYMENT FAILED]', { accountId, transactionId });
+
+  const user = await resolveUserFromAccountId(accountId, eventData);
+  if (!user || !user.businessId) {
+    console.error('[PAYMENT FAILED] User not found for accountId:', accountId);
+    return;
+  }
+
+  const businessId = user.businessId;
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      lastPaymentStatus: 'failed',
+      lastPaymentDate: new Date(),
+      lastPaymentTransactionId: transactionId?.toString() || null
+    }
+  });
 
   const subscription = await prisma.subscription.findUnique({
     where: { businessId }
@@ -691,8 +775,16 @@ async function handlePaymentFail(businessId, transactionId, eventData) {
 }
 
 // Handle subscription cancellation
-async function handleSubscriptionCancel(businessId, subscriptionId) {
-  console.log('[SUBSCRIPTION CANCELLED]', { businessId, subscriptionId });
+async function handleSubscriptionCancel(accountId, subscriptionId) {
+  console.log('[SUBSCRIPTION CANCELLED]', { accountId, subscriptionId });
+
+  const user = await resolveUserFromAccountId(accountId);
+  if (!user || !user.businessId) {
+    console.error('[SUBSCRIPTION CANCELLED] User not found for accountId:', accountId);
+    return;
+  }
+
+  const businessId = user.businessId;
 
   await prisma.subscription.update({
     where: { businessId },
@@ -705,8 +797,31 @@ async function handleSubscriptionCancel(businessId, subscriptionId) {
 }
 
 // Handle recurrent payment
-async function handleRecurrentPayment(businessId, subscriptionId, transactionId, eventData) {
-  console.log('[RECURRING SUCCESS]', { businessId, subscriptionId, transactionId });
+async function handleRecurrentPayment(accountId, subscriptionId, transactionId, eventData) {
+  console.log('[RECURRING SUCCESS]', { accountId, subscriptionId, transactionId });
+
+  const user = await resolveUserFromAccountId(accountId, eventData);
+  if (!user || !user.businessId) {
+    console.error('[RECURRING SUCCESS] User not found for accountId:', accountId);
+    return;
+  }
+
+  const businessId = user.businessId;
+
+  // Store amount in kopecks for admin panel
+  const amountKopecks = Math.round(parseFloat(eventData.Amount || eventData.PaymentAmount || 0) * 100);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      totalPaid: { increment: amountKopecks },
+      isPaying: true,
+      lastPaymentAmount: amountKopecks,
+      lastPaymentDate: new Date(),
+      lastPaymentStatus: 'success',
+      lastPaymentTransactionId: transactionId?.toString() || null
+    }
+  });
 
   const subscription = await prisma.subscription.findUnique({
     where: { businessId }
