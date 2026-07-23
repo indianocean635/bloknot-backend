@@ -263,7 +263,7 @@
                     <td>${manager.name || '-'}</td>
                     <td>${manager.totalClients || 0}</td>
                     <td>${manager.clientsWithCards || 0}</td>
-                    <td>${manager.totalPayments || 0} ₽</td>
+                    <td>${(manager.totalPayments / 100).toFixed(2)} ₽</td>
                 </tr>
             `).join('');
         }
