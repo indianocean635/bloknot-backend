@@ -6,7 +6,8 @@ class CloudPaymentsService {
         this.publicId = process.env.CLOUDPAYMENTS_PUBLIC_ID;
         this.privateKey = process.env.CLOUDPAYMENTS_PRIVATE_KEY;
         this.apiBaseUrl = 'https://api.cloudpayments.ru';
-        
+        this.processedPaymentTransactionIds = new Set();
+
         console.log('[CLOUDPAYMENTS] Service initialized', {
             hasPublicId: !!this.publicId,
             hasPrivateKey: !!this.privateKey,
@@ -614,48 +615,59 @@ class CloudPaymentsService {
         console.log('[CLOUDPAYMENTS] Handling payment webhook:', { reason, model });
         
         const accountId = model.AccountId;
-        const amount = model.Amount;
+        const txId = model.TransactionId?.toString() || null;
 
         if (!accountId) {
             console.error('[CLOUDPAYMENTS] Invalid payment webhook data');
             return;
         }
 
+        // CloudPayments Amount is in rubles, store in kopecks
+        const amountKopecks = Math.round(parseFloat(model.Amount || model.PaymentAmount || 0) * 100);
+
+        // Skip duplicate webhooks for the same transaction
+        const user = await prisma.user.findUnique({ where: { id: accountId }, select: { lastPaymentTransactionId: true } });
+        if (this.processedPaymentTransactionIds.has(txId) || (user && user.lastPaymentTransactionId === txId)) {
+            console.log('[CLOUDPAYMENTS] Duplicate transaction, skipping totalPaid increment:', { accountId, txId });
+            return;
+        }
+
         // Обновляем общую сумму платежей и данные о последнем платеже
         if (reason === 'Success') {
+            this.processedPaymentTransactionIds.add(txId);
             await prisma.user.update({
                 where: { id: accountId },
                 data: {
-                    totalPaid: { increment: amount },
+                    totalPaid: { increment: amountKopecks },
                     isPaying: true,
-                    lastPaymentAmount: amount,
+                    lastPaymentAmount: amountKopecks,
                     lastPaymentDate: new Date(),
                     lastPaymentStatus: 'success',
-                    lastPaymentTransactionId: model.TransactionId?.toString() || null
+                    lastPaymentTransactionId: txId
                 }
             });
 
             console.log('[CLOUDPAYMENTS] Payment successful, updated totals:', {
                 accountId,
-                amount,
-                totalPaid: amount,
-                lastPaymentAmount: amount,
+                amountKopecks,
+                totalPaid: amountKopecks,
+                lastPaymentAmount: amountKopecks,
                 lastPaymentStatus: 'success'
             });
         } else if (reason === 'Fail') {
             await prisma.user.update({
                 where: { id: accountId },
                 data: {
-                    lastPaymentAmount: amount,
+                    lastPaymentAmount: amountKopecks,
                     lastPaymentDate: new Date(),
                     lastPaymentStatus: 'failed',
-                    lastPaymentTransactionId: model.TransactionId?.toString() || null
+                    lastPaymentTransactionId: txId
                 }
             });
 
             console.log('[CLOUDPAYMENTS] Payment failed, updated status:', {
                 accountId,
-                amount,
+                amountKopecks,
                 lastPaymentStatus: 'failed'
             });
         }

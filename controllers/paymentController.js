@@ -2,6 +2,9 @@ const { PrismaClient } = require('@prisma/client');
 const crypto = require('crypto');
 const prisma = new PrismaClient();
 
+// Track recently processed payment transaction IDs to avoid duplicate webhook increments
+const processedPaymentTransactionIds = new Set();
+
 // Plan configuration
 const PLANS = {
   solo: {
@@ -331,6 +334,12 @@ async function handleCloudPaymentsWebhook(req, res) {
       status: eventData.Status
     });
 
+    // Skip payment/recurrent events that are not successes (e.g. refund notifications)
+    if ((eventType === 'Pay' || eventType === 'Payment' || eventType === 'Recurrent') && eventData.Reason && eventData.Reason !== 'Success') {
+      console.log('[WEBHOOK] Skipping payment/recurrent event with reason:', eventData.Reason);
+      return res.json({ success: true });
+    }
+
     switch (eventType) {
       case 'Pay':
       case 'Payment':  // CloudPayments отправляет "Payment"
@@ -489,9 +498,17 @@ async function handlePaymentSuccess(accountId, transactionId, eventData) {
 
   // CloudPayments sends Amount in rubles as string (e.g. "690.00")
   // Admin panel divides by 100, so store in kopecks
+  // Skip duplicate webhooks for the same transaction
+  const txId = transactionId?.toString() || null;
+  if (processedPaymentTransactionIds.has(txId) || user.lastPaymentTransactionId === txId) {
+    console.log('[PAYMENT SUCCESS] Duplicate transaction, skipping totalPaid increment:', { userId: user.id, transactionId: txId });
+    return;
+  }
+
   const amountKopecks = Math.round(parseFloat(eventData.Amount || eventData.PaymentAmount || 0) * 100);
 
   // Update user payment stats so admin panel can display totals
+  processedPaymentTransactionIds.add(txId);
   await prisma.user.update({
     where: { id: user.id },
     data: {
@@ -809,8 +826,16 @@ async function handleRecurrentPayment(accountId, subscriptionId, transactionId, 
   const businessId = user.businessId;
 
   // Store amount in kopecks for admin panel
+  // Skip duplicate webhooks for the same transaction
+  const txId = transactionId?.toString() || null;
+  if (processedPaymentTransactionIds.has(txId) || user.lastPaymentTransactionId === txId) {
+    console.log('[RECURRING SUCCESS] Duplicate transaction, skipping totalPaid increment:', { userId: user.id, transactionId: txId });
+    return;
+  }
+
   const amountKopecks = Math.round(parseFloat(eventData.Amount || eventData.PaymentAmount || 0) * 100);
 
+  processedPaymentTransactionIds.add(txId);
   await prisma.user.update({
     where: { id: user.id },
     data: {
@@ -819,7 +844,7 @@ async function handleRecurrentPayment(accountId, subscriptionId, transactionId, 
       lastPaymentAmount: amountKopecks,
       lastPaymentDate: new Date(),
       lastPaymentStatus: 'success',
-      lastPaymentTransactionId: transactionId?.toString() || null
+      lastPaymentTransactionId: txId
     }
   });
 
