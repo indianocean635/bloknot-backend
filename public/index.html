@@ -32,6 +32,9 @@
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.webmanifest">
 
+  <!-- VK Video Player API -->
+  <script src="https://vk.com/js/api/videoplayer.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -534,12 +537,13 @@
     <!-- VIDEO -->
     <div class="video-block">
       <div class="video-wrapper" id="videoWrapper">
-        <div class="video-cover" onclick="const w=this.parentElement, f=w.querySelector('iframe'); f.src='https://vk.com/video_ext.php?oid=871315466&id=456239079&autoplay=1'; f.style.display='block'; this.style.display='none';">
+        <div class="video-cover" onclick="startVideo()">
+          <img src="/666.jpg" alt="Обложка видео">
           <div class="play-button">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="#111" style="margin-left:4px"><path d="M8 5v14l11-7z"/></svg>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="#111"><path d="M8 5v14l11-7z"/></svg>
           </div>
         </div>
-        <iframe id="vkVideo" src="https://vk.com/video_ext.php?oid=871315466&id=456239079" width="100%" height="100%" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;" frameborder="0" allowfullscreen></iframe>
+        <iframe id="vkVideo" src="" width="100%" height="100%" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;" frameborder="0" allowfullscreen></iframe>
       </div>
     </div>
 
@@ -558,12 +562,20 @@
       .video-cover {
         position: absolute;
         inset: 0;
-        background: url('/666.jpg') center / cover no-repeat;
         display: flex;
         align-items: center;
         justify-content: center;
       }
+      .video-cover img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
       .play-button {
+        position: relative;
+        z-index: 2;
         width: 80px;
         height: 80px;
         background: rgba(255,255,255,0.9);
@@ -592,6 +604,29 @@
         .video-wrapper { max-width: 900px; }
       }
     </style>
+
+    <script>
+      function startVideo() {
+        const wrapper = document.getElementById('videoWrapper');
+        const cover = wrapper.querySelector('.video-cover');
+        const iframe = document.getElementById('vkVideo');
+        cover.style.display = 'none';
+        iframe.style.display = 'block';
+        iframe.src = 'https://vk.com/video_ext.php?oid=871315466&id=456239079&autoplay=1&js_api=1';
+        if (typeof VK !== 'undefined' && VK.VideoPlayer) {
+          try {
+            const player = VK.VideoPlayer(iframe);
+            player.on('inited', function() {
+              player.unmute();
+              player.setVolume(1);
+              player.play();
+            });
+          } catch (e) {
+            console.error('VK player error', e);
+          }
+        }
+      }
+    </script>
 
     <!-- HERO -->
     <main>
