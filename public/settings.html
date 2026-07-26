@@ -2193,7 +2193,7 @@ async function loadSpecialistSettings(index) {
             <div style="margin-bottom: 8px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
               <label style="display: flex; align-items: center; cursor: pointer;">
                 <input type="checkbox" class="service-checkbox" value="${svc.id}" style="margin-right: 8px;">
-                <span>${svc.name} (${svc.duration} мин, ${svc.price} руб)</span>
+                <span>${svc.name} (${svc.duration} мин, ${svc.priceRange || svc.price} руб)</span>
               </label>
             </div>
           `).join('')}

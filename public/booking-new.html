@@ -1092,7 +1092,7 @@
                   <div class="service-name">${service.name}</div>
                   <div class="service-duration">${service.duration} мин</div>
                 </div>
-                <div class="service-price">${service.price} ₽</div>
+                <div class="service-price">${service.priceRange || service.price} ₽</div>
               </div>
             `).join('');
           }
@@ -1110,7 +1110,7 @@
                 <div class="service-name">${service.name}</div>
                 <div class="service-duration">${service.duration} мин</div>
               </div>
-              <div class="service-price">${service.price} ₽</div>
+              <div class="service-price">${service.priceRange || service.price} ₽</div>
             </div>
           `).join('');
         }
@@ -1127,7 +1127,7 @@
               <div class="service-name">${service.name}</div>
               <div class="service-duration">${service.duration} мин</div>
             </div>
-            <div class="service-price">${service.price} ₽</div>
+            <div class="service-price">${service.priceRange || service.price} ₽</div>
           </div>
         `).join('');
       }

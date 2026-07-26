@@ -291,12 +291,12 @@
       }
       
       servicesGrid.innerHTML = businessData.services.map(service => `
-        <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}">
+        <div class="service-item" data-service-id="${service.id}" data-duration="${service.duration}" data-price="${service.price}">
           <div class="service-info">
             <div class="service-name">${service.name}</div>
             <div class="service-duration">${service.duration} мин</div>
           </div>
-          <div class="service-price">${service.price} RUB</div>
+          <div class="service-price">${service.priceRange || service.price} RUB</div>
         </div>
       `).join('');
       
@@ -323,7 +323,7 @@
         id: element.dataset.serviceId,
         duration: parseInt(element.dataset.duration),
         name: element.querySelector('.service-name').textContent,
-        price: element.querySelector('.service-price').textContent
+        price: parseInt(element.dataset.price) || 0
       };
       
       // Enable continue button
