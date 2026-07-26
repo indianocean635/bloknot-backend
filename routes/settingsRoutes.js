@@ -455,6 +455,17 @@ router.get("/services", requireAuth, async (req, res) => {
   }
 });
 
+// Parse price text like "1500" or "1500 - 2000" and return lower numeric price and display text
+function parseServicePrice(priceText) {
+  const raw = String(priceText || '').trim();
+  const numbers = raw.match(/\d+/g);
+  if (!numbers || numbers.length === 0) {
+    return null;
+  }
+  const minPrice = parseInt(numbers[0], 10);
+  return { minPrice, display: raw };
+}
+
 // Create service
 router.post("/services", requireAuth, async (req, res) => {
   try {
@@ -474,7 +485,8 @@ router.post("/services", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Duration must be greater than 0" });
     }
     
-    if (!price || price <= 0) {
+    const parsed = parseServicePrice(price);
+    if (!parsed || parsed.minPrice <= 0) {
       return res.status(400).json({ error: "Price must be greater than 0" });
     }
     
@@ -482,7 +494,8 @@ router.post("/services", requireAuth, async (req, res) => {
       data: {
         name: name.trim(),
         duration: parseInt(duration),
-        price: parseFloat(price),
+        price: parsed.minPrice,
+        priceRange: parsed.display || null,
         categoryId: categoryId ? parseInt(categoryId) : null,
         businessId: req.user.businessId
       },
@@ -519,12 +532,14 @@ router.patch("/services/:id", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Service not found" });
     }
     
+    const parsed = price ? parseServicePrice(price) : null;
     const updatedService = await prisma.service.update({
       where: { id: parseInt(id) },
       data: {
         name: name?.trim() || service.name,
         duration: duration ? parseInt(duration) : service.duration,
-        price: price ? parseFloat(price) : service.price,
+        price: parsed ? parsed.minPrice : service.price,
+        priceRange: parsed ? (parsed.display || null) : service.priceRange,
         categoryId: categoryId ? parseInt(categoryId) : service.categoryId
       },
       include: { category: true }

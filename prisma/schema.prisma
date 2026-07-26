@@ -129,6 +129,7 @@ model Service {
   name       String
   duration   Int
   price      Int
+  priceRange String?
   businessId String
   categoryId Int?
   createdAt  DateTime @default(now())

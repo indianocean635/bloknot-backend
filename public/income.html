@@ -137,19 +137,21 @@
       
       completedAppointments.forEach(appointment => {
         const service = services.find(s => String(s.id) === String(appointment.serviceId));
+        const servicePrice = Number(service?.price) || 0;
+        const displayPrice = service?.priceRange || servicePrice;
         if (service) {
-          totalRevenue += service.price || 0;
+          totalRevenue += servicePrice;
           
           // Services statistics
           if (!servicesStats[service.name]) {
             servicesStats[service.name] = {
               count: 0,
               totalRevenue: 0,
-              price: service.price
+              price: displayPrice
             };
           }
           servicesStats[service.name].count += 1;
-          servicesStats[service.name].totalRevenue += service.price;
+          servicesStats[service.name].totalRevenue += servicePrice;
         }
         
         // Masters statistics
@@ -163,7 +165,7 @@
           }
           mastersStats[master.name].count += 1;
           if (service) {
-            mastersStats[master.name].totalRevenue += service.price;
+            mastersStats[master.name].totalRevenue += servicePrice;
           }
         }
       });
