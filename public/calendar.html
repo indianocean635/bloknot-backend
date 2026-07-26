@@ -2131,7 +2131,7 @@
         form.reset();
         if (slotInfo) {
           document.getElementById('bookingMaster').value = slotInfo.masterId;
-          document.getElementById('bookingDate').value = ymd(state.currentDate);
+          document.getElementById('bookingDate').value = ymd(slotInfo.date || state.currentDate);
           document.getElementById('bookingTime').value = `${String(slotInfo.hour).padStart(2, '0')}:00`;
         }
         deleteBtn.style.display = 'none';
