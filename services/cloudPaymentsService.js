@@ -108,7 +108,7 @@ class CloudPaymentsService {
             const firstPaymentReceipt = {
                 Items: [{
                     Label: subscriptionConfig.name,
-                    Price: subscriptionConfig.amount * 100, // РЕАЛЬНАЯ ЦЕНА в копейках (99000 копеек)
+                    Price: firstPaymentAmount * 100, // Сумма первого платежа в копейках
                     Quantity: 1,
                     Amount: firstPaymentAmount * 100, // 1 рубль для месячных, полная стоимость для годовых
                     Vat: 20,

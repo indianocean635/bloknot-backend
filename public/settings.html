@@ -3817,9 +3817,8 @@ async function processCardPayment() {
           console.error('Payment failed', reason, options);
           alert('Ошибка оплаты: ' + reason);
         }, function() {
-          // Close - обновляем страницу настроек при закрытии виджета
-          console.log('[WIDGET] Widget closed, refreshing settings page...');
-          window.location.href = '/settings.html#tariff';
+          // Close - handlePaymentSuccess will redirect after the backend confirms activation
+          console.log('[WIDGET] Widget closed');
         });
       } else {
         // Success without CloudPayments (subscription already created)
