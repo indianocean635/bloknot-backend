@@ -50,7 +50,7 @@ async function createPayment(req, res) {
       return res.status(400).json({ error: 'Invalid plan' });
     }
 
-    // Check if user has an active trial subscription
+    // Check if user has an active trial subscription for a different plan
     const existingSubscription = await prisma.subscription.findUnique({
       where: { businessId: req.user.businessId }
     });
@@ -58,27 +58,32 @@ async function createPayment(req, res) {
     if (existingSubscription && existingSubscription.subscriptionStatus === 'TRIAL') {
       const trialEndsAt = new Date(existingSubscription.trialEndsAt);
       const now = new Date();
-      
-      if (trialEndsAt > now) {
-        const remainingDays = Math.ceil((trialEndsAt - now) / (1000 * 60 * 60 * 24));
-        
-        console.log('[TRIAL RESTRICTION]', {
-          businessId: req.user.businessId,
-          currentPlan: existingSubscription.plan,
-          requestedPlan: plan,
-          trialEndsAt: existingSubscription.trialEndsAt,
-          remainingDays
-        });
 
-        return res.status(400).json({ 
-          error: 'TRIAL_RESTRICTION',
-          message: `Вы уже используете пробный период тарифа "${existingSubscription.plan}". 
-                    Доступна смена тарифа через ${remainingDays} дней. 
+      if (trialEndsAt > now) {
+        const existingPlan = (existingSubscription.plan || '').toString().toLowerCase();
+
+        // If paying for the same tariff, allow it; block only switching to a different tariff during trial
+        if (existingPlan !== plan) {
+          const remainingDays = Math.ceil((trialEndsAt - now) / (1000 * 60 * 60 * 24));
+
+          console.log('[TRIAL RESTRICTION]', {
+            businessId: req.user.businessId,
+            currentPlan: existingSubscription.plan,
+            requestedPlan: plan,
+            trialEndsAt: existingSubscription.trialEndsAt,
+            remainingDays
+          });
+
+          return res.status(400).json({
+            error: 'TRIAL_RESTRICTION',
+            message: `Вы уже используете пробный период тарифа "${existingSubscription.plan}".
+                    Доступна смена тарифа через ${remainingDays} дней.
                     Для немедленной смены тарифа отмените текущую подписку в настройках.`,
-          currentPlan: existingSubscription.plan,
-          trialEndsAt: existingSubscription.trialEndsAt,
-          remainingDays
-        });
+            currentPlan: existingSubscription.plan,
+            trialEndsAt: existingSubscription.trialEndsAt,
+            remainingDays
+          });
+        }
       }
     }
 
