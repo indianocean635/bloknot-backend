@@ -1381,21 +1381,19 @@ function selectTariffPeriod(period) {
 function updateTariffPrices() {
   const priceElement = document.getElementById('tariffPrice');
   const periodElement = document.querySelector('#tariffModal .price-period');
-  
+
   const monthlyPrice = priceElement.getAttribute('data-monthly');
   const yearlyPrice = priceElement.getAttribute('data-yearly');
-  
+
   const formatNumber = (num) => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   };
-  
-  if (currentTariffPeriod === 1) {
-    priceElement.textContent = `${formatNumber(monthlyPrice)}₽`;
-    periodElement.textContent = 'в месяц';
-  } else {
-    priceElement.textContent = `${formatNumber(yearlyPrice)}₽`;
-    periodElement.textContent = 'в год';
-  }
+
+  const realPrice = currentTariffPeriod === 1 ? monthlyPrice : yearlyPrice;
+  const periodLabel = currentTariffPeriod === 1 ? 'месяц' : 'год';
+
+  priceElement.textContent = '1р';
+  periodElement.textContent = `далее ${formatNumber(realPrice)}р в ${periodLabel}`;
 }
 
 // Tariff data
@@ -1459,9 +1457,11 @@ function openSingleTariffModal(tariff, monthlyPrice, yearlyPrice, description) {
   priceElement.setAttribute('data-monthly', monthlyPrice);
   priceElement.setAttribute('data-yearly', yearlyPrice);
   
-  // Update pay button
+  // Update pay button - pay immediately without the confirmation modal
   const payButton = document.getElementById('tariffPayButton');
-  payButton.setAttribute('onclick', `openPaymentModal('${tariff}', '${monthlyPrice}', '${yearlyPrice}')`);
+  const paymentModal = document.getElementById('paymentModal');
+  paymentModal.setAttribute('data-tariff', tariff);
+  payButton.setAttribute('onclick', `closeTariffModal(); processCardPayment()`);
   
   // Update features
   const featuresContainer = document.getElementById('tariffFeatures');
