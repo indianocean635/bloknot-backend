@@ -808,32 +808,27 @@
     const modalPrice = document.getElementById('modalPrice');
     const modalSubtitle = document.getElementById('modalSubtitle');
     const modalButtons = document.getElementById('modalButtons');
-    
-    const price = currentPeriod === 1 ? monthlyPrice : yearlyPrice;
-    const periodText = currentPeriod === 1 ? '/мес' : '/год';
-    
-    modalPrice.textContent = `${price}₽${periodText}`;
-    
-    if (currentPeriod === 1) {
-      modalSubtitle.textContent = 'Выберите способ оплаты для привязки карты и автоматического списания';
-      modalButtons.innerHTML = `
-        <button class="btn-primary" onclick="processPaymentFromModal()">
-          💳 Оплатить картой
-        </button>
-      `;
-    } else {
-      modalSubtitle.textContent = 'Оплатите годовую подписку со скидкой 20%';
-      modalButtons.innerHTML = `
-        <button class="btn-primary" onclick="processPaymentFromModal()">
-          💳 Оплатить картой
-        </button>
-      `;
-    }
-    
+    const modalTitle = modal.querySelector('.modal-title');
+
+    const realPrice = currentPeriod === 1 ? monthlyPrice : yearlyPrice;
+    const periodLabel = currentPeriod === 1 ? 'месяц' : 'год';
+
+    modalTitle.textContent = tariff;
+    modalPrice.textContent = '1р';
+    modalSubtitle.textContent = `далее ${realPrice}р в ${periodLabel}`;
+    modalSubtitle.style.fontSize = '14px';
+    modalSubtitle.style.color = '#6b7280';
+
+    modalButtons.innerHTML = `
+      <button class="btn-primary" onclick="processPaymentFromModal()">
+        💳 Оплатить картой
+      </button>
+    `;
+
     modal.setAttribute('data-tariff', tariff);
     modal.setAttribute('data-monthly-price', monthlyPrice);
     modal.setAttribute('data-yearly-price', yearlyPrice);
-    
+
     modal.classList.add('active');
   }
 
