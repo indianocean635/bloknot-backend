@@ -1389,11 +1389,13 @@ function updateTariffPrices() {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   };
 
-  const realPrice = currentTariffPeriod === 1 ? monthlyPrice : yearlyPrice;
-  const periodLabel = currentTariffPeriod === 1 ? 'месяц' : 'год';
-
-  priceElement.textContent = '1р';
-  periodElement.textContent = `далее ${formatNumber(realPrice)}р в ${periodLabel}`;
+  if (currentTariffPeriod === 1) {
+    priceElement.textContent = '1р';
+    periodElement.textContent = `далее ${formatNumber(monthlyPrice)}р в месяц`;
+  } else {
+    priceElement.textContent = `${formatNumber(yearlyPrice)}₽`;
+    periodElement.textContent = 'в год';
+  }
 }
 
 // Tariff data
