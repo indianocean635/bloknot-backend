@@ -292,6 +292,7 @@ model PushSubscription {
   @@index([businessId, isActive])
   @@index([userId, isActive])
   @@index([token])
+}
 
 model CrmRecord {
   id          String   @id @default(uuid())
@@ -309,5 +310,4 @@ model CrmRecord {
   staff User @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
   @@index([staffId, createdAt])
-}
 }
