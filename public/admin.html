@@ -141,6 +141,7 @@
     <!-- Staff Navigation (ADMIN_STAFF only) -->
     <div id="staffNavigation" class="actions" style="margin-top:20px; gap:10px; display:none;">
       <button class="btn secondary" onclick="goToManagerResults()" style="padding:8px 16px; border-radius:10px">Результаты по менеджерам</button>
+      <button class="btn secondary" onclick="goToCrm()" style="padding:8px 16px; border-radius:10px">CRM</button>
     </div>
 
     <!-- Staff Client Search Section (ADMIN_STAFF only) -->
@@ -629,6 +630,13 @@
           managerResultsBtn.style.cssText = 'padding:8px 16px; border-radius:10px';
           managerResultsBtn.textContent = 'Результаты по менеджерам';
           navContainer.appendChild(managerResultsBtn);
+
+          const crmBtn = document.createElement('button');
+          crmBtn.className = 'btn secondary crm-btn';
+          crmBtn.onclick = () => goToCrm();
+          crmBtn.style.cssText = 'padding:8px 16px; border-radius:10px';
+          crmBtn.textContent = 'CRM';
+          navContainer.appendChild(crmBtn);
         }
         
         switchTab('users');
@@ -845,6 +853,11 @@
     function goToManagerResults() {
       // Переход на страницу результатов по менеджерам
       window.location.href = '/staff-manager-results.html';
+    }
+
+    function goToCrm() {
+      // Переход на страницу CRM
+      window.location.href = '/crm.html';
     }
 
     // Search clients function

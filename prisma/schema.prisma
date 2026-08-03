@@ -43,6 +43,7 @@ model User {
   loginTokens  LoginToken[]
   salesStaffAssignments SalesStaffAssignment[]
   pushSubscriptions PushSubscription[]
+  crmRecords CrmRecord[]
 }
 
 model Business {
@@ -291,4 +292,22 @@ model PushSubscription {
   @@index([businessId, isActive])
   @@index([userId, isActive])
   @@index([token])
+
+model CrmRecord {
+  id          String   @id @default(uuid())
+  staffId     String
+  name        String
+  phone       String?
+  salon       String?
+  tariff      String?
+  date        DateTime?
+  registered  Boolean  @default(false)
+  comment     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  staff User @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId, createdAt])
+}
 }
