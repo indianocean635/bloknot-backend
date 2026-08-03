@@ -86,12 +86,24 @@
         }
 
         .form-row input,
-        .form-row select {
+        .form-row select,
+        .form-row textarea {
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
+        }
+
+        .form-row textarea,
+        #newComment {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        #newComment {
+            grid-column: 1 / -1;
+            min-width: 100%;
         }
 
         .btn {
@@ -151,12 +163,19 @@
         }
 
         td input,
-        td select {
+        td select,
+        td textarea {
             width: 100%;
             padding: 6px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
+        }
+
+        td textarea.comment {
+            min-width: 280px;
+            min-height: 60px;
+            resize: vertical;
         }
 
         .actions-cell {
@@ -215,7 +234,7 @@
                     <option value="false">Нет</option>
                     <option value="true">Да</option>
                 </select>
-                <input type="text" id="newComment" placeholder="Коммент">
+                <textarea id="newComment" placeholder="Коммент" rows="3"></textarea>
             </div>
             <button class="btn" onclick="addRecord()">Добавить</button>
         </div>
@@ -372,7 +391,7 @@
                             <option value="true" ${record.registered ? 'selected' : ''}>Да</option>
                         </select>
                     </td>
-                    <td><input type="text" class="comment" value="${escapeHtml(record.comment || '')}"></td>
+                    <td><textarea class="comment" rows="2">${escapeHtml(record.comment || '')}</textarea></td>
                     <td class="actions-cell">
                         <button class="btn success" onclick="saveRow('${record.id}')">Сохранить</button>
                         <button class="btn danger" onclick="deleteRecord('${record.id}')">Удалить</button>
