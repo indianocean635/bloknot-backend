@@ -159,7 +159,7 @@ router.get('/staff', requireAuth, async (req, res) => {
     }
 
     const staff = await prisma.user.findMany({
-      where: { role: 'SALES_STAFF' },
+      where: { role: { in: ['SALES_STAFF', 'STAFF'] } },
       orderBy: { name: 'asc' },
       select: { id: true, name: true, email: true, role: true }
     });
