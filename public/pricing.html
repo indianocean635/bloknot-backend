@@ -723,6 +723,11 @@
     </div>
   </footer>
 
+  <div id="authBanner" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#fff3cd; color:#856404; border:1px solid #ffeeba; border-radius:8px; padding:16px 24px; z-index:10000; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-width:90%; width:max-content; text-align:center;">
+    <span>Чтобы оплатить тариф, необходимо <a href="/login.html" style="color:#856404; text-decoration:underline;">войти</a> или <a href="/register.html" style="color:#856404; text-decoration:underline;">зарегистрироваться</a></span>
+    <button onclick="document.getElementById('authBanner').style.display='none'" style="margin-left:12px; background:transparent; border:none; color:#856404; cursor:pointer; font-size:18px; line-height:1;">&times;</button>
+  </div>
+
   <div class="modal" id="paymentModal">
     <div class="modal-content">
       <h3 class="modal-title">Подтверждение оплаты</h3>
@@ -847,6 +852,13 @@
         
         const plan = planMap[tariff];
         
+        const isLoggedIn = !!(localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || document.cookie.split(';').some(c => c.trim().startsWith('auth=')));
+        if (!isLoggedIn) {
+          closePaymentModal();
+          document.getElementById('authBanner').style.display = 'block';
+          return;
+        }
+        
         try {
           // Show CloudPayments widget first to collect card data
           const widget = new cp.CloudPayments();
@@ -942,8 +954,8 @@
           
           // Check if it's an authorization error
           if (error.message === 'Unauthorized' || error.message.includes('401')) {
-            alert('Для оплаты необходимо войти в аккаунт или зарегистрироваться');
-            window.location.href = '/login.html';
+            closePaymentModal();
+            document.getElementById('authBanner').style.display = 'block';
             return;
           }
           
