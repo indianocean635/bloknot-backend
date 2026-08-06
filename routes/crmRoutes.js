@@ -30,6 +30,13 @@ router.get('/', requireAuth, async (req, res) => {
         return res.status(403).json({ error: 'Forbidden' });
       }
       staffId = req.query.staffId;
+
+      const staffExists = await prisma.user.count({
+        where: { id: staffId, business: { ownerId: req.user.id } }
+      });
+      if (!staffExists) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
     }
 
     const records = await prisma.crmRecord.findMany({
@@ -62,6 +69,14 @@ router.post('/', requireAuth, async (req, res) => {
       if (!isAdmin(role)) {
         return res.status(403).json({ error: 'Forbidden' });
       }
+
+      const staffExists = await prisma.user.count({
+        where: { id: staffId, business: { ownerId: req.user.id } }
+      });
+      if (!staffExists) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       targetStaffId = staffId;
     }
 
@@ -159,7 +174,7 @@ router.get('/staff', requireAuth, async (req, res) => {
     }
 
     const staff = await prisma.user.findMany({
-      where: { role: { in: ['SALES_STAFF', 'STAFF'] } },
+      where: { business: { ownerId: req.user.id }, role: { in: ['SALES_STAFF', 'STAFF'] } },
       orderBy: { name: 'asc' },
       select: { id: true, name: true, email: true, role: true }
     });
