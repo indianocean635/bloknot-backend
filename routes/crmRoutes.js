@@ -32,7 +32,7 @@ router.get('/', requireAuth, async (req, res) => {
       staffId = req.query.staffId;
 
       const staffExists = await prisma.user.count({
-        where: { id: staffId, business: { ownerId: req.user.id } }
+        where: { id: staffId, role: 'SALES_STAFF' }
       });
       if (!staffExists) {
         return res.status(403).json({ error: 'Forbidden' });
@@ -71,7 +71,7 @@ router.post('/', requireAuth, async (req, res) => {
       }
 
       const staffExists = await prisma.user.count({
-        where: { id: staffId, business: { ownerId: req.user.id } }
+        where: { id: staffId, role: 'SALES_STAFF' }
       });
       if (!staffExists) {
         return res.status(403).json({ error: 'Forbidden' });
@@ -174,7 +174,7 @@ router.get('/staff', requireAuth, async (req, res) => {
     }
 
     const staff = await prisma.user.findMany({
-      where: { business: { ownerId: req.user.id }, role: { in: ['SALES_STAFF', 'STAFF'] } },
+      where: { role: 'SALES_STAFF' },
       orderBy: { name: 'asc' },
       select: { id: true, name: true, email: true, role: true }
     });
