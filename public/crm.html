@@ -296,26 +296,57 @@
 
         async function loadStaffList() {
             try {
-                const response = await fetch('/api/crm/staff', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                let staff = [];
 
-                if (!response.ok) {
-                    throw new Error('Failed to load staff list');
+                try {
+                    const response = await fetch('/api/crm/staff', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        staff = data.staff || [];
+                    }
+                } catch (e) {
+                    console.error('CRM staff endpoint failed:', e);
                 }
 
-                const data = await response.json();
+                if (!staff.length && currentUser && currentUser.role === 'SUPER_ADMIN') {
+                    try {
+                        const response = await fetch('/api/admin/sales-staff', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            staff = Array.isArray(data) ? data : [];
+                        }
+                    } catch (e) {
+                        console.error('Admin sales-staff endpoint failed:', e);
+                    }
+                }
+
                 const select = document.getElementById('staffSelect');
                 select.innerHTML = '<option value="">— выберите сотрудника —</option>';
 
-                (data.staff || []).forEach(staff => {
+                staff.forEach(staff => {
                     const option = document.createElement('option');
                     option.value = staff.id;
                     option.textContent = staff.name || staff.email || staff.id;
                     select.appendChild(option);
                 });
+
+                if (!staff.length) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Нет доступных сотрудников';
+                    option.disabled = true;
+                    select.appendChild(option);
+                }
 
                 document.getElementById('staffSelector').style.display = 'block';
             } catch (error) {
