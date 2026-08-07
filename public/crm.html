@@ -315,7 +315,7 @@
 
                 if (!staff.length && currentUser && currentUser.role === 'SUPER_ADMIN') {
                     try {
-                        const response = await fetch('/api/admin/sales-staff', {
+                        const response = await fetch('/api/admin-staff', {
                             headers: {
                                 'Authorization': `Bearer ${token}`
                             }
@@ -323,10 +323,10 @@
 
                         if (response.ok) {
                             const data = await response.json();
-                            staff = Array.isArray(data) ? data : [];
+                            staff = data.staff || [];
                         }
                     } catch (e) {
-                        console.error('Admin sales-staff endpoint failed:', e);
+                        console.error('Admin-staff endpoint failed:', e);
                     }
                 }
 
