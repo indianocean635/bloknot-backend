@@ -183,9 +183,19 @@
         }
 
         .actions-cell button {
-            padding: 5px 10px;
+            padding: 2px 6px;
             margin-right: 4px;
-            font-size: 12px;
+            font-size: 10px;
+        }
+
+        #newName,
+        td input.name {
+            min-width: 160px;
+        }
+
+        table th:nth-child(1),
+        table td:nth-child(1) {
+            min-width: 170px;
         }
 
         .loading {
@@ -238,7 +248,12 @@
                 <input type="text" id="newName" placeholder="Имя" required>
                 <input type="text" id="newPhone" placeholder="Телефон">
                 <input type="text" id="newSalon" placeholder="Салон">
-                <input type="text" id="newTariff" placeholder="Тариф">
+                <select id="newTariff">
+                    <option value="">—</option>
+                    <option value="690">690</option>
+                    <option value="990">990</option>
+                    <option value="1490">1490</option>
+                </select>
                 <input type="date" id="newDate" placeholder="Дата">
                 <select id="newRegistered">
                     <option value="false">Нет</option>
@@ -424,7 +439,14 @@
                     <td><input type="text" class="name" value="${escapeHtml(record.name || '')}"></td>
                     <td><input type="text" class="phone" value="${escapeHtml(record.phone || '')}"></td>
                     <td><input type="text" class="salon" value="${escapeHtml(record.salon || '')}"></td>
-                    <td><input type="text" class="tariff" value="${escapeHtml(record.tariff || '')}"></td>
+                    <td>
+                        <select class="tariff">
+                            <option value="" ${!record.tariff ? 'selected' : ''}></option>
+                            <option value="690" ${record.tariff === '690' ? 'selected' : ''}>690</option>
+                            <option value="990" ${record.tariff === '990' ? 'selected' : ''}>990</option>
+                            <option value="1490" ${record.tariff === '1490' ? 'selected' : ''}>1490</option>
+                        </select>
+                    </td>
                     <td><input type="date" class="date" value="${record.date ? record.date.slice(0, 10) : ''}"></td>
                     <td>
                         <select class="registered">
