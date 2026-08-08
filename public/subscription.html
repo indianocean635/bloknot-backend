@@ -720,7 +720,7 @@
 
     // Show actions only for active subscriptions (not trial)
     // Кнопка "сменить тариф" должна появляться только после окончания демо периода
-    if (normalizedStatus === 'active') {
+    if (['active', 'expired'].includes(normalizedStatus)) {
       actionsDiv.style.display = 'block';
     } else {
       actionsDiv.style.display = 'none';
