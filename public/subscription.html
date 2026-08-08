@@ -813,9 +813,11 @@
     const realPrice = currentPeriod === 1 ? monthlyPrice : yearlyPrice;
     const periodLabel = currentPeriod === 1 ? 'месяц' : 'год';
 
+    const formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
     modalTitle.textContent = tariff;
-    modalPrice.textContent = '1р';
-    modalSubtitle.textContent = `далее ${realPrice}р в ${periodLabel}`;
+    modalPrice.textContent = `${formatNumber(realPrice)}₽`;
+    modalSubtitle.textContent = `К оплате за ${periodLabel}`;
     modalSubtitle.style.fontSize = '14px';
     modalSubtitle.style.color = '#6b7280';
 
