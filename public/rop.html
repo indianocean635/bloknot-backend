@@ -170,7 +170,8 @@
         }
 
         td input.fio,
-        td input.requisites {
+        td input.requisites,
+        td input.emails {
             min-width: 170px;
         }
 
@@ -337,7 +338,7 @@
                     <td><input type="text" class="fio" value="${escapeHtml(record.fio || '')}"></td>
                     <td><input type="text" class="requisites" value="${escapeHtml(record.requisites || '')}"></td>
                     <td><input type="number" class="number sales" value="${escapeHtml(record.sales || '')}" step="1"></td>
-                    <td><input type="number" class="number emails" value="${escapeHtml(record.emails || '')}" step="1"></td>
+                    <td><input type="text" class="emails" value="${escapeHtml(record.emails || '')}"></td>
                     <td><input type="number" class="number two-weeks" value="${escapeHtml(record.twoWeeks || '')}" step="0.01"></td>
                     <td><input type="number" class="number bonuses" value="${escapeHtml(record.bonuses || '')}" step="0.01"></td>
                     <td><input type="number" class="number total" value="${escapeHtml(record.total || '')}" step="0.01"></td>
