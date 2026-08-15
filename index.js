@@ -22,6 +22,7 @@ const publicRoutes = require('./routes/publicRoutes');
 const cloudPaymentsRoutes = require('./routes/cloudPaymentsRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const crmRoutes = require('./routes/crmRoutes');
+const ropRoutes = require('./routes/ropRoutes');
 const { requireMagicAuth, getBusinessFromUser, adminAuth, optionalAuth } = require('./middleware/magicAuthMiddleware');
 const app = express();
 const PORT = 3001;
@@ -114,6 +115,7 @@ app.use('/api/vk-community', vkCommunityRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/cloudpayments', cloudPaymentsRoutes);
 app.use('/api/crm', crmRoutes);
+app.use('/api/rop', ropRoutes);
 app.use('/api/invoice', invoiceRoutes);
 
 console.log('Business routes loaded:', typeof businessRoutes);

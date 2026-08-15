@@ -249,7 +249,7 @@
         </div>
 
         <div class="table-controls">
-            <button class="btn warning" onclick="resetColumns()">Обнулить данные</button>
+            <button class="btn warning" id="resetBtn" onclick="resetColumns()">Обнулить данные</button>
         </div>
 
         <div class="table-container">
@@ -279,7 +279,7 @@
 
     <script>
         let currentRecords = [];
-        const STORAGE_KEY = 'rop_records';
+        let currentUser = null;
         const token = localStorage.getItem('auth');
 
         async function checkAuth() {
@@ -299,6 +299,11 @@
                     throw new Error('Not authorized');
                 }
 
+                currentUser = data.user;
+                if (currentUser.role !== 'SUPER_ADMIN') {
+                    document.getElementById('resetBtn').style.display = 'none';
+                }
+
                 return true;
             } catch (error) {
                 console.error('Auth check failed:', error);
@@ -307,23 +312,29 @@
             }
         }
 
-        function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-        }
-
-        function loadRecords() {
+        async function loadRecords() {
             try {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                currentRecords = saved ? JSON.parse(saved) : [];
-            } catch (e) {
-                console.error('Load records error:', e);
-                currentRecords = [];
-            }
-            displayRecords(currentRecords);
-        }
+                const response = await fetch('/api/rop', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
 
-        function saveRecords() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentRecords));
+                if (!response.ok) {
+                    throw new Error('Failed to load ROP records');
+                }
+
+                const data = await response.json();
+                currentRecords = data.records || [];
+                displayRecords(currentRecords);
+            } catch (error) {
+                console.error('Load records error:', error);
+                document.getElementById('ropTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="error">Ошибка загрузки данных: ${error.message}</td>
+                    </tr>
+                `;
+            }
         }
 
         function displayRecords(records) {
@@ -373,32 +384,43 @@
             notice.style.display = 'block';
         }
 
-        function addRecord() {
+        async function addRecord() {
             const fio = document.getElementById('newFio').value.trim();
             if (!fio) {
                 showNotice('Введите ФИО', 'error');
                 return;
             }
 
-            const record = {
-                id: generateId(),
+            const body = {
                 fio,
-                requisites: document.getElementById('newRequisites').value.trim() || '',
-                sales: '',
-                emails: '',
-                twoWeeks: '',
-                bonuses: '',
-                total: ''
+                requisites: document.getElementById('newRequisites').value.trim() || ''
             };
 
-            currentRecords.push(record);
-            saveRecords();
+            try {
+                const response = await fetch('/api/rop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(body)
+                });
 
-            document.getElementById('newFio').value = '';
-            document.getElementById('newRequisites').value = '';
+                const data = await response.json();
 
-            showNotice('Строка добавлена', 'success');
-            displayRecords(currentRecords);
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to create record');
+                }
+
+                document.getElementById('newFio').value = '';
+                document.getElementById('newRequisites').value = '';
+
+                showNotice('Строка добавлена', 'success');
+                await loadRecords();
+            } catch (error) {
+                console.error('Add record error:', error);
+                showNotice('Ошибка добавления: ' + error.message, 'error');
+            }
         }
 
         function readRowData(row) {
@@ -413,12 +435,9 @@
             };
         }
 
-        function saveRow(id) {
+        async function saveRow(id) {
             const row = document.querySelector(`tr[data-id="${id}"]`);
             if (!row) return;
-
-            const index = currentRecords.findIndex(r => r.id === id);
-            if (index === -1) return;
 
             const data = readRowData(row);
             if (!data.fio) {
@@ -426,42 +445,86 @@
                 return;
             }
 
-            currentRecords[index] = { ...currentRecords[index], ...data };
-            saveRecords();
-            showNotice('Сохранено', 'success');
+            try {
+                const response = await fetch(`/api/rop/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Failed to update record');
+                }
+
+                showNotice('Сохранено', 'success');
+                await loadRecords();
+            } catch (error) {
+                console.error('Save row error:', error);
+                showNotice('Ошибка сохранения: ' + error.message, 'error');
+            }
         }
 
-        function deleteRecord(id) {
+        async function deleteRecord(id) {
             if (!confirm('Удалить строку?')) return;
 
-            currentRecords = currentRecords.filter(r => r.id !== id);
-            saveRecords();
-            displayRecords(currentRecords);
-            showNotice('Строка удалена', 'success');
+            try {
+                const response = await fetch(`/api/rop/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to delete record');
+                }
+
+                await loadRecords();
+                showNotice('Строка удалена', 'success');
+            } catch (error) {
+                console.error('Delete record error:', error);
+                showNotice('Ошибка удаления: ' + error.message, 'error');
+            }
         }
 
-        function resetColumns() {
+        async function resetColumns() {
             if (!confirm('Обнулить столбцы «продажи», «почты», «2 недели», «бонусы», «итог в ЗП» для всех строк?\nФИО и реквизиты сохранятся.')) {
                 return;
             }
 
-            currentRecords.forEach(record => {
-                record.sales = '';
-                record.emails = '';
-                record.twoWeeks = '';
-                record.bonuses = '';
-                record.total = '';
-            });
+            try {
+                const response = await fetch('/api/rop/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
 
-            saveRecords();
-            displayRecords(currentRecords);
-            showNotice('Данные обнулены', 'success');
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to reset records');
+                }
+
+                await loadRecords();
+                showNotice('Данные обнулены', 'success');
+            } catch (error) {
+                console.error('Reset columns error:', error);
+                showNotice('Ошибка обнуления: ' + error.message, 'error');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
             const isAuthenticated = await checkAuth();
             if (!isAuthenticated) return;
-            loadRecords();
+            await loadRecords();
         });
     </script>
 </body>
