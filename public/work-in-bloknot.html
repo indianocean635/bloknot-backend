@@ -208,11 +208,157 @@
 
         .success-screen {
             display: none;
-            text-align: center;
+            text-align: left;
         }
 
-        .success-screen h2 {
-            margin-bottom: 12px;
+        .success-icon {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .success-title {
+            text-align: center;
+            font-size: 26px;
+            margin-bottom: 8px;
+            color: #1b5e20;
+        }
+
+        .success-subtitle {
+            text-align: center;
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        .success-info {
+            background: #f0f4f8;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 15px;
+        }
+
+        .success-meta {
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .success-row {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .success-row:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 600px) {
+            .success-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+        }
+
+        .meta-label {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .meta-value {
+            font-family: monospace;
+            font-size: 15px;
+            word-break: break-all;
+        }
+
+        .success-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .success-actions .btn {
+            flex: 1;
+            min-width: 240px;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-outline {
+            background: #fff;
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+
+        .btn-outline:hover {
+            background: #f0f7ff;
+        }
+
+        .success-legal {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .success-legal h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .success-legal p {
+            margin-bottom: 10px;
+        }
+
+        .success-legal p:last-child {
+            margin-bottom: 0;
+        }
+
+        .success-checks {
+            margin-bottom: 24px;
+            font-size: 15px;
+        }
+
+        .success-checks ul {
+            list-style: none;
+            margin-top: 8px;
+        }
+
+        .success-checks li {
+            margin: 6px 0;
+            color: #333;
+        }
+
+        .success-copy-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .copy-toast {
+            color: #28a745;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .copy-toast.visible {
+            opacity: 1;
+        }
+
+        .success-hint {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 24px;
         }
 
         .success-id {
@@ -349,11 +495,76 @@
         </div>
 
         <div class="card success-screen" id="successScreen">
-            <h2>Спасибо!</h2>
-            <p>Данные успешно отправлены, условия договора приняты.</p>
-            <div class="success-id" id="successId"></div>
-            <p style="font-size: 14px; color: #666;">Сохраните номер регистрации.</p>
-            <a href="/" class="back-link" style="font-size: 16px;">На главную</a>
+            <div class="success-icon" aria-hidden="true">
+                <svg viewBox="0 0 64 64" width="64" height="64">
+                    <circle cx="32" cy="32" r="30" fill="#e8f5e9" stroke="#28a745" stroke-width="2"/>
+                    <path d="M20 34 L28 42 L44 24" fill="none" stroke="#28a745" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            <h1 class="success-title">Договор заключён</h1>
+            <p class="success-subtitle">Вы успешно зарегистрированы в качестве исполнителя Bloknot.</p>
+
+            <div class="success-info">
+                <p>Вы приняли условия Договора-оферты и подтвердили предоставленные при регистрации сведения. Договор заключён в электронной форме посредством акцепта Договора-оферты.</p>
+            </div>
+
+            <div class="success-meta">
+                <div class="success-row">
+                    <div class="meta-label">Номер регистрации</div>
+                    <div class="meta-value" id="successId"></div>
+                </div>
+                <div class="success-row">
+                    <div class="meta-label">Дата и время акцепта</div>
+                    <div class="meta-value" id="successAcceptedAt"></div>
+                </div>
+                <div class="success-row">
+                    <div class="meta-label">Версия Договора-оферты</div>
+                    <div class="meta-value" id="successContractVersion"></div>
+                </div>
+                <div class="success-row">
+                    <div class="meta-label">Идентификатор документа</div>
+                    <div class="meta-value" id="successContractHash"></div>
+                </div>
+                <div class="success-row">
+                    <div class="meta-label">Версия Политики обработки ПД</div>
+                    <div class="meta-value" id="successPrivacyVersion"></div>
+                </div>
+                <div class="success-row">
+                    <div class="meta-label">Идентификатор документа</div>
+                    <div class="meta-value" id="successPrivacyHash"></div>
+                </div>
+            </div>
+
+            <div class="success-actions">
+                <a id="openOfferBtn" href="#" target="_blank" class="btn">Открыть Договор-оферту</a>
+                <a id="openPrivacyBtn" href="#" target="_blank" class="btn btn-outline">Открыть Политику обработки ПД</a>
+            </div>
+
+            <div class="success-legal">
+                <h3>Подтверждение</h3>
+                <p>Договор заключён в электронной форме посредством акцепта Договора-оферты.</p>
+                <p>Акцепт был зафиксирован информационной системой Блокнот с указанием даты и времени совершения действия, версии принятого документа и уникального номера регистрации.</p>
+                <p>Настоящий договор является гражданско-правовым договором оказания услуг. Он не является трудовым договором и сам по себе не устанавливает трудовые отношения между Исполнителем и Индивидуальным предпринимателем Песковым Александром Валерьевичем.</p>
+            </div>
+
+            <div class="success-checks">
+                <p><strong>Вы также подтвердили:</strong></p>
+                <ul>
+                    <li>✓ согласие на обработку персональных данных;</li>
+                    <li>✓ ознакомление с Политикой обработки персональных данных;</li>
+                    <li>✓ достоверность предоставленных сведений;</li>
+                    <li>✓ статус плательщика НПД.</li>
+                </ul>
+            </div>
+
+            <div class="success-copy-row">
+                <button id="copyIdBtn" class="btn" type="button">Скопировать номер</button>
+                <span class="copy-toast" id="copyToast">Номер скопирован</span>
+            </div>
+            <p class="success-hint">Сохраните этот номер. Он позволяет идентифицировать вашу регистрацию и заключённый договор.</p>
+
+            <a href="/" class="back-link" style="font-size: 16px; margin-top: 24px; display: inline-block;">На главную</a>
         </div>
     </div>
 
@@ -364,6 +575,21 @@
     <script>
         let currentContract = null;
         let currentPrivacy = null;
+        let acceptanceResult = null;
+
+        function generateRequestId() {
+            if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                return crypto.randomUUID();
+            }
+            return 'req-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+        }
+
+        const idempotencyKey = generateRequestId();
+
+        function formatAcceptanceDate(iso) {
+            const d = new Date(iso);
+            return d.toLocaleString('ru-RU', { dateStyle: 'long', timeStyle: 'medium' });
+        }
 
         function formatPhone(value) {
             let digits = value.replace(/\D/g, '');
@@ -433,7 +659,12 @@
             e.preventDefault();
             setNotice('Отправка...', '');
 
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Отправка...';
+
             const body = {
+                idempotencyKey,
                 lastName: document.getElementById('lastName').value.trim(),
                 firstName: document.getElementById('firstName').value.trim(),
                 middleName: document.getElementById('middleName').value.trim(),
@@ -463,14 +694,64 @@
                     throw new Error(data.error || 'Ошибка отправки');
                 }
 
+                acceptanceResult = data;
+
                 document.getElementById('formCard').style.display = 'none';
                 document.getElementById('successScreen').style.display = 'block';
+
                 document.getElementById('successId').textContent = data.id;
+                document.getElementById('successAcceptedAt').textContent = formatAcceptanceDate(data.acceptedAt);
+                document.getElementById('successContractVersion').textContent = data.contractVersion.version + ' — ' + data.contractVersion.title;
+                document.getElementById('successContractHash').textContent = (data.contractVersion.hash || '').slice(0, 16) + '...';
+                document.getElementById('successPrivacyVersion').textContent = data.privacyVersion.version + ' — ' + data.privacyVersion.title;
+                document.getElementById('successPrivacyHash').textContent = (data.privacyVersion.hash || '').slice(0, 16) + '...';
+
+                document.getElementById('openOfferBtn').href = '/partner-offer.html?version=' + encodeURIComponent(data.contractVersion.version);
+                document.getElementById('openPrivacyBtn').href = '/partner-privacy.html?version=' + encodeURIComponent(data.privacyVersion.version);
+
+                const checks = document.querySelectorAll('.success-checks li');
+                if (checks.length >= 4) {
+                    checks[0].textContent = (data.consents.privacy ? '✓' : '✗') + ' согласие на обработку персональных данных;';
+                    checks[1].textContent = (data.consents.privacy ? '✓' : '✗') + ' ознакомление с Политикой обработки персональных данных;';
+                    checks[2].textContent = (data.consents.dataCorrect ? '✓' : '✗') + ' достоверность предоставленных сведений;';
+                    checks[3].textContent = (data.consents.npd ? '✓' : '✗') + ' статус плательщика НПД.';
+                }
+
                 window.scrollTo(0, 0);
             } catch (err) {
                 setNotice(err.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Принять условия и стать партнёром';
             }
         });
+
+        function copyId() {
+            if (!acceptanceResult) return;
+            const text = acceptanceResult.id;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(showCopyToast).catch(fallbackCopy);
+            } else {
+                fallbackCopy();
+            }
+
+            function fallbackCopy() {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showCopyToast();
+            }
+
+            function showCopyToast() {
+                const toast = document.getElementById('copyToast');
+                toast.classList.add('visible');
+                setTimeout(() => toast.classList.remove('visible'), 2000);
+            }
+        }
+
+        document.getElementById('copyIdBtn').addEventListener('click', copyId);
 
         loadContract();
     </script>

@@ -114,13 +114,20 @@
                     { label: 'Банковские реквизиты', value: (e.bankDetails || '').replace(/\n/g, '<br>') }
                 ];
 
-                const contract = [
+                const acceptance = [
+                    { label: 'Номер регистрации', value: e.id },
                     { label: 'Дата и время акцепта', value: formatDate(e.acceptedAt) },
-                    { label: 'Версия оферты', value: e.contractVersion ? e.contractVersion.version : '—' },
-                    { label: 'Хэш/идентификатор версии', value: e.contractVersion ? e.contractVersion.hash : '—' },
+                    { label: 'Дата регистрации', value: formatDate(e.createdAt) },
+                    { label: 'Версия оферты', value: e.contractVersion ? e.contractVersion.version + ' — ' + e.contractVersion.title : '—' },
+                    { label: 'Идентификатор/хэш оферты', value: e.contractVersion ? e.contractVersion.hash : '—' },
+                    { label: 'Версия политики ПД', value: e.privacyVersion ? e.privacyVersion.version + ' — ' + e.privacyVersion.title : '—' },
+                    { label: 'Идентификатор/хэш политики', value: e.privacyVersion ? e.privacyVersion.hash : '—' },
                     { label: 'IP-адрес', value: e.ipAddress },
                     { label: 'User-Agent', value: e.userAgent },
-                    { label: 'Дата регистрации', value: formatDate(e.createdAt) }
+                    { label: 'Согласие на обработку ПД', value: e.acceptedPrivacy ? `Дано (${formatDate(e.privacyAcceptedAt || e.acceptedAt)})` : 'Нет' },
+                    { label: 'Ознакомление с Политикой ПД', value: e.acceptedPrivacy ? `Подтверждено (${formatDate(e.privacyAcceptedAt || e.acceptedAt)})` : 'Нет' },
+                    { label: 'Подтверждение статуса НПД', value: e.acceptedNpd ? `Подтверждён (${formatDate(e.npdConfirmedAt || e.acceptedAt)})` : 'Нет' },
+                    { label: 'Достоверность данных', value: e.acceptedDataCorrect ? `Подтверждено (${formatDate(e.dataCorrectConfirmedAt || e.acceptedAt)})` : 'Нет' }
                 ];
 
                 const consent = [
@@ -135,12 +142,13 @@
                     ${renderSection('Налоговые данные', tax)}
                     ${renderSection('Контакты', contacts)}
                     ${renderSection('Данные для выплат', payout)}
-                    ${renderSection('Договор', contract)}
+                    ${renderSection('Акцепт договора', acceptance)}
                     ${renderSection('Принятые согласия', consent)}
                     <div class="card">
                         <h2>Действия</h2>
                         <div class="actions">
                             <a href="/partner-offer.html?version=${encodeURIComponent(e.contractVersion ? e.contractVersion.version : '')}" target="_blank" class="btn success">Открыть принятую версию договора</a>
+                            <a href="/partner-privacy.html?version=${encodeURIComponent(e.privacyVersion ? e.privacyVersion.version : '')}" target="_blank" class="btn success">Открыть принятую версию политики</a>
                             <button class="btn" onclick="changeStatus('ACCEPTED')">Статус: Принят</button>
                             <button class="btn" onclick="changeStatus('PENDING')">Статус: На рассмотрении</button>
                             <button class="btn" onclick="changeStatus('ARCHIVED')">Статус: Архив</button>

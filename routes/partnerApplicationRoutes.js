@@ -1,6 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const { prisma } = require('../services/prismaService');
+const { sendPartnerAcceptanceEmail } = require('../services/emailService');
 
 const router = express.Router();
 
@@ -1083,6 +1084,32 @@ async function ensureActivePrivacyVersion() {
   return version;
 }
 
+function formatAcceptanceResponse(employee) {
+  const cv = employee.contractVersion || {};
+  const pv = employee.privacyVersion || {};
+  return {
+    success: true,
+    id: employee.id,
+    acceptedAt: employee.acceptedAt,
+    contractVersion: {
+      version: cv.version,
+      title: cv.title,
+      hash: cv.hash
+    },
+    privacyVersion: {
+      version: pv.version,
+      title: pv.title,
+      hash: pv.hash
+    },
+    consents: {
+      offer: employee.acceptedOffer,
+      npd: employee.acceptedNpd,
+      privacy: employee.acceptedPrivacy,
+      dataCorrect: employee.acceptedDataCorrect
+    }
+  };
+}
+
 function sanitizeInput(value) {
   if (typeof value !== 'string') return '';
   return value.trim().replace(/[<>]/g, '');
@@ -1205,6 +1232,17 @@ router.get('/privacy/:version', async (req, res) => {
 router.post('/apply', async (req, res) => {
   try {
     const body = req.body || {};
+    const idempotencyKey = sanitizeInput(body.idempotencyKey);
+
+    if (idempotencyKey) {
+      const existing = await prisma.employee.findUnique({
+        where: { idempotencyKey },
+        include: { contractVersion: true, privacyVersion: true }
+      });
+      if (existing) {
+        return res.status(200).json(formatAcceptanceResponse(existing));
+      }
+    }
 
     const lastName = sanitizeInput(body.lastName);
     const firstName = sanitizeInput(body.firstName);
@@ -1223,7 +1261,6 @@ router.post('/apply', async (req, res) => {
     const acceptedPrivacy = body.acceptedPrivacy === true || body.acceptedPrivacy === 'true';
     const acceptedDataCorrect = body.acceptedDataCorrect === true || body.acceptedDataCorrect === 'true';
 
-    // Server-side validation
     const errors = [];
     const addError = (msg) => msg && errors.push(msg);
     addError(validateRequired(lastName, 'Фамилия'));
@@ -1253,58 +1290,79 @@ router.post('/apply', async (req, res) => {
     const userAgent = req.headers['user-agent'] || '';
     const acceptedAt = new Date();
 
-    const result = await prisma.$transaction(async (tx) => {
-      const employee = await tx.employee.create({
-        data: {
-          lastName,
-          firstName,
-          middleName: middleName || null,
-          birthDate: new Date(birthDate),
-          phone,
-          email,
-          inn,
-          isNpdPayer,
-          region,
-          telegram: telegram || null,
-          bankDetails,
-          acceptedOffer,
-          acceptedNpd,
-          acceptedPrivacy,
-          acceptedDataCorrect,
-          contractVersionId: contractVersion.id,
-          privacyVersionId: privacyVersion.id,
-          ipAddress,
-          userAgent,
-          status: 'ACCEPTED',
-          acceptedAt,
-          createdAt: acceptedAt
-        }
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const employee = await tx.employee.create({
+          data: {
+            lastName,
+            firstName,
+            middleName: middleName || null,
+            birthDate: new Date(birthDate),
+            phone,
+            email,
+            inn,
+            isNpdPayer,
+            region,
+            telegram: telegram || null,
+            bankDetails,
+            acceptedOffer,
+            acceptedNpd,
+            acceptedPrivacy,
+            acceptedDataCorrect,
+            offerAcceptedAt: acceptedAt,
+            privacyAcceptedAt: acceptedAt,
+            npdConfirmedAt: acceptedAt,
+            dataCorrectConfirmedAt: acceptedAt,
+            idempotencyKey: idempotencyKey || null,
+            contractVersionId: contractVersion.id,
+            privacyVersionId: privacyVersion.id,
+            ipAddress,
+            userAgent,
+            status: 'ACCEPTED',
+            acceptedAt,
+            createdAt: acceptedAt
+          },
+          include: { contractVersion: true, privacyVersion: true }
+        });
+
+        await tx.employeeContractAcceptance.create({
+          data: {
+            employeeId: employee.id,
+            contractVersionId: contractVersion.id,
+            privacyVersionId: privacyVersion.id,
+            ipAddress,
+            userAgent,
+            acceptedAt
+          }
+        });
+
+        return employee;
       });
 
-      await tx.employeeContractAcceptance.create({
-        data: {
-          employeeId: employee.id,
-          contractVersionId: contractVersion.id,
-          privacyVersionId: privacyVersion.id,
-          ipAddress,
-          userAgent,
-          acceptedAt
+      try {
+        await sendPartnerAcceptanceEmail(email, formatAcceptanceResponse(result));
+      } catch (emailError) {
+        console.error('[PARTNER APPLY] email failed', emailError);
+      }
+
+      res.status(201).json(formatAcceptanceResponse(result));
+    } catch (error) {
+      if (error.code === 'P2002') {
+        if (idempotencyKey) {
+          const existing = await prisma.employee.findUnique({
+            where: { idempotencyKey },
+            include: { contractVersion: true, privacyVersion: true }
+          });
+          if (existing) {
+            return res.status(200).json(formatAcceptanceResponse(existing));
+          }
         }
-      });
-
-      return employee;
-    });
-
-    res.status(201).json({
-      success: true,
-      id: result.id,
-      message: 'Данные успешно отправлены, условия договора приняты.'
-    });
+        return res.status(400).json({ error: 'Исполнитель с такими данными уже зарегистрирован' });
+      }
+      throw error;
+    }
   } catch (error) {
     console.error('[PARTNER APPLY]', error);
-    if (error.code === 'P2002') {
-      return res.status(400).json({ error: 'Исполнитель с такими данными уже зарегистрирован' });
-    }
     res.status(500).json({ error: 'Internal server error' });
   }
 });

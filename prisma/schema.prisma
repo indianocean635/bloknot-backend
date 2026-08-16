@@ -336,9 +336,18 @@ model Employee {
     acceptedPrivacy      Boolean
     acceptedDataCorrect  Boolean
 
+    // Separate timestamps for each legal consent
+    offerAcceptedAt      DateTime?
+    privacyAcceptedAt    DateTime?
+    npdConfirmedAt       DateTime?
+    dataCorrectConfirmedAt DateTime?
+
     // Legal versions accepted at the moment of application
     contractVersionId    String
     privacyVersionId     String
+
+    // Idempotency key to prevent duplicate submissions
+    idempotencyKey       String?  @unique
 
     // Audit / technical
     ipAddress            String
