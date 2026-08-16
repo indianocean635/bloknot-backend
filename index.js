@@ -23,6 +23,8 @@ const cloudPaymentsRoutes = require('./routes/cloudPaymentsRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const crmRoutes = require('./routes/crmRoutes');
 const ropRoutes = require('./routes/ropRoutes');
+const partnerApplicationRoutes = require('./routes/partnerApplicationRoutes');
+const adminEmployeeRoutes = require('./routes/adminEmployeeRoutes');
 const { requireMagicAuth, getBusinessFromUser, adminAuth, optionalAuth } = require('./middleware/magicAuthMiddleware');
 const app = express();
 const PORT = 3001;
@@ -116,6 +118,8 @@ app.use('/api/public', publicRoutes);
 app.use('/api/cloudpayments', cloudPaymentsRoutes);
 app.use('/api/crm', crmRoutes);
 app.use('/api/rop', ropRoutes);
+app.use('/api/partners', partnerApplicationRoutes);
+app.use('/api/admin/employees', adminEmployeeRoutes);
 app.use('/api/invoice', invoiceRoutes);
 
 console.log('Business routes loaded:', typeof businessRoutes);

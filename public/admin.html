@@ -143,6 +143,7 @@
       <button class="btn secondary" onclick="goToManagerResults()" style="padding:8px 16px; border-radius:10px">Результаты по менеджерам</button>
       <button class="btn secondary" onclick="goToCrm()" style="padding:8px 16px; border-radius:10px">CRM</button>
       <button class="btn secondary" onclick="goToRop()" style="padding:8px 16px; border-radius:10px">РОП</button>
+      <button class="btn secondary" onclick="goToEmployees()" style="padding:8px 16px; border-radius:10px">Данные о сотрудниках</button>
     </div>
 
     <!-- Staff Client Search Section (ADMIN_STAFF only) -->
@@ -645,6 +646,13 @@
           ropBtn.style.cssText = 'padding:8px 16px; border-radius:10px';
           ropBtn.textContent = 'РОП';
           navContainer.appendChild(ropBtn);
+
+          const employeesBtn = document.createElement('button');
+          employeesBtn.className = 'btn secondary employees-btn';
+          employeesBtn.onclick = () => goToEmployees();
+          employeesBtn.style.cssText = 'padding:8px 16px; border-radius:10px';
+          employeesBtn.textContent = 'Данные о сотрудниках';
+          navContainer.appendChild(employeesBtn);
         }
         
         switchTab('users');
@@ -871,6 +879,11 @@
     function goToRop() {
       // Переход на страницу РОП
       window.location.href = '/rop.html';
+    }
+
+    function goToEmployees() {
+      // Переход на страницу данных о сотрудниках
+      window.location.href = '/admin-employees.html';
     }
 
     // Search clients function

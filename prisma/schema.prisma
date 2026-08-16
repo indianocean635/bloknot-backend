@@ -44,6 +44,8 @@ model User {
   salesStaffAssignments SalesStaffAssignment[]
   pushSubscriptions PushSubscription[]
   crmRecords CrmRecord[]
+  userPermissions UserPermission[]
+  adminAuditLogs  AdminAuditLog[]
 }
 
 model Business {
@@ -310,4 +312,129 @@ model CrmRecord {
   staff User @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
   @@index([staffId, createdAt])
+}
+
+// ===== Partner / employee contractor program =====
+
+model Employee {
+    id                   String   @id @default(uuid())
+    lastName             String
+    firstName            String
+    middleName           String?
+    birthDate            DateTime
+    phone                String
+    email                String
+    inn                  String
+    isNpdPayer           Boolean
+    region               String
+    telegram             String?
+    bankDetails          String
+
+    // Acceptance
+    acceptedOffer        Boolean
+    acceptedNpd          Boolean
+    acceptedPrivacy      Boolean
+    acceptedDataCorrect  Boolean
+
+    // Legal versions accepted at the moment of application
+    contractVersionId    String
+    privacyVersionId     String
+
+    // Audit / technical
+    ipAddress            String
+    userAgent            String
+    status               String   @default("ACCEPTED") // ACCEPTED, PENDING, REJECTED, ARCHIVED
+    acceptedAt           DateTime @default(now())
+    createdAt            DateTime @default(now())
+    updatedAt            DateTime @updatedAt
+
+    contractVersion ContractVersion @relation(fields: [contractVersionId], references: [id])
+    privacyVersion  PolicyVersion   @relation(fields: [privacyVersionId], references: [id])
+    acceptance      EmployeeContractAcceptance?
+    adminAuditLogs  AdminAuditLog[]
+
+    @@index([email])
+    @@index([inn])
+    @@index([phone])
+    @@index([createdAt])
+    @@index([status])
+    @@index([contractVersionId])
+}
+
+model EmployeeContractAcceptance {
+    id                String   @id @default(uuid())
+    employeeId        String   @unique
+    contractVersionId String
+    privacyVersionId  String
+    ipAddress         String
+    userAgent         String
+    acceptedAt        DateTime @default(now())
+
+    employee        Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+    contractVersion ContractVersion @relation(fields: [contractVersionId], references: [id])
+    privacyVersion  PolicyVersion   @relation(fields: [privacyVersionId], references: [id])
+}
+
+model ContractVersion {
+    id          String   @id @default(uuid())
+    version     String   @unique // e.g. "1.0"
+    hash        String   @unique
+    title       String
+    content     String   @db.Text
+    activeFrom  DateTime @default(now())
+    createdAt   DateTime @default(now())
+
+    employees          Employee[]
+    acceptances        EmployeeContractAcceptance[]
+}
+
+model PolicyVersion {
+    id          String   @id @default(uuid())
+    version     String   @unique // e.g. "1.0"
+    hash        String   @unique
+    title       String
+    content     String   @db.Text
+    activeFrom  DateTime @default(now())
+    createdAt   DateTime @default(now())
+
+    employees          Employee[]
+    acceptances        EmployeeContractAcceptance[]
+}
+
+model Permission {
+    id          String   @id @default(uuid())
+    key         String   @unique // employees_data.view, employees_data.export, etc.
+    description String?
+    createdAt   DateTime @default(now())
+
+    users UserPermission[]
+}
+
+model UserPermission {
+    id           String   @id @default(uuid())
+    userId       String
+    permissionId String
+    grantedAt    DateTime @default(now())
+
+    user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, permissionId])
+}
+
+model AdminAuditLog {
+    id            String   @id @default(uuid())
+    adminId       String
+    action        String   // view, edit, export, delete
+    entity        String   // employee, contract_version, etc.
+    entityId      String?
+    metadata      Json?
+    createdAt     DateTime @default(now())
+
+    admin    User    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+    employee Employee? @relation(fields: [entityId], references: [id])
+
+    @@index([adminId])
+    @@index([entity, entityId])
+    @@index([createdAt])
 }

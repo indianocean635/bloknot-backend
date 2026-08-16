@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карточка исполнителя</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; line-height: 1.6; }
+        .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+        .header { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .header h1 { margin-bottom: 10px; }
+        .back-btn { background: #007bff; color: #fff; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; margin-bottom: 20px; }
+        .back-btn:hover { background: #0056b3; }
+        .card { background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .card h2 { font-size: 18px; margin-bottom: 16px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px; }
+        @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+        .field { margin-bottom: 12px; }
+        .field label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; }
+        .field .value { font-size: 15px; word-break: break-word; }
+        .btn { background: #007bff; color: #fff; padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #0056b3; }
+        .btn.success { background: #28a745; }
+        .btn.success:hover { background: #1e7e34; }
+        .btn.danger { background: #dc3545; }
+        .btn.danger:hover { background: #a71d2a; }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .notice { margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 14px; display: none; }
+        .notice.error { background: #ffebee; color: #b71c1c; border: 1px solid #ffcdd2; }
+        .notice.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/admin-employees.html" class="back-btn">← К списку</a>
+            <h1>Карточка исполнителя</h1>
+        </div>
+
+        <div id="content">Загрузка...</div>
+        <div class="notice" id="notice"></div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth');
+        const params = new URLSearchParams(window.location.search);
+        const employeeId = params.get('id');
+
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/admin/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error('auth');
+                const data = await res.json();
+                if (!data.success) throw new Error('auth');
+                return true;
+            } catch (e) {
+                window.location.href = '/admin-login.html';
+                return false;
+            }
+        }
+
+        function showNotice(text, type) {
+            const n = document.getElementById('notice');
+            n.textContent = text;
+            n.className = 'notice' + (type ? ' ' + type : '');
+            n.style.display = text ? 'block' : 'none';
+        }
+
+        function formatDate(date) {
+            if (!date) return '—';
+            const d = new Date(date);
+            return d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU');
+        }
+
+        function renderSection(title, fields) {
+            return `
+                <div class="card">
+                    <h2>${title}</h2>
+                    <div class="row">
+                        ${fields.map(f => `<div class="field"><label>${f.label}</label><div class="value">${f.value || '—'}</div></div>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadEmployee() {
+            try {
+                const res = await fetch('/api/admin/employees/' + encodeURIComponent(employeeId), { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Ошибка');
+
+                const e = data.employee;
+                const fio = `${e.lastName} ${e.firstName} ${e.middleName || ''}`.trim();
+
+                const personal = [
+                    { label: 'ФИО', value: fio },
+                    { label: 'Дата рождения', value: e.birthDate ? new Date(e.birthDate).toISOString().slice(0, 10) : '—' },
+                    { label: 'Телефон', value: e.phone },
+                    { label: 'Email', value: e.email },
+                    { label: 'Регион', value: e.region }
+                ];
+
+                const tax = [
+                    { label: 'ИНН', value: e.inn },
+                    { label: 'Плательщик НПД (самозанятый)', value: e.isNpdPayer ? 'Да' : 'Нет' }
+                ];
+
+                const contacts = [
+                    { label: 'Telegram', value: e.telegram || '—' }
+                ];
+
+                const payout = [
+                    { label: 'Банковские реквизиты', value: (e.bankDetails || '').replace(/\n/g, '<br>') }
+                ];
+
+                const contract = [
+                    { label: 'Дата и время акцепта', value: formatDate(e.acceptedAt) },
+                    { label: 'Версия оферты', value: e.contractVersion ? e.contractVersion.version : '—' },
+                    { label: 'Хэш/идентификатор версии', value: e.contractVersion ? e.contractVersion.hash : '—' },
+                    { label: 'IP-адрес', value: e.ipAddress },
+                    { label: 'User-Agent', value: e.userAgent },
+                    { label: 'Дата регистрации', value: formatDate(e.createdAt) }
+                ];
+
+                const consent = [
+                    { label: 'Договор-оферта', value: e.acceptedOffer ? 'Принят' : 'Нет' },
+                    { label: 'Статус НПД', value: e.acceptedNpd ? 'Подтверждён' : 'Нет' },
+                    { label: 'Политика ПД', value: e.acceptedPrivacy ? 'Согласие дано' : 'Нет' },
+                    { label: 'Достоверность данных', value: e.acceptedDataCorrect ? 'Подтверждено' : 'Нет' }
+                ];
+
+                document.getElementById('content').innerHTML = `
+                    ${renderSection('Персональные данные', personal)}
+                    ${renderSection('Налоговые данные', tax)}
+                    ${renderSection('Контакты', contacts)}
+                    ${renderSection('Данные для выплат', payout)}
+                    ${renderSection('Договор', contract)}
+                    ${renderSection('Принятые согласия', consent)}
+                    <div class="card">
+                        <h2>Действия</h2>
+                        <div class="actions">
+                            <a href="/partner-offer.html?version=${encodeURIComponent(e.contractVersion ? e.contractVersion.version : '')}" target="_blank" class="btn success">Открыть принятую версию договора</a>
+                            <button class="btn" onclick="changeStatus('ACCEPTED')">Статус: Принят</button>
+                            <button class="btn" onclick="changeStatus('PENDING')">Статус: На рассмотрении</button>
+                            <button class="btn" onclick="changeStatus('ARCHIVED')">Статус: Архив</button>
+                            <button class="btn danger" onclick="deleteEmployee()">Удалить</button>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                document.getElementById('content').innerHTML = '';
+                showNotice(err.message, 'error');
+            }
+        }
+
+        async function changeStatus(status) {
+            try {
+                const res = await fetch('/api/admin/employees/' + encodeURIComponent(employeeId), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ status })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Ошибка');
+                showNotice('Статус обновлён', 'success');
+                await loadEmployee();
+            } catch (err) {
+                showNotice(err.message, 'error');
+            }
+        }
+
+        async function deleteEmployee() {
+            if (!confirm('Удалить запись исполнителя?')) return;
+            try {
+                const res = await fetch('/api/admin/employees/' + encodeURIComponent(employeeId), {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Ошибка');
+                window.location.href = '/admin-employees.html';
+            } catch (err) {
+                showNotice(err.message, 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!employeeId) {
+                showNotice('Не указан ID исполнителя', 'error');
+                return;
+            }
+            const ok = await checkAuth();
+            if (!ok) return;
+            await loadEmployee();
+        });
+    </script>
+</body>
+</html>
