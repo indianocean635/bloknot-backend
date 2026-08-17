@@ -439,8 +439,8 @@
                         <label>Статус плательщика НПД / самозанятого <span class="required">*</span></label>
                         <select name="isNpdPayer" id="isNpdPayer" required>
                             <option value="">—</option>
+                            <option value="false">ИП</option>
                             <option value="true">Да, плательщик НПД (самозанятый)</option>
-                            <option value="false">Нет</option>
                         </select>
                     </div>
                 </div>
@@ -753,6 +753,15 @@
 
         document.getElementById('copyIdBtn').addEventListener('click', copyId);
 
+        function setBirthDateMax() {
+            const today = new Date();
+            const year = today.getFullYear() - 14;
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('birthDate').max = `${year}-${month}-${day}`;
+        }
+
+        setBirthDateMax();
         loadContract();
     </script>
 </body>
