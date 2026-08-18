@@ -328,7 +328,11 @@ router.post('/initiate', async (req, res) => {
     });
   } catch (error) {
     console.error('[MINOR INITIATE] Error:', error);
-    res.status(500).json({ error: 'Ошибка при сохранении заявки несовершеннолетнего' });
+    res.status(500).json({
+      error: 'Ошибка при сохранении заявки: ' + (error?.message || 'неизвестная ошибка'),
+      details: error?.message,
+      meta: error?.meta
+    });
   }
 });
 
