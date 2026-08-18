@@ -428,7 +428,7 @@ info@bloknotservis.ru
                         <input type="checkbox" id="guardianConfirmRead">
                         <span>Я ознакомился(ась) с документами и согласен(а) с их условиями</span>
                     </label>
-                    <button type="submit" class="btn" id="submitBtn">Отправить анкету и код на email</button>
+                    <button type="submit" class="btn" id="submitBtn" disabled>Отправить анкету и код на email</button>
                 </div>
 
                 <div class="notice" id="notice"></div>
@@ -721,6 +721,14 @@ info@bloknotservis.ru
 
         document.getElementById('verifyOtpBtn').addEventListener('click', verifyOtp);
         document.getElementById('resendOtpBtn').addEventListener('click', requestOtp);
+
+        const consentCheckboxIds = ['acceptPrivacy', 'acceptNpd', 'acceptDataCorrect', 'acceptOffer', 'guardianConfirmRepresentative', 'guardianConfirmConsent', 'guardianConfirmRead'];
+        function updateSubmitButton() {
+            const allChecked = consentCheckboxIds.every(id => document.getElementById(id).checked);
+            document.getElementById('submitBtn').disabled = !allChecked;
+        }
+        consentCheckboxIds.forEach(id => document.getElementById(id).addEventListener('change', updateSubmitButton));
+        updateSubmitButton();
 
         setAgeLimits();
         loadDocuments();
