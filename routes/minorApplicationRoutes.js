@@ -466,7 +466,7 @@ router.post('/guardian-consent/request-otp', async (req, res) => {
     });
 
     if (!emailResult.sent) {
-      return res.status(500).json({ error: 'Не удалось отправить код. Проверьте настройки почты.' });
+      return res.status(500).json({ error: 'Не удалось отправить код. Проверьте настройки почты.', reason: emailResult.reason });
     }
 
     res.json({
