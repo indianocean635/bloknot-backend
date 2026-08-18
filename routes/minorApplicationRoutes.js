@@ -312,36 +312,6 @@ router.post('/initiate', async (req, res) => {
       return employee;
     });
 
-    const consentLink = `${PARTNER_BASE_URL}/partner-guardian-consent.html?token=${encodeURIComponent(token)}`;
-
-    // Send email asynchronously; do not block the response
-    setImmediate(async () => {
-      try {
-        const employee = await prisma.employee.findUnique({
-          where: { id: result.id },
-          include: { guardianConsent: true }
-        });
-        if (employee) {
-          const minorName = `${employee.lastName} ${employee.firstName}`;
-          const emailResult = await sendGuardianConsentLinkEmail(employee.representativeEmail, {
-            link: consentLink,
-            minorName,
-            minorBirthDate: employee.birthDate
-          });
-          await createConsentEvent({
-            legalRepresentativeConsentId: employee.guardianConsent.id,
-            employeeId: employee.id,
-            event: 'LINK_EMAIL_SENT',
-            metadata: { sent: emailResult.sent, reason: emailResult.reason },
-            ipAddress,
-            userAgent
-          });
-        }
-      } catch (err) {
-        console.error('[MINOR INITIATE] Failed to send link email:', err);
-      }
-    });
-
     await createConsentEvent({
       employeeId: result.id,
       event: 'CONSENT_CREATED',
@@ -353,9 +323,8 @@ router.post('/initiate', async (req, res) => {
     res.status(201).json({
       id: result.id,
       token,
-      nextStep: 'guardian_consent_pending',
-      representativeEmail,
-      guardianConsentUrl: consentLink
+      nextStep: 'enter_otp',
+      representativeEmail
     });
   } catch (error) {
     console.error('[MINOR INITIATE] Error:', error);

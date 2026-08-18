@@ -32,6 +32,7 @@
         .btn:disabled { background: #b0c4de; cursor: not-allowed; }
         .btn:hover:not(:disabled) { background: #0056b3; }
         .btn-outline { background: #fff; color: #007bff; border: 1px solid #007bff; }
+        .btn-secondary { background: #6c757d; color: #fff; }
         .notice { margin-top: 16px; padding: 12px; border-radius: 8px; font-size: 14px; display: none; }
         .notice.error { background: #ffebee; color: #b71c1c; border: 1px solid #ffcdd2; }
         .notice.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
@@ -41,7 +42,9 @@
         .version-info { font-size: 12px; color: #666; margin-bottom: 10px; }
         .file-list { font-size: 14px; color: #666; margin-top: 8px; }
         .step-title { font-size: 18px; margin: 24px 0 12px; }
-        .wait-info { background: #f0f4f8; border-radius: 8px; padding: 16px; margin: 16px 0; font-size: 14px; }
+        .otp-section { background: #f0f4f8; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .otp-row { display: flex; gap: 10px; justify-content: center; margin: 16px 0; }
+        .otp-row input { width: 180px; padding: 14px; font-size: 22px; text-align: center; letter-spacing: 6px; border: 1px solid #ddd; border-radius: 8px; }
         .meta-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px; }
         .meta-row:last-child { border-bottom: none; }
         footer { background: #fff; border-top: 1px solid #eee; padding: 24px 20px; text-align: center; font-size: 13px; color: #666; }
@@ -58,7 +61,7 @@
     <div class="container">
         <div class="card" id="formCard">
             <h1>Работа в Bloknot</h1>
-            <p class="subtitle">Регистрация исполнителя 14–17 лет. После заполнения анкеты согласие подтвердит законный представитель.</p>
+            <p class="subtitle">Регистрация исполнителя 14–17 лет. Заполните анкету, примите оферту и введите код, который получит законный представитель.</p>
 
             <form id="minorForm">
                 <h2 class="step-title">Данные несовершеннолетнего</h2>
@@ -119,44 +122,61 @@
                     <div class="file-list" id="authorityFileName"></div>
                 </div>
 
-                <button type="submit" class="btn" id="submitBtn">Отправить анкету</button>
+                <h2 class="step-title">Согласие на обработку персональных данных</h2>
+                <div class="version-info" id="privacyMeta"></div>
+                <div class="document-box" id="privacyText">Загрузка...</div>
+                <label class="checkbox">
+                    <input type="checkbox" id="acceptPrivacy">
+                    <span>Я даю согласие на обработку персональных данных в соответствии с вышеизложенным документом</span>
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" id="acceptNpd">
+                    <span>Я являюсь плательщиком налога на профессиональный доход (самозанятый) и даю согласие на передачу данных в ФНС</span>
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" id="acceptDataCorrect">
+                    <span>Все указанные данные верны и актуальны</span>
+                </label>
+
+                <h2 class="step-title">Договор-оферта</h2>
+                <div class="version-info" id="offerMeta"></div>
+                <div class="document-box" id="offerText">Загрузка...</div>
+                <label class="checkbox">
+                    <input type="checkbox" id="acceptOffer">
+                    <span>Я ознакомился(ась) и принимаю условия Договора-оферты</span>
+                </label>
+
+                <h2 class="step-title">Подтверждение законного представителя по email</h2>
+                <div class="otp-section">
+                    <p style="font-size:14px;margin-bottom:12px;">Код подтверждения будет отправлен на <strong id="otpTargetEmail">email представителя</strong>.</p>
+                    <label class="checkbox">
+                        <input type="checkbox" id="guardianConfirmRepresentative">
+                        <span>Я являюсь законным представителем несовершеннолетнего</span>
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" id="guardianConfirmConsent">
+                        <span>Я даю согласие на обработку персональных данных несовершеннолетнего, заключение договора и участие в программе</span>
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" id="guardianConfirmRead">
+                        <span>Я ознакомился(ась) с документами и согласен(а) с их условиями</span>
+                    </label>
+                    <button type="submit" class="btn" id="submitBtn">Отправить анкету и код на email</button>
+                </div>
+
                 <div class="notice" id="notice"></div>
             </form>
         </div>
 
-        <div class="card hidden" id="waitCard">
-            <h1>Ожидание согласия</h1>
-            <div class="wait-info">
-                <p>Анкета сохранена. Мы отправили ссылку на подтверждение законному представителю.</p>
-                <p><strong>Email:</strong> <span id="waitEmail"></span></p>
-                <p id="waitLinkRow" class="hidden">Ссылка: <a id="waitLink" href="#" target="_blank" style="word-break: break-all;">#</a></p>
+        <div class="card hidden" id="otpCard">
+            <h1>Подтверждение законного представителя</h1>
+            <p style="font-size:14px;margin:12px 0;">Код отправлен на <strong id="otpEmail"></strong>. Введите 6-значный код из письма.</p>
+            <div class="otp-row">
+                <input type="text" id="otpCode" maxlength="6" inputmode="numeric" pattern="\d{6}" placeholder="000000">
             </div>
-            <button class="btn btn-outline" id="checkStatusBtn" style="margin-top: 16px;">Проверить статус</button>
-            <div class="notice" id="waitNotice"></div>
-        </div>
-
-        <div class="card hidden" id="privacyCard">
-            <h1>Согласие на обработку персональных данных</h1>
-            <div class="version-info" id="privacyMeta"></div>
-            <div class="document-box" id="privacyText">Загрузка...</div>
-            <label class="checkbox">
-                <input type="checkbox" id="acceptPrivacy">
-                <span>Я даю согласие на обработку персональных данных в соответствии с вышеизложенным документом</span>
-            </label>
-            <button class="btn" id="privacyBtn" disabled>Подтвердить согласие на ПД</button>
-            <div class="notice" id="privacyNotice"></div>
-        </div>
-
-        <div class="card hidden" id="offerCard">
-            <h1>Акцепт Договора-оферты</h1>
-            <div class="version-info" id="offerMeta"></div>
-            <div class="document-box" id="offerText">Загрузка...</div>
-            <label class="checkbox">
-                <input type="checkbox" id="acceptOffer">
-                <span>Я ознакомился(ась) и принимаю условия Договора-оферты</span>
-            </label>
-            <button class="btn" id="offerBtn" disabled>Принять Договор-оферту</button>
-            <div class="notice" id="offerNotice"></div>
+            <button class="btn" id="verifyOtpBtn">Подтвердить согласие</button>
+            <button class="btn btn-outline" id="resendOtpBtn" style="margin-top: 12px;">Отправить повторно</button>
+            <div class="notice" id="otpNotice"></div>
         </div>
 
         <div class="card hidden" id="successCard">
@@ -174,6 +194,8 @@
     <script>
         const apiBase = '';
         let currentToken = null;
+        let offerVersion = null;
+        let privacyVersion = null;
 
         function setNotice(id, text, type) {
             const el = document.getElementById(id);
@@ -230,9 +252,10 @@
         const authorityField = document.getElementById('authorityDocField');
         repStatus.addEventListener('change', () => {
             const needs = ['ADOPTIVE_PARENT', 'CURATOR'].includes(repStatus.value);
-            authorityField.style.display = needs ? 'block' : 'none';
+            authorityField.style.display = needs ? 'block' : 'block';
+            authorityField.querySelector('label .required').style.display = needs ? 'inline' : 'none';
         });
-        authorityField.style.display = ['ADOPTIVE_PARENT', 'CURATOR'].includes(repStatus.value) ? 'block' : 'none';
+        authorityField.querySelector('label .required').style.display = 'none';
 
         document.getElementById('authorityDoc').addEventListener('change', async function (e) {
             const file = e.target.files[0];
@@ -245,24 +268,86 @@
             }
         });
 
+        async function loadDocuments() {
+            try {
+                const [contractRes, privacyRes] = await Promise.all([
+                    fetch(`${apiBase}/api/partners/contract`),
+                    fetch(`${apiBase}/api/partners/minor/minor-privacy-version`)
+                ]);
+                const contractData = await contractRes.json();
+                const privacyData = await privacyRes.json();
+
+                offerVersion = contractData.contract;
+                privacyVersion = privacyData;
+
+                document.getElementById('offerMeta').textContent = offerVersion.title + ' · версия ' + offerVersion.version;
+                document.getElementById('offerText').textContent = offerVersion.content;
+
+                document.getElementById('privacyMeta').textContent = privacyVersion.title + ' · версия ' + privacyVersion.version;
+                document.getElementById('privacyText').textContent = privacyVersion.content;
+            } catch (err) {
+                setNotice('notice', 'Не удалось загрузить документы: ' + err.message, 'error');
+            }
+        }
+
+        async function requestOtp() {
+            if (!currentToken) return;
+            setNotice('otpNotice', '', '');
+            const resendBtn = document.getElementById('resendOtpBtn');
+            resendBtn.disabled = true;
+
+            try {
+                const res = await fetch(`${apiBase}/api/partners/minor/guardian-consent/request-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token: currentToken,
+                        confirmedRepresentative: true,
+                        confirmedConsent: true,
+                        confirmedRead: true
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Ошибка');
+
+                document.getElementById('otpEmail').textContent = data.email;
+                setNotice('otpNotice', 'Код отправлен. Проверьте папку «Входящие» и «Спам».', 'success');
+            } catch (err) {
+                setNotice('otpNotice', err.message, 'error');
+            } finally {
+                setTimeout(() => resendBtn.disabled = false, 3000);
+            }
+        }
+
         async function submitMinor(e) {
             e.preventDefault();
-            setNotice('notice', 'Отправка...', 'info');
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
+            setNotice('notice', '', '');
 
             const minorEmail = document.getElementById('minorEmail').value.trim().toLowerCase();
             const repEmail = document.getElementById('repEmail').value.trim().toLowerCase();
             if (minorEmail === repEmail) {
                 setNotice('notice', 'Email представителя должен отличаться от email несовершеннолетнего', 'error');
-                btn.disabled = false;
                 return;
             }
 
             const needsAuthority = ['ADOPTIVE_PARENT', 'CURATOR'].includes(repStatus.value);
             if (needsAuthority && !authorityDocData) {
                 setNotice('notice', 'Загрузите документ, подтверждающий полномочия', 'error');
-                btn.disabled = false;
+                return;
+            }
+
+            if (!document.getElementById('acceptPrivacy').checked ||
+                !document.getElementById('acceptOffer').checked ||
+                !document.getElementById('acceptNpd').checked ||
+                !document.getElementById('acceptDataCorrect').checked) {
+                setNotice('notice', 'Необходимо поставить все галочки согласий', 'error');
+                return;
+            }
+
+            if (!document.getElementById('guardianConfirmRepresentative').checked ||
+                !document.getElementById('guardianConfirmConsent').checked ||
+                !document.getElementById('guardianConfirmRead').checked) {
+                setNotice('notice', 'Необходимо подтвердить согласие законного представителя', 'error');
                 return;
             }
 
@@ -295,6 +380,9 @@
                 }
             };
 
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+
             try {
                 const res = await fetch(`${apiBase}/api/partners/minor/initiate`, {
                     method: 'POST',
@@ -307,15 +395,11 @@
                 currentToken = data.token;
                 history.replaceState(null, '', '?token=' + encodeURIComponent(currentToken));
 
+                await requestOtp();
+
                 document.getElementById('formCard').classList.add('hidden');
-                document.getElementById('waitCard').classList.remove('hidden');
-                document.getElementById('waitEmail').textContent = data.representativeEmail;
-                if (data.guardianConsentUrl) {
-                    document.getElementById('waitLinkRow').classList.remove('hidden');
-                    document.getElementById('waitLink').href = data.guardianConsentUrl;
-                    document.getElementById('waitLink').textContent = data.guardianConsentUrl;
-                }
-                setNotice('waitNotice', 'Ссылка отправлена законному представителю.', 'success');
+                document.getElementById('otpCard').classList.remove('hidden');
+                document.getElementById('otpTargetEmail').textContent = data.representativeEmail;
             } catch (err) {
                 setNotice('notice', err.message, 'error');
                 btn.disabled = false;
@@ -324,118 +408,56 @@
 
         document.getElementById('minorForm').addEventListener('submit', submitMinor);
 
-        async function checkStatus() {
-            if (!currentToken) return;
-            try {
-                const res = await fetch(`${apiBase}/api/partners/minor/guardian-consent?token=${encodeURIComponent(currentToken)}`);
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Ошибка');
-
-                if (data.status === 'CONFIRMED') {
-                    document.getElementById('waitCard').classList.add('hidden');
-                    loadPrivacyAndOffer();
-                } else {
-                    setNotice('waitNotice', 'Пока согласие не получено. Попробуйте позже.', 'info');
-                }
-            } catch (err) {
-                setNotice('waitNotice', err.message, 'error');
-            }
-        }
-
-        document.getElementById('checkStatusBtn').addEventListener('click', checkStatus);
-
-        let offerVersion = null;
-        let privacyVersion = null;
-
-        async function loadPrivacyAndOffer() {
-            try {
-                const [contractRes, privacyRes] = await Promise.all([
-                    fetch(`${apiBase}/api/partners/contract`),
-                    fetch(`${apiBase}/api/partners/minor/minor-privacy-version`)
-                ]);
-                const contractData = await contractRes.json();
-                const privacyData = await privacyRes.json();
-
-                offerVersion = contractData.contract;
-                privacyVersion = privacyData;
-
-                document.getElementById('offerMeta').textContent = offerVersion.title + ' · версия ' + offerVersion.version;
-                document.getElementById('offerText').textContent = offerVersion.content;
-
-                document.getElementById('privacyMeta').textContent = privacyVersion.title + ' · версия ' + privacyVersion.version;
-                document.getElementById('privacyText').textContent = privacyVersion.content;
-
-                document.getElementById('privacyCard').classList.remove('hidden');
-            } catch (err) {
-                setNotice('waitNotice', 'Не удалось загрузить документы: ' + err.message, 'error');
-            }
-        }
-
-        document.getElementById('acceptPrivacy').addEventListener('change', (e) => {
-            document.getElementById('privacyBtn').disabled = !e.target.checked;
-        });
-
-        document.getElementById('privacyBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('privacyBtn');
-            btn.disabled = true;
-            try {
-                const res = await fetch(`${apiBase}/api/partners/minor/privacy-consent`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: currentToken, accepted: true })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Ошибка');
-                document.getElementById('privacyCard').classList.add('hidden');
-                document.getElementById('offerCard').classList.remove('hidden');
-            } catch (err) {
-                setNotice('privacyNotice', err.message, 'error');
-                btn.disabled = false;
-            }
-        });
-
-        document.getElementById('acceptOffer').addEventListener('change', (e) => {
-            document.getElementById('offerBtn').disabled = !e.target.checked;
-        });
-
-        document.getElementById('offerBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('offerBtn');
-            btn.disabled = true;
-            try {
-                const res = await fetch(`${apiBase}/api/partners/minor/accept-offer`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: currentToken, accepted: true })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Ошибка');
-
-                document.getElementById('offerCard').classList.add('hidden');
-                document.getElementById('successCard').classList.remove('hidden');
-                document.getElementById('successId').textContent = data.registrationId;
-                document.getElementById('successDate').textContent = new Date(data.acceptedAt).toLocaleString('ru-RU');
-                document.getElementById('successOfferVersion').textContent = data.contractVersion;
-            } catch (err) {
-                setNotice('offerNotice', err.message, 'error');
-                btn.disabled = false;
-            }
-        });
-
-        async function initFromToken() {
-            const params = new URLSearchParams(window.location.search);
-            const token = params.get('token');
-            if (!token) {
-                setAgeLimits();
+        async function verifyOtp() {
+            const code = document.getElementById('otpCode').value.replace(/\D/g, '');
+            if (code.length !== 6) {
+                setNotice('otpNotice', 'Введите 6 цифр кода', 'error');
                 return;
             }
-            currentToken = token;
-            document.getElementById('formCard').classList.add('hidden');
-            document.getElementById('waitCard').classList.remove('hidden');
-            document.getElementById('waitEmail').textContent = '...';
-            await checkStatus();
+
+            const btn = document.getElementById('verifyOtpBtn');
+            btn.disabled = true;
+            setNotice('otpNotice', '', '');
+
+            try {
+                const res = await fetch(`${apiBase}/api/partners/minor/guardian-consent/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: currentToken, code })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Ошибка');
+
+                await fetch(`${apiBase}/api/partners/minor/privacy-consent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: currentToken, accepted: true })
+                });
+
+                const offerRes = await fetch(`${apiBase}/api/partners/minor/accept-offer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: currentToken, accepted: true })
+                });
+                const offerData = await offerRes.json();
+                if (!offerRes.ok) throw new Error(offerData.error || 'Ошибка оформления договора');
+
+                document.getElementById('otpCard').classList.add('hidden');
+                document.getElementById('successCard').classList.remove('hidden');
+                document.getElementById('successId').textContent = offerData.registrationId;
+                document.getElementById('successDate').textContent = new Date(offerData.acceptedAt).toLocaleString('ru-RU');
+                document.getElementById('successOfferVersion').textContent = offerData.contractVersion;
+            } catch (err) {
+                setNotice('otpNotice', err.message, 'error');
+                btn.disabled = false;
+            }
         }
 
-        initFromToken();
+        document.getElementById('verifyOtpBtn').addEventListener('click', verifyOtp);
+        document.getElementById('resendOtpBtn').addEventListener('click', requestOtp);
+
+        setAgeLimits();
+        loadDocuments();
     </script>
 </body>
 </html>

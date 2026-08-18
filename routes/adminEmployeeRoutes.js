@@ -23,10 +23,6 @@ const EMPLOYEE_LIST_SELECT = {
   status: true,
   acceptedAt: true,
   createdAt: true,
-  ageCategory: true,
-  guardianConsent: {
-    select: { status: true, confirmedAt: true }
-  },
   contractVersion: {
     select: { id: true, version: true, title: true, hash: true }
   },
