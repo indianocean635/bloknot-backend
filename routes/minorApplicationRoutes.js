@@ -167,6 +167,8 @@ router.post('/initiate', async (req, res) => {
     const email = sanitizeInput(body.email).toLowerCase();
     const inn = sanitizeInput(body.inn);
     const isNpdPayer = body.isNpdPayer === true || body.isNpdPayer === 'true';
+    const acceptedNpd = body.acceptedNpd === true || body.acceptedNpd === 'true';
+    const acceptedDataCorrect = body.acceptedDataCorrect === true || body.acceptedDataCorrect === 'true';
     const region = sanitizeInput(body.region);
     const telegram = sanitizeInput(body.telegram) || null;
     const bankDetails = sanitizeInput(body.bankDetails);
@@ -252,6 +254,12 @@ router.post('/initiate', async (req, res) => {
           region,
           telegram,
           bankDetails,
+          acceptedOffer: false,
+          acceptedNpd,
+          acceptedPrivacy: false,
+          acceptedDataCorrect,
+          npdConfirmedAt: acceptedNpd ? new Date() : null,
+          dataCorrectConfirmedAt: acceptedDataCorrect ? new Date() : null,
           ageCategory: 'MINOR',
           representativeLastName,
           representativeFirstName,
@@ -619,7 +627,11 @@ router.post('/privacy-consent', async (req, res) => {
       }),
       prisma.employee.update({
         where: { id: consent.employeeId },
-        data: { status: 'PRIVACY_CONSENT_CONFIRMED' }
+        data: {
+          acceptedPrivacy: true,
+          privacyAcceptedAt: now,
+          status: 'PRIVACY_CONSENT_CONFIRMED'
+        }
       })
     ]);
 
