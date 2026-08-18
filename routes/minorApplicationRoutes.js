@@ -629,7 +629,6 @@ router.post('/privacy-consent', async (req, res) => {
         data: {
           acceptedPrivacy: true,
           privacyAcceptedAt: now,
-          privacyVersionId: privacyVersion.id,
           status: 'PRIVACY_CONSENT_CONFIRMED'
         }
       })
@@ -724,7 +723,6 @@ router.post('/accept-offer', async (req, res) => {
           acceptedAt: now,
           privacyAcceptedAt: now,
           offerAcceptedAt: now,
-          privacyVersionId: privacyVersion.id,
           contractVersionId: contractVersion.id,
           status: 'CONFIRMED'
         }
