@@ -1,7 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const { prisma } = require('../services/prismaService');
-const { sendGuardianConsentLinkEmail, sendGuardianOtpEmail } = require('../services/emailService');
+const { sendGuardianConsentLinkEmail, sendGuardianOtpEmail, sendPartnerAcceptanceEmail } = require('../services/emailService');
 const { uploadPrivateFile } = require('../lib/s3');
 const {
   generateOtp,
@@ -737,6 +737,14 @@ router.post('/accept-offer', async (req, res) => {
       ipAddress,
       userAgent
     });
+
+    const emailResult = await sendPartnerAcceptanceEmail(consent.representativeEmail, {
+      id: consent.employeeId,
+      acceptedAt: now,
+      contractVersion,
+      privacyVersion
+    });
+    console.log('[MINOR ACCEPT OFFER] Email result:', emailResult);
 
     res.json({
       success: true,
