@@ -96,7 +96,125 @@ Bloknot`;
   }
 }
 
+function formatDateShort(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('ru-RU');
+}
+
+async function sendGuardianConsentLinkEmail(to, details) {
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.log('[EMAIL] Skipping guardian consent link email: SMTP is not configured.');
+    return { sent: false, reason: 'SMTP not configured' };
+  }
+
+  const { link, minorName, minorBirthDate } = details;
+  const subject = 'Подтверждение согласия законного представителя — Блокнот';
+  const birthText = minorBirthDate ? formatDateShort(minorBirthDate) : '';
+
+  const text = `Здравствуйте!
+
+Для подтверждения согласия на заключение и исполнение гражданско-правового договора несовершеннолетним на сайте сервиса «Блокнот» перейдите по ссылке:
+${link}
+
+Несовершеннолетний: ${minorName}
+Дата рождения: ${birthText}
+
+Если вы не инициировали данную процедуру, проигнорируйте это письмо.
+
+С уважением,
+Блокнот
+https://bloknotservis.ru/`;
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #333; line-height: 1.6; max-width: 600px;">
+      <h2 style="color: #1b5e20;">Подтверждение согласия законного представителя</h2>
+      <p>Здравствуйте!</p>
+      <p>Для подтверждения согласия перейдите по ссылке:</p>
+      <p><a href="${link}" style="display: inline-block; margin: 8px 0; padding: 10px 16px; background: #007bff; color: #fff; text-decoration: none; border-radius: 6px;">Подтвердить согласие</a></p>
+      <p>Несовершеннолетний: <strong>${minorName}</strong></p>
+      <p>Дата рождения: <strong>${birthText}</strong></p>
+      <p style="color: #666; font-size: 13px;">Если вы не инициировали данную процедуру, проигнорируйте это письмо.</p>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to,
+      subject,
+      text,
+      html
+    });
+    console.log('[EMAIL] Guardian consent link email sent to', to);
+    return { sent: true };
+  } catch (error) {
+    console.error('[EMAIL] Failed to send guardian consent link email:', error);
+    return { sent: false, reason: error.message };
+  }
+}
+
+async function sendGuardianOtpEmail(to, details) {
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.log('[EMAIL] Skipping guardian OTP email: SMTP is not configured.');
+    return { sent: false, reason: 'SMTP not configured' };
+  }
+
+  const { code, minorName, minorBirthDate } = details;
+  const subject = 'Подтверждение согласия законного представителя — Блокнот';
+  const birthText = minorBirthDate ? formatDateShort(minorBirthDate) : '';
+
+  const text = `Здравствуйте!
+
+Для подтверждения вашего согласия на заключение и исполнение гражданско-правового договора несовершеннолетним на сайте сервиса «Блокнот» введите следующий код:
+
+${code}
+
+Несовершеннолетний: ${minorName}
+Дата рождения: ${birthText}
+
+Код действует ограниченное время.
+
+Если вы не инициировали данную процедуру, не вводите код и обратитесь в службу поддержки:
+info@bloknotservis.ru
+
+С уважением,
+Блокнот
+https://bloknotservis.ru/`;
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #333; line-height: 1.6; max-width: 600px;">
+      <h2 style="color: #1b5e20;">Подтверждение согласия законного представителя</h2>
+      <p>Здравствуйте!</p>
+      <p>Для подтверждения вашего согласия введите следующий код:</p>
+      <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px; padding: 12px 0;">${code}</p>
+      <p>Несовершеннолетний: <strong>${minorName}</strong></p>
+      <p>Дата рождения: <strong>${birthText}</strong></p>
+      <p>Код действует ограниченное время.</p>
+      <p style="color: #666; font-size: 13px;">Если вы не инициировали данную процедуру, не вводите код и обратитесь в службу поддержки: info@bloknotservis.ru</p>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to,
+      subject,
+      text,
+      html
+    });
+    console.log('[EMAIL] Guardian OTP email sent to', to);
+    return { sent: true };
+  } catch (error) {
+    console.error('[EMAIL] Failed to send guardian OTP email:', error);
+    return { sent: false, reason: error.message };
+  }
+}
+
 module.exports = {
   isEmailConfigured,
-  sendPartnerAcceptanceEmail
+  sendPartnerAcceptanceEmail,
+  sendGuardianConsentLinkEmail,
+  sendGuardianOtpEmail
 };

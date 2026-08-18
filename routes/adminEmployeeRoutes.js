@@ -3,6 +3,7 @@ const { requireAuth } = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/permissionMiddleware');
 const { logAdminAction } = require('../services/auditService');
 const { prisma } = require('../services/prismaService');
+const { getSignedUrlForFile } = require('../lib/s3');
 
 const router = express.Router();
 
@@ -22,6 +23,10 @@ const EMPLOYEE_LIST_SELECT = {
   status: true,
   acceptedAt: true,
   createdAt: true,
+  ageCategory: true,
+  guardianConsent: {
+    select: { status: true, confirmedAt: true }
+  },
   contractVersion: {
     select: { id: true, version: true, title: true, hash: true }
   },
@@ -186,7 +191,12 @@ router.get('/:id', requireAuth, requirePermission('employees_data.view'), async 
       include: {
         contractVersion: true,
         privacyVersion: true,
-        acceptance: true
+        acceptance: true,
+        guardianConsent: true,
+        minorPrivacyConsent: true,
+        minorContractAcceptance: true,
+        documents: true,
+        consentEvents: { orderBy: { createdAt: 'desc' } }
       }
     });
 
@@ -221,7 +231,7 @@ router.put('/:id', requireAuth, requirePermission('employees_data.edit'), async 
     }
 
     const updateData = {};
-    const allowedStatuses = ['ACCEPTED', 'PENDING', 'REJECTED', 'ARCHIVED'];
+    const allowedStatuses = ['ACCEPTED', 'PENDING', 'REJECTED', 'ARCHIVED', 'OTP_SENT', 'CONFIRMED', 'GUARDIAN_CONSENT_CONFIRMED', 'PRIVACY_CONSENT_CONFIRMED', 'OFFER_ACCEPTED', 'LOCKED'];
     if (status && allowedStatuses.includes(status)) updateData.status = status;
 
     const employee = await prisma.employee.update({
@@ -243,6 +253,34 @@ router.put('/:id', requireAuth, requirePermission('employees_data.edit'), async 
     res.json({ success: true, employee });
   } catch (error) {
     console.error('[ADMIN EMPLOYEE UPDATE]', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get a signed URL for a private document
+router.get('/:id/document/:docId', requireAuth, requirePermission('employees_data.view'), async (req, res) => {
+  try {
+    const { id, docId } = req.params;
+    const doc = await prisma.employeeDocument.findFirst({
+      where: { id: docId, employeeId: id }
+    });
+    if (!doc) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    const signedUrl = await getSignedUrlForFile(doc.s3Key, 900);
+
+    await logAdminAction({
+      adminId: req.user.id,
+      action: 'view_document',
+      entity: 'employee_document',
+      entityId: docId,
+      metadata: { employeeId: id, documentType: doc.type }
+    });
+
+    res.json({ success: true, signedUrl, fileName: doc.fileName });
+  } catch (error) {
+    console.error('[ADMIN DOCUMENT SIGNED URL]', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

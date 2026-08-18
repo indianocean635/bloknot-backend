@@ -73,6 +73,35 @@
             return d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU');
         }
 
+        function formatStatus(status) {
+            const map = {
+                'PENDING': 'Ожидание',
+                'OTP_SENT': 'Код отправлен',
+                'CONFIRMED': 'Подтверждено',
+                'REJECTED': 'Отклонено',
+                'LOCKED': 'Заблокировано',
+                'GUARDIAN_CONSENT_CONFIRMED': 'Согласие представителя',
+                'PRIVACY_CONSENT_CONFIRMED': 'Согласие на ПД',
+                'OFFER_ACCEPTED': 'Оферта принята',
+                'ACCEPTED': 'Принят',
+                'ARCHIVED': 'Архив'
+            };
+            return map[status] || (status || '—');
+        }
+
+        async function downloadDoc(docId) {
+            try {
+                const res = await fetch(`/api/admin/employees/${encodeURIComponent(employeeId)}/document/${encodeURIComponent(docId)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Ошибка');
+                window.open(data.signedUrl, '_blank');
+            } catch (err) {
+                showNotice(err.message, 'error');
+            }
+        }
+
         function renderSection(title, fields) {
             return `
                 <div class="card">
@@ -95,6 +124,7 @@
 
                 const personal = [
                     { label: 'ФИО', value: fio },
+                    { label: 'Категория', value: e.ageCategory === 'MINOR' ? '14–17 лет' : '18+' },
                     { label: 'Дата рождения', value: e.birthDate ? new Date(e.birthDate).toISOString().slice(0, 10) : '—' },
                     { label: 'Телефон', value: e.phone },
                     { label: 'Email', value: e.email },
@@ -131,11 +161,42 @@
                 ];
 
                 const consent = [
+                    { label: 'Статус', value: formatStatus(e.status) },
                     { label: 'Договор-оферта', value: e.acceptedOffer ? 'Принят' : 'Нет' },
                     { label: 'Статус НПД', value: e.acceptedNpd ? 'Подтверждён' : 'Нет' },
                     { label: 'Политика ПД', value: e.acceptedPrivacy ? 'Согласие дано' : 'Нет' },
                     { label: 'Достоверность данных', value: e.acceptedDataCorrect ? 'Подтверждено' : 'Нет' }
                 ];
+
+                let minorHtml = '';
+                if (e.ageCategory === 'MINOR') {
+                    const gc = e.guardianConsent || {};
+                    const rep = {
+                        fio: `${gc.lastName || ''} ${gc.firstName || ''} ${gc.middleName || ''}`.trim() || '—',
+                        status: formatStatus(gc.status),
+                        email: gc.email || '—',
+                        phone: gc.phone || '—',
+                        confirmedAt: formatDate(gc.confirmedAt)
+                    };
+                    const docs = (e.documents || []).map(d => `
+                        <li style="margin: 6px 0; font-size: 14px;">
+                            ${d.type} — ${d.fileName} <button class="btn" style="padding: 4px 10px; font-size: 13px; width: auto;" onclick="downloadDoc('${d.id}')">Скачать</button>
+                        </li>`).join('');
+                    minorHtml = `
+                        <div class="card">
+                            <h2>Регистрация 14–17 лет</h2>
+                            ${renderSection('Законный представитель', [
+                                { label: 'ФИО', value: rep.fio },
+                                { label: 'Статус', value: rep.status },
+                                { label: 'Email', value: rep.email },
+                                { label: 'Телефон', value: rep.phone },
+                                { label: 'Подтверждено', value: rep.confirmedAt }
+                            ])}
+                            <h3 style="margin: 16px 0 8px; font-size: 16px;">Документы</h3>
+                            ${docs ? '<ul style="margin-left: 18px;">' + docs + '</ul>' : '<p style="font-size: 14px; color: #666;">Нет документов</p>'}
+                        </div>
+                    `;
+                }
 
                 document.getElementById('content').innerHTML = `
                     ${renderSection('Персональные данные', personal)}
@@ -144,6 +205,7 @@
                     ${renderSection('Данные для выплат', payout)}
                     ${renderSection('Акцепт договора', acceptance)}
                     ${renderSection('Принятые согласия', consent)}
+                    ${minorHtml}
                     <div class="card">
                         <h2>Действия</h2>
                         <div class="actions">

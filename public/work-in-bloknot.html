@@ -398,6 +398,19 @@
             <div class="subtitle">Станьте партнёром и помогайте клиентам подключать онлайн-запись. Никаких трудовых отношений — только сотрудничество и вознаграждение.</div>
 
             <form id="partnerForm">
+                <div class="field" id="ageCategoryField" style="margin-bottom: 24px;">
+                    <label>Возраст <span class="required">*</span></label>
+                    <div style="display: flex; gap: 20px; margin-top: 8px; flex-wrap: wrap;">
+                        <label class="checkbox" style="margin: 0; font-weight: 400;">
+                            <input type="radio" name="ageCategory" value="adult" checked style="width: auto; height: auto; margin-right: 8px; margin-top: 0;">
+                            18 лет и старше
+                        </label>
+                        <label class="checkbox" style="margin: 0; font-weight: 400;">
+                            <input type="radio" name="ageCategory" value="minor" style="width: auto; height: auto; margin-right: 8px; margin-top: 0;">
+                            От 14 до 17 лет
+                        </label>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="field">
                         <label>Фамилия <span class="required">*</span></label>
@@ -755,11 +768,19 @@
 
         function setBirthDateMax() {
             const today = new Date();
-            const year = today.getFullYear() - 14;
+            const year = today.getFullYear() - 18;
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
             document.getElementById('birthDate').max = `${year}-${month}-${day}`;
         }
+
+        document.querySelectorAll('input[name="ageCategory"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'minor') {
+                    window.location.href = '/work-in-bloknot-minor.html';
+                }
+            });
+        });
 
         setBirthDateMax();
         loadContract();

@@ -24,6 +24,7 @@ const invoiceRoutes = require('./routes/invoiceRoutes');
 const crmRoutes = require('./routes/crmRoutes');
 const ropRoutes = require('./routes/ropRoutes');
 const partnerApplicationRoutes = require('./routes/partnerApplicationRoutes');
+const minorApplicationRoutes = require('./routes/minorApplicationRoutes');
 const adminEmployeeRoutes = require('./routes/adminEmployeeRoutes');
 const { requireMagicAuth, getBusinessFromUser, adminAuth, optionalAuth } = require('./middleware/magicAuthMiddleware');
 const app = express();
@@ -119,6 +120,7 @@ app.use('/api/cloudpayments', cloudPaymentsRoutes);
 app.use('/api/crm', crmRoutes);
 app.use('/api/rop', ropRoutes);
 app.use('/api/partners', partnerApplicationRoutes);
+app.use('/api/partners/minor', minorApplicationRoutes);
 app.use('/api/admin/employees', adminEmployeeRoutes);
 app.use('/api/invoice', invoiceRoutes);
 

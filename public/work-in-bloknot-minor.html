@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Работа в Bloknot — регистрация 14–17 лет</title>
+    <link rel="icon" href="/favicon.png?v=2" type="image/png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; line-height: 1.6; min-height: 100vh; }
+        .container { max-width: 720px; margin: 0 auto; padding: 20px; }
+        header { background: #fff; border-bottom: 1px solid #eee; }
+        .header-inner { max-width: 720px; margin: 0 auto; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .logo img { height: 32px; }
+        .back-link { color: #007bff; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+        .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 28px; margin: 24px 0; }
+        h1 { font-size: 26px; margin-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 24px; font-size: 15px; }
+        .field { margin-bottom: 18px; }
+        .field label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
+        .field label .required { color: #dc3545; margin-left: 2px; }
+        .field input, .field select, .field textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; font-family: inherit; }
+        .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #007bff; }
+        .field textarea { min-height: 80px; resize: vertical; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+        .checkbox { display: flex; align-items: flex-start; margin-bottom: 14px; font-size: 14px; }
+        .checkbox input { margin-right: 10px; margin-top: 3px; flex-shrink: 0; width: 18px; height: 18px; }
+        .checkbox a { color: #007bff; text-decoration: none; }
+        .btn { background: #007bff; color: #fff; border: none; border-radius: 8px; padding: 12px 24px; font-size: 16px; cursor: pointer; width: 100%; }
+        .btn:disabled { background: #b0c4de; cursor: not-allowed; }
+        .btn:hover:not(:disabled) { background: #0056b3; }
+        .btn-outline { background: #fff; color: #007bff; border: 1px solid #007bff; }
+        .notice { margin-top: 16px; padding: 12px; border-radius: 8px; font-size: 14px; display: none; }
+        .notice.error { background: #ffebee; color: #b71c1c; border: 1px solid #ffcdd2; }
+        .notice.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+        .notice.info { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+        .hidden { display: none !important; }
+        .document-box { border: 1px solid #ddd; border-radius: 8px; padding: 16px; max-height: 300px; overflow-y: auto; background: #fafafa; margin: 12px 0; font-size: 14px; white-space: pre-wrap; }
+        .version-info { font-size: 12px; color: #666; margin-bottom: 10px; }
+        .file-list { font-size: 14px; color: #666; margin-top: 8px; }
+        .step-title { font-size: 18px; margin: 24px 0 12px; }
+        .wait-info { background: #f0f4f8; border-radius: 8px; padding: 16px; margin: 16px 0; font-size: 14px; }
+        .meta-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+        .meta-row:last-child { border-bottom: none; }
+        footer { background: #fff; border-top: 1px solid #eee; padding: 24px 20px; text-align: center; font-size: 13px; color: #666; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <div class="logo"><a href="/"><img src="/logo-wordmark.svg?v=10" alt="Bloknot"></a></div>
+            <a href="/work-in-bloknot.html" class="back-link">← Назад к выбору возраста</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card" id="formCard">
+            <h1>Работа в Bloknot</h1>
+            <p class="subtitle">Регистрация исполнителя 14–17 лет. После заполнения анкеты согласие подтвердит законный представитель.</p>
+
+            <form id="minorForm">
+                <h2 class="step-title">Данные несовершеннолетнего</h2>
+                <div class="row">
+                    <div class="field"><label>Фамилия <span class="required">*</span></label><input type="text" id="minorLastName" required></div>
+                    <div class="field"><label>Имя <span class="required">*</span></label><input type="text" id="minorFirstName" required></div>
+                </div>
+                <div class="field"><label>Отчество <span class="required">*</span></label><input type="text" id="minorMiddleName" required></div>
+                <div class="row">
+                    <div class="field"><label>Дата рождения <span class="required">*</span></label><input type="date" id="minorBirthDate" required></div>
+                    <div class="field"><label>Телефон <span class="required">*</span></label><input type="tel" id="minorPhone" value="+7" required></div>
+                </div>
+                <div class="field"><label>Email <span class="required">*</span></label><input type="email" id="minorEmail" required></div>
+                <div class="row">
+                    <div class="field"><label>ИНН <span class="required">*</span></label><input type="text" id="minorInn" inputmode="numeric" maxlength="12" required></div>
+                    <div class="field">
+                        <label>Статус плательщика НПД <span class="required">*</span></label>
+                        <select id="minorIsNpdPayer" required>
+                            <option value="">—</option>
+                            <option value="true">Да, самозанятый</option>
+                            <option value="false">Нет</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field"><label>Регион <span class="required">*</span></label><input type="text" id="minorRegion" placeholder="Например: Москва" required></div>
+                <div class="field"><label>Telegram username <span class="required">*</span></label><input type="text" id="minorTelegram" placeholder="@username" required></div>
+                <div class="field"><label>Банковские реквизиты <span class="required">*</span></label><textarea id="minorBankDetails" rows="3" required></textarea></div>
+
+                <h2 class="step-title">Данные законного представителя</h2>
+                <div class="row">
+                    <div class="field"><label>Фамилия <span class="required">*</span></label><input type="text" id="repLastName" required></div>
+                    <div class="field"><label>Имя <span class="required">*</span></label><input type="text" id="repFirstName" required></div>
+                </div>
+                <div class="field"><label>Отчество</label><input type="text" id="repMiddleName"></div>
+                <div class="row">
+                    <div class="field"><label>Дата рождения</label><input type="date" id="repBirthDate"></div>
+                    <div class="field">
+                        <label>Статус представителя <span class="required">*</span></label>
+                        <select id="repStatus" required>
+                            <option value="">—</option>
+                            <option value="MOTHER">Мать</option>
+                            <option value="FATHER">Отец</option>
+                            <option value="ADOPTIVE_PARENT">Усыновитель</option>
+                            <option value="CURATOR">Попечитель</option>
+                            <option value="GUARDIAN">Законный представитель</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="field"><label>Email <span class="required">*</span></label><input type="email" id="repEmail" required></div>
+                    <div class="field"><label>Телефон <span class="required">*</span></label><input type="tel" id="repPhone" value="+7" required></div>
+                </div>
+                <div class="field"><label>Адрес</label><input type="text" id="repAddress"></div>
+
+                <div class="field" id="authorityDocField">
+                    <label>Документ, подтверждающий полномочия <span class="required">*</span></label>
+                    <input type="file" id="authorityDoc" accept=".pdf,.jpg,.jpeg,.png" style="padding: 8px 0;">
+                    <div class="file-list" id="authorityFileName"></div>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Отправить анкету</button>
+                <div class="notice" id="notice"></div>
+            </form>
+        </div>
+
+        <div class="card hidden" id="waitCard">
+            <h1>Ожидание согласия</h1>
+            <div class="wait-info">
+                <p>Анкета сохранена. Мы отправили ссылку на подтверждение законному представителю.</p>
+                <p><strong>Email:</strong> <span id="waitEmail"></span></p>
+                <p id="waitLinkRow" class="hidden">Ссылка: <a id="waitLink" href="#" target="_blank" style="word-break: break-all;">#</a></p>
+            </div>
+            <button class="btn btn-outline" id="checkStatusBtn" style="margin-top: 16px;">Проверить статус</button>
+            <div class="notice" id="waitNotice"></div>
+        </div>
+
+        <div class="card hidden" id="privacyCard">
+            <h1>Согласие на обработку персональных данных</h1>
+            <div class="version-info" id="privacyMeta"></div>
+            <div class="document-box" id="privacyText">Загрузка...</div>
+            <label class="checkbox">
+                <input type="checkbox" id="acceptPrivacy">
+                <span>Я даю согласие на обработку персональных данных в соответствии с вышеизложенным документом</span>
+            </label>
+            <button class="btn" id="privacyBtn" disabled>Подтвердить согласие на ПД</button>
+            <div class="notice" id="privacyNotice"></div>
+        </div>
+
+        <div class="card hidden" id="offerCard">
+            <h1>Акцепт Договора-оферты</h1>
+            <div class="version-info" id="offerMeta"></div>
+            <div class="document-box" id="offerText">Загрузка...</div>
+            <label class="checkbox">
+                <input type="checkbox" id="acceptOffer">
+                <span>Я ознакомился(ась) и принимаю условия Договора-оферты</span>
+            </label>
+            <button class="btn" id="offerBtn" disabled>Принять Договор-оферту</button>
+            <div class="notice" id="offerNotice"></div>
+        </div>
+
+        <div class="card hidden" id="successCard">
+            <h1>Регистрация завершена</h1>
+            <div class="notice success" style="display: block;">Ваша регистрация успешно завершена. Договор заключён в электронной форме.</div>
+            <div class="meta-row"><span class="meta-label">Номер регистрации</span><span id="successId"></span></div>
+            <div class="meta-row"><span class="meta-label">Дата и время</span><span id="successDate"></span></div>
+            <div class="meta-row"><span class="meta-label">Версия оферты</span><span id="successOfferVersion"></span></div>
+            <a href="/" class="back-link" style="font-size: 16px; margin-top: 20px; display: inline-block;">На главную</a>
+        </div>
+    </div>
+
+    <footer>© Bloknot. Работа в Bloknot — партнёрское сотрудничество.</footer>
+
+    <script>
+        const apiBase = '';
+        let currentToken = null;
+
+        function setNotice(id, text, type) {
+            const el = document.getElementById(id);
+            el.textContent = text;
+            el.className = 'notice ' + (type || '');
+            el.style.display = text ? 'block' : 'none';
+        }
+
+        function formatPhone(value) {
+            let digits = value.replace(/\D/g, '');
+            if (digits.startsWith('7') || digits.startsWith('8')) digits = digits.substring(1);
+            let out = '+7';
+            if (digits.length > 0) out += ' (' + digits.slice(0, 3);
+            if (digits.length >= 3) out += ')';
+            if (digits.length > 3) out += ' ' + digits.slice(3, 6);
+            if (digits.length > 6) out += '-' + digits.slice(6, 8);
+            if (digits.length > 8) out += '-' + digits.slice(8, 10);
+            return out;
+        }
+
+        function setAgeLimits() {
+            const today = new Date();
+            const max14 = today.getFullYear() - 14;
+            const min17 = today.getFullYear() - 17;
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const minorBirth = document.getElementById('minorBirthDate');
+            minorBirth.max = `${max14}-${month}-${day}`;
+            minorBirth.min = `${min17}-${month}-${day}`;
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        let authorityDocData = null;
+
+        document.getElementById('minorPhone').addEventListener('input', function (e) {
+            this.value = formatPhone(this.value);
+        });
+        document.getElementById('repPhone').addEventListener('input', function (e) {
+            this.value = formatPhone(this.value);
+        });
+        document.getElementById('minorInn').addEventListener('input', function (e) {
+            this.value = this.value.replace(/\D/g, '').slice(0, 12);
+        });
+
+        const repStatus = document.getElementById('repStatus');
+        const authorityField = document.getElementById('authorityDocField');
+        repStatus.addEventListener('change', () => {
+            const needs = ['ADOPTIVE_PARENT', 'CURATOR'].includes(repStatus.value);
+            authorityField.style.display = needs ? 'block' : 'none';
+        });
+        authorityField.style.display = ['ADOPTIVE_PARENT', 'CURATOR'].includes(repStatus.value) ? 'block' : 'none';
+
+        document.getElementById('authorityDoc').addEventListener('change', async function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                authorityDocData = await fileToBase64(file);
+                document.getElementById('authorityFileName').textContent = 'Выбран: ' + file.name;
+            } catch (err) {
+                setNotice('notice', 'Не удалось прочитать файл', 'error');
+            }
+        });
+
+        async function submitMinor(e) {
+            e.preventDefault();
+            setNotice('notice', 'Отправка...', 'info');
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+
+            const minorEmail = document.getElementById('minorEmail').value.trim().toLowerCase();
+            const repEmail = document.getElementById('repEmail').value.trim().toLowerCase();
+            if (minorEmail === repEmail) {
+                setNotice('notice', 'Email представителя должен отличаться от email несовершеннолетнего', 'error');
+                btn.disabled = false;
+                return;
+            }
+
+            const needsAuthority = ['ADOPTIVE_PARENT', 'CURATOR'].includes(repStatus.value);
+            if (needsAuthority && !authorityDocData) {
+                setNotice('notice', 'Загрузите документ, подтверждающий полномочия', 'error');
+                btn.disabled = false;
+                return;
+            }
+
+            const documents = [];
+            if (authorityDocData) documents.push({ type: 'AUTHORITY', base64: authorityDocData, fileName: document.getElementById('authorityDoc').files[0]?.name });
+
+            const body = {
+                idempotencyKey: crypto.randomUUID ? crypto.randomUUID() : ('req-' + Date.now()),
+                lastName: document.getElementById('minorLastName').value.trim(),
+                firstName: document.getElementById('minorFirstName').value.trim(),
+                middleName: document.getElementById('minorMiddleName').value.trim(),
+                birthDate: document.getElementById('minorBirthDate').value,
+                phone: document.getElementById('minorPhone').value.replace(/\D/g, ''),
+                email: minorEmail,
+                inn: document.getElementById('minorInn').value.trim(),
+                isNpdPayer: document.getElementById('minorIsNpdPayer').value === 'true',
+                region: document.getElementById('minorRegion').value.trim(),
+                telegram: document.getElementById('minorTelegram').value.trim(),
+                bankDetails: document.getElementById('minorBankDetails').value.trim(),
+                documents,
+                representative: {
+                    lastName: document.getElementById('repLastName').value.trim(),
+                    firstName: document.getElementById('repFirstName').value.trim(),
+                    middleName: document.getElementById('repMiddleName').value.trim() || null,
+                    birthDate: document.getElementById('repBirthDate').value || null,
+                    status: repStatus.value,
+                    email: repEmail,
+                    phone: document.getElementById('repPhone').value.replace(/\D/g, ''),
+                    address: document.getElementById('repAddress').value.trim() || null
+                }
+            };
+
+            try {
+                const res = await fetch(`${apiBase}/api/partners/minor/initiate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Ошибка отправки');
+
+                currentToken = data.token;
+                history.replaceState(null, '', '?token=' + encodeURIComponent(currentToken));
+
+                document.getElementById('formCard').classList.add('hidden');
+                document.getElementById('waitCard').classList.remove('hidden');
+                document.getElementById('waitEmail').textContent = data.representativeEmail;
+                if (data.guardianConsentUrl) {
+                    document.getElementById('waitLinkRow').classList.remove('hidden');
+                    document.getElementById('waitLink').href = data.guardianConsentUrl;
+                    document.getElementById('waitLink').textContent = data.guardianConsentUrl;
+                }
+                setNotice('waitNotice', 'Ссылка отправлена законному представителю.', 'success');
+            } catch (err) {
+                setNotice('notice', err.message, 'error');
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('minorForm').addEventListener('submit', submitMinor);
+
+        async function checkStatus() {
+            if (!currentToken) return;
+            try {
+                const res = await fetch(`${apiBase}/api/partners/minor/guardian-consent?token=${encodeURIComponent(currentToken)}`);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Ошибка');
+
+                if (data.status === 'CONFIRMED') {
+                    document.getElementById('waitCard').classList.add('hidden');
+                    loadPrivacyAndOffer();
+                } else {
+                    setNotice('waitNotice', 'Пока согласие не получено. Попробуйте позже.', 'info');
+                }
+            } catch (err) {
+                setNotice('waitNotice', err.message, 'error');
+            }
+        }
+
+        document.getElementById('checkStatusBtn').addEventListener('click', checkStatus);
+
+        let offerVersion = null;
+        let privacyVersion = null;
+
+        async function loadPrivacyAndOffer() {
+            try {
+                const [contractRes, privacyRes] = await Promise.all([
+                    fetch(`${apiBase}/api/partners/contract`),
+                    fetch(`${apiBase}/api/partners/minor/minor-privacy-version`)
+                ]);
+                const contractData = await contractRes.json();
+                const privacyData = await privacyRes.json();
+
+                offerVersion = contractData.contract;
+                privacyVersion = privacyData;
+
+                document.getElementById('offerMeta').textContent = offerVersion.title + ' · версия ' + offerVersion.version;
+                document.getElementById('offerText').textContent = offerVersion.content;
+
+                document.getElementById('privacyMeta').textContent = privacyVersion.title + ' · версия ' + privacyVersion.version;
+                document.getElementById('privacyText').textContent = privacyVersion.content;
+
+                document.getElementById('privacyCard').classList.remove('hidden');
+            } catch (err) {
+                setNotice('waitNotice', 'Не удалось загрузить документы: ' + err.message, 'error');
+            }
+        }
+
+        document.getElementById('acceptPrivacy').addEventListener('change', (e) => {
+            document.getElementById('privacyBtn').disabled = !e.target.checked;
+        });
+
+        document.getElementById('privacyBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('privacyBtn');
+            btn.disabled = true;
+            try {
+                const res = await fetch(`${apiBase}/api/partners/minor/privacy-consent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: currentToken, accepted: true })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Ошибка');
+                document.getElementById('privacyCard').classList.add('hidden');
+                document.getElementById('offerCard').classList.remove('hidden');
+            } catch (err) {
+                setNotice('privacyNotice', err.message, 'error');
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('acceptOffer').addEventListener('change', (e) => {
+            document.getElementById('offerBtn').disabled = !e.target.checked;
+        });
+
+        document.getElementById('offerBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('offerBtn');
+            btn.disabled = true;
+            try {
+                const res = await fetch(`${apiBase}/api/partners/minor/accept-offer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: currentToken, accepted: true })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Ошибка');
+
+                document.getElementById('offerCard').classList.add('hidden');
+                document.getElementById('successCard').classList.remove('hidden');
+                document.getElementById('successId').textContent = data.registrationId;
+                document.getElementById('successDate').textContent = new Date(data.acceptedAt).toLocaleString('ru-RU');
+                document.getElementById('successOfferVersion').textContent = data.contractVersion;
+            } catch (err) {
+                setNotice('offerNotice', err.message, 'error');
+                btn.disabled = false;
+            }
+        });
+
+        async function initFromToken() {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            if (!token) {
+                setAgeLimits();
+                return;
+            }
+            currentToken = token;
+            document.getElementById('formCard').classList.add('hidden');
+            document.getElementById('waitCard').classList.remove('hidden');
+            document.getElementById('waitEmail').textContent = '...';
+            await checkStatus();
+        }
+
+        initFromToken();
+    </script>
+</body>
+</html>

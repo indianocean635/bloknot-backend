@@ -329,6 +329,25 @@ model Employee {
     region               String
     telegram             String?
     bankDetails          String
+    ageCategory          String   @default("ADULT") // ADULT, MINOR
+
+    // Minor / legal representative
+    isFullLegalCapacity  Boolean  @default(false)
+    emancipationDocumentType   String?
+    emancipationDocumentNumber String?
+    emancipationDocumentDate   DateTime?
+    emancipationDocumentAuthority String?
+    emancipationDocumentUrl    String?
+
+    representativeLastName  String?
+    representativeFirstName String?
+    representativeMiddleName String?
+    representativeBirthDate DateTime?
+    representativePhone     String?
+    representativeEmail     String?
+    representativeAddress   String?
+    representativeRelationship String? // MOTHER, FATHER, ADOPTIVE_PARENT, CURATOR, GUARDIAN
+    representativeAuthorityDocumentUrl String?
 
     // Acceptance
     acceptedOffer        Boolean
@@ -343,8 +362,8 @@ model Employee {
     dataCorrectConfirmedAt DateTime?
 
     // Legal versions accepted at the moment of application
-    contractVersionId    String
-    privacyVersionId     String
+    contractVersionId    String?
+    privacyVersionId     String?
 
     // Idempotency key to prevent duplicate submissions
     idempotencyKey       String?  @unique
@@ -352,15 +371,20 @@ model Employee {
     // Audit / technical
     ipAddress            String
     userAgent            String
-    status               String   @default("ACCEPTED") // ACCEPTED, PENDING, REJECTED, ARCHIVED
-    acceptedAt           DateTime @default(now())
+    status               String   @default("PENDING") // PENDING, GUARDIAN_CONSENT_CONFIRMED, PRIVACY_CONSENT_CONFIRMED, OFFER_ACCEPTED, CONFIRMED, REJECTED, ARCHIVED, ACCEPTED
+    acceptedAt           DateTime?
     createdAt            DateTime @default(now())
     updatedAt            DateTime @updatedAt
 
-    contractVersion ContractVersion @relation(fields: [contractVersionId], references: [id])
-    privacyVersion  PolicyVersion   @relation(fields: [privacyVersionId], references: [id])
+    contractVersion ContractVersion? @relation(fields: [contractVersionId], references: [id])
+    privacyVersion  PolicyVersion?   @relation(fields: [privacyVersionId], references: [id])
     acceptance      EmployeeContractAcceptance?
     adminAuditLogs  AdminAuditLog[]
+    documents       EmployeeDocument[]
+    guardianConsent LegalRepresentativeConsent?
+    minorPrivacyConsent MinorPersonalDataConsent?
+    minorContractAcceptance MinorContractAcceptance?
+    consentEvents   ConsentEvent[]
 
     @@index([email])
     @@index([inn])
@@ -368,6 +392,8 @@ model Employee {
     @@index([createdAt])
     @@index([status])
     @@index([contractVersionId])
+    @@index([ageCategory])
+    @@index([representativeEmail])
 }
 
 model EmployeeContractAcceptance {
@@ -395,6 +421,8 @@ model ContractVersion {
 
     employees          Employee[]
     acceptances        EmployeeContractAcceptance[]
+    legalRepresentativeConsents LegalRepresentativeConsent[]
+    minorContractAcceptances MinorContractAcceptance[]
 }
 
 model PolicyVersion {
@@ -445,5 +473,163 @@ model AdminAuditLog {
 
     @@index([adminId])
     @@index([entity, entityId])
+    @@index([createdAt])
+}
+
+model GuardianConsentVersion {
+    id          String   @id @default(uuid())
+    version     String   @unique
+    hash        String   @unique
+    title       String
+    content     String   @db.Text
+    activeFrom  DateTime @default(now())
+    createdAt   DateTime @default(now())
+
+    consents LegalRepresentativeConsent[]
+}
+
+model MinorPrivacyConsentVersion {
+    id          String   @id @default(uuid())
+    version     String   @unique
+    hash        String   @unique
+    title       String
+    content     String   @db.Text
+    activeFrom  DateTime @default(now())
+    createdAt   DateTime @default(now())
+
+    consents MinorPersonalDataConsent[]
+}
+
+model LegalRepresentativeConsent {
+    id                       String   @id @default(uuid())
+    employeeId               String   @unique
+    token                    String   @unique
+    status                   String   @default("PENDING") // PENDING, OTP_SENT, CONFIRMED, REJECTED, EXPIRED, LOCKED
+
+    // Minor data snapshot
+    minorLastName            String
+    minorFirstName           String
+    minorMiddleName          String?
+    minorBirthDate           DateTime
+    minorInn                 String
+
+    // Representative data
+    representativeLastName   String
+    representativeFirstName  String
+    representativeMiddleName String?
+    representativeBirthDate  DateTime?
+    representativeStatus     String   // MOTHER, FATHER, ADOPTIVE_PARENT, CURATOR, GUARDIAN
+    representativeEmail      String
+    representativePhone      String
+
+    // Consent checkboxes
+    confirmedRepresentative  Boolean  @default(false)
+    representativeConsentAt  DateTime?
+    confirmedConsent         Boolean  @default(false)
+    consentGivenAt           DateTime?
+    confirmedRead            Boolean  @default(false)
+    documentReadAt           DateTime?
+
+    // Versioning
+    guardianConsentVersionId String
+    contractVersionId        String
+    guardianConsentHash      String
+    contractHash             String
+
+    // OTP
+    otpHash                  String?
+    otpSentAt                DateTime?
+    otpExpiresAt             DateTime?
+    otpVerifiedAt            DateTime?
+    attemptCount             Int      @default(0)
+    resendCount              Int      @default(0)
+    lastResentAt             DateTime?
+
+    // Audit
+    ipAddress                String?
+    userAgent                String?
+    confirmationMethod       String   @default("email_otp")
+    sentEmailMessageId       String?
+    verifiedAt               DateTime?
+    createdAt                DateTime @default(now())
+    updatedAt                DateTime @updatedAt
+
+    employee                 Employee             @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+    guardianConsentVersion   GuardianConsentVersion @relation(fields: [guardianConsentVersionId], references: [id])
+    contractVersion          ContractVersion      @relation(fields: [contractVersionId], references: [id])
+    events                   ConsentEvent[]
+
+    @@index([token])
+    @@index([representativeEmail])
+    @@index([status])
+    @@index([createdAt])
+}
+
+model MinorPersonalDataConsent {
+    id                     String   @id @default(uuid())
+    employeeId             String   @unique
+    privacyVersionId       String
+    privacyHash            String
+    confirmedBy            String   @default("GUARDIAN") // GUARDIAN, MINOR
+    acceptedAt             DateTime?
+    ipAddress              String?
+    userAgent              String?
+    createdAt              DateTime @default(now())
+
+    employee               Employee                  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+    privacyVersion         MinorPrivacyConsentVersion @relation(fields: [privacyVersionId], references: [id])
+
+    @@index([employeeId])
+    @@index([acceptedAt])
+}
+
+model MinorContractAcceptance {
+    id                String   @id @default(uuid())
+    employeeId        String   @unique
+    contractVersionId String
+    contractHash      String
+    acceptedAt        DateTime?
+    ipAddress         String?
+    userAgent         String?
+    createdAt         DateTime @default(now())
+
+    employee        Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+    contractVersion ContractVersion @relation(fields: [contractVersionId], references: [id])
+
+    @@index([employeeId])
+    @@index([acceptedAt])
+}
+
+model EmployeeDocument {
+    id           String   @id @default(uuid())
+    employeeId   String
+    type         String   // EMANCIPATION, AUTHORITY
+    fileUrl      String
+    originalName String?
+    fileSize     Int?
+    uploadedAt   DateTime @default(now())
+
+    employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+    @@index([employeeId])
+    @@index([type])
+}
+
+model ConsentEvent {
+    id                         String   @id @default(uuid())
+    legalRepresentativeConsentId String?
+    employeeId                 String?
+    event                      String   // OTP_SENT, OTP_RESENT, OTP_FAILED, OTP_VERIFIED, CONSENT_CONFIRMED, PRIVACY_CONSENT, OFFER_ACCEPTED, DOCUMENT_VIEWED, STATUS_CHANGED
+    metadata                   Json?
+    ipAddress                  String?
+    userAgent                  String?
+    createdAt                  DateTime @default(now())
+
+    legalRepresentativeConsent LegalRepresentativeConsent? @relation(fields: [legalRepresentativeConsentId], references: [id], onDelete: Cascade)
+    employee                   Employee?                   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+    @@index([legalRepresentativeConsentId])
+    @@index([employeeId])
+    @@index([event])
     @@index([createdAt])
 }

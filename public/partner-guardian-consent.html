@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Согласие законного представителя — Блокнот</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      background: #f5f7fa;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 0 0 8px;
+      color: #1b5e20;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .meta {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .meta h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      color: #333;
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    .meta-row:last-child { border-bottom: none; }
+    .meta-label { color: #666; }
+    .meta-value { font-weight: 500; }
+    .document-box {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      background: #fafafa;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    .version-info {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+    .checkbox {
+      display: flex;
+      align-items: flex-start;
+      margin: 12px 0;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .checkbox input {
+      margin-top: 3px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .checkbox-label {
+      line-height: 1.4;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 8px;
+    }
+    .btn-primary { background: #1b5e20; color: #fff; }
+    .btn-primary:hover { background: #144214; }
+    .btn-primary:disabled { background: #9e9e9e; cursor: not-allowed; }
+    .btn-link {
+      background: none;
+      color: #1b5e20;
+      text-decoration: underline;
+      padding: 0;
+      margin: 0;
+      font-size: 14px;
+    }
+    .notice {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .notice.success { background: #e8f5e9; color: #1b5e20; }
+    .notice.error { background: #ffebee; color: #c62828; }
+    .notice.info { background: #e3f2fd; color: #1565c0; }
+    .code-inputs {
+      display: flex;
+      gap: 8px;
+      margin: 16px 0;
+      justify-content: center;
+    }
+    .code-inputs input {
+      width: 44px;
+      height: 52px;
+      font-size: 24px;
+      text-align: center;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+    }
+    .code-inputs input:focus { border-color: #1b5e20; }
+    .timer {
+      color: #666;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="app"></div>
+  </div>
+
+  <script>
+    const apiBase = '';
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+
+    const app = document.getElementById('app');
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleDateString('ru-RU');
+    }
+
+    function renderLoading() {
+      app.innerHTML = '<div class="card"><p>Загрузка...</p></div>';
+    }
+
+    function showNotice(type, message) {
+      const el = document.createElement('div');
+      el.className = `notice ${type}`;
+      el.textContent = message;
+      app.insertBefore(el, app.firstChild);
+      setTimeout(() => el.remove(), 8000);
+    }
+
+    async function loadConsent() {
+      renderLoading();
+      try {
+        const res = await fetch(`${apiBase}/api/partners/minor/guardian-consent?token=${encodeURIComponent(token)}`);
+        const data = await res.json();
+        if (!res.ok) {
+          app.innerHTML = `<div class="card"><div class="notice error">${data.error || 'Ошибка загрузки'}</div></div>`;
+          return;
+        }
+        if (data.status === 'CONFIRMED') {
+          renderSuccess(data);
+          return;
+        }
+        renderConsentForm(data);
+      } catch (e) {
+        app.innerHTML = '<div class="card"><div class="notice error">Не удалось загрузить страницу. Проверьте ссылку.</div></div>';
+      }
+    }
+
+    function renderSuccess(data) {
+      const minor = data.minor || {};
+      const rep = data.representative || {};
+      app.innerHTML = `
+        <div class="card">
+          <h1>Согласие подтверждено</h1>
+          <div class="notice success">Ваше согласие успешно подтверждено и зафиксировано в информационной системе Блокнот.</div>
+          <div class="meta">
+            <div class="meta-row"><span class="meta-label">Несовершеннолетний:</span><span class="meta-value">${minor.lastName || ''} ${minor.firstName || ''} ${minor.middleName || ''}</span></div>
+            <div class="meta-row"><span class="meta-label">Дата и время:</span><span class="meta-value">${formatDate(new Date())}</span></div>
+            <div class="meta-row"><span class="meta-label">Версия согласия:</span><span class="meta-value">${data.guardianConsent.version}</span></div>
+            <div class="meta-row"><span class="meta-label">Версия Договора-оферты:</span><span class="meta-value">${data.contractVersion.version}</span></div>
+          </div>
+          <p style="font-size:14px;color:#666">Email законного представителя подтверждён.</p>
+        </div>
+      `;
+    }
+
+    function renderConsentForm(data) {
+      const minor = data.minor || {};
+      const rep = data.representative || {};
+      app.innerHTML = `
+        <div class="card">
+          <h1>Согласие законного представителя</h1>
+          <p class="subtitle">Проверьте данные, установите обязательные отметки и подтвердите согласие.</p>
+
+          <div class="meta">
+            <h3>Несовершеннолетний</h3>
+            <div class="meta-row"><span class="meta-label">ФИО:</span><span class="meta-value">${minor.lastName || ''} ${minor.firstName || ''} ${minor.middleName || ''}</span></div>
+            <div class="meta-row"><span class="meta-label">Дата рождения:</span><span class="meta-value">${formatDate(minor.birthDate)}</span></div>
+          </div>
+
+          <div class="meta">
+            <h3>Законный представитель</h3>
+            <div class="meta-row"><span class="meta-label">ФИО:</span><span class="meta-value">${rep.lastName || ''} ${rep.firstName || ''} ${rep.middleName || ''}</span></div>
+            <div class="meta-row"><span class="meta-label">Статус:</span><span class="meta-value">${translateStatus(rep.status)}</span></div>
+            <div class="meta-row"><span class="meta-label">Email для подтверждения:</span><span class="meta-value">${rep.email || '—'}</span></div>
+          </div>
+
+          <h3>Текст согласия</h3>
+          <div class="version-info">Версия ${data.guardianConsent.version} · ID: ${(data.guardianConsent.hash || '').slice(0, 16)}...</div>
+          <div class="document-box">${escapeHtml(data.guardianConsent.content)}</div>
+
+          <div id="checkboxes">
+            <label class="checkbox">
+              <input type="checkbox" id="cb-representative">
+              <span class="checkbox-label">Я подтверждаю, что являюсь законным представителем указанного несовершеннолетнего.</span>
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" id="cb-consent">
+              <span class="checkbox-label">Я даю письменное согласие на заключение и исполнение несовершеннолетним гражданско-правового договора с ИП Песковым Александром Валерьевичем на условиях Договора-оферты.</span>
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" id="cb-read">
+              <span class="checkbox-label">Я ознакомился(ась) с настоящим Согласием и Договором-офертой.</span>
+            </label>
+          </div>
+
+          <button id="btn-request" class="btn btn-primary">Получить код на email</button>
+        </div>
+
+        <div id="otp-card" class="card hidden">
+          <h2>Введите код из письма</h2>
+          <p class="subtitle">Мы отправили код подтверждения на: <strong>${rep.email}</strong></p>
+          <div class="code-inputs" id="code-inputs">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+          </div>
+          <button id="btn-verify" class="btn btn-primary" disabled>Подтвердить согласие</button>
+          <div class="timer" id="resend-timer"></div>
+          <button id="btn-resend" class="btn btn-link hidden">Отправить код повторно</button>
+        </div>
+      `;
+
+      bindEvents();
+    }
+
+    function translateStatus(status) {
+      const map = { MOTHER: 'Мать', FATHER: 'Отец', ADOPTIVE_PARENT: 'Усыновитель', CURATOR: 'Попечитель', GUARDIAN: 'Законный представитель' };
+      return map[status] || status;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function bindEvents() {
+      const btnRequest = document.getElementById('btn-request');
+      btnRequest.addEventListener('click', requestOtp);
+
+      const inputs = document.querySelectorAll('#code-inputs input');
+      inputs.forEach((input, idx) => {
+        input.addEventListener('input', (e) => handleCodeInput(e, idx, inputs));
+        input.addEventListener('keydown', (e) => handleKeydown(e, idx, inputs));
+        input.addEventListener('paste', (e) => handlePaste(e, inputs));
+      });
+
+      const btnVerify = document.getElementById('btn-verify');
+      btnVerify.addEventListener('click', verifyOtp);
+
+      const btnResend = document.getElementById('btn-resend');
+      btnResend.addEventListener('click', requestOtp);
+    }
+
+    function getCode(inputs) {
+      return Array.from(inputs).map(i => i.value).join('');
+    }
+
+    function handleCodeInput(e, idx, inputs) {
+      const val = e.target.value.replace(/\D/g, '').slice(0, 1);
+      e.target.value = val;
+      if (val && idx < inputs.length - 1) inputs[idx + 1].focus();
+      const code = getCode(inputs);
+      document.getElementById('btn-verify').disabled = code.length !== 6;
+    }
+
+    function handleKeydown(e, idx, inputs) {
+      if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+        inputs[idx - 1].focus();
+      }
+    }
+
+    function handlePaste(e, inputs) {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6).split('');
+      inputs.forEach((input, i) => {
+        input.value = text[i] || '';
+      });
+      document.getElementById('btn-verify').disabled = getCode(inputs).length !== 6;
+      if (text.length === 6) document.getElementById('btn-verify').focus();
+    }
+
+    async function requestOtp() {
+      const cb1 = document.getElementById('cb-representative');
+      const cb2 = document.getElementById('cb-consent');
+      const cb3 = document.getElementById('cb-read');
+      if (!cb1.checked || !cb2.checked || !cb3.checked) {
+        showNotice('error', 'Необходимо установить все три отметки перед получением кода');
+        return;
+      }
+
+      const btn = document.getElementById('btn-request') || document.getElementById('btn-resend');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${apiBase}/api/partners/minor/guardian-consent/request-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token,
+            confirmedRepresentative: true,
+            confirmedConsent: true,
+            confirmedRead: true
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showNotice('error', data.error || 'Ошибка отправки');
+          btn.disabled = false;
+          return;
+        }
+        showNotice('success', 'Код отправлен на email законного представителя');
+        document.getElementById('otp-card').classList.remove('hidden');
+        startResendTimer(60);
+      } catch (e) {
+        showNotice('error', 'Не удалось отправить код. Попробуйте позже.');
+        btn.disabled = false;
+      }
+    }
+
+    let resendTimerId = null;
+    function startResendTimer(seconds) {
+      const timer = document.getElementById('resend-timer');
+      const btn = document.getElementById('btn-resend');
+      btn.classList.add('hidden');
+      if (resendTimerId) clearInterval(resendTimerId);
+      let remaining = seconds;
+      timer.textContent = `Повторная отправка возможна через ${remaining} сек`;
+      resendTimerId = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(resendTimerId);
+          timer.textContent = '';
+          btn.classList.remove('hidden');
+        } else {
+          timer.textContent = `Повторная отправка возможна через ${remaining} сек`;
+        }
+      }, 1000);
+    }
+
+    async function verifyOtp() {
+      const inputs = document.querySelectorAll('#code-inputs input');
+      const code = getCode(inputs);
+      if (code.length !== 6) return;
+
+      const btn = document.getElementById('btn-verify');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${apiBase}/api/partners/minor/guardian-consent/verify-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, code })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showNotice('error', data.error || 'Неверный код');
+          if (data.remainingAttempts !== undefined) {
+            showNotice('info', `Осталось попыток: ${data.remainingAttempts}`);
+          }
+          btn.disabled = false;
+          return;
+        }
+        app.innerHTML = `
+          <div class="card">
+            <h1>Согласие законного представителя получено</h1>
+            <div class="notice success">Ваше согласие успешно подтверждено и зафиксировано в информационной системе Блокнот.</div>
+            <p>Теперь несовершеннолетний может продолжить процедуру регистрации.</p>
+          </div>
+        `;
+      } catch (e) {
+        showNotice('error', 'Ошибка при проверке кода');
+        btn.disabled = false;
+      }
+    }
+
+    if (!token) {
+      app.innerHTML = '<div class="card"><div class="notice error">Ссылка не содержит токена. Проверьте email.</div></div>';
+    } else {
+      loadConsent();
+    }
+  </script>
+</body>
+</html>
