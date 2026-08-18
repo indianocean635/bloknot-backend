@@ -672,11 +672,9 @@ router.post('/accept-offer', async (req, res) => {
     if (consent.status !== 'CONFIRMED') {
       return res.status(400).json({ error: 'Сначала требуется подтверждение законного представителя' });
     }
-    if (!consent.employee.minorPrivacyConsent) {
-      return res.status(400).json({ error: 'Сначала требуется согласие на обработку персональных данных' });
-    }
 
     const contractVersion = await ensureContractVersion();
+    const privacyVersion = await ensureMinorPrivacyConsentVersion();
     const now = new Date();
 
     await prisma.$transaction([
@@ -698,12 +696,35 @@ router.post('/accept-offer', async (req, res) => {
           userAgent
         }
       }),
+      prisma.minorPersonalDataConsent.upsert({
+        where: { employeeId: consent.employeeId },
+        update: {
+          privacyVersionId: privacyVersion.id,
+          privacyHash: privacyVersion.hash,
+          acceptedAt: now,
+          ipAddress,
+          userAgent,
+          confirmedBy: 'MINOR'
+        },
+        create: {
+          employeeId: consent.employeeId,
+          privacyVersionId: privacyVersion.id,
+          privacyHash: privacyVersion.hash,
+          acceptedAt: now,
+          ipAddress,
+          userAgent,
+          confirmedBy: 'MINOR'
+        }
+      }),
       prisma.employee.update({
         where: { id: consent.employeeId },
         data: {
+          acceptedPrivacy: true,
           acceptedOffer: true,
           acceptedAt: now,
+          privacyAcceptedAt: now,
           offerAcceptedAt: now,
+          privacyVersionId: privacyVersion.id,
           contractVersionId: contractVersion.id,
           status: 'CONFIRMED'
         }
