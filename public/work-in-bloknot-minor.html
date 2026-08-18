@@ -551,7 +551,6 @@ info@bloknotservis.ru
                 document.getElementById('offerText').textContent = offerVersion.content;
 
                 document.getElementById('privacyMeta').textContent = privacyVersion.title + ' · версия ' + privacyVersion.version;
-                document.getElementById('privacyText').textContent = privacyVersion.content;
             } catch (err) {
                 setNotice('notice', 'Не удалось загрузить документы: ' + err.message, 'error');
             }
