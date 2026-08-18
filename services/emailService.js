@@ -2,25 +2,26 @@ const nodemailer = require('nodemailer');
 
 function createTransporter() {
   const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT || '587', 10);
+  const port = parseInt(process.env.SMTP_PORT || '465', 10);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM;
 
-  if (!host || !user || !pass || !from) {
+  if (!host || !user || !pass) {
     return null;
   }
+
+  const secure = process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : (port === 465);
 
   return nodemailer.createTransporter({
     host,
     port,
-    secure: port === 465,
+    secure,
     auth: { user, pass }
   });
 }
 
 function isEmailConfigured() {
-  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_FROM);
+  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
 
 function formatDate(iso) {
@@ -82,7 +83,7 @@ Bloknot`;
 
   try {
     await transporter.sendMail({
-      from: process.env.SMTP_FROM,
+      from: process.env.SMTP_FROM || `"Bloknot" <${process.env.SMTP_USER}>`,
       to,
       subject,
       text,
@@ -140,7 +141,7 @@ https://bloknotservis.ru/`;
 
   try {
     await transporter.sendMail({
-      from: process.env.SMTP_FROM,
+      from: process.env.SMTP_FROM || `"Bloknot" <${process.env.SMTP_USER}>`,
       to,
       subject,
       text,
@@ -198,7 +199,7 @@ https://bloknotservis.ru/`;
 
   try {
     await transporter.sendMail({
-      from: process.env.SMTP_FROM,
+      from: process.env.SMTP_FROM || `"Bloknot" <${process.env.SMTP_USER}>`,
       to,
       subject,
       text,
