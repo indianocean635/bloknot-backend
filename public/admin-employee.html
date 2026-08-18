@@ -171,13 +171,8 @@
                 let minorHtml = '';
                 if (e.ageCategory === 'MINOR') {
                     const gc = e.guardianConsent || {};
-                    const rep = {
-                        fio: `${gc.lastName || ''} ${gc.firstName || ''} ${gc.middleName || ''}`.trim() || '—',
-                        status: formatStatus(gc.status),
-                        email: gc.email || '—',
-                        phone: gc.phone || '—',
-                        confirmedAt: formatDate(gc.confirmedAt)
-                    };
+                    const repFio = `${gc.representativeLastName || ''} ${gc.representativeFirstName || ''} ${gc.representativeMiddleName || ''}`.trim() || '—';
+                    const repBirth = gc.representativeBirthDate ? new Date(gc.representativeBirthDate).toISOString().slice(0, 10) : '—';
                     const docs = (e.documents || []).map(d => `
                         <li style="margin: 6px 0; font-size: 14px;">
                             ${d.type} — ${d.fileName} <button class="btn" style="padding: 4px 10px; font-size: 13px; width: auto;" onclick="downloadDoc('${d.id}')">Скачать</button>
@@ -186,11 +181,14 @@
                         <div class="card">
                             <h2>Регистрация 14–17 лет</h2>
                             ${renderSection('Законный представитель', [
-                                { label: 'ФИО', value: rep.fio },
-                                { label: 'Статус', value: rep.status },
-                                { label: 'Email', value: rep.email },
-                                { label: 'Телефон', value: rep.phone },
-                                { label: 'Подтверждено', value: rep.confirmedAt }
+                                { label: 'ФИО', value: repFio },
+                                { label: 'Статус (родство)', value: gc.representativeStatus || '—' },
+                                { label: 'Дата рождения', value: repBirth },
+                                { label: 'Email', value: gc.representativeEmail || '—' },
+                                { label: 'Телефон', value: gc.representativePhone || '—' },
+                                { label: 'Адрес', value: e.representativeAddress || '—' },
+                                { label: 'Статус согласия', value: formatStatus(gc.status) },
+                                { label: 'Подтверждено', value: formatDate(gc.verifiedAt) }
                             ])}
                             <h3 style="margin: 16px 0 8px; font-size: 16px;">Документы</h3>
                             ${docs ? '<ul style="margin-left: 18px;">' + docs + '</ul>' : '<p style="font-size: 14px; color: #666;">Нет документов</p>'}
