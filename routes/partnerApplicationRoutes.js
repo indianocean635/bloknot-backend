@@ -1145,7 +1145,7 @@ function validateBirthDate(date) {
   const now = new Date();
   if (d > now) return 'Дата рождения не может быть в будущем';
   const age = now.getFullYear() - d.getFullYear();
-  if (age < 18) return 'Исполнитель должен быть старше 18 лет';
+  if (age < 14) return 'Исполнитель должен быть старше 14 лет';
   return null;
 }
 
