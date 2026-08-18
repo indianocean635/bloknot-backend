@@ -265,7 +265,6 @@ router.post('/initiate', async (req, res) => {
           representativeFirstName,
           representativeMiddleName,
           representativeBirthDate,
-          representativeStatus,
           representativeEmail,
           representativePhone,
           representativeAddress,
