@@ -26,6 +26,7 @@ const ropRoutes = require('./routes/ropRoutes');
 const partnerApplicationRoutes = require('./routes/partnerApplicationRoutes');
 const minorApplicationRoutes = require('./routes/minorApplicationRoutes');
 const adminEmployeeRoutes = require('./routes/adminEmployeeRoutes');
+const websiteRoutes = require('./routes/websiteRoutes');
 const { requireMagicAuth, getBusinessFromUser, adminAuth, optionalAuth } = require('./middleware/magicAuthMiddleware');
 const app = express();
 const PORT = 3001;
@@ -123,6 +124,7 @@ app.use('/api/partners', partnerApplicationRoutes);
 app.use('/api/partners/minor', minorApplicationRoutes);
 app.use('/api/admin/employees', adminEmployeeRoutes);
 app.use('/api/invoice', invoiceRoutes);
+app.use('/api/website', websiteRoutes);
 
 console.log('Business routes loaded:', typeof businessRoutes);
 console.log('Business routes methods:', Object.getOwnPropertyNames(businessRoutes));
