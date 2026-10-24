@@ -64,72 +64,184 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 32px;
-      max-width: 800px;
-      margin: 0 auto;
+      margin-bottom: 60px;
     }
 
-    .card {
-      background: #ffffff;
+    .pricing-card {
+      background: white;
+      border: 1px solid #e5e7eb;
       border-radius: 16px;
-      padding: 40px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      border: 2px solid transparent;
+      padding: 6px;
+      position: relative;
       transition: all 0.3s ease;
     }
 
-    .card:hover {
-      border-color: #10b981;
+    .pricing-card:hover {
       transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
     }
 
-    .card-name {
-      font-size: 24px;
+    .pricing-card.featured {
+      border-color: #22c55e;
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: -8px;
+      right: 16px;
+      background: #22c55e;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .pricing-header {
+      margin-bottom: 12px;
+    }
+
+    .pricing-name {
+      font-size: 18px;
       font-weight: 700;
-      margin-bottom: 16px;
-      color: #1a1a1a;
+      margin-bottom: 4px;
+      color: #0b0f14;
     }
 
-    .card-price {
-      font-size: 48px;
-      font-weight: 800;
-      margin-bottom: 8px;
-      color: #1a1a1a;
-    }
-
-    .card-price-original {
-      font-size: 24px;
-      color: #9ca3af;
-      text-decoration: line-through;
-      margin-bottom: 8px;
-    }
-
-    .card-period {
-      font-size: 16px;
+    .pricing-users {
       color: #6b7280;
-      margin-bottom: 32px;
+      font-size: 10px;
+      margin-bottom: 8px;
     }
 
-    .card-features {
+    .pricing-price {
+      margin-bottom: 12px;
+    }
+
+    .price-monthly {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0b0f14;
+      margin-bottom: 4px;
+    }
+
+    .price-period {
+      color: #6b7280;
+      font-size: 10px;
+    }
+
+    .pricing-features {
       list-style: none;
-      margin-bottom: 32px;
+      padding: 0;
+      margin: 0 0 16px 0;
     }
 
-    .card-features li {
-      padding: 12px 0;
+    .pricing-features li {
+      display: flex;
+      align-items: center;
+      padding: 4px 0;
       border-bottom: 1px solid #f3f4f6;
-      font-size: 15px;
-      color: #374151;
+      font-size: 10px;
     }
 
-    .card-features li:last-child {
+    .pricing-features li:last-child {
       border-bottom: none;
     }
 
-    .card-features li::before {
-      content: "✓";
-      color: #10b981;
-      font-weight: bold;
+    .feature-icon {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .feature-icon::before {
+      content: '✓';
+      color: white;
+      font-size: 5px;
+      font-weight: bold;
+    }
+
+    .pricing-buttons {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .btn-primary {
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex: 1;
+    }
+
+    .btn-primary:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #0b0f14;
+    }
+
+    .modal-price {
+      font-size: 32px;
+      font-weight: 700;
+      color: #22c55e;
+      margin-bottom: 16px;
+    }
+
+    .modal-subtitle {
+      color: #6b7280;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .promo-section {
@@ -375,36 +487,95 @@
     <p class="subtitle">Профессиональное создание сайта под ключ</p>
 
     <div class="pricing-grid">
-      <div class="card">
-        <div class="card-name">Стандарт</div>
-        <div class="card-price-original" id="standard-original">49 900 ₽</div>
-        <div class="card-price" id="standard-price">49 900 ₽</div>
-        <div class="card-period">Разовый платеж</div>
-        <ul class="card-features">
-          <li>Адаптивный дизайн</li>
-          <li>До 5 страниц</li>
-          <li>Базовая SEO оптимизация</li>
-          <li>Интеграция с соцсетями</li>
-          <li>Форма обратной связи</li>
-          <li>Хостинг на 1 год</li>
+      <div class="pricing-card">
+        <div class="pricing-header">
+          <h3 class="pricing-name">Стандарт</h3>
+          <p class="pricing-users">Разовый платеж</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" id="standard-price">49 900₽</div>
+          <div class="price-period">Разовый платёж</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('standard', 49900)">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Адаптивный дизайн</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>До 5 страниц</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Базовая SEO оптимизация</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Интеграция с соцсетями</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Форма обратной связи</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Хостинг на 1 год</span>
+          </li>
         </ul>
-        <button class="btn btn-primary" onclick="selectPlan('standard', 49900)">Выбрать Стандарт</button>
       </div>
 
-      <div class="card">
-        <div class="card-name">Экстра</div>
-        <div class="card-price-original" id="extra-original">79 900 ₽</div>
-        <div class="card-price" id="extra-price">79 900 ₽</div>
-        <div class="card-period">Разовый платеж</div>
-        <ul class="card-features">
-          <li>Всё из тарифа Стандарт</li>
-          <li>До 15 страниц</li>
-          <li>Расширенная SEO оптимизация</li>
-          <li>Интернет-магазин</li>
-          <li>CRM интеграция</li>
-          <li>Поддержка 3 месяца</li>
+      <div class="pricing-card featured">
+        <div class="popular-badge">Популярное</div>
+        <div class="pricing-header">
+          <h3 class="pricing-name">Экстра</h3>
+          <p class="pricing-users">Разовый платеж</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" id="extra-price">79 900₽</div>
+          <div class="price-period">Разовый платёж</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('extra', 79900)">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Всё из тарифа Стандарт</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>До 15 страниц</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Расширенная SEO оптимизация</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Интернет-магазин</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>CRM интеграция</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Поддержка 3 месяца</span>
+          </li>
         </ul>
-        <button class="btn btn-primary" onclick="selectPlan('extra', 79900)">Выбрать Экстра</button>
       </div>
     </div>
 
@@ -413,41 +584,48 @@
       <input type="text" class="promo-input" id="promoCode" placeholder="Введите промокод">
       <div class="promo-message" id="promoMessage"></div>
     </div>
+  </div>
 
-    <div class="payment-methods">
-      <h2 class="payment-methods-title">Способ оплаты</h2>
-      <div class="payment-methods-grid">
-        <div class="payment-method selected" onclick="selectPaymentMethod('card')" id="method-card">
-          <div class="payment-method-icon">💳</div>
-          <div class="payment-method-name">Банковская карта</div>
+  <div class="modal" id="paymentModal">
+    <div class="modal-content">
+      <h3 class="modal-title">Оплата тарифа</h3>
+      <div class="modal-price" id="modalPrice">49 900₽</div>
+      <p class="modal-subtitle" id="modalSubtitle">Выберите способ оплаты</p>
+      
+      <div class="promo-section" style="margin: 0 0 20px 0;">
+        <label class="promo-label">Промокод</label>
+        <input type="text" class="promo-input" id="modalPromoCode" placeholder="Введите промокод">
+        <div class="promo-message" id="modalPromoMessage"></div>
+      </div>
+      
+      <div class="modal-buttons" id="modalButtons">
+        <button class="btn-primary" onclick="payWithCard()">
+          � Оплатить картой
+        </button>
+        <button class="btn-primary" onclick="showInvoiceForm()">
+          📄 По счёту (ИП/ООО)
+        </button>
+      </div>
+      
+      <div id="invoiceForm" style="display: none; margin-top: 20px; text-align: left;">
+        <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Данные для счёта</h4>
+        <div class="form-group">
+          <label>Название организации *</label>
+          <input type="text" id="orgName" required placeholder="ИП или ООО">
         </div>
-        <div class="payment-method" onclick="selectPaymentMethod('invoice')" id="method-invoice">
-          <div class="payment-method-icon">📄</div>
-          <div class="payment-method-name">По счёту (ИП/ООО)</div>
+        <div class="form-group">
+          <label>ИНН *</label>
+          <input type="text" id="orgInn" required placeholder="10 или 12 цифр" maxlength="12">
         </div>
+        <div class="form-group">
+          <label>Email для отправки счёта *</label>
+          <input type="email" id="invoiceEmail" required placeholder="email@example.com">
+        </div>
+        <button class="btn-primary" onclick="generateInvoice()">Сформировать счёт</button>
+        <button class="btn-primary" onclick="hideInvoiceForm()" style="background: #6b7280; margin-top: 12px;">Назад</button>
       </div>
     </div>
-
-    <div class="invoice-form" id="invoiceForm">
-      <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 24px;">Данные для счёта</h3>
-      <div class="form-group">
-        <label>Название организации *</label>
-        <input type="text" id="orgName" required placeholder="ИП или ООО">
-      </div>
-      <div class="form-group">
-        <label>ИНН *</label>
-        <input type="text" id="orgInn" required placeholder="10 или 12 цифр" maxlength="12">
-      </div>
-      <div class="form-group">
-        <label>Email для отправки счёта *</label>
-        <input type="email" id="invoiceEmail" required placeholder="email@example.com">
-      </div>
-      <button class="btn btn-primary" onclick="generateInvoice()">Сформировать счёт</button>
-    </div>
-
-    <div style="max-width: 400px; margin: 40px auto;">
-      <button class="btn btn-primary" id="payCardBtn" onclick="payWithCard()" disabled>Оплатить картой</button>
-    </div>
+  </div>
   </div>
 
   <footer class="footer">
@@ -475,7 +653,6 @@
   <script>
     let selectedPlan = null;
     let selectedAmount = 0;
-    let selectedPaymentMethod = 'card';
     let discount = 0;
     let cloudPaymentsPublicId = null;
 
@@ -496,6 +673,7 @@
         const response = await fetch('/api/website/config');
         const data = await response.json();
         cloudPaymentsPublicId = data.cloudPaymentsPublicId;
+        console.log('CloudPayments Public ID loaded:', cloudPaymentsPublicId ? 'configured' : 'not configured');
       } catch (error) {
         console.error('Failed to load config:', error);
       }
@@ -503,88 +681,85 @@
 
     loadConfig();
 
-    function selectPlan(plan, amount) {
+    function openPaymentModal(plan, amount) {
       selectedPlan = plan;
       selectedAmount = amount;
-      applyPromoCode();
+      discount = 0;
       
-      // Enable the pay card button
-      document.getElementById('payCardBtn').disabled = false;
+      const planName = plan === 'standard' ? 'Стандарт' : 'Экстра';
+      document.getElementById('modalPrice').textContent = amount.toLocaleString('ru-RU') + '₽';
+      document.getElementById('modalSubtitle').textContent = `Тариф "${planName}" — Выберите способ оплаты`;
+      document.getElementById('modalPromoCode').value = '';
+      document.getElementById('modalPromoMessage').style.display = 'none';
+      document.getElementById('modalButtons').style.display = 'flex';
+      document.getElementById('invoiceForm').style.display = 'none';
       
-      if (selectedPaymentMethod === 'invoice') {
-        document.getElementById('invoiceForm').classList.add('visible');
-      }
+      document.getElementById('paymentModal').classList.add('active');
     }
 
-    function selectPaymentMethod(method) {
-      selectedPaymentMethod = method;
-      document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
-      document.getElementById('method-' + method).classList.add('selected');
-      
-      if (method === 'invoice') {
-        document.getElementById('invoiceForm').classList.add('visible');
-      } else {
-        document.getElementById('invoiceForm').classList.remove('visible');
-      }
+    function closeModal() {
+      document.getElementById('paymentModal').classList.remove('active');
     }
 
-    function applyPromoCode() {
-      const code = document.getElementById('promoCode').value.trim().toLowerCase();
-      const messageEl = document.getElementById('promoMessage');
+    // Close modal on outside click
+    document.getElementById('paymentModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+
+    function applyModalPromoCode() {
+      const code = document.getElementById('modalPromoCode').value.trim().toLowerCase();
+      const messageEl = document.getElementById('modalPromoMessage');
       
       if (code && promoCodes[code]) {
         discount = promoCodes[code];
+        const finalAmount = Math.round(selectedAmount * (1 - discount / 100));
+        document.getElementById('modalPrice').textContent = finalAmount.toLocaleString('ru-RU') + '₽';
         messageEl.textContent = `Скидка ${discount}% применена`;
         messageEl.classList.remove('error');
         messageEl.style.display = 'block';
       } else if (code) {
         discount = 0;
+        document.getElementById('modalPrice').textContent = selectedAmount.toLocaleString('ru-RU') + '₽';
         messageEl.textContent = 'Неверный промокод';
         messageEl.classList.add('error');
         messageEl.style.display = 'block';
       } else {
         discount = 0;
+        document.getElementById('modalPrice').textContent = selectedAmount.toLocaleString('ru-RU') + '₽';
         messageEl.style.display = 'none';
       }
-
-      // Обновляем цены
-      const finalStandard = Math.round(prices.standard * (1 - discount / 100));
-      const finalExtra = Math.round(prices.extra * (1 - discount / 100));
-
-      document.getElementById('standard-original').textContent = formatPrice(prices.standard);
-      document.getElementById('extra-original').textContent = formatPrice(prices.extra);
-      
-      if (discount > 0) {
-        document.getElementById('standard-original').style.display = 'block';
-        document.getElementById('extra-original').style.display = 'block';
-        document.getElementById('standard-price').textContent = formatPrice(finalStandard);
-        document.getElementById('extra-price').textContent = formatPrice(finalExtra);
-      } else {
-        document.getElementById('standard-original').style.display = 'none';
-        document.getElementById('extra-original').style.display = 'none';
-        document.getElementById('standard-price').textContent = formatPrice(prices.standard);
-        document.getElementById('extra-price').textContent = formatPrice(prices.extra);
-      }
-
-      if (selectedPlan) {
-        selectedAmount = Math.round(prices[selectedPlan] * (1 - discount / 100));
-      }
     }
 
-    function formatPrice(amount) {
-      return amount.toLocaleString('ru-RU') + ' ₽';
+    document.getElementById('modalPromoCode').addEventListener('input', applyModalPromoCode);
+
+    function showInvoiceForm() {
+      document.getElementById('modalButtons').style.display = 'none';
+      document.getElementById('invoiceForm').style.display = 'block';
     }
 
-    document.getElementById('promoCode').addEventListener('input', applyPromoCode);
+    function hideInvoiceForm() {
+      document.getElementById('invoiceForm').style.display = 'none';
+      document.getElementById('modalButtons').style.display = 'flex';
+    }
 
     function payWithCard() {
       if (!cloudPaymentsPublicId) {
         alert('Ошибка конфигурации платежной системы. Свяжитесь с поддержкой.');
+        console.error('CloudPayments Public ID not configured');
         return;
       }
 
-      const finalAmount = Math.round(prices[selectedPlan] * (1 - discount / 100));
+      const finalAmount = Math.round(selectedAmount * (1 - discount / 100));
       const planName = selectedPlan === 'standard' ? 'Стандарт' : 'Экстра';
+      
+      console.log('Opening CloudPayments widget with:', {
+        publicId: cloudPaymentsPublicId,
+        amount: finalAmount,
+        plan: selectedPlan,
+        planName: planName
+      });
       
       const widget = new cp.CloudPayments({
         publicId: cloudPaymentsPublicId,
@@ -595,7 +770,7 @@
         accountId: 'guest-' + Date.now(),
         data: {
           plan: selectedPlan,
-          originalAmount: prices[selectedPlan],
+          originalAmount: selectedAmount,
           discount: discount
         }
       });
@@ -603,6 +778,7 @@
       widget.charge({}, function(options) {
         console.log('Payment successful', options);
         alert('Оплата прошла успешно!');
+        closeModal();
       }, function(reason, options) {
         console.log('Payment failed', reason, options);
         alert('Оплата не удалась. Попробуйте ещё раз.');
@@ -648,6 +824,7 @@
       .then(data => {
         if (data.success) {
           alert(`Счёт сформирован и отправлен на ${email}`);
+          closeModal();
         } else {
           alert('Ошибка при формировании счёта: ' + data.error);
         }
