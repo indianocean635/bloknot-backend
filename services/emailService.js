@@ -213,9 +213,87 @@ https://bloknotservis.ru/`;
   }
 }
 
+async function sendWebsiteInvoiceEmail(to, invoiceDetails) {
+  const transporter = createTransporter();
+
+  if (!transporter) {
+    console.log('[EMAIL] Skipping website invoice email: SMTP is not configured.');
+    return { sent: false, reason: 'SMTP not configured' };
+  }
+
+  const { invoiceNumber, invoiceDate, dueDate, amount, planName, orgName, orgInn, invoiceText } = invoiceDetails;
+
+  const subject = `Счёт №${invoiceNumber} на оплату тарифа "${planName}"`;
+  const text = `Здравствуйте!
+
+Сформирован счёт на оплату тарифа "${planName}".
+
+Номер счёта: ${invoiceNumber}
+Дата: ${invoiceDate}
+Срок оплаты: ${dueDate}
+Сумма: ${amount.toLocaleString('ru-RU')} ₽
+
+Плательщик:
+${orgName}
+ИНН: ${orgInn}
+
+Текст счёта:
+${invoiceText}
+
+---
+Счёт сформирован автоматически
+Сайт: https://bloknotservis.ru/website-pricing.html`;
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #333; line-height: 1.6; max-width: 600px;">
+      <h2 style="color: #1b5e20;">Счёт на оплату</h2>
+      <p>Сформирован счёт на оплату тарифа "<strong>${planName}</strong>".</p>
+      
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      
+      <p><strong>Номер счёта:</strong> ${invoiceNumber}</p>
+      <p><strong>Дата:</strong> ${invoiceDate}</p>
+      <p><strong>Срок оплаты:</strong> ${dueDate}</p>
+      <p><strong>Сумма:</strong> ${amount.toLocaleString('ru-RU')} ₽</p>
+      
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      
+      <h3 style="font-size: 16px; margin-bottom: 12px;">Плательщик:</h3>
+      <p><strong>${orgName}</strong></p>
+      <p>ИНН: ${orgInn}</p>
+      
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      
+      <h3 style="font-size: 16px; margin-bottom: 12px;">Текст счёта:</h3>
+      <pre style="background: #f5f5f5; padding: 16px; border-radius: 8px; white-space: pre-wrap; font-size: 13px;">${invoiceText}</pre>
+      
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      
+      <p style="color: #666; font-size: 13px;">Счёт сформирован автоматически</p>
+      <p style="color: #666; font-size: 13px;">Сайт: <a href="https://bloknotservis.ru/website-pricing.html">https://bloknotservis.ru/website-pricing.html</a></p>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || `"Bloknot" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      text,
+      html
+    });
+    console.log('[EMAIL] Website invoice email sent to', to);
+    return { sent: true };
+  } catch (error) {
+    console.error('[EMAIL] Failed to send website invoice email:', error);
+    return { sent: false, reason: error.message };
+  }
+}
+
 module.exports = {
   isEmailConfigured,
   sendPartnerAcceptanceEmail,
   sendGuardianConsentLinkEmail,
-  sendGuardianOtpEmail
+  sendGuardianOtpEmail,
+  sendWebsiteInvoiceEmail
 };

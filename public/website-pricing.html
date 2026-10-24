@@ -444,6 +444,10 @@
       </div>
       <button class="btn btn-primary" onclick="generateInvoice()">Сформировать счёт</button>
     </div>
+
+    <div style="max-width: 400px; margin: 40px auto;">
+      <button class="btn btn-primary" id="payCardBtn" onclick="payWithCard()" disabled>Оплатить картой</button>
+    </div>
   </div>
 
   <footer class="footer">
@@ -504,9 +508,10 @@
       selectedAmount = amount;
       applyPromoCode();
       
-      if (selectedPaymentMethod === 'card') {
-        payWithCard();
-      } else {
+      // Enable the pay card button
+      document.getElementById('payCardBtn').disabled = false;
+      
+      if (selectedPaymentMethod === 'invoice') {
         document.getElementById('invoiceForm').classList.add('visible');
       }
     }

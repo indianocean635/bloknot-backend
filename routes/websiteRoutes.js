@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const { sendWebsiteInvoiceEmail } = require('../services/emailService');
 
 // GET /api/website/config - Получить конфигурацию (CloudPayments Public ID)
 router.get('/config', (req, res) => {
@@ -80,9 +81,23 @@ ${discount > 0 ? `(Скидка ${discount}%, исходная сумма: ${ori
 Email: ${email}
     `.trim();
 
-    // TODO: Здесь можно добавить отправку email с PDF-счётом
-    // Для этого потребуется библиотека для генерации PDF (например, pdfkit)
-    // и отправка через emailService
+    // Отправка email со счётом
+    try {
+      const emailResult = await sendWebsiteInvoiceEmail(email, {
+        invoiceNumber,
+        invoiceDate,
+        dueDate,
+        amount,
+        planName,
+        orgName,
+        orgInn,
+        invoiceText
+      });
+
+      console.log('[WEBSITE INVOICE] Email sent:', emailResult);
+    } catch (emailError) {
+      console.error('[WEBSITE INVOICE] Failed to send email:', emailError);
+    }
 
     console.log('[WEBSITE INVOICE] Generated invoice:', {
       invoiceNumber,
