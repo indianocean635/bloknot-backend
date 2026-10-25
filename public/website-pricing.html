@@ -594,7 +594,7 @@
       
       <div class="modal-buttons" id="modalButtons">
         <button class="btn-primary" onclick="payWithCard()">
-          � Оплатить картой
+          💳 Оплатить картой
         </button>
         <button class="btn-primary" onclick="showInvoiceForm()">
           📄 По счёту (ИП/ООО)
@@ -739,9 +739,27 @@
     }
 
     function payWithCard() {
+      console.log('payWithCard called');
+      console.log('cp object:', typeof cp);
+      console.log('cloudPaymentsPublicId:', cloudPaymentsPublicId);
+      console.log('selectedPlan:', selectedPlan);
+      console.log('selectedAmount:', selectedAmount);
+      console.log('discount:', discount);
+      
+      if (typeof cp === 'undefined') {
+        alert('CloudPayments не загружен. Обновите страницу и попробуйте снова.');
+        console.error('CloudPayments script not loaded');
+        return;
+      }
+      
       if (!cloudPaymentsPublicId) {
         alert('Ошибка конфигурации платежной системы. Свяжитесь с поддержкой.');
         console.error('CloudPayments Public ID not configured');
+        return;
+      }
+
+      if (!selectedPlan) {
+        alert('Выберите тариф для оплаты');
         return;
       }
 
@@ -755,28 +773,33 @@
         planName: planName
       });
       
-      const widget = new cp.CloudPayments({
-        publicId: cloudPaymentsPublicId,
-        description: `Тариф "${planName}" — Создание сайтов`,
-        amount: finalAmount,
-        currency: 'RUB',
-        invoiceId: 'website-' + Date.now(),
-        accountId: 'guest-' + Date.now(),
-        data: {
-          plan: selectedPlan,
-          originalAmount: selectedAmount,
-          discount: discount
-        }
-      });
-      
-      widget.charge({}, function(options) {
-        console.log('Payment successful', options);
-        alert('Оплата прошла успешно!');
-        closeModal();
-      }, function(reason, options) {
-        console.log('Payment failed', reason, options);
-        alert('Оплата не удалась. Попробуйте ещё раз.');
-      });
+      try {
+        const widget = new cp.CloudPayments({
+          publicId: cloudPaymentsPublicId,
+          description: `Тариф "${planName}" — Создание сайтов`,
+          amount: finalAmount,
+          currency: 'RUB',
+          invoiceId: 'website-' + Date.now(),
+          accountId: 'guest-' + Date.now(),
+          data: {
+            plan: selectedPlan,
+            originalAmount: selectedAmount,
+            discount: discount
+          }
+        });
+        
+        widget.charge({}, function(options) {
+          console.log('Payment successful', options);
+          alert('Оплата прошла успешно!');
+          closeModal();
+        }, function(reason, options) {
+          console.log('Payment failed', reason, options);
+          alert('Оплата не удалась. Попробуйте ещё раз.');
+        });
+      } catch (error) {
+        console.error('Error creating CloudPayments widget:', error);
+        alert('Ошибка при инициализации платежной системы: ' + error.message);
+      }
     }
 
     function generateInvoice() {
