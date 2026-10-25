@@ -774,7 +774,9 @@
       });
       
       try {
-        const widget = new cp.CloudPayments({
+        const widget = new cp.CloudPayments();
+        
+        widget.charge({
           publicId: cloudPaymentsPublicId,
           description: `Тариф "${planName}" — Создание сайтов`,
           amount: finalAmount,
@@ -786,9 +788,7 @@
             originalAmount: selectedAmount,
             discount: discount
           }
-        });
-        
-        widget.charge({}, function(options) {
+        }, function(options) {
           console.log('Payment successful', options);
           alert('Оплата прошла успешно!');
           closeModal();
