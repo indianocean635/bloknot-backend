@@ -220,7 +220,7 @@ async function sendWebsiteInvoiceEmail(to, invoiceDetails) {
     return { sent: false, reason: 'SMTP not configured' };
   }
 
-  const { invoiceNumber, invoiceDate, dueDate, amount, planName, orgName, orgInn, invoiceText } = invoiceDetails;
+  const { invoiceNumber, invoiceDate, dueDate, amount, planName, orgName, orgInn, invoiceText, qrCode, sbpPhone } = invoiceDetails;
 
   const subject = `Счёт №${invoiceNumber} на оплату тарифа "${planName}"`;
   const text = `Здравствуйте!
@@ -240,6 +240,10 @@ ${orgName}
 ${invoiceText}
 
 ---
+Оплата по QR-коду через СБП:
+Отсканируйте QR-код в банковском приложении для быстрой оплаты
+Номер телефона для СБП: ${sbpPhone}
+
 Счёт сформирован автоматически
 Сайт: https://bloknotservis.ru/website-pricing.html`;
 
@@ -260,6 +264,18 @@ ${invoiceText}
       <h3 style="font-size: 16px; margin-bottom: 12px;">Плательщик:</h3>
       <p><strong>${orgName}</strong></p>
       <p>ИНН: ${orgInn}</p>
+      
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      
+      ${qrCode ? `
+      <div style="text-align: center; margin: 24px 0; padding: 20px; background: #f9f9f9; border-radius: 12px;">
+        <h3 style="font-size: 16px; margin-bottom: 12px; color: #1b5e20;">Оплата через СБП</h3>
+        <p style="font-size: 14px; color: #666; margin-bottom: 16px;">Отсканируйте QR-код в банковском приложении для быстрой оплаты</p>
+        <img src="${qrCode}" alt="QR-код для оплаты через СБП" style="max-width: 200px; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 8px; background: white;">
+        <p style="font-size: 14px; margin-top: 12px; color: #666;">Номер телефона: <strong>${sbpPhone}</strong></p>
+      </div>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      ` : ''}
       
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
       

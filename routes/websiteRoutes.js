@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const QRCode = require('qrcode');
 const { sendWebsiteInvoiceEmail } = require('../services/emailService');
 
 // GET /api/website/config - Получить конфигурацию (CloudPayments Public ID)
@@ -81,7 +82,16 @@ ${discount > 0 ? `(Скидка ${discount}%, исходная сумма: ${ori
 Email: ${email}
     `.trim();
 
-    // Отправка email со счётом
+    // Генерация QR-кода для СБП
+    const sbpPhone = '+79911158391';
+    const sbpData = `R0001|ST00012|Name=${COMPANY_DETAILS.name}|PersonalAcc=${COMPANY_DETAILS.bankAccount}|BankName=${COMPANY_DETAILS.bankName}|BIC=${COMPANY_DETAILS.bankBik}|Sum=${amount * 100}|Purpose=Оплата тарифа "${planName}" за создание сайта. Счёт №${invoiceNumber}`;
+    const qrCodeBase64 = await QRCode.toDataURL(sbpData, {
+      width: 200,
+      margin: 2,
+      errorCorrectionLevel: 'L'
+    });
+
+    // Отправка email со счётом и QR-кодом
     try {
       const emailResult = await sendWebsiteInvoiceEmail(email, {
         invoiceNumber,
@@ -91,7 +101,9 @@ Email: ${email}
         planName,
         orgName,
         orgInn,
-        invoiceText
+        invoiceText,
+        qrCode: qrCodeBase64,
+        sbpPhone: sbpPhone
       });
 
       console.log('[WEBSITE INVOICE] Email sent:', emailResult);
