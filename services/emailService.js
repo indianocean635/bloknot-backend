@@ -1,14 +1,10 @@
 const nodemailer = require('nodemailer');
 
 function createTransporter() {
-  const host = process.env.SMTP_HOST;
+  const host = process.env.SMTP_HOST || 'smtp.yandex.ru';
   const port = parseInt(process.env.SMTP_PORT || '465', 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  if (!host || !user || !pass) {
-    return null;
-  }
+  const user = process.env.SMTP_USER || 'your-yandex-email@yandex.ru';
+  const pass = process.env.SMTP_PASS || 'your-yandex-password';
 
   const secure = process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : (port === 465);
 
@@ -16,7 +12,10 @@ function createTransporter() {
     host,
     port,
     secure,
-    auth: { user, pass }
+    auth: { user, pass },
+    connectionTimeout: 10000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000
   });
 }
 
