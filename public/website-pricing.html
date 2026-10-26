@@ -1095,21 +1095,98 @@
     </div>
   </div>
 
+  <div class="modal" id="consentModal">
+    <div class="modal-content modal-content-large">
+      <h3 class="modal-title">СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ</h3>
+      <div class="modal-text">
+        <p><strong>Я, даю согласие индивидуальному предпринимателю Пескову Александру Валерьевичу (ИНН 420208173430, ОГРНИП 326420500029879) на обработку моих персональных данных.</strong></p>
+        
+        <h4>1. Цели обработки</h4>
+        <p>Персональные данные обрабатываются в следующих целях:</p>
+        <p>• оформление и исполнение заказа на создание сайта;<br>
+        • направление информации об услугах и предложениях;<br>
+        • проведение платежей и оформление возвратов;<br>
+        • выполнение обязательств, предусмотренных законодательством.</p>
+        
+        <h4>2. Перечень обрабатываемых данных</h4>
+        <p>Могут обрабатываться следующие персональные данные:</p>
+        <p>• фамилия, имя, отчество;<br>
+        • номер телефона;<br>
+        • адрес электронной почты;<br>
+        • иные данные, предоставленные мной добровольно.</p>
+        
+        <h4>3. Оператор</h4>
+        <p>Оператор персональных данных: индивидуальный предприниматель Песков Александр Валерьевич.<br>
+        Адрес: 650055, Россия, Кемеровская область — Кузбасс, г. Кемерово, ул. Сарыгина, д. 37, кв. 124.<br>
+        Электронная почта: info@bloknotservis.ru</p>
+        
+        <h4>4. Согласие</h4>
+        <p>Настоящее согласие действует до момента его отзыва в письменной форме. Отзыв согласия не влечёт за собой прекращения обработки персональных данных, начатой до его отзыва, если иное не предусмотрено законом.</p>
+        <p>Я подтверждаю, что ознакомлен с Политикой обработки персональных данных, размещённой на сайте купитьсайт.com.</p>
+      </div>
+      <button class="btn-primary" onclick="closeConsentModal()">Закрыть</button>
+    </div>
+  </div>
+
+  <div class="modal" id="cookieModal">
+    <div class="modal-content modal-content-large">
+      <h3 class="modal-title">УВЕДОМЛЕНИЕ О COOKIE И АНАЛИТИКЕ</h3>
+      <div class="modal-text">
+        <p><strong>Дата публикации: 26 октября 2026 года</strong></p>
+        
+        <h4>1. Что такое cookie</h4>
+        <p>Cookie — это небольшие текстовые файлы, которые сохраняются на вашем устройстве при посещении сайта. Они помогают сайту работать корректно, запоминать ваши настройки и обеспечивать безопасность.</p>
+        
+        <h4>2. Какие cookie использует сайт</h4>
+        <p>Сайт купитьсайт.com может использовать следующие типы cookie:</p>
+        <p>• Технические cookie — необходимы для работы сайта (сохранение сессии, настройка языка и т.д.);<br>
+        • Функциональные cookie — запоминают ваши настройки и предпочтения;<br>
+        • Аналитические cookie — собирают информацию о посещениях сайта для улучшения его работы.</p>
+        
+        <h4>3. Аналитика</h4>
+        <p>Для анализа посещаемости сайта могут использоваться сторонние сервисы аналитики. Эти сервисы могут собирать информацию о:</p>
+        <p>• страницах, которые вы посещаете;<br>
+        • времени, проведённом на сайте;<br>
+        • источнике перехода на сайт;<br>
+        • устройстве и браузере.</p>
+        
+        <h4>4. Управление cookie</h4>
+        <p>Вы можете управлять cookie через настройки вашего браузера:</p>
+        <p>• заблокировать все cookie;<br>
+        • удалить уже сохранённые cookie;<br>
+        • настроить уведомления о сохранении cookie.</p>
+        <p>Обратите внимание: отключение cookie может привести к некорректной работе некоторых функций сайта.</p>
+        
+        <h4>5. Срок хранения</h4>
+        <p>Срок хранения cookie зависит от их типа и назначения. Технические cookie обычно удаляются при закрытии браузера, другие могут храниться дольше.</p>
+        
+        <h4>6. Передача данных третьим лицам</h4>
+        <p>Если используются сторонние сервисы аналитики, данные могут передаваться этим сервисам в соответствии с их политиками конфиденциальности. Мы не передаём персональные данные третьим лицам без вашего согласия, если это не требуется для исполнения договора или по закону.</p>
+        
+        <h4>7. Изменения уведомления</h4>
+        <p>Мы можем вносить изменения в настоящее уведомление. Актуальная версия всегда доступна на сайте.</p>
+        
+        <h4>8. Контакты</h4>
+        <p>По вопросам, связанным с cookie и аналитикой, вы можете обратиться:<br>
+        Электронная почта: info@bloknotservis.ru<br>
+        Сайт: купитьсайт.com</p>
+      </div>
+      <button class="btn-primary" onclick="closeCookieModal()">Закрыть</button>
+    </div>
+  </div>
+
   <footer class="footer">
     <div class="footer-content">
       <div class="footer-section">
         <h3>Документы</h3>
         <a href="#" onclick="showOfferModal()">Договор-оферта</a>
         <a href="#" onclick="showPrivacyModal()">Политика конфиденциальности</a>
+        <a href="#" onclick="showConsentModal()">Согласие на обработку персональных данных</a>
+        <a href="#" onclick="showCookieModal()">Уведомление о cookie и аналитике</a>
       </div>
       <div class="footer-section">
         <h3>Контакты</h3>
         <a href="mailto:info@bloknotservis.ru">info@bloknotservis.ru</a>
-      </div>
-      <div class="footer-section">
-        <h3>Информация</h3>
-        <a href="#">О сервисе</a>
-        <a href="#">FAQ</a>
       </div>
     </div>
     <div class="footer-bottom">
@@ -1352,6 +1429,36 @@
     document.getElementById('privacyModal').addEventListener('click', function(e) {
       if (e.target === this) {
         closePrivacyModal();
+      }
+    });
+
+    function showConsentModal() {
+      document.getElementById('consentModal').classList.add('active');
+    }
+
+    function closeConsentModal() {
+      document.getElementById('consentModal').classList.remove('active');
+    }
+
+    // Close consent modal on outside click
+    document.getElementById('consentModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeConsentModal();
+      }
+    });
+
+    function showCookieModal() {
+      document.getElementById('cookieModal').classList.add('active');
+    }
+
+    function closeCookieModal() {
+      document.getElementById('cookieModal').classList.remove('active');
+    }
+
+    // Close cookie modal on outside click
+    document.getElementById('cookieModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeCookieModal();
       }
     });
   </script>
