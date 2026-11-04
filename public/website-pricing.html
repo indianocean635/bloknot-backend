@@ -20,14 +20,15 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: #f5f7fa;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
       min-height: 100vh;
       color: #1a1a1a;
     }
 
     .header {
-      background: #ffffff;
-      border-bottom: 1px solid #e5e7eb;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       padding: 20px 40px;
       display: flex;
       align-items: center;
@@ -36,7 +37,7 @@
     .logo {
       font-size: 24px;
       font-weight: 700;
-      color: #1a1a1a;
+      color: #ffffff;
     }
 
     .container {
@@ -50,14 +51,74 @@
       font-size: 36px;
       font-weight: 700;
       margin-bottom: 16px;
-      color: #1a1a1a;
+      color: #ffffff;
     }
 
     .subtitle {
       text-align: center;
       font-size: 18px;
-      color: #6b7280;
+      color: #94a3b8;
+      margin-bottom: 40px;
+    }
+
+    .black-friday-banner {
+      background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ff6b35 100%);
+      border-radius: 20px;
+      padding: 40px;
       margin-bottom: 60px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(255, 107, 53, 0.3);
+    }
+
+    .black-friday-banner::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .black-friday-title {
+      font-size: 48px;
+      font-weight: 800;
+      color: #ffffff;
+      text-align: center;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .black-friday-subtitle {
+      font-size: 24px;
+      color: #ffffff;
+      text-align: center;
+      opacity: 0.95;
+      position: relative;
+      z-index: 1;
+    }
+
+    .discount-badge {
+      display: inline-block;
+      background: #ffffff;
+      color: #ff6b35;
+      padding: 8px 24px;
+      border-radius: 50px;
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 16px;
+      position: relative;
+      z-index: 1;
     }
 
     .pricing-grid {
@@ -68,34 +129,44 @@
     }
 
     .pricing-card {
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
       padding: 6px;
       position: relative;
       transition: all 0.3s ease;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     }
 
     .pricing-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     }
 
     .pricing-card.featured {
-      border-color: #22c55e;
-      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
+      border: 2px solid #22c55e;
+      box-shadow: 0 8px 32px rgba(34, 197, 94, 0.3);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
     }
 
     .popular-badge {
       position: absolute;
       top: -8px;
       right: 16px;
-      background: #22c55e;
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
       color: white;
-      padding: 6px 16px;
-      border-radius: 20px;
+      padding: 8px 20px;
+      border-radius: 50px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4); }
+      50% { box-shadow: 0 4px 20px rgba(34, 197, 94, 0.8); }
     }
 
     .pricing-header {
@@ -519,6 +590,12 @@
     <h1 class="title">Выберите тариф</h1>
     <p class="subtitle">Профессиональное создание сайта под ключ</p>
 
+    <div class="black-friday-banner">
+      <h2 class="black-friday-title">🔥 Чёрная пятница 🔥</h2>
+      <p class="black-friday-subtitle">Скидки до 45% на все тарифы!</p>
+      <div class="discount-badge">Используйте промокод VIP45</div>
+    </div>
+
     <div class="pricing-grid">
       <div class="pricing-card">
         <div class="pricing-header">
@@ -565,7 +642,8 @@
         </ul>
       </div>
 
-      <div class="pricing-card">
+      <div class="pricing-card featured">
+        <div class="popular-badge">⭐ Популярный</div>
         <div class="pricing-header">
           <h3 class="pricing-name">Стандарт</h3>
           <p class="pricing-users">Разовый платеж</p>
