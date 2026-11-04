@@ -522,6 +522,51 @@
     <div class="pricing-grid">
       <div class="pricing-card">
         <div class="pricing-header">
+          <h3 class="pricing-name">База</h3>
+          <p class="pricing-users">Разовый платеж</p>
+        </div>
+        
+        <div class="pricing-price">
+          <div class="price-monthly" id="base-price">14 600₽</div>
+          <div class="price-period">Разовый платёж</div>
+        </div>
+        
+        <div class="pricing-buttons">
+          <button class="btn-primary" onclick="openPaymentModal('base', 14600)">
+            💳 Оплатить
+          </button>
+        </div>
+        
+        <ul class="pricing-features">
+          <li>
+            <div class="feature-icon"></div>
+            <span>Адаптивный дизайн</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>До 3 страниц</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Базовая SEO оптимизация</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Онлайн запись</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Форма обратной связи</span>
+          </li>
+          <li>
+            <div class="feature-icon"></div>
+            <span>Хостинг на 1 год</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pricing-header">
           <h3 class="pricing-name">Стандарт</h3>
           <p class="pricing-users">Разовый платеж</p>
         </div>
@@ -1222,6 +1267,7 @@
     };
 
     const prices = {
+      base: 14600,
       standard: 49900,
       extra: 79900
     };
@@ -1244,15 +1290,21 @@
       selectedPlan = plan;
       selectedAmount = amount;
       discount = 0;
-      
-      const planName = plan === 'standard' ? 'Стандарт' : 'Экстра';
+
+      const planNames = {
+        'base': 'База',
+        'standard': 'Стандарт',
+        'extra': 'Экстра'
+      };
+      const planName = planNames[plan] || plan;
+
       document.getElementById('modalPrice').textContent = amount.toLocaleString('ru-RU') + '₽';
       document.getElementById('modalSubtitle').textContent = `Тариф "${planName}" — Выберите способ оплаты`;
       document.getElementById('modalPromoCode').value = '';
       document.getElementById('modalPromoMessage').style.display = 'none';
       document.getElementById('modalButtons').style.display = 'flex';
       document.getElementById('invoiceForm').style.display = 'none';
-      
+
       document.getElementById('paymentModal').classList.add('active');
     }
 
@@ -1329,8 +1381,14 @@
       }
 
       const finalAmount = Math.round(selectedAmount * (1 - discount / 100));
-      const planName = selectedPlan === 'standard' ? 'Стандарт' : 'Экстра';
-      
+
+      const planNames = {
+        'base': 'База',
+        'standard': 'Стандарт',
+        'extra': 'Экстра'
+      };
+      const planName = planNames[selectedPlan] || selectedPlan;
+
       console.log('Opening CloudPayments widget with:', {
         publicId: cloudPaymentsPublicId,
         amount: finalAmount,
@@ -1383,7 +1441,13 @@
       }
 
       const finalAmount = Math.round(prices[selectedPlan] * (1 - discount / 100));
-      const planName = selectedPlan === 'standard' ? 'Стандарт' : 'Экстра';
+
+      const planNames = {
+        'base': 'База',
+        'standard': 'Стандарт',
+        'extra': 'Экстра'
+      };
+      const planName = planNames[selectedPlan] || selectedPlan;
 
       // Отправляем запрос на сервер для генерации счёта
       fetch('/api/website/invoice', {
